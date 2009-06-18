@@ -28,6 +28,8 @@ AS_IF([test x"$have_tvmet_conf" != xno],
        [AC_MSG_ERROR([Could not find tvmet-config. Please install tvmet!])])
 
 # Checks for libraries.
+AX_BOOST_BASE([1.39])
+AX_BOOST_SERIALIZATION
 
 # Checks for header files.
 
@@ -41,8 +43,11 @@ AC_OUTPUT
 
 echo "
   $PACKAGE_NAME version $PACKAGE_VERSION-$GIT_VERSION
-  Prefix..............: $prefix
-  TVMET_CFLAGS........: $TVMET_CFLAGS
-  TVMET_LIBS..........: $TVMET_LIBS
-  C++ Compiler........: $CXX $CXXFLAGS $CPPFLAGS
-  Linker..............: $LD $LDFLAGS $LIBS"
+  Prefix...................: $prefix
+  TVMET_CFLAGS.............: $TVMET_CFLAGS
+  TVMET_LIBS...............: $TVMET_LIBS
+  BOOST_CPPFLAGS...........: $BOOST_CPPFLAGS
+  BOOST_LIBS...............: $BOOST_LIBS
+  BOOST_SERIALIZATION_LIB..: $BOOST_SERIALIZATION_LIB
+  C++ Compiler.............: $CXX $CXXFLAGS $CPPFLAGS
+  Linker...................: $LD $LDFLAGS $LIBS"
