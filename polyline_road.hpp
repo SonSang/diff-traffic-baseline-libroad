@@ -1,7 +1,7 @@
 #ifndef _POLYLINE_ROAD_HPP_
 #define _POLYLINE_ROAD_HPP_
 
-#include "road.hpp"
+#include "road_rep.hpp"
 #include <vector>
 
 struct polyline_road : public road_rep

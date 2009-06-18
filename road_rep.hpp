@@ -1,5 +1,5 @@
-#ifndef _ROAD_HPP_
-#define _ROAD_HPP_
+#ifndef _ROAD_REP_HPP_
+#define _ROAD_REP_HPP_
 
 #include <tvmet/Matrix.h>
 #include <tvmet/Vector.h>
