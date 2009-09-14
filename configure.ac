@@ -3,7 +3,7 @@ AC_INIT([libroad], [0.01], [jasonsewall@gmail.com])
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([road.hpp])
+AC_CONFIG_SRCDIR([road_rep.hpp])
 AC_CONFIG_HEADERS([config.h])
 
 AC_LANG([C++])
