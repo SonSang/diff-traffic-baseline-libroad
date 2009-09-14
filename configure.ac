@@ -47,7 +47,7 @@ echo "
   TVMET_CFLAGS.............: $TVMET_CFLAGS
   TVMET_LIBS...............: $TVMET_LIBS
   BOOST_CPPFLAGS...........: $BOOST_CPPFLAGS
-  BOOST_LIBS...............: $BOOST_LIBS
+  BOOST_LDFLAGS............: $BOOST_LDFLAGS
   BOOST_SERIALIZATION_LIB..: $BOOST_SERIALIZATION_LIB
   C++ Compiler.............: $CXX $CXXFLAGS $CPPFLAGS
   Linker...................: $LD $LDFLAGS $LIBS"

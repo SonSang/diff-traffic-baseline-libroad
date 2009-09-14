@@ -6,7 +6,7 @@ libroad_la_SOURCES  = polyline_road.cpp \
 		      partition01.hpp
 libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(BOOST_CPPFLAGS)
 libroad_la_LDFLAGS  = -static
-libroad_la_LIBADD   = $(BOOST_SERIALIZATION_LIB) $(LDFLAGS)
+libroad_la_LIBADD   = $(BOOST_LDFLAGS) $(BOOST_SERIALIZATION_LIB) $(LDFLAGS)
 
 noinst_PROGRAMS = road-test interval-test
 
