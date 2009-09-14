@@ -3,7 +3,7 @@ AC_INIT([libroad], [0.01], [jasonsewall@gmail.com])
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([road_rep.hpp])
+AC_CONFIG_SRCDIR([libroad/road_rep.hpp])
 AC_CONFIG_HEADERS([config.h])
 
 AC_LANG([C++])
@@ -28,7 +28,7 @@ AS_IF([test x"$have_tvmet_conf" != xno],
        [AC_MSG_ERROR([Could not find tvmet-config. Please install tvmet!])])
 
 # Checks for libraries.
-AX_BOOST_BASE([1.39])
+AX_BOOST_BASE([1.40])
 AX_BOOST_SERIALIZATION
 
 # Checks for header files.
@@ -38,7 +38,10 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile \
+                 libroad/Makefile \
+		 test/Makefile
+		])
 AC_OUTPUT
 
 echo "
