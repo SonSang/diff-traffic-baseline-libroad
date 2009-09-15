@@ -22,39 +22,39 @@ namespace sumo
 
     bool network::xml_read(node &n, xmlTextReaderPtr reader)
     {
-        return read_attributes(att_list("id",   n.id,
-                                        "x",    n.xy[0],
-                                        "y",    n.xy[1],
-                                        "type", n.type),
+        return read_attributes(att_list("id",   n.id,    xa::NEEDED,
+                                        "x",    n.xy[0], xa::NEEDED,
+                                        "y",    n.xy[1], xa::NEEDED,
+                                        "type", n.type,  xa::OPTIONAL),
                                reader);
     }
 
     bool network::xml_read(edge_type &et, xmlTextReaderPtr reader)
     {
-        return read_attributes(att_list("id",       et.id,
-                                        "priority", et.priority,
-                                        "nolanes",  et.nolanes,
-                                        "speed",    et.speed),
+        return read_attributes(att_list("id",       et.id,       xa::NEEDED,
+                                        "priority", et.priority, xa::NEEDED,
+                                        "nolanes",  et.nolanes,  xa::NEEDED,
+                                        "speed",    et.speed,    xa::NEEDED),
                                reader);
     }
 
     bool network::xml_read(edge &e, xmlTextReaderPtr reader)
     {
-        if(!read_attributes(att_list("id", e.id),
+        if(!read_attributes(att_list("id", e.id, xa::NEEDED),
                             reader))
             return false;
 
-        bool have_nodes = read_attributes(att_list("fromnode", e.from,
-                                                   "tonode",   e.to),
+        bool have_nodes = read_attributes(att_list("fromnode", e.from, xa::NEEDED,
+                                                   "tonode",   e.to,   xa::NEEDED),
                                           reader);
         if(!have_nodes)
         {
             vec2d from;
             vec2d to;
-            if(!read_attributes(att_list("xfrom", from[0],
-                                         "xfrom", from[1],
-                                         "xto",   to[0],
-                                         "yto",   to[1]),
+            if(!read_attributes(att_list("xfrom", from[0], xa::NEEDED,
+                                         "xfrom", from[1], xa::NEEDED,
+                                         "xto",   to[0],   xa::NEEDED,
+                                         "yto",   to[1],   xa::NEEDED),
                                 reader))
                 return false;
 

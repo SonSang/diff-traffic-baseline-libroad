@@ -11,24 +11,30 @@
 #include <cstring>
 #include <libxml/xmlreader.h>
 
+struct xa
+{
+    typedef enum {NEEDED, OPTIONAL} type;
+};
+
 template <typename T>
 struct list_matcher
 {
-    list_matcher(const char *n, T &v)
-        : name(n), count(0), val(v)
+    list_matcher(const char *n, T &v, xa::type xt = xa::NEEDED)
+        : name(n), val(v), optional(xt == xa::OPTIONAL), found(false)
     {}
 
     const char *name;
 
-    int count;
     T &val;
+    bool optional;
+    bool found;
 
     inline bool match(const char *nstr, const char *vstr)
     {
-        if(!count && strcmp(nstr, name) == 0)
+        if(!found && strcmp(nstr, name) == 0)
         {
             val = boost::lexical_cast<T>(vstr);
-            ++count;
+            found = true;
             return true;
         }
         return false;
@@ -46,12 +52,12 @@ struct walker
             return walker<T, N-1>::walk(v, nstr, vstr);
     }
 
-    static inline bool is_full(T &v)
+    static inline bool valid(T &v)
     {
-        if(boost::fusion::at_c<N>(v).count == 0)
-            return false;
+        if(boost::fusion::at_c<N>(v).found || boost::fusion::at_c<N>(v).optional)
+            return walker<T, N-1>::valid(v);
 
-        return walker<T, N-1>::is_full(v);
+        return false;
     }
 };
 
@@ -63,9 +69,9 @@ struct walker<T, 0>
         return boost::fusion::at_c<0>(v).match(nstr, vstr);
     }
 
-    static inline bool is_full(T & v)
+    static inline bool valid(T & v)
     {
-        return boost::fusion::at_c<0>(v).count > 0;
+        return boost::fusion::at_c<0>(v).found || boost::fusion::at_c<0>(v).optional;
     }
 };
 
@@ -76,9 +82,9 @@ bool walk(T &v, const char *nstr, const char *vstr)
 }
 
 template <typename T>
-bool is_full(T &v)
+bool valid(T &v)
 {
-    return walker<T, boost::fusion::result_of::size<T>::value-1>::is_full(v);
+    return walker<T, boost::fusion::result_of::size<T>::value-1>::valid(v);
 }
 
 template <typename T>
@@ -87,7 +93,7 @@ inline bool read_attributes(T v, xmlTextReaderPtr reader)
     if(xmlTextReaderMoveToFirstAttribute(reader) != 1)
         return false;
 
-    while(!is_full(v))
+    while(1)
     {
         walk(v, (const char*)xmlTextReaderConstName(reader), (const char*)xmlTextReaderConstValue(reader));
         if(xmlTextReaderMoveToNextAttribute(reader) != 1)
@@ -96,43 +102,44 @@ inline bool read_attributes(T v, xmlTextReaderPtr reader)
 
     xmlTextReaderMoveToElement(reader);
 
-    return is_full(v);
+    return valid(v);
 }
 
 template <class T0>
-boost::fusion::vector<list_matcher<T0> > att_list(const char *id0, T0 &elt0)
+boost::fusion::vector<list_matcher<T0> > att_list(const char *id0, T0 &elt0, xa::type xt0)
 {
-    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0));
+    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0, xt0));
 }
 
+
 template <class T0, class T1>
-boost::fusion::vector<list_matcher<T0>, list_matcher<T1> > att_list(const char *id0, T0 &elt0,
-                                                                    const char *id1, T1 &elt1)
+boost::fusion::vector<list_matcher<T0>, list_matcher<T1> > att_list(const char *id0, T0 &elt0, xa::type xt0,
+                                                                    const char *id1, T1 &elt1, xa::type xt1)
 {
-    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0),
-                                      list_matcher<T1>(id1, elt1));
+    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0, xt0),
+                                      list_matcher<T1>(id1, elt1, xt1));
 }
 
 template <class T0, class T1, class T2>
-boost::fusion::vector<list_matcher<T0>, list_matcher<T1>, list_matcher<T2> > att_list(const char *id0, T0 &elt0,
-                                                                                      const char *id1, T1 &elt1,
-                                                                                      const char *id2, T2 &elt2)
+boost::fusion::vector<list_matcher<T0>, list_matcher<T1>, list_matcher<T2> > att_list(const char *id0, T0 &elt0, xa::type xt0,
+                                                                                      const char *id1, T1 &elt1, xa::type xt1,
+                                                                                      const char *id2, T2 &elt2, xa::type xt2)
 {
-    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0),
-                                      list_matcher<T1>(id1, elt1),
-                                      list_matcher<T2>(id2, elt2));
+    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0, xt0),
+                                      list_matcher<T1>(id1, elt1, xt1),
+                                      list_matcher<T2>(id2, elt2, xt2));
 
 }
 
 template <class T0, class T1, class T2, class T3>
-boost::fusion::vector<list_matcher<T0>, list_matcher<T1>, list_matcher<T2>, list_matcher<T3> > att_list(const char *id0, T0 &elt0,
-                                                                                                        const char *id1, T1 &elt1,
-                                                                                                        const char *id2, T2 &elt2,
-                                                                                                        const char *id3, T3 &elt3)
+boost::fusion::vector<list_matcher<T0>, list_matcher<T1>, list_matcher<T2>, list_matcher<T3> > att_list(const char *id0, T0 &elt0, xa::type xt0,
+                                                                                                        const char *id1, T1 &elt1, xa::type xt1,
+                                                                                                        const char *id2, T2 &elt2, xa::type xt2,
+                                                                                                        const char *id3, T3 &elt3, xa::type xt3)
 {
-    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0),
-                                      list_matcher<T1>(id1, elt1),
-                                      list_matcher<T2>(id2, elt2),
-                                      list_matcher<T3>(id3, elt3));
+    return boost::fusion::make_vector(list_matcher<T0>(id0, elt0, xt0),
+                                      list_matcher<T1>(id1, elt1, xt1),
+                                      list_matcher<T2>(id2, elt2, xt2),
+                                      list_matcher<T3>(id3, elt3, xt3));
 }
 #endif
