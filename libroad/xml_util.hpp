@@ -32,6 +32,13 @@ inline bool get_attribute(T &res, xmlpp::TextReader &reader, const str &eltname)
     return true;
 }
 
+template <>
+inline bool get_attribute(str &res, xmlpp::TextReader &reader, const str &eltname)
+{
+    res = reader.get_attribute(eltname);
+    return !res.empty();
+}
+
 inline bool is_opening_element(const xmlpp::TextReader &reader, const str &name)
 {
     return (reader.get_node_type() == xmlpp::TextReader::Element
