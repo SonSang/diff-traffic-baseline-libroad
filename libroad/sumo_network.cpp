@@ -66,14 +66,21 @@ namespace sumo
 
     bool network::xml_read_nodes(const char *filename)
     {
-        xmlpp::TextReader reader(filename);
+        try
+        {
+            xmlpp::TextReader reader(filename);
 
-        bool res = (reader.read() &&
-                    xml_read_nodes(reader));
+            bool res = (reader.read() &&
+                        xml_read_nodes(reader));
 
-        reader.close();
+            reader.close();
 
-        return res;
+            return res;
+        }
+        catch(const std::exception &e)
+        {
+            return false;
+        }
     }
 
     bool network::xml_read_nodes(xmlpp::TextReader &reader)
@@ -85,15 +92,20 @@ namespace sumo
 
     bool network::xml_read_types(const char *filename)
     {
-        xmlpp::TextReader reader(filename);
+        try
+        {
+            xmlpp::TextReader reader(filename);
 
-        bool res = (reader.is_valid() &&
-                    reader.read() &&
-                    xml_read_types(reader));
+            bool res = (reader.read() &&
+                        xml_read_types(reader));
 
-        reader.close();
-
-        return res;
+            reader.close();
+            return res;
+        }
+        catch(const std::exception &e)
+        {
+            return false;
+        }
     }
 
     bool network::xml_read_types(xmlpp::TextReader &reader)

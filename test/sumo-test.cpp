@@ -6,16 +6,28 @@
 int main(int argc, char *argv[])
 {
     sumo::network net;
-    bool res = net.xml_read_nodes(argv[1]);
 
-    typedef std::pair<std::string, sumo::node> maptype;
-    BOOST_FOREACH(const maptype &n, net.nodes)
+    if(!net.xml_read_nodes(argv[1]))
+        std::cerr << "Node file didn't load correctly!"<< std::endl;
+    if(!net.xml_read_types(argv[2]))
+        std::cerr << "Edge type file didn't load correctly!"<< std::endl;
+
     {
-        std::cout << n.second.id << " " << n.second.xy << " " << n.second.type << std::endl;
+        typedef std::pair<std::string, sumo::node> maptype;
+        BOOST_FOREACH(const maptype &n, net.nodes)
+        {
+            std::cout << n.second.id << " " << n.second.xy << " " << n.second.type << std::endl;
+        }
+
     }
 
-    if(!res)
-        std::cerr << "Didn't load correctly!"<< std::endl;
+    {
+        typedef std::pair<std::string, sumo::edge_type> maptype;
+        BOOST_FOREACH(const maptype &n, net.types)
+        {
+            std::cout << n.second.id << " " << n.second.priority << " " << n.second.nolanes << " " << n.second.speed << std::endl;
+        }
+    }
 
 
     return 0;
