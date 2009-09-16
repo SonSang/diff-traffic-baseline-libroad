@@ -20,7 +20,6 @@ int main(int argc, char *argv[])
         {
             std::cout << n.second.id << " " << n.second.xy << " " << n.second.type << std::endl;
         }
-
     }
 
     {
@@ -35,7 +34,12 @@ int main(int argc, char *argv[])
         typedef std::pair<std::string, sumo::edge> maptype;
         BOOST_FOREACH(const maptype &n, net.edges)
         {
-            std::cout << n.second.id << " " << n.second.from << " " << n.second.to << " " << n.second.type << std::endl;
+            std::cout << n.second.id << " " << n.second.from << " " << n.second.to << " " << n.second.type << " " << n.second.spread;
+            BOOST_FOREACH(const vec2d &v, n.second.shape)
+            {
+                std::cout << " [" << v[0] << ", " << v[1] << "]";
+            }
+            std::cout << std::endl;
         }
     }
 

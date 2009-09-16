@@ -1,10 +1,31 @@
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 #include <iostream>
 #include "sumo_network.hpp"
 
 namespace sumo
 {
+    void read_shape(edge::shape_t &shape, const std::string &s)
+    {
+        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+        boost::char_separator<char> sep(" ");
+        tokenizer                   tokens(s, sep);
+
+        BOOST_FOREACH(const std::string &vs, tokens)
+        {
+            boost::char_separator<char> csep(",");
+            tokenizer                   vtokens(vs, csep);
+            tokenizer::iterator         tok        = vtokens.begin();
+
+            double x = boost::lexical_cast<double>(*tok);
+            ++tok;
+            double y = boost::lexical_cast<double>(*tok);
+            shape.push_back(vec2d(x, y));
+        }
+    }
+
     node::id_t network::anon_node(vec2d &pos)
     {
         node::id_t id(boost::str(boost::format("anon_node%u") % anon_node_count++));
@@ -86,6 +107,10 @@ namespace sumo
 
             e.type = anon_edge_type(priority, nolanes, speed);
         }
+
+        str shape_str;
+        if(get_attribute(shape_str, reader, "shape"))
+            read_shape(e.shape, shape_str);
 
         return true;
     }

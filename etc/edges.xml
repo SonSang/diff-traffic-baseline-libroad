@@ -33,6 +33,5 @@
 
    <edge id="4fi" fromnode="4" tonode="m4" priority="2" nolanes="2" speed="11.11"/>
    <edge id="4si" fromnode="m4" tonode="0" priority="3" nolanes="3" speed="13.89"/>
-   <edge id="4o" fromnode="0" tonode="4" priority="1" nolanes="1" speed="11.11"/>
-
+   <edge id="4o" fromnode="0" tonode="4" priority="3" nolanes="3" speed="13.89" shape="0,0 100,100"/>
 </edges>
