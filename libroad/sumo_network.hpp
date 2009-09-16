@@ -61,7 +61,7 @@ namespace sumo
 
         std::map<edge::id_t,      edge>      edges;
         node::id_t anon_node(vec2d &pos);
-        edge_type::id_t anon_edge_type();
+        edge_type::id_t anon_edge_type(int priority, int nolanes, double speed);
 
         bool xml_read(node &n,       xmlpp::TextReader &reader);
         bool xml_read(edge_type &et, xmlpp::TextReader &reader);
@@ -72,6 +72,9 @@ namespace sumo
 
         bool xml_read_types(const char *filename);
         bool xml_read_types(xmlpp::TextReader &reader);
+
+        bool xml_read_edges(const char *filename);
+        bool xml_read_edges(xmlpp::TextReader &reader);
     };
 }
 

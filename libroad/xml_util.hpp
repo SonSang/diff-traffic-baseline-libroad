@@ -9,6 +9,18 @@
 
 typedef Glib::ustring str;
 
+inline bool read_skip_comment(xmlpp::TextReader &reader)
+{
+    bool res;
+    do
+    {
+        res = reader.read();
+    }
+    while(res && reader.get_node_type() == xmlpp::TextReader::Comment);
+
+    return res;
+}
+
 template <typename T>
 inline bool get_attribute(T &res, xmlpp::TextReader &reader, const str &eltname)
 {

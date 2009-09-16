@@ -11,6 +11,8 @@ int main(int argc, char *argv[])
         std::cerr << "Node file didn't load correctly!"<< std::endl;
     if(!net.xml_read_types(argv[2]))
         std::cerr << "Edge type file didn't load correctly!"<< std::endl;
+    if(!net.xml_read_edges(argv[3]))
+        std::cerr << "Edge file didn't load correctly!"<< std::endl;
 
     {
         typedef std::pair<std::string, sumo::node> maptype;
@@ -29,6 +31,13 @@ int main(int argc, char *argv[])
         }
     }
 
+    {
+        typedef std::pair<std::string, sumo::edge> maptype;
+        BOOST_FOREACH(const maptype &n, net.edges)
+        {
+            std::cout << n.second.id << " " << n.second.from << " " << n.second.to << " " << n.second.type << std::endl;
+        }
+    }
 
     return 0;
 }

@@ -10,10 +10,24 @@ namespace sumo
         node::id_t id(boost::str(boost::format("anon_node%u") % anon_node_count++));
 
         node n;
-        n.id = id;
-        n.xy = pos;
-        n.type = node::unknown;
+        n.id      = id;
+        n.xy      = pos;
+        n.type    = node::unknown;
         nodes[id] = n;
+
+        return id;
+    }
+
+    edge_type::id_t network::anon_edge_type(const int priority, const int nolanes, const double speed)
+    {
+        edge_type::id_t id(boost::str(boost::format("anon_edge_type%u") % anon_edge_type_count++));
+
+        edge_type et;
+        et.id       = id;
+        et.priority = priority;
+        et.nolanes  = nolanes;
+        et.speed    = speed;
+        types[id]   = et;
 
         return id;
     }
@@ -45,10 +59,8 @@ namespace sumo
         if(!get_attribute(e.id, reader, "id"))
             return false;
 
-        bool have_nodes = get_attribute(e.from, reader, "fromnode") &&
-                          get_attribute(e.to,   reader, "tonode");
-
-        if(!have_nodes)
+        if(!(get_attribute(e.from, reader, "fromnode") &&
+             get_attribute(e.to,   reader, "tonode")))
         {
             vec2d from;
             vec2d to;
@@ -61,7 +73,21 @@ namespace sumo
             e.from = anon_node(from);
             e.to   = anon_node(to);
         }
-        return false;
+
+        if(!get_attribute(e.type, reader, "type"))
+        {
+            int priority;
+            int nolanes;
+            double speed;
+            if(!(get_attribute(priority, reader, "priority") &&
+                 get_attribute(nolanes, reader, "nolanes") &&
+                 get_attribute(speed, reader, "speed")))
+                return false;
+
+            e.type = anon_edge_type(priority, nolanes, speed);
+        }
+
+        return true;
     }
 
     bool network::xml_read_nodes(const char *filename)
@@ -70,7 +96,7 @@ namespace sumo
         {
             xmlpp::TextReader reader(filename);
 
-            bool res = (reader.read() &&
+            bool res = (read_skip_comment(reader) &&
                         xml_read_nodes(reader));
 
             reader.close();
@@ -86,7 +112,7 @@ namespace sumo
     bool network::xml_read_nodes(xmlpp::TextReader &reader)
     {
         return (is_opening_element(reader, "nodes") &&
-                reader.read() &&
+                read_skip_comment(reader) &&
                 read_map(*this, nodes, reader, "node", "nodes"));
     }
 
@@ -96,7 +122,7 @@ namespace sumo
         {
             xmlpp::TextReader reader(filename);
 
-            bool res = (reader.read() &&
+            bool res = (read_skip_comment(reader) &&
                         xml_read_types(reader));
 
             reader.close();
@@ -111,8 +137,33 @@ namespace sumo
     bool network::xml_read_types(xmlpp::TextReader &reader)
     {
         return (is_opening_element(reader, "types") &&
-                reader.read() &&
+                read_skip_comment(reader) &&
                 read_map(*this, types, reader, "type", "types"));
+    }
+
+    bool network::xml_read_edges(const char *filename)
+    {
+        try
+        {
+            xmlpp::TextReader reader(filename);
+
+            bool res = (read_skip_comment(reader) &&
+                        xml_read_edges(reader));
+
+            reader.close();
+            return res;
+        }
+        catch(const std::exception &e)
+        {
+            return false;
+        }
+    }
+
+    bool network::xml_read_edges(xmlpp::TextReader &reader)
+    {
+        return (is_opening_element(reader, "edges") &&
+                read_skip_comment(reader) &&
+                read_map(*this, edges, reader, "edge", "edges"));
     }
 }
 
