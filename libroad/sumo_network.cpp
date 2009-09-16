@@ -108,6 +108,9 @@ namespace sumo
             e.type = anon_edge_type(priority, nolanes, speed);
         }
 
+        if(!get_attribute(e.spread, reader, "spread"))
+            e.spread = edge::right;
+
         str shape_str;
         if(get_attribute(shape_str, reader, "shape"))
             read_shape(e.shape, shape_str);
