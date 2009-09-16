@@ -77,6 +77,9 @@ namespace sumo
 
         bool xml_read_edges(const char *filename);
         bool xml_read_edges(xmlpp::TextReader &reader);
+
+        bool check_edge(const edge &e) const;
+        bool check() const;
     };
 }
 

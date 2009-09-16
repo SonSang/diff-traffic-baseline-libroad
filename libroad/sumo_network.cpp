@@ -165,5 +165,23 @@ namespace sumo
                 read_skip_comment(reader) &&
                 read_map(*this, edges, reader, "edge", "edges"));
     }
-}
 
+    bool network::check_edge(const edge &e) const
+    {
+        return (e.to != e.from &&
+                nodes.find(e.to) != nodes.end() &&
+                nodes.find(e.from) != nodes.end() &&
+                types.find(e.type) != types.end());
+    }
+
+    bool network::check() const
+    {
+        typedef std::pair<edge::id_t,edge> emap_pair;
+        BOOST_FOREACH(const emap_pair &ep, edges)
+        {
+            if(!check_edge(ep.second))
+                return false;
+        }
+        return true;
+    }
+}

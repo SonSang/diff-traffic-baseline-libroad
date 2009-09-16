@@ -39,5 +39,10 @@ int main(int argc, char *argv[])
         }
     }
 
+    if(net.check())
+        std::cout << "Network checks out" << std::endl;
+    else
+        std::cout << "Network doesn't check out" << std::endl;
+
     return 0;
 }
