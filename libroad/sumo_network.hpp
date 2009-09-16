@@ -53,6 +53,8 @@ namespace sumo
 
     struct network
     {
+        network() : anon_node_count(0), anon_edge_type_count(0)
+        {}
         std::map<node::id_t,      node>      nodes;
         size_t                               anon_node_count;
 
