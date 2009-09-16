@@ -50,8 +50,8 @@ inline bool read_map(closure &c, std::map<str, T> &themap, xmlpp::TextReader &re
     bool ret;
     do
     {
-        ret = reader.read();
-        if(ret != 1)
+        ret = read_skip_comment(reader);
+        if(!ret)
             return false;
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
