@@ -1,9 +1,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
-
+#include <iostream>
 #include "sumo_network.hpp"
-#include "xml_attributes.hpp"
-#include "xml_util.hpp"
 
 namespace sumo
 {
@@ -20,42 +18,44 @@ namespace sumo
         return id;
     }
 
-    bool network::xml_read(node &n, xmlTextReaderPtr reader)
+    bool network::xml_read(node &n, xmlpp::TextReader &reader)
     {
-        return read_attributes(att_list("id",   n.id,    xa::NEEDED,
-                                        "x",    n.xy[0], xa::NEEDED,
-                                        "y",    n.xy[1], xa::NEEDED,
-                                        "type", n.type,  xa::OPTIONAL),
-                               reader);
-    }
-
-    bool network::xml_read(edge_type &et, xmlTextReaderPtr reader)
-    {
-        return read_attributes(att_list("id",       et.id,       xa::NEEDED,
-                                        "priority", et.priority, xa::NEEDED,
-                                        "nolanes",  et.nolanes,  xa::NEEDED,
-                                        "speed",    et.speed,    xa::NEEDED),
-                               reader);
-    }
-
-    bool network::xml_read(edge &e, xmlTextReaderPtr reader)
-    {
-        if(!read_attributes(att_list("id", e.id, xa::NEEDED),
-                            reader))
+        bool res = get_attribute(n.id,    reader, "id") &&
+                   get_attribute(n.xy[0], reader, "x")  &&
+                   get_attribute(n.xy[1], reader, "y");
+        if(!res)
             return false;
 
-        bool have_nodes = read_attributes(att_list("fromnode", e.from, xa::NEEDED,
-                                                   "tonode",   e.to,   xa::NEEDED),
-                                          reader);
+        if(!get_attribute(n.type, reader, "type"))
+            n.type = node::unknown;
+
+        return true;
+    }
+
+    bool network::xml_read(edge_type &et, xmlpp::TextReader &reader)
+    {
+        return (get_attribute(et.id,       reader, "id")       &&
+                get_attribute(et.priority, reader, "priority") &&
+                get_attribute(et.nolanes,  reader, "nolanes")  &&
+                get_attribute(et.speed,    reader, "speed"));
+    }
+
+    bool network::xml_read(edge &e, xmlpp::TextReader &reader)
+    {
+        if(!get_attribute(e.id, reader, "id"))
+            return false;
+
+        bool have_nodes = get_attribute(e.from, reader, "fromnode") &&
+                          get_attribute(e.to,   reader, "tonode");
+
         if(!have_nodes)
         {
             vec2d from;
             vec2d to;
-            if(!read_attributes(att_list("xfrom", from[0], xa::NEEDED,
-                                         "xfrom", from[1], xa::NEEDED,
-                                         "xto",   to[0],   xa::NEEDED,
-                                         "yto",   to[1],   xa::NEEDED),
-                                reader))
+            if(!(get_attribute(from[0], reader, "xfrom") &&
+                 get_attribute(from[1], reader, "yfrom") &&
+                 get_attribute(to[0],   reader, "xto")   &&
+                 get_attribute(to[1],   reader, "yto")))
                 return false;
 
             e.from = anon_node(from);
@@ -66,40 +66,41 @@ namespace sumo
 
     bool network::xml_read_nodes(const char *filename)
     {
-        xmlTextReaderPtr reader = xmlReaderForFile(filename,
-                                                   NULL,
-                                                   0);
+        xmlpp::TextReader reader(filename);
 
-        return reader &&
-            xmlTextReaderRead(reader) == 1 &&
-            xml_read_nodes(reader) &&
-            xmlTextReaderClose(reader) == 0;
+        bool res = (reader.read() &&
+                    xml_read_nodes(reader));
+
+        reader.close();
+
+        return res;
     }
 
-    bool network::xml_read_nodes(xmlTextReaderPtr reader)
+    bool network::xml_read_nodes(xmlpp::TextReader &reader)
     {
-        return is_opening_element(reader, BAD_CAST "nodes") &&
-            xmlTextReaderRead(reader) == 1 &&
-            read_map(*this, nodes, reader, BAD_CAST "node", BAD_CAST "nodes");
+        return (is_opening_element(reader, "nodes") &&
+                reader.read() &&
+                read_map(*this, nodes, reader, "node", "nodes"));
     }
 
     bool network::xml_read_types(const char *filename)
     {
-        xmlTextReaderPtr reader = xmlReaderForFile(filename,
-                                                   NULL,
-                                                   0);
+        xmlpp::TextReader reader(filename);
 
-        return reader &&
-            xmlTextReaderRead(reader) == 1 &&
-            xml_read_types(reader) &&
-            xmlTextReaderClose(reader) == 0;
+        bool res = (reader.is_valid() &&
+                    reader.read() &&
+                    xml_read_types(reader));
+
+        reader.close();
+
+        return res;
     }
 
-    bool network::xml_read_types(xmlTextReaderPtr reader)
+    bool network::xml_read_types(xmlpp::TextReader &reader)
     {
-        return is_opening_element(reader, BAD_CAST "types") &&
-            xmlTextReaderRead(reader) == 1 &&
-            read_map(*this, types, reader, BAD_CAST "type", BAD_CAST "types");
+        return (is_opening_element(reader, "types") &&
+                reader.read() &&
+                read_map(*this, types, reader, "type", "types"));
     }
 }
 

@@ -18,7 +18,8 @@ AC_DEFINE_UNQUOTED(GIT_VERSION, "$GIT_VERSION")
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_LIBTOOL
-PKG_CHECK_MODULES(LIBXML2, libxml-2.0)
+PKG_CHECK_MODULES(LIBXMLPP, libxml++-2.6 >= 2.10.0)
+PKG_CHECK_MODULES(GLIBMM, glibmm-2.4 >= 2.20.0)
 
 AC_CHECK_PROG(have_tvmet_conf, tvmet-config, [yes], [no])
 AS_IF([test x"$have_tvmet_conf" != xno],
@@ -50,8 +51,10 @@ echo "
   Prefix...................: $prefix
   TVMET_CFLAGS.............: $TVMET_CFLAGS
   TVMET_LIBS...............: $TVMET_LIBS
-  LIBXML2_CFLAGS...........: $LIBXML2_CFLAGS
-  LIBXML2_LIBS.............: $LIBXML2_LIBS
+  GLIBMM_CFLAGS............: $GLIBMM_CFLAGS
+  GLIBMM_LIBS..............: $GLIBMM_LIBS
+  LIBXMLPP_CFLAGS..........: $LIBXMLPP_CFLAGS
+  LIBXMLPP_LIBS............: $LIBXMLPP_LIBS
   BOOST_CPPFLAGS...........: $BOOST_CPPFLAGS
   BOOST_LDFLAGS............: $BOOST_LDFLAGS
   BOOST_SERIALIZATION_LIB..: $BOOST_SERIALIZATION_LIB

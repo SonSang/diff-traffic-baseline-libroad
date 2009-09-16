@@ -2,42 +2,49 @@
 #define _XML_UTIL_HPP_
 
 #include <boost/lexical_cast.hpp>
-#include <libxml/xmlreader.h>
+#include <glibmm/ustring.h>
+#include <libxml++/libxml++.h>
+#include <libxml++/parsers/textreader.h>
 #include <map>
 
-inline bool is_opening_element(xmlTextReaderPtr reader, const xmlChar *eltname)
-{
-    const xmlChar *name = xmlTextReaderConstName(reader);
+typedef Glib::ustring str;
 
-    return name && xmlTextReaderNodeType(reader) == XML_READER_TYPE_ELEMENT
-        && xmlStrEqual(eltname, name);
+template <typename T>
+inline bool get_attribute(T &res, xmlpp::TextReader &reader, const str &eltname)
+{
+    str val(reader.get_attribute(eltname));
+
+    if(val.empty())
+        return false;
+    res = boost::lexical_cast<T>(val);
+    return true;
 }
 
-inline bool is_closing_element(xmlTextReaderPtr reader, const xmlChar *eltname)
+inline bool is_opening_element(const xmlpp::TextReader &reader, const str &name)
 {
-    const xmlChar *name = xmlTextReaderConstName(reader);
+    return (reader.get_node_type() == xmlpp::TextReader::Element
+            && reader.get_name() == name);
+}
 
-    return name && xmlTextReaderNodeType(reader) == XML_READER_TYPE_END_ELEMENT
-        && xmlStrEqual(eltname, name);
+inline bool is_closing_element(const xmlpp::TextReader &reader, const str &name)
+{
+    return (reader.get_node_type() == xmlpp::TextReader::EndElement
+            && reader.get_name() == name);
 }
 
 template <class closure, typename T>
-inline bool read_map(closure &c, std::map<std::string, T> &themap, xmlTextReaderPtr reader, const xmlChar *item_name, const xmlChar *container_name)
+inline bool read_map(closure &c, std::map<str, T> &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
-    int ret;
+    bool ret;
     do
     {
-        ret = xmlTextReaderRead(reader);
+        ret = reader.read();
         if(ret != 1)
             return false;
 
-        if(xmlTextReaderNodeType(reader) == XML_READER_TYPE_ELEMENT)
+        if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
-            const xmlChar *name = xmlTextReaderConstName(reader);
-            if(!name)
-                return false;
-
-            if(xmlStrEqual(name, item_name))
+            if(reader.get_name() == item_name)
             {
                 T new_item;
                 if(!c.xml_read(new_item, reader))
@@ -49,29 +56,29 @@ inline bool read_map(closure &c, std::map<std::string, T> &themap, xmlTextReader
                 return false;
         }
     }
-    while(ret == 1 && !is_closing_element(reader, container_name));
+    while(ret && !is_closing_element(reader, container_name));
 
-    return ret == 1;
+    return ret;
 }
 
-inline bool read_leaf_text(std::string &res, xmlTextReaderPtr reader, const char *endtag)
-{
-    bool read_text = false;
+// inline bool read_leaf_text(std::string &res, xmlTextReaderPtr reader, const char *endtag)
+// {
+//     bool read_text = false;
 
-    do
-    {
-        int ret = xmlTextReaderRead(reader);
-        if(ret != 1)
-            return false;
+//     do
+//     {
+//         int ret = xmlTextReaderRead(reader);
+//         if(ret != 1)
+//             return false;
 
-        if(xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT)
-        {
-            res.append((const char *) xmlTextReaderConstValue(reader));
-            read_text = true;
-        }
-    }
-    while(!is_closing_element(reader, BAD_CAST endtag));
+//         if(xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT)
+//         {
+//             res.append((const char *) xmlTextReaderConstValue(reader));
+//             read_text = true;
+//         }
+//     }
+//     while(!is_closing_element(reader, endtag));
 
-    return read_text;
-}
+//     return read_text;
+// }
 #endif

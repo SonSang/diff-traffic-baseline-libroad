@@ -5,8 +5,9 @@ libroad_la_SOURCES  = polyline_road.cpp \
 pkginclude_HEADERS  = partition01.hpp \
 		      road_rep.hpp \
 		      polyline_road.hpp \
-		      sumo_network.hpp
-libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(BOOST_CPPFLAGS) $(LIBXML2_CFLAGS)
+		      sumo_network.hpp \
+		      xml_util.hpp
+libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
 libroad_la_LDFLAGS  = -static
-libroad_la_LIBADD   = $(BOOST_LDFLAGS) $(BOOST_SERIALIZATION_LIB) $(LIBXML2_LIBS) $(LDFLAGS)
+libroad_la_LIBADD   = $(BOOST_LDFLAGS) $(BOOST_SERIALIZATION_LIB) $(GLIBMM_LIBS) $(LIBXMLPP_LIBS) $(LDFLAGS)
 

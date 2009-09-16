@@ -4,7 +4,11 @@
 #include <vector>
 #include <map>
 #include <tvmet/Vector.h>
-#include <libxml/xmlreader.h>
+#include <glibmm/ustring.h>
+#include <libxml++/libxml++.h>
+#include <libxml++/parsers/textreader.h>
+
+#include "xml_util.hpp"
 
 typedef tvmet::Vector<double, 2> vec2d;
 
@@ -12,7 +16,7 @@ namespace sumo
 {
     struct node
     {
-        typedef std::string id_t;
+        typedef str id_t;
         typedef enum {priority, traffic_light, unknown} TYPES;
 
         id_t  id;
@@ -22,7 +26,7 @@ namespace sumo
 
     struct edge_type
     {
-        typedef std::string id_t;
+        typedef str id_t;
 
         id_t   id;
         int    nolanes;
@@ -33,7 +37,7 @@ namespace sumo
 
     struct edge
     {
-        typedef std::string id_t;
+        typedef str id_t;
         struct shape_t : public std::vector<vec2d>
         {
         };
@@ -50,23 +54,24 @@ namespace sumo
     struct network
     {
         std::map<node::id_t,      node>      nodes;
-        size_t anon_node_count;
-        std::map<edge_type::id_t, edge_type> types;
-        size_t anon_edge_type_count;
-        std::map<edge::id_t,      edge>      edges;
+        size_t                               anon_node_count;
 
+        std::map<edge_type::id_t, edge_type> types;
+        size_t                               anon_edge_type_count;
+
+        std::map<edge::id_t,      edge>      edges;
         node::id_t anon_node(vec2d &pos);
         edge_type::id_t anon_edge_type();
 
-        bool xml_read(node &n, xmlTextReaderPtr reader);
-        bool xml_read(edge_type &et, xmlTextReaderPtr reader);
-        bool xml_read(edge &e, xmlTextReaderPtr reader);
+        bool xml_read(node &n,       xmlpp::TextReader &reader);
+        bool xml_read(edge_type &et, xmlpp::TextReader &reader);
+        bool xml_read(edge &e,       xmlpp::TextReader &reader);
 
         bool xml_read_nodes(const char *filename);
-        bool xml_read_nodes(xmlTextReaderPtr reader);
+        bool xml_read_nodes(xmlpp::TextReader &reader);
 
         bool xml_read_types(const char *filename);
-        bool xml_read_types(xmlTextReaderPtr reader);
+        bool xml_read_types(xmlpp::TextReader &reader);
     };
 }
 
@@ -89,7 +94,7 @@ inline std::ostream &operator<<(std::ostream &o, const sumo::node::TYPES &t)
 
 inline std::istream &operator>>(std::istream &i, sumo::node::TYPES &t)
 {
-    std::string src;
+    str src;
     i >> src;
 
     if(src == "priority")
@@ -121,7 +126,7 @@ inline std::ostream &operator<<(std::ostream &o, const sumo::edge::SPREAD &t)
 
 inline std::istream &operator>>(std::istream &i, sumo::edge::SPREAD &t)
 {
-    std::string src;
+    str src;
     i >> src;
 
     if(src == "center")
