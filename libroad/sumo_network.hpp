@@ -52,13 +52,11 @@ namespace sumo
         network() : anon_node_count(0), anon_edge_type_count(0)
         {}
 
-        std::map<const str, node>      nodes;
-        size_t                         anon_node_count;
-
-        std::map<const str, edge_type> types;
-        size_t                         anon_edge_type_count;
-
-        std::map<const str, edge>      edges;
+        strhash<node>::type      nodes;
+        size_t                   anon_node_count;
+        strhash<edge_type>::type types;
+        size_t                   anon_edge_type_count;
+        strhash<edge>::type      edges;
 
         node      *anon_node(vec2d &pos);
         edge_type *anon_edge_type(int priority, int nolanes, double speed);

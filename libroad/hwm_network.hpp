@@ -87,11 +87,11 @@ namespace hwm
 
     struct network
     {
-        str                               name;
-        float                             gamma;
-        std::map<const str, road>         roads;
-        std::map<const str, lane>         lanes;
-        std::map<const str, intersection> intersections;
+        str                         name;
+        float                       gamma;
+        strhash<road>::type         roads;
+        strhash<lane>::type         lanes;
+        strhash<intersection>::type intersections;
 
         road         *retreive_road(const str &id);
         lane         *retreive_lane(const str &id);
@@ -109,5 +109,4 @@ namespace hwm
         bool xml_read(const char *filename);
     };
 };
-
 #endif

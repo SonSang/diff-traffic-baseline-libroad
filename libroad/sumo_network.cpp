@@ -55,7 +55,7 @@ namespace sumo
 
     node *network::retreive_node(const str &id)
     {
-        std::map<const str, node>::iterator entry(nodes.find(id));
+        strhash<node>::type::iterator entry(nodes.find(id));
         if(entry == nodes.end())
             nodes.insert(entry, std::make_pair(id, node()));
 
@@ -64,7 +64,7 @@ namespace sumo
 
     edge_type *network::retreive_edge_type(const str &id)
     {
-        std::map<const str, edge_type>::iterator entry(types.find(id));
+        strhash<edge_type>::type::iterator entry(types.find(id));
         if(entry == types.end())
             types.insert(entry, std::make_pair(id, edge_type()));
 

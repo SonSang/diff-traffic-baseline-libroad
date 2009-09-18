@@ -7,8 +7,34 @@
 #include <libxml++/parsers/textreader.h>
 #include <map>
 #include <iostream>
+#include <tr1/functional>
+#include <tr1/unordered_map>
+
+using std::tr1::hash;
 
 typedef Glib::ustring str;
+
+namespace std
+{
+    namespace tr1
+    {
+        template <>
+        struct hash<const str>
+        {
+            size_t operator()(const Glib::ustring &str) const
+            {
+                hash<const char*> h;
+                return h(str.c_str());
+            }
+        };
+    }
+}
+
+template <class T>
+struct strhash
+{
+    typedef std::tr1::unordered_map<const str, T> type;
+};
 
 inline bool read_skip_comment(xmlpp::TextReader &reader)
 {
@@ -72,7 +98,7 @@ inline bool read_to_close(xmlpp::TextReader &reader, const str &endtag)
 }
 
 template <class closure, typename T>
-inline bool read_map(closure &c, std::map<const str, T> &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
+inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
     bool ret;
     do
@@ -85,7 +111,7 @@ inline bool read_map(closure &c, std::map<const str, T> &themap, xmlpp::TextRead
         {
             if(reader.get_name() == item_name)
             {
-                T new_item;
+                typename T::value_type::second_type new_item;
                 if(!c.xml_read(new_item, reader))
                     return false;
 

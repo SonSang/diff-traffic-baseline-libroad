@@ -252,7 +252,7 @@ namespace hwm
 
     road *network::retreive_road(const str &id)
     {
-        std::map<const str, road>::iterator entry(roads.find(id));
+        strhash<road>::type::iterator entry(roads.find(id));
         if(entry == roads.end())
             roads.insert(entry, std::make_pair(id, road()));
 
@@ -261,7 +261,7 @@ namespace hwm
 
     lane *network::retreive_lane(const str &id)
     {
-        std::map<const str, lane>::iterator entry(lanes.find(id));
+        strhash<lane>::type::iterator entry(lanes.find(id));
         if(entry == lanes.end())
             lanes.insert(entry, std::make_pair(id, lane()));
 
@@ -270,7 +270,7 @@ namespace hwm
 
     intersection *network::retreive_intersection(const str &id)
     {
-        std::map<const str, intersection>::iterator entry(intersections.find(id));
+        strhash<intersection>::type::iterator entry(intersections.find(id));
         if(entry == intersections.end())
             intersections.insert(entry, std::make_pair(id, intersection()));
 
