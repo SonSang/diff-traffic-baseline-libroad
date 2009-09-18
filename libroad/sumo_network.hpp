@@ -55,14 +55,15 @@ namespace sumo
     {
         network() : anon_node_count(0), anon_edge_type_count(0)
         {}
-        std::map<node::id_t,      node>      nodes;
-        size_t                               anon_node_count;
+        std::map<const node::id_t,      node>      nodes;
+        size_t         anon_node_count;
 
-        std::map<edge_type::id_t, edge_type> types;
-        size_t                               anon_edge_type_count;
+        std::map<const edge_type::id_t, edge_type> types;
+        size_t         anon_edge_type_count;
 
-        std::map<edge::id_t,      edge>      edges;
-        node::id_t anon_node(vec2d &pos);
+        std::map<const edge::id_t,      edge>      edges;
+
+        node::id_t      anon_node(vec2d &pos);
         edge_type::id_t anon_edge_type(int priority, int nolanes, double speed);
 
         bool xml_read(node &n,       xmlpp::TextReader &reader);

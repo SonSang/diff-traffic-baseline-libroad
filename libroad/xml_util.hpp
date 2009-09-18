@@ -52,7 +52,7 @@ inline bool is_closing_element(const xmlpp::TextReader &reader, const str &name)
 }
 
 template <class closure, typename T>
-inline bool read_map(closure &c, std::map<str, T> &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
+inline bool read_map(closure &c, std::map<const str, T> &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
     bool ret;
     do
