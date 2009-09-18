@@ -26,9 +26,9 @@ namespace sumo
         }
     }
 
-    node::id_t network::anon_node(vec2d &pos)
+    node *network::anon_node(vec2d &pos)
     {
-        node::id_t id(boost::str(boost::format("anon_node%u") % anon_node_count++));
+        str id(boost::str(boost::format("anon_node%u") % anon_node_count++));
 
         node n;
         n.id      = id;
@@ -36,12 +36,12 @@ namespace sumo
         n.type    = node::unknown;
         nodes[id] = n;
 
-        return id;
+        return &(nodes[id]);
     }
 
-    edge_type::id_t network::anon_edge_type(const int priority, const int nolanes, const double speed)
+    edge_type *network::anon_edge_type(const int priority, const int nolanes, const double speed)
     {
-        edge_type::id_t id(boost::str(boost::format("anon_edge_type%u") % anon_edge_type_count++));
+        str id(boost::str(boost::format("anon_edge_type%u") % anon_edge_type_count++));
 
         edge_type et;
         et.id       = id;
@@ -50,7 +50,25 @@ namespace sumo
         et.speed    = speed;
         types[id]   = et;
 
-        return id;
+        return &(types[id]);
+    }
+
+    node *network::retreive_node(const str &id)
+    {
+        std::map<const str, node>::iterator entry(nodes.find(id));
+        if(entry == nodes.end())
+            nodes.insert(entry, std::make_pair(id, node()));
+
+        return &(entry->second);
+    }
+
+    edge_type *network::retreive_edge_type(const str &id)
+    {
+        std::map<const str, edge_type>::iterator entry(types.find(id));
+        if(entry == types.end())
+            types.insert(entry, std::make_pair(id, edge_type()));
+
+        return &(entry->second);
     }
 
     bool network::xml_read(node &n, xmlpp::TextReader &reader)
@@ -80,8 +98,10 @@ namespace sumo
         if(!get_attribute(e.id, reader, "id"))
             return false;
 
-        if(!(get_attribute(e.from, reader, "fromnode") &&
-             get_attribute(e.to,   reader, "tonode")))
+        str from_id;
+        str to_id;
+        if(!(get_attribute(from_id, reader, "fromnode") &&
+             get_attribute(to_id,   reader, "tonode")))
         {
             vec2d from;
             vec2d to;
@@ -94,8 +114,14 @@ namespace sumo
             e.from = anon_node(from);
             e.to   = anon_node(to);
         }
+        else
+        {
+            e.from = retreive_node(from_id);
+            e.to   = retreive_node(to_id);
+        }
 
-        if(!get_attribute(e.type, reader, "type"))
+        str type_id;
+        if(!get_attribute(type_id, reader, "type"))
         {
             int priority;
             int nolanes;
@@ -106,6 +132,10 @@ namespace sumo
                 return false;
 
             e.type = anon_edge_type(priority, nolanes, speed);
+        }
+        else
+        {
+            e.type = retreive_edge_type(type_id);
         }
 
         if(!get_attribute(e.spread, reader, "spread"))
@@ -196,15 +226,24 @@ namespace sumo
 
     bool network::check_edge(const edge &e) const
     {
-        return (e.to != e.from &&
-                nodes.find(e.to) != nodes.end() &&
-                nodes.find(e.from) != nodes.end() &&
-                types.find(e.type) != types.end());
+        return (e.to != e.from);
+    }
+
+    bool network::check_node(const node &n) const
+    {
+        return !n.id.empty();
     }
 
     bool network::check() const
     {
-        typedef std::pair<edge::id_t,edge> emap_pair;
+        typedef std::pair<str, node> nmap_pair;
+        BOOST_FOREACH(const nmap_pair &np, nodes)
+        {
+            if(!check_node(np.second))
+                return false;
+        }
+
+        typedef std::pair<str, edge> emap_pair;
         BOOST_FOREACH(const emap_pair &ep, edges)
         {
             if(!check_edge(ep.second))

@@ -16,19 +16,16 @@ namespace sumo
 {
     struct node
     {
-        typedef str id_t;
         typedef enum {priority, traffic_light, unknown} TYPES;
 
-        id_t  id;
+        str   id;
         vec2d xy;
         TYPES type;
     };
 
     struct edge_type
     {
-        typedef str id_t;
-
-        id_t   id;
+        str    id;
         int    nolanes;
         double speed;
         int    priority;
@@ -37,34 +34,37 @@ namespace sumo
 
     struct edge
     {
-        typedef str id_t;
         struct shape_t : public std::vector<vec2d>
         {
         };
         typedef enum {center, right} SPREAD;
 
-        id_t            id;
-        node::id_t      from;
-        node::id_t      to;
-        edge_type::id_t type;
-        shape_t         shape;
-        SPREAD          spread;
+        str        id;
+        node*      from;
+        node*      to;
+        edge_type* type;
+        shape_t    shape;
+        SPREAD     spread;
     };
 
     struct network
     {
         network() : anon_node_count(0), anon_edge_type_count(0)
         {}
-        std::map<const node::id_t,      node>      nodes;
-        size_t         anon_node_count;
 
-        std::map<const edge_type::id_t, edge_type> types;
-        size_t         anon_edge_type_count;
+        std::map<const str, node>      nodes;
+        size_t                         anon_node_count;
 
-        std::map<const edge::id_t,      edge>      edges;
+        std::map<const str, edge_type> types;
+        size_t                         anon_edge_type_count;
 
-        node::id_t      anon_node(vec2d &pos);
-        edge_type::id_t anon_edge_type(int priority, int nolanes, double speed);
+        std::map<const str, edge>      edges;
+
+        node      *anon_node(vec2d &pos);
+        edge_type *anon_edge_type(int priority, int nolanes, double speed);
+
+        node      *retreive_node(const str &id);
+        edge_type *retreive_edge_type(const str &id);
 
         bool xml_read(node &n,       xmlpp::TextReader &reader);
         bool xml_read(edge_type &et, xmlpp::TextReader &reader);
@@ -80,6 +80,7 @@ namespace sumo
         bool xml_read_edges(xmlpp::TextReader &reader);
 
         bool check_edge(const edge &e) const;
+        bool check_node(const node &n) const;
         bool check() const;
     };
 }
