@@ -11,5 +11,5 @@ pkginclude_HEADERS  = partition01.hpp \
 		      xml_util.hpp
 libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
 libroad_la_LDFLAGS  = -static
-libroad_la_LIBADD   = $(BOOST_LDFLAGS) $(BOOST_SERIALIZATION_LIB) $(GLIBMM_LIBS) $(LIBXMLPP_LIBS) $(LDFLAGS)
+libroad_la_LIBADD   = $(BOOST_LDFLAGS) $(GLIBMM_LIBS) $(LIBXMLPP_LIBS) $(LDFLAGS)
 

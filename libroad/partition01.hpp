@@ -3,12 +3,6 @@
 
 #include <map>
 #include <algorithm>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/nvp.hpp>
-
-namespace bs = boost::serialization;
 
 template <class T>
 struct partition01 : public std::map<float, T>
@@ -97,12 +91,6 @@ struct partition01 : public std::map<float, T>
         const_iterator itr = find(x);
         scale = (x-itr->first)/interval_length(itr);
         return itr;
-    }
-
-    template <class Archive>
-    void serialize(Archive &ar, const unsigned int version)
-    {
-        ar & bs::make_nvp("map", bs::base_object<base>(*this));
     }
 };
 #endif

@@ -31,7 +31,6 @@ AS_IF([test x"$have_tvmet_conf" != xno],
 
 # Checks for libraries.
 AX_BOOST_BASE([1.40])
-AX_BOOST_SERIALIZATION
 
 # Checks for header files.
 
@@ -57,6 +56,5 @@ echo "
   LIBXMLPP_LIBS............: $LIBXMLPP_LIBS
   BOOST_CPPFLAGS...........: $BOOST_CPPFLAGS
   BOOST_LDFLAGS............: $BOOST_LDFLAGS
-  BOOST_SERIALIZATION_LIB..: $BOOST_SERIALIZATION_LIB
   C++ Compiler.............: $CXX $CXXFLAGS $CPPFLAGS
   Linker...................: $LD $LDFLAGS $LIBS"
