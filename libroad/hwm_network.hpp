@@ -97,6 +97,11 @@ namespace hwm
         lane         *retreive_lane(const str &id);
         intersection *retreive_intersection(const str &id);
 
+        template <class T>
+        bool xml_read(partition01<T> &part, xmlpp::TextReader &reader, const str &tag);
+        bool xml_read(lane::road_membership &rm, xmlpp::TextReader &reader);
+        bool xml_read(lane::adjacency &la, xmlpp::TextReader &reader);
+        bool xml_read(lane::terminus &lt, xmlpp::TextReader &reader, const str &endtag);
         bool xml_read(road &r, xmlpp::TextReader &reader);
         bool xml_read(lane &l, xmlpp::TextReader &reader);
         bool xml_read(intersection &i, xmlpp::TextReader &reader);
