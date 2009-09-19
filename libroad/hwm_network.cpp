@@ -1,10 +1,13 @@
 #include "hwm_network.hpp"
 #include <iostream>
+#include <cassert>
 
 namespace hwm
 {
     bool network::xml_read(road &r, xmlpp::TextReader &reader)
     {
+        assert(is_opening_element(reader, "road"));
+
         if(!(get_attribute(r.id,   reader, "id") &&
              get_attribute(r.name, reader, "name")))
             return false;
@@ -20,6 +23,8 @@ namespace hwm
 
     bool network::xml_read(lane &l, xmlpp::TextReader &reader)
     {
+        assert(is_opening_element(reader, "lane"));
+
         if(!(get_attribute(l.id,         reader, "id") &&
              get_attribute(l.speedlimit, reader, "speedlimit")))
             return false;
@@ -29,6 +34,8 @@ namespace hwm
 
     bool network::xml_read(intersection &i, xmlpp::TextReader &reader)
     {
+        assert(is_opening_element(reader, "intersection"));
+
         if(!get_attribute(i.id, reader, "id"))
              return false;
 
