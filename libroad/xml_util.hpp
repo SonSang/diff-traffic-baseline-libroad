@@ -48,30 +48,25 @@ inline bool is_opening_element(const xmlpp::TextReader &reader, const str &name)
 
 inline bool is_closing_element(const xmlpp::TextReader &reader, const str &name)
 {
-    return (reader.get_node_type() == xmlpp::TextReader::EndElement
-            && reader.get_name() == name);
+    return ((reader.get_node_type() == xmlpp::TextReader::EndElement ||
+             reader.is_empty_element()) &&
+            reader.get_name() == name);
 }
 
 inline bool read_to_open(xmlpp::TextReader &reader, const str &opentag)
 {
-    bool res;
-    do
-    {
+    bool res = true;
+    while(res && !is_opening_element(reader, opentag))
         res = read_skip_comment(reader);
-    }
-    while(res && !is_opening_element(reader, opentag));
 
     return res;
 }
 
 inline bool read_to_close(xmlpp::TextReader &reader, const str &endtag)
 {
-    bool res;
-    do
-    {
+    bool res = true;
+    while(res && !is_closing_element(reader, endtag))
         res = read_skip_comment(reader);
-    }
-    while(res && !is_closing_element(reader, endtag));
 
     return res;
 }
