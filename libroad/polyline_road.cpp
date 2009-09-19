@@ -5,6 +5,7 @@
 #include <cassert>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
 
 float polyline_road::length() const
 {
@@ -123,21 +124,26 @@ bool polyline_road::xml_read(xmlpp::TextReader &reader)
         if(reader.get_node_type() == xmlpp::TextReader::Text ||
            reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
         {
-            std::string res(reader.get_value());
-            boost::trim(res);
-            if(!res.empty())
+            std::string                 res(reader.get_value());
+            typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+            boost::char_separator<char> linesep("\n");
+            tokenizer                   linetokens(res, linesep);
+
+            BOOST_FOREACH(const std::string &ltok, linetokens)
             {
-                typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-                boost::char_separator<char> sep(" ");
-                tokenizer                   tokens(res, sep);
-                tokenizer::iterator tok = tokens.begin();
+                std::string trim_ltok(ltok);
+                boost::trim_left(trim_ltok);
+                if(!trim_ltok.empty())
+                {
+                    std::stringstream instr(trim_ltok);
 
-                vec3f pos;
-                pos[0] = boost::lexical_cast<float>(*tok++);
-                pos[1] = boost::lexical_cast<float>(*tok++);
-                pos[2] = boost::lexical_cast<float>(*tok);
+                    vec3f pos;
+                    instr >> pos[0];
+                    instr >> pos[1];
+                    instr >> pos[2];
 
-                points_.push_back(pos);
+                    points_.push_back(pos);
+                }
             }
         }
     }
