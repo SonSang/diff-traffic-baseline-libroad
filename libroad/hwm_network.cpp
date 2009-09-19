@@ -1,4 +1,5 @@
 #include "hwm_network.hpp"
+#include <iostream>
 
 namespace hwm
 {
@@ -8,7 +9,23 @@ namespace hwm
              get_attribute(r.name, reader, "name")))
             return false;
 
+        if(!read_skip_comment(reader))
+            return false;
+
+        if(is_opening_element(reader, "line_rep") ||
+           !r.rep.xml_read(reader))
+            return false;
+
         bool res;
+        do
+        {
+            res = read_skip_comment(reader);
+        }
+        while(res && !is_opening_element(reader, "line_rep"));
+
+        if(!r.rep.xml_read(reader))
+            return false;
+
         do
         {
             res = read_skip_comment(reader);
@@ -85,7 +102,6 @@ namespace hwm
                     res = read_map(*this, lanes, reader, "lane", "lanes");
                 else if(is_opening_element(reader, "intersections"))
                     res = read_map(*this, intersections, reader, "intersection", "intersections");
-
             }
             while(res && !is_closing_element(reader, "network"));
 

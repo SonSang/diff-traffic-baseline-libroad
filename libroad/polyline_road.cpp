@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 #include <cassert>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/tokenizer.hpp>
 
 float polyline_road::length() const
 {
@@ -106,4 +108,53 @@ inline size_t polyline_road::locate_scale(float t, float &local) const
         local = 0.0f;
         return 0;
     }
+}
+
+bool polyline_road::xml_read(xmlpp::TextReader &reader)
+{
+    bool ret;
+    do
+    {
+        ret = read_skip_comment(reader);
+    }
+    while(ret && !is_opening_element(reader, "points"));
+
+    if(!ret)
+        return false;
+
+    do
+    {
+        if(!read_skip_comment(reader))
+            return false;
+
+        if(reader.get_node_type() == xmlpp::TextReader::Text ||
+           reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
+        {
+            std::string res(reader.get_value());
+            boost::trim(res);
+            if(!res.empty())
+            {
+                typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+                boost::char_separator<char> sep(" ");
+                tokenizer                   tokens(res, sep);
+                tokenizer::iterator tok = tokens.begin();
+
+                vec3f pos;
+                pos[0] = boost::lexical_cast<float>(*tok++);
+                pos[1] = boost::lexical_cast<float>(*tok++);
+                pos[2] = boost::lexical_cast<float>(*tok);
+
+                points_.push_back(pos);
+            }
+        }
+    }
+    while(!is_closing_element(reader, "points"));
+
+    do
+    {
+        ret = read_skip_comment(reader);
+    }
+    while(ret && !is_closing_element(reader, "line_rep"));
+
+    return ret;
 }

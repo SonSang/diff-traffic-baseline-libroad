@@ -6,6 +6,7 @@
 #include <libxml++/libxml++.h>
 #include <libxml++/parsers/textreader.h>
 #include <map>
+#include <iostream>
 
 typedef Glib::ustring str;
 
@@ -80,24 +81,21 @@ inline bool read_map(closure &c, std::map<const str, T> &themap, xmlpp::TextRead
     return ret;
 }
 
-// inline bool read_leaf_text(std::string &res, xmlTextReaderPtr reader, const char *endtag)
-// {
-//     bool read_text = false;
+inline str read_leaf_text(xmlpp::TextReader &reader, const str &endtag)
+{
+    str res;
 
-//     do
-//     {
-//         int ret = xmlTextReaderRead(reader);
-//         if(ret != 1)
-//             return false;
+    do
+    {
+        if(!read_skip_comment(reader))
+            return res;
 
-//         if(xmlTextReaderNodeType(reader) == XML_READER_TYPE_TEXT)
-//         {
-//             res.append((const char *) xmlTextReaderConstValue(reader));
-//             read_text = true;
-//         }
-//     }
-//     while(!is_closing_element(reader, endtag));
+        if(reader.get_node_type() == xmlpp::TextReader::Text ||
+           reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
+            res.append(reader.get_value());
+    }
+    while(!is_closing_element(reader, endtag));
 
-//     return read_text;
-// }
+    return res;
+}
 #endif

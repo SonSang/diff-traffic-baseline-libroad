@@ -15,5 +15,16 @@ int main(int argc, char *argv[])
     else
         std::cerr << "HWM net loaded successfully" << std::endl;
 
+    typedef std::pair<const str, hwm::road> rmap_itr;
+    BOOST_FOREACH(const rmap_itr &r, net.roads)
+    {
+        std::cout << r.second.id << " " << r.second.name << " ";
+        BOOST_FOREACH(const vec3f &f, r.second.rep.points_)
+        {
+            std::cout << f;
+        }
+        std::cout << std::endl;
+    }
+
     return 0;
 }
