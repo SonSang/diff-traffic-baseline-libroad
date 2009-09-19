@@ -112,14 +112,7 @@ inline size_t polyline_road::locate_scale(float t, float &local) const
 
 bool polyline_road::xml_read(xmlpp::TextReader &reader)
 {
-    bool ret;
-    do
-    {
-        ret = read_skip_comment(reader);
-    }
-    while(ret && !is_opening_element(reader, "points"));
-
-    if(!ret)
+    if(!read_to_open(reader, "points"))
         return false;
 
     do
@@ -150,11 +143,5 @@ bool polyline_road::xml_read(xmlpp::TextReader &reader)
     }
     while(!is_closing_element(reader, "points"));
 
-    do
-    {
-        ret = read_skip_comment(reader);
-    }
-    while(ret && !is_closing_element(reader, "line_rep"));
-
-    return ret;
+    return read_to_close(reader, "line_rep");
 }

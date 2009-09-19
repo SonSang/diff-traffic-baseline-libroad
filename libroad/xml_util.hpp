@@ -52,6 +52,30 @@ inline bool is_closing_element(const xmlpp::TextReader &reader, const str &name)
             && reader.get_name() == name);
 }
 
+inline bool read_to_open(xmlpp::TextReader &reader, const str &opentag)
+{
+    bool res;
+    do
+    {
+        res = read_skip_comment(reader);
+    }
+    while(res && !is_opening_element(reader, opentag));
+
+    return res;
+}
+
+inline bool read_to_close(xmlpp::TextReader &reader, const str &endtag)
+{
+    bool res;
+    do
+    {
+        res = read_skip_comment(reader);
+    }
+    while(res && !is_closing_element(reader, endtag));
+
+    return res;
+}
+
 template <class closure, typename T>
 inline bool read_map(closure &c, std::map<const str, T> &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
@@ -79,23 +103,5 @@ inline bool read_map(closure &c, std::map<const str, T> &themap, xmlpp::TextRead
     while(ret && !is_closing_element(reader, container_name));
 
     return ret;
-}
-
-inline str read_leaf_text(xmlpp::TextReader &reader, const str &endtag)
-{
-    str res;
-
-    do
-    {
-        if(!read_skip_comment(reader))
-            return res;
-
-        if(reader.get_node_type() == xmlpp::TextReader::Text ||
-           reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
-            res.append(reader.get_value());
-    }
-    while(!is_closing_element(reader, endtag));
-
-    return res;
 }
 #endif

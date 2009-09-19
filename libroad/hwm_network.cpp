@@ -9,30 +9,13 @@ namespace hwm
              get_attribute(r.name, reader, "name")))
             return false;
 
-        if(!read_skip_comment(reader))
+        if(!read_to_open(reader, "line_rep"))
             return false;
-
-        if(is_opening_element(reader, "line_rep") ||
-           !r.rep.xml_read(reader))
-            return false;
-
-        bool res;
-        do
-        {
-            res = read_skip_comment(reader);
-        }
-        while(res && !is_opening_element(reader, "line_rep"));
 
         if(!r.rep.xml_read(reader))
             return false;
 
-        do
-        {
-            res = read_skip_comment(reader);
-        }
-        while(res && !is_closing_element(reader, "road"));
-
-        return res;
+        return read_to_close(reader, "line_rep");
     }
 
     bool network::xml_read(lane &l, xmlpp::TextReader &reader)
@@ -41,14 +24,7 @@ namespace hwm
              get_attribute(l.speedlimit, reader, "speedlimit")))
             return false;
 
-        bool res;
-        do
-        {
-            res = read_skip_comment(reader);
-        }
-        while(res && !is_closing_element(reader, "lane"));
-
-        return res;
+        return read_to_close(reader, "lane");
     }
 
     bool network::xml_read(intersection &i, xmlpp::TextReader &reader)
@@ -56,14 +32,7 @@ namespace hwm
         if(!get_attribute(i.id, reader, "id"))
              return false;
 
-        bool res;
-        do
-        {
-            res = read_skip_comment(reader);
-        }
-        while(res && !is_closing_element(reader, "intersection"));
-
-        return res;
+        return read_to_close(reader, "intersection");
     }
 
     bool network::xml_read(const char *filename)
