@@ -17,7 +17,3 @@ Makefile.in
 aclocal.m4
 autoscan.log
 autom4te.cache/
-road-test
-interval-test
-sumo-test
-
