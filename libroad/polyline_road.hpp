@@ -4,14 +4,14 @@
 #include "road_rep.hpp"
 #include <vector>
 
-struct polyline_road : public road_rep
+struct polyline_road
 {
-    virtual float length     ()                       const;
-    virtual void  point      (float t, vec3f   &pt)   const;
-    virtual void  frame      (float t, mat3x3f &fr)   const;
-    virtual void  point_frame(float t, mat4x4f &ptfr) const;
+    float length     ()                       const;
+    void  point      (float t, vec3f   &pt)   const;
+    void  frame      (float t, mat3x3f &fr)   const;
+    void  point_frame(float t, mat4x4f &ptfr) const;
 
-    virtual ~polyline_road();
+    ~polyline_road();
 
     void   initialize();
     size_t locate(float t) const;

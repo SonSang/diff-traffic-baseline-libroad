@@ -10,15 +10,15 @@
 
 #include "partition01.hpp"
 #include "xml_util.hpp"
-#include "road_rep.hpp"
+#include "polyline_road.hpp"
 
 namespace hwm
 {
     struct road
     {
-        str       id;
-        str       name;
-        road_rep *rep;
+        str           id;
+        str           name;
+        polyline_road rep;
     };
 
     struct intersection;
