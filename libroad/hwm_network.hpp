@@ -93,6 +93,10 @@ namespace hwm
         std::map<const str, lane>         lanes;
         std::map<const str, intersection> intersections;
 
+        road         *retreive_road(const str &id);
+        lane         *retreive_lane(const str &id);
+        intersection *retreive_intersection(const str &id);
+
         bool xml_read(road &r, xmlpp::TextReader &reader);
         bool xml_read(lane &l, xmlpp::TextReader &reader);
         bool xml_read(intersection &i, xmlpp::TextReader &reader);

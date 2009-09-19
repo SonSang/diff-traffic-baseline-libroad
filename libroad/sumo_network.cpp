@@ -59,7 +59,7 @@ namespace sumo
         if(entry == nodes.end())
             nodes.insert(entry, std::make_pair(id, node()));
 
-        return &(entry->second);
+        return &(nodes[id]);
     }
 
     edge_type *network::retreive_edge_type(const str &id)
@@ -68,7 +68,7 @@ namespace sumo
         if(entry == types.end())
             types.insert(entry, std::make_pair(id, edge_type()));
 
-        return &(entry->second);
+        return &(types[id]);
     }
 
     bool network::xml_read(node &n, xmlpp::TextReader &reader)

@@ -83,4 +83,31 @@ namespace hwm
             return false;
         }
     }
+
+    road *network::retreive_road(const str &id)
+    {
+        std::map<const str, road>::iterator entry(roads.find(id));
+        if(entry == roads.end())
+            roads.insert(entry, std::make_pair(id, road()));
+
+        return &(roads[id]);
+    }
+
+    lane *network::retreive_lane(const str &id)
+    {
+        std::map<const str, lane>::iterator entry(lanes.find(id));
+        if(entry == lanes.end())
+            lanes.insert(entry, std::make_pair(id, lane()));
+
+        return &(lanes[id]);
+    }
+
+    intersection *network::retreive_intersection(const str &id)
+    {
+        std::map<const str, intersection>::iterator entry(intersections.find(id));
+        if(entry == intersections.end())
+            intersections.insert(entry, std::make_pair(id, intersection()));
+
+        return &(intersections[id]);
+    }
 };
