@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[])
 {
-    hwm::network net(hwm::xml_read(argv[1]));
+    hwm::network net(hwm::load_xml_network(argv[1]));
 
     std::cerr << "HWM net loaded successfully" << std::endl;
 

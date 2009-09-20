@@ -91,7 +91,7 @@ namespace hwm
         strhash<intersection>::type intersections;
     };
 
-    network xml_read(const char *filename);
+    network load_xml_network(const char *filename);
 
 };
 #endif

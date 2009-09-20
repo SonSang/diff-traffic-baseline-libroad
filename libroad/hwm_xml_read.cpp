@@ -356,7 +356,7 @@ namespace hwm
         return res;
     }
 
-    network xml_read(const char *filename)
+    network load_xml_network(const char *filename)
     {
         network n;
         xmlpp::TextReader reader(filename);
