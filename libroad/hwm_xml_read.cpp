@@ -9,35 +9,6 @@
 #include <iostream>
 #include <cassert>
 
-template <class closure, typename T>
-static inline bool hwm_read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
-{
-    bool ret;
-    do
-    {
-        ret = read_skip_comment(reader);
-        if(!ret)
-            return false;
-
-        if(reader.get_node_type() == xmlpp::TextReader::Element)
-        {
-            if(reader.get_name() == item_name)
-            {
-                typename T::value_type::second_type new_item;
-                if(!xml_read(c, new_item, reader))
-                    return false;
-
-                themap[new_item.id] = new_item;
-            }
-            else
-                return false;
-        }
-    }
-    while(ret && !is_closing_element(reader, container_name));
-
-    return ret;
-}
-
 namespace hwm
 {
     template <class T>
@@ -418,11 +389,11 @@ namespace hwm
             res = read_skip_comment(reader);
 
             if(is_opening_element(reader, "roads"))
-                res = have_roads = hwm_read_map(n, n.roads, reader, "road", "roads");
+                res = have_roads = read_map(n, n.roads, reader, "road", "roads");
             else if(is_opening_element(reader, "lanes"))
-                res = have_lanes = hwm_read_map(n, n.lanes, reader, "lane", "lanes");
+                res = have_lanes = read_map(n, n.lanes, reader, "lane", "lanes");
             else if(is_opening_element(reader, "intersections"))
-                res = have_intersections = hwm_read_map(n, n.intersections, reader, "intersection", "intersections");
+                res = have_intersections = read_map(n, n.intersections, reader, "intersection", "intersections");
         }
 
         if(!res)

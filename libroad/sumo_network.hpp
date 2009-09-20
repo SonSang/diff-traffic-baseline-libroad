@@ -1,16 +1,7 @@
 #ifndef _SUMO_NETWORK_HPP_
 #define _SUMO_NETWORK_HPP_
 
-#include <vector>
-#include <map>
-#include <tvmet/Vector.h>
-#include <glibmm/ustring.h>
-#include <libxml++/libxml++.h>
-#include <libxml++/parsers/textreader.h>
-
-#include "xml_util.hpp"
-
-typedef tvmet::Vector<double, 2> vec2d;
+#include "libroad_common.hpp"
 
 namespace sumo
 {
@@ -58,29 +49,14 @@ namespace sumo
         size_t                   anon_edge_type_count;
         strhash<edge>::type      edges;
 
-        node      *anon_node(vec2d &pos);
-        edge_type *anon_edge_type(int priority, int nolanes, double speed);
-
-        node      *retreive_node(const str &id);
-        edge_type *retreive_edge_type(const str &id);
-
-        bool xml_read(node &n,       xmlpp::TextReader &reader);
-        bool xml_read(edge_type &et, xmlpp::TextReader &reader);
-        bool xml_read(edge &e,       xmlpp::TextReader &reader);
-
-        bool xml_read_nodes(const char *filename);
-        bool xml_read_nodes(xmlpp::TextReader &reader);
-
-        bool xml_read_types(const char *filename);
-        bool xml_read_types(xmlpp::TextReader &reader);
-
-        bool xml_read_edges(const char *filename);
-        bool xml_read_edges(xmlpp::TextReader &reader);
-
         bool check_edge(const edge &e) const;
         bool check_node(const node &n) const;
         bool check() const;
     };
+
+    network load_xml_network(const char *node_file,
+                             const char *edge_type_file,
+                             const char *edge_file);
 }
 
 inline std::ostream &operator<<(std::ostream &o, const sumo::node::TYPES &t)

@@ -82,7 +82,7 @@ inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str
             if(reader.get_name() == item_name)
             {
                 typename T::value_type::second_type new_item;
-                if(!c.xml_read(new_item, reader))
+                if(!xml_read(c, new_item, reader))
                     return false;
 
                 themap[new_item.id] = new_item;

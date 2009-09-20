@@ -2,6 +2,7 @@ lib_LTLIBRARIES = libroad.la
 
 libroad_la_SOURCES  = polyline_road.cpp \
 		      sumo_network.cpp \
+		      sumo_xml_read.cpp \
 		      hwm_network.cpp \
 		      hwm_xml_read.cpp
 pkginclude_HEADERS  = partition01.hpp \

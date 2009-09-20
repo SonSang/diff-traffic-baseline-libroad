@@ -5,14 +5,9 @@
 
 int main(int argc, char *argv[])
 {
-    sumo::network net;
-
-    if(!net.xml_read_nodes(argv[1]))
-        std::cerr << "Node file didn't load correctly!"<< std::endl;
-    if(!net.xml_read_types(argv[2]))
-        std::cerr << "Edge type file didn't load correctly!"<< std::endl;
-    if(!net.xml_read_edges(argv[3]))
-        std::cerr << "Edge file didn't load correctly!"<< std::endl;
+    sumo::network net = sumo::load_xml_network(argv[1],
+                                               argv[2],
+                                               argv[3]);
 
     {
         typedef std::pair<std::string, sumo::node> maptype;

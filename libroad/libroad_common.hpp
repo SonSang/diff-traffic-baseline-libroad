@@ -2,6 +2,8 @@
 #define _LIBROAD_COMMON_HPP_
 
 #include <glibmm/ustring.h>
+#include <tvmet/Vector.h>
+#include <vector>
 #include <map>
 #include <iostream>
 #include <tr1/functional>
@@ -33,4 +35,5 @@ struct strhash
     typedef std::map<const str, T> type;
 };
 
+typedef tvmet::Vector<double, 2> vec2d;
 #endif
