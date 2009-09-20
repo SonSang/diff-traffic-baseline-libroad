@@ -2,14 +2,10 @@
 #define _SUMO_NETWORK_HPP_
 
 #include <vector>
-#include <map>
 #include <tvmet/Vector.h>
-#include <glibmm/ustring.h>
-#include <libxml++/libxml++.h>
-#include <libxml++/parsers/textreader.h>
+#include "libroad_common.hpp"
 
 #include "partition01.hpp"
-#include "xml_util.hpp"
 #include "polyline_road.hpp"
 
 namespace hwm
@@ -93,23 +89,9 @@ namespace hwm
         strhash<road>::type         roads;
         strhash<lane>::type         lanes;
         strhash<intersection>::type intersections;
-
-        road         *retreive_road(const str &id);
-        lane         *retreive_lane(const str &id);
-        intersection *retreive_intersection(const str &id);
-
-        bool xml_read(intersection::state &s, xmlpp::TextReader &reader);
-        bool xml_read(std::vector<lane*> &lv, xmlpp::TextReader &reader);
-        template <class T>
-        bool xml_read(partition01<T> &part, xmlpp::TextReader &reader, const str &tag);
-        bool xml_read(lane::road_membership &rm, xmlpp::TextReader &reader);
-        bool xml_read(lane::adjacency &la, xmlpp::TextReader &reader);
-        bool xml_read(lane::terminus &lt, xmlpp::TextReader &reader, const str &endtag);
-        bool xml_read(road &r, xmlpp::TextReader &reader);
-        bool xml_read(lane &l, xmlpp::TextReader &reader);
-        bool xml_read(intersection &i, xmlpp::TextReader &reader);
-
-        bool xml_read(const char *filename);
     };
+
+    network xml_read(const char *filename);
+
 };
 #endif

@@ -3,9 +3,6 @@
 #include <algorithm>
 #include <iostream>
 #include <cassert>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/foreach.hpp>
 
 float polyline_road::length() const
 {
@@ -109,47 +106,4 @@ inline size_t polyline_road::locate_scale(float t, float &local) const
         local = 0.0f;
         return 0;
     }
-}
-
-bool polyline_road::xml_read(xmlpp::TextReader &reader)
-{
-    assert(is_opening_element(reader, "line_rep"));
-
-    if(!read_to_open(reader, "points"))
-        return false;
-
-    do
-    {
-        if(!read_skip_comment(reader))
-            return false;
-
-        if(reader.get_node_type() == xmlpp::TextReader::Text ||
-           reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
-        {
-            std::string                 res(reader.get_value());
-            typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-            boost::char_separator<char> linesep("\n");
-            tokenizer                   linetokens(res, linesep);
-
-            BOOST_FOREACH(const std::string &ltok, linetokens)
-            {
-                std::string trim_ltok(ltok);
-                boost::trim_left(trim_ltok);
-                if(!trim_ltok.empty())
-                {
-                    std::stringstream instr(trim_ltok);
-
-                    vec3f pos;
-                    instr >> pos[0];
-                    instr >> pos[1];
-                    instr >> pos[2];
-
-                    points_.push_back(pos);
-                }
-            }
-        }
-    }
-    while(!is_closing_element(reader, "points"));
-
-    return read_to_close(reader, "line_rep");
 }

@@ -3,7 +3,6 @@
 
 #include "road_rep.hpp"
 #include <vector>
-#include "xml_util.hpp"
 
 struct polyline_road
 {
@@ -17,8 +16,6 @@ struct polyline_road
     void   initialize();
     size_t locate(float t) const;
     size_t locate_scale(float t, float &local) const;
-
-    bool xml_read(xmlpp::TextReader &reader);
 
     std::vector<vec3f> points_;
     std::vector<vec3f> normals_;

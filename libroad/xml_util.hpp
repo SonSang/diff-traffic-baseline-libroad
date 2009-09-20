@@ -2,39 +2,9 @@
 #define _XML_UTIL_HPP_
 
 #include <boost/lexical_cast.hpp>
-#include <glibmm/ustring.h>
 #include <libxml++/libxml++.h>
 #include <libxml++/parsers/textreader.h>
-#include <map>
-#include <iostream>
-#include <tr1/functional>
-#include <tr1/unordered_map>
-
-using std::tr1::hash;
-
-typedef Glib::ustring str;
-
-namespace std
-{
-    namespace tr1
-    {
-        template <>
-        struct hash<const str>
-        {
-            size_t operator()(const Glib::ustring &str) const
-            {
-                hash<const char*> h;
-                return h(str.c_str());
-            }
-        };
-    }
-}
-
-template <class T>
-struct strhash
-{
-    typedef std::map<const str, T> type;
-};
+#include "libroad_common.hpp"
 
 inline bool read_skip_comment(xmlpp::TextReader &reader)
 {
