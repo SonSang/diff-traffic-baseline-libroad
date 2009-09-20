@@ -4,6 +4,56 @@
 
 namespace hwm
 {
+    bool network::xml_read(intersection::state &s, xmlpp::TextReader &reader)
+    {
+        assert(is_opening_element(reader, "state"));
+
+        bool res = get_attribute(s.duration, reader, "duration");
+
+        while(res && !is_closing_element(reader, "state"))
+        {
+            res = read_skip_comment(reader);
+            if(is_opening_element(reader, "lane_pair"))
+            {
+                size_t in_id, out_id;
+                if(!(get_attribute(in_id, reader, "in_id") &&
+                     get_attribute(out_id, reader, "out_id")))
+                    return false;
+
+                if(s.out_states.size() <= out_id)
+                    s.out_states.resize(out_id + 1);
+                if(s.in_states.size() <= in_id)
+                    s.in_states.resize(in_id + 1);
+
+                s.out_states[out_id].in_ref = in_id;
+                s.in_states[in_id].out_ref  = out_id;
+
+                res = read_to_close(reader, "lane_pair");
+            }
+        }
+
+        return res;
+    }
+
+    bool network::xml_read(std::vector<lane*> &lv, xmlpp::TextReader &reader)
+    {
+        assert(is_opening_element(reader, "lane_ref"));
+
+        str ref;
+        size_t loc;
+        if(!(get_attribute(ref, reader, "ref") &&
+             get_attribute(loc, reader, "local_id")))
+           return false;
+
+        if(lv.size() <= loc)
+            lv.resize(loc+1);
+
+        assert(lv.size() > loc);
+        lv[loc] = retreive_lane(ref);
+
+        return read_to_close(reader, "lane_ref");
+    }
+
     template <class T>
     bool network::xml_read(partition01<T> &part, xmlpp::TextReader &reader, const str &tag)
     {
@@ -193,7 +243,54 @@ namespace hwm
         if(!get_attribute(i.id, reader, "id"))
              return false;
 
-        return read_to_close(reader, "intersection");
+        bool res = read_to_open(reader, "incident");
+
+        while(res && !is_closing_element(reader, "incident"))
+        {
+            res = read_skip_comment(reader);
+
+            if(is_opening_element(reader, "incoming"))
+            {
+                while(res && !is_closing_element(reader, "incoming"))
+                {
+                    res = read_skip_comment(reader);
+
+                    if(is_opening_element(reader, "lane_ref"))
+                        res = xml_read(i.incoming, reader);
+                }
+            }
+            else if(is_opening_element(reader, "outgoing"))
+            {
+                while(res && !is_closing_element(reader, "outgoing"))
+                {
+                    res = read_skip_comment(reader);
+
+                    if(is_opening_element(reader, "lane_ref"))
+                        res = xml_read(i.outgoing, reader);
+                }
+            }
+        }
+
+        res = read_to_open(reader, "states");
+
+        while(res && !is_closing_element(reader, "states"))
+        {
+            res = read_skip_comment(reader);
+
+            if(is_opening_element(reader, "state"))
+            {
+                size_t id;
+                if(!get_attribute(id, reader, "id"))
+                    return false;
+
+                if(i.states.size() <= id)
+                    i.states.resize(id+1);
+
+                res = xml_read(i.states[id], reader);
+            }
+        }
+
+        return res;
     }
 
     bool network::xml_read(const char *filename)

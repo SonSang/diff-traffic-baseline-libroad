@@ -74,6 +74,7 @@ namespace hwm
 
             enum {STARVATION=-1, STOP=-1};
 
+            float duration;
             std::vector<out_id> in_states;
             std::vector<in_id>  out_states;
         };
@@ -97,6 +98,8 @@ namespace hwm
         lane         *retreive_lane(const str &id);
         intersection *retreive_intersection(const str &id);
 
+        bool xml_read(intersection::state &s, xmlpp::TextReader &reader);
+        bool xml_read(std::vector<lane*> &lv, xmlpp::TextReader &reader);
         template <class T>
         bool xml_read(partition01<T> &part, xmlpp::TextReader &reader, const str &tag);
         bool xml_read(lane::road_membership &rm, xmlpp::TextReader &reader);

@@ -51,10 +51,42 @@ int main(int argc, char *argv[])
                 std::cout << right.first << ": " << right.second.neighbor->id << " [" << right.second.neighbor_interval[0] << "," << right.second.neighbor_interval[1] << "] ";
         }
         std::cout << " } " << std::endl;
-
-
     }
 
+    typedef std::pair<const str, hwm::intersection> imap_itr;
+    BOOST_FOREACH(const imap_itr &i, net.intersections)
+    {
+        std::cout << i.second.id << " incoming {";
+        BOOST_FOREACH(const hwm::lane* la, i.second.incoming)
+        {
+            std::cout << la->id << " ";
+        }
+        std::cout << " } outgoing {";
 
+        BOOST_FOREACH(const hwm::lane* la, i.second.outgoing)
+        {
+            std::cout << la->id << " ";
+        }
+        std::cout << " } states {";
+
+        int id = 0;
+        BOOST_FOREACH(const hwm::intersection::state &s, i.second.states)
+        {
+            std::cout << " " << id++ << " " << s.duration << " in";
+            int c = 0;
+            BOOST_FOREACH(const hwm::intersection::state::out_id &oi, s.in_states)
+            {
+                std::cout << " " << c++ << " : " << oi.out_ref << " ";
+            }
+            std::cout << " out";
+
+            c = 0;
+            BOOST_FOREACH(const hwm::intersection::state::in_id &ii, s.out_states)
+            {
+                std::cout << " " << c++ << " : " << ii.in_ref << " ";
+            }
+        }
+        std::cout << " } " << std::endl;
+    }
     return 0;
 }
