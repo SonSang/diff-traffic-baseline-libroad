@@ -33,7 +33,7 @@ namespace std
 template <class T>
 struct strhash
 {
-    typedef std::tr1::unordered_map<const str, T> type;
+    typedef std::map<const str, T> type;
 };
 
 inline bool read_skip_comment(xmlpp::TextReader &reader)
