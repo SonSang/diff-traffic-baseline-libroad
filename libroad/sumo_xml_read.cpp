@@ -1,12 +1,6 @@
 #include "sumo_network.hpp"
 #include "xml_util.hpp"
 
-#include <boost/format.hpp>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
-#include <iostream>
-
 namespace sumo
 {
     static inline void read_shape(edge::shape_t &shape, const std::string &s)

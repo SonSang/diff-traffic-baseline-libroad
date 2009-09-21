@@ -1,4 +1,3 @@
-#include <boost/foreach.hpp>
 #include "sumo_network.hpp"
 
 namespace sumo

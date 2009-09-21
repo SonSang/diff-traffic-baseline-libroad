@@ -1,14 +1,6 @@
 #include "hwm_network.hpp"
 #include "xml_util.hpp"
 
-#include <libxml++/libxml++.h>
-#include <libxml++/parsers/textreader.h>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/foreach.hpp>
-#include <iostream>
-#include <cassert>
-
 namespace hwm
 {
     template <class T>

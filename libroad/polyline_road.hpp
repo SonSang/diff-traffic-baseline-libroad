@@ -1,8 +1,7 @@
 #ifndef _POLYLINE_ROAD_HPP_
 #define _POLYLINE_ROAD_HPP_
 
-#include "road_rep.hpp"
-#include <vector>
+#include "libroad_common.hpp"
 
 struct polyline_road
 {

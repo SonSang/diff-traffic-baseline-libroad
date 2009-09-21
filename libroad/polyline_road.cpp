@@ -1,9 +1,5 @@
 #include "polyline_road.hpp"
 
-#include <algorithm>
-#include <iostream>
-#include <cassert>
-
 float polyline_road::length() const
 {
     return clengths_.back();

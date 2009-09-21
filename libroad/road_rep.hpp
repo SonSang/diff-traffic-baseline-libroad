@@ -1,12 +1,7 @@
 #ifndef _ROAD_REP_HPP_
 #define _ROAD_REP_HPP_
 
-#include <tvmet/Matrix.h>
-#include <tvmet/Vector.h>
-
-typedef tvmet::Vector<float, 3> vec3f;
-typedef tvmet::Matrix<float, 3, 3> mat3x3f;
-typedef tvmet::Matrix<float, 4, 4> mat4x4f;
+#include "libroad_common.hpp"
 
 struct road_rep
 {

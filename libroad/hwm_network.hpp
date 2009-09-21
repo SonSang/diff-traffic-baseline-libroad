@@ -1,12 +1,9 @@
 #ifndef _SUMO_NETWORK_HPP_
 #define _SUMO_NETWORK_HPP_
 
-#include <vector>
-#include <tvmet/Vector.h>
-#include "libroad_common.hpp"
-
 #include "partition01.hpp"
 #include "polyline_road.hpp"
+#include "libroad_common.hpp"
 
 namespace hwm
 {

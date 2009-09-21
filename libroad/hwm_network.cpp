@@ -1,5 +1,4 @@
 #include "hwm_network.hpp"
-#include <boost/foreach.hpp>
 
 namespace hwm
 {

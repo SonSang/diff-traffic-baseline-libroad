@@ -1,10 +1,10 @@
 #ifndef _XML_UTIL_HPP_
 #define _XML_UTIL_HPP_
 
+#include "libroad_common.hpp"
 #include <boost/lexical_cast.hpp>
 #include <libxml++/libxml++.h>
 #include <libxml++/parsers/textreader.h>
-#include "libroad_common.hpp"
 
 inline bool read_skip_comment(xmlpp::TextReader &reader)
 {
