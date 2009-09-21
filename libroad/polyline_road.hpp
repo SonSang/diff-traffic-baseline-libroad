@@ -16,6 +16,7 @@ struct polyline_road
     void   initialize();
     size_t locate(float t) const;
     size_t locate_scale(float t, float &local) const;
+    bool   check() const;
 
     std::vector<vec3f> points_;
     std::vector<vec3f> normals_;

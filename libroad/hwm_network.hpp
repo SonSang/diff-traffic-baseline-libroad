@@ -12,6 +12,8 @@ namespace hwm
 {
     struct road
     {
+        bool check() const;
+
         str           id;
         str           name;
         polyline_road rep;
@@ -23,12 +25,17 @@ namespace hwm
     {
         struct terminus
         {
+            bool check() const;
+
             intersection *inters;
             int           intersect_in_ref;
         };
 
         struct road_membership
         {
+            bool check() const;
+            bool empty() const;
+
             road *parent_road;
             float interval[2];
             float lane_position;
@@ -38,10 +45,15 @@ namespace hwm
 
         struct adjacency
         {
+            bool check() const;
+            bool empty() const;
+
             lane *neighbor;
             float neighbor_interval[2];
             typedef partition01<adjacency> intervals;
         };
+
+        bool check() const;
 
         str                        id;
         road_membership::intervals road_memberships;
@@ -58,15 +70,21 @@ namespace hwm
         {
             struct in_id
             {
+                bool check() const;
+
                 int   in_ref;
                 lane *fict_lane;
             };
 
             struct out_id
             {
+                bool check() const;
+
                 int   out_ref;
                 lane *fict_lane;
             };
+
+            bool check() const;
 
             enum {STARVATION=-1, STOP=-1};
 
@@ -74,6 +92,8 @@ namespace hwm
             std::vector<out_id> in_states;
             std::vector<in_id>  out_states;
         };
+
+        bool check() const;
 
         str                id;
         std::vector<lane*> incoming;
@@ -84,6 +104,8 @@ namespace hwm
 
     struct network
     {
+        bool check() const;
+
         str                         name;
         float                       gamma;
         strhash<road>::type         roads;

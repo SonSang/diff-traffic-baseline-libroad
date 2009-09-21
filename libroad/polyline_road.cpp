@@ -107,3 +107,10 @@ inline size_t polyline_road::locate_scale(float t, float &local) const
         return 0;
     }
 }
+
+bool polyline_road::check() const
+{
+    return (!points_.empty() &&
+            points_.size() == clengths_.size() &&
+            points_.size() == normals_.size() + 1);
+}

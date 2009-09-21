@@ -69,6 +69,11 @@ struct partition01 : public std::map<float, T>
         return base::end();
     }
 
+    bool empty() const
+    {
+        return base::empty();
+    }
+
     iterator operator[](float x)
     {
         return find(x);

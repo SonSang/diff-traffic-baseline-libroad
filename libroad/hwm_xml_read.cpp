@@ -83,11 +83,6 @@ namespace hwm
                      get_attribute(out_id, reader, "out_id")))
                     return false;
 
-                if(s.out_states.size() <= out_id)
-                    s.out_states.resize(out_id + 1);
-                if(s.in_states.size() <= in_id)
-                    s.in_states.resize(in_id + 1);
-
                 s.out_states[out_id].in_ref = in_id;
                 s.in_states[in_id].out_ref  = out_id;
 
@@ -125,10 +120,12 @@ namespace hwm
              read_to_open(reader, tag)))
             return false;
 
-        typename partition01<T>::iterator new_elt(part.insert(0.0, T()));
-
-        if(!xml_read(n, new_elt->second, reader))
+        T elt;
+        if(!xml_read(n, elt, reader))
             return false;
+
+        if(!elt.empty())
+            part.insert(0.0, elt);
 
         bool res = read_to_close(reader, "base");
         while(res && !is_closing_element(reader, "interval"))
@@ -145,10 +142,12 @@ namespace hwm
                 if(!read_to_open(reader, tag))
                     return false;
 
-                typename partition01<T>::iterator new_elt(part.insert(div, T()));
-
-                if(!xml_read(n, new_elt->second, reader))
+                T elt;
+                if(!xml_read(n, elt, reader))
                     return false;
+
+                if(!elt.empty())
+                    part.insert(div, elt);
 
                 if(!read_to_close(reader, "divider"))
                     return false;
@@ -348,6 +347,19 @@ namespace hwm
 
                 if(i.states.size() <= id)
                     i.states.resize(id+1);
+
+                i.states[id].in_states.resize(i.incoming.size());
+                BOOST_FOREACH(intersection::state::out_id &oid, i.states[id].in_states)
+                {
+                    oid.out_ref = -1;
+                    oid.fict_lane = 0;
+                }
+                i.states[id].out_states.resize(i.outgoing.size());
+                BOOST_FOREACH(intersection::state::in_id &iid, i.states[id].out_states)
+                {
+                    iid.in_ref = -1;
+                    iid.fict_lane = 0;
+                }
 
                 res = xml_read(n, i.states[id], reader);
             }

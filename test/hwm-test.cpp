@@ -9,6 +9,11 @@ int main(int argc, char *argv[])
 
     std::cerr << "HWM net loaded successfully" << std::endl;
 
+    if(net.check())
+        std::cerr << "HWM net checks out" << std::endl;
+    else
+        std::cerr << "HWM net doesn't check out" << std::endl;
+
     typedef std::pair<const str, hwm::road> rmap_itr;
     BOOST_FOREACH(const rmap_itr &r, net.roads)
     {
