@@ -111,6 +111,6 @@ namespace hwm
     };
 
     network load_xml_network(const char *filename);
-
+    void    write_xml_network(const network &n, const char *filename);
 };
 #endif

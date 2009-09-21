@@ -87,5 +87,8 @@ int main(int argc, char *argv[])
         }
         std::cout << " } " << std::endl;
     }
+
+    write_xml_network(net, argv[2]);
+
     return 0;
 }

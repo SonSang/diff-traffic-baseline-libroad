@@ -4,7 +4,8 @@ libroad_la_SOURCES  = polyline_road.cpp \
 		      sumo_network.cpp \
 		      sumo_xml_read.cpp \
 		      hwm_network.cpp \
-		      hwm_xml_read.cpp
+		      hwm_xml_read.cpp \
+		      hwm_xml_write.cpp
 pkginclude_HEADERS  = partition01.hpp \
 		      road_rep.hpp \
 		      polyline_road.hpp \
