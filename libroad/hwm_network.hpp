@@ -22,7 +22,7 @@ namespace hwm
     {
         struct terminus
         {
-            bool check() const;
+            bool check(bool start, const lane *parent) const;
 
             intersection *inters;
             int           intersect_in_ref;

@@ -7,9 +7,14 @@ namespace hwm
         return !id.empty() && rep.check();
     }
 
-    bool lane::terminus::check() const
+    bool lane::terminus::check(bool start, const lane *parent) const
     {
-        return !inters || !(inters->id.empty());
+        if(!inters)
+            return intersect_in_ref == -1;
+        if(inters->id.empty() || intersect_in_ref == -1)
+            return false;
+        const std::vector<lane*> &cont = start ? inters->outgoing : inters->incoming;
+        return cont[intersect_in_ref] == parent;
     }
 
     bool lane::road_membership::check() const
@@ -38,7 +43,7 @@ namespace hwm
     {
         if(id.empty() ||
            road_memberships.empty() ||
-           !start.check() || !end.check() ||
+           !start.check(true, this) || !end.check(false, this) ||
            speedlimit <= 0.0f)
             return false;
 
