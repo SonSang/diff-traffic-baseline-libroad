@@ -249,8 +249,12 @@ namespace hwm
     {
         assert(is_opening_element(reader, "road"));
 
-        if(!(get_attribute(r.id,   reader, "id") &&
-             get_attribute(r.name, reader, "name")))
+        str id;
+        get_attribute(id, reader, "id");
+        if(id != r.id)
+            return false;
+
+        if(!get_attribute(r.name, reader, "name"))
             return false;
 
         if(!read_to_open(reader, "line_rep"))
@@ -266,8 +270,12 @@ namespace hwm
     {
         assert(is_opening_element(reader, "lane"));
 
-        if(!(get_attribute(l.id,         reader, "id") &&
-             get_attribute(l.speedlimit, reader, "speedlimit")))
+        str id;
+        get_attribute(id, reader, "id");
+        if(id != l.id)
+            return false;
+
+        if(!get_attribute(l.speedlimit, reader, "speedlimit"))
             return false;
 
         bool have_start     = false;
@@ -320,7 +328,9 @@ namespace hwm
     {
         assert(is_opening_element(reader, "intersection"));
 
-        if(!get_attribute(i.id, reader, "id"))
+        str id;
+        get_attribute(id, reader, "id");
+        if(id != i.id)
             return false;
 
         bool res = read_to_open(reader, "incident");
