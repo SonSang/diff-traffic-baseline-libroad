@@ -83,7 +83,7 @@ namespace hwm
         xmlpp::Element *la_elt = elt->add_child("lane_adjacency");
         if(!la.empty())
         {
-            la_elt->set_attribute("neighbor", la.neighbor->id);
+            la_elt->set_attribute("lane_ref", la.neighbor->id);
             la_elt->set_attribute("interval_start", boost::lexical_cast<str>(la.neighbor_interval[0]));
             la_elt->set_attribute("interval_end", boost::lexical_cast<str>(la.neighbor_interval[1]));
         }
