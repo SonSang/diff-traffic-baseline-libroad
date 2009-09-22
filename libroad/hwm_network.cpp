@@ -9,7 +9,7 @@ namespace hwm
 
     bool lane::terminus::check() const
     {
-        return true;
+        return !inters || !(inters->id.empty());
     }
 
     bool lane::road_membership::check() const
