@@ -81,11 +81,16 @@ inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str
         {
             if(reader.get_name() == item_name)
             {
-                typename T::value_type::second_type new_item;
-                if(!xml_read(c, new_item, reader))
-                    return false;
+                str id(reader.get_attribute("id"));
 
-                themap[new_item.id] = new_item;
+                typename T::iterator vp(themap.find(id));
+                if(vp == themap.end())
+                    themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
+                typename T::iterator res(themap.find(id));
+                res->second.id = res->first;
+
+                if(!xml_read(c, themap[id], reader))
+                    return false;
             }
             else
                 return false;
