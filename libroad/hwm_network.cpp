@@ -25,7 +25,7 @@ namespace hwm
 
     bool lane::adjacency::check() const
     {
-        return true;
+        return !neighbor || !(neighbor->id.empty());
     }
 
     bool lane::adjacency::empty() const
