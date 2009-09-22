@@ -196,7 +196,7 @@ namespace hwm
         return read_to_close(reader, "lane_adjacency");
     }
 
-    static inline bool xml_read(network &n, lane::terminus &lt, xmlpp::TextReader &reader, const str &tag)
+    static inline bool xml_read(network &n, lane::terminus &lt, const lane *parent, xmlpp::TextReader &reader, const str &tag)
     {
         assert(is_opening_element(reader, tag));
 
@@ -224,6 +224,19 @@ namespace hwm
 
             lt.inters = retrieve<intersection>(n.intersections, ref);
             lt.intersect_in_ref = -1;
+
+            if(!lt.inters->id.empty())
+            {
+                const std::vector<lane*> &cont(tag == "start" ? lt.inters->outgoing : lt.inters->incoming);
+                size_t pos = 0;
+                while(cont[pos] != parent)
+                {
+                    if(pos >= cont.size())
+                        return false;
+                    ++pos;
+                }
+                lt.intersect_in_ref = pos;
+            }
 
             if(!read_to_close(reader, "intersection_ref"))
                 return false;
@@ -267,9 +280,9 @@ namespace hwm
             res = read_skip_comment(reader);
 
             if(is_opening_element(reader, "start"))
-                res = have_start = xml_read(n, l.start, reader, "start");
+                res = have_start = xml_read(n, l.start, &l, reader, "start");
             else if(is_opening_element(reader, "end"))
-                res = have_end = xml_read(n, l.end, reader, "end");
+                res = have_end = xml_read(n, l.end, &l, reader, "end");
             else if(is_opening_element(reader, "road_intervals"))
             {
                 if(!xml_read(n, l.road_memberships, reader, "road_membership"))
