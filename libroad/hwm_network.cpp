@@ -113,21 +113,21 @@ namespace hwm
         typedef strhash<road>::type::value_type rval;
         BOOST_FOREACH(const rval &r, roads)
         {
-            if(!r.second.check())
+            if(r.first != r.second.id || !r.second.check())
                 return false;
         }
 
         typedef strhash<lane>::type::value_type lval;
         BOOST_FOREACH(const lval &l, lanes)
         {
-            if(!l.second.check())
+            if(l.first != l.second.id || !l.second.check())
                 return false;
         }
 
         typedef strhash<intersection>::type::value_type ival;
         BOOST_FOREACH(const ival &i, intersections)
         {
-            if(!i.second.check())
+            if(i.first != i.second.id || !i.second.check())
                 return false;
         }
 
