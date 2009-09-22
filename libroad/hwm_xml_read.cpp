@@ -85,7 +85,7 @@ namespace hwm
         return res;
     }
 
-    static inline bool xml_read(network &n, std::vector<lane*> &lv, xmlpp::TextReader &reader)
+    static inline bool xml_read(network &n, std::vector<lane*> &lv, xmlpp::TextReader &reader, bool incoming, const str &intersect_id)
     {
         assert(is_opening_element(reader, "lane_ref"));
 
@@ -100,6 +100,15 @@ namespace hwm
 
         assert(lv.size() > loc);
         lv[loc] = retrieve<lane>(n.lanes, ref);
+
+        if(!lv[loc]->id.empty())
+        {
+            lane::terminus &term = incoming ? lv[loc]->end : lv[loc]->start;
+
+            if(!term.inters || term.inters->id != intersect_id)
+                return false;
+            term.intersect_in_ref = loc;
+        }
 
         return read_to_close(reader, "lane_ref");
     }
@@ -314,7 +323,7 @@ namespace hwm
                     res = read_skip_comment(reader);
 
                     if(is_opening_element(reader, "lane_ref"))
-                        res = xml_read(n, i.incoming, reader);
+                        res = xml_read(n, i.incoming, reader, true, i.id);
                 }
             }
             else if(is_opening_element(reader, "outgoing"))
@@ -324,7 +333,7 @@ namespace hwm
                     res = read_skip_comment(reader);
 
                     if(is_opening_element(reader, "lane_ref"))
-                        res = xml_read(n, i.outgoing, reader);
+                        res = xml_read(n, i.outgoing, reader, false, i.id);
                 }
             }
         }
