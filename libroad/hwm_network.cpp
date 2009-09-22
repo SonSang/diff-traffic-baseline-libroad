@@ -67,16 +67,20 @@ namespace hwm
         if(id.empty())
             return false;
 
+        int count = 0;
         BOOST_FOREACH(const lane* lp, incoming)
         {
-            if(!lp)
+            if(!lp || lp->end.inters != this || lp->end.intersect_in_ref != count)
                 return false;
+            ++count;
         }
 
+        count = 0;
         BOOST_FOREACH(const lane* lp, outgoing)
         {
-            if(!lp)
+            if(!lp || lp->start.inters != this || lp->start.intersect_in_ref != count)
                 return false;
+            ++count;
         }
 
         BOOST_FOREACH(const intersection::state &s, states)
