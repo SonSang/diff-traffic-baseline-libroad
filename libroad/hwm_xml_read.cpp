@@ -107,17 +107,19 @@ namespace hwm
     template <class T>
     static inline bool xml_read(network &n, partition01<T> &part, xmlpp::TextReader &reader, const str &tag)
     {
-        if(!(read_to_open(reader, "interval") &&
-             read_to_open(reader, "base") &&
+        if(!read_to_open(reader, "interval"))
+            return false;
+
+        if(is_closing_element(reader, "interval"))
+           return true;
+
+        if(!(read_to_open(reader, "base") &&
              read_to_open(reader, tag)))
             return false;
 
-        T elt;
-        if(!xml_read(n, elt, reader))
+        T elt0;
+        if(!xml_read(n, elt0, reader))
             return false;
-
-        if(!elt.empty())
-            part.insert(0.0, elt);
 
         bool res = read_to_close(reader, "base");
         while(res && !is_closing_element(reader, "interval"))
@@ -138,13 +140,15 @@ namespace hwm
                 if(!xml_read(n, elt, reader))
                     return false;
 
-                if(!elt.empty())
-                    part.insert(div, elt);
+                part.insert(div, elt);
 
                 if(!read_to_close(reader, "divider"))
                     return false;
             }
         }
+
+        if(!part.empty() || !elt0.empty())
+           part.insert(0.0f, elt0);
 
         return res;
     }
