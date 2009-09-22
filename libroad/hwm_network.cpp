@@ -25,6 +25,7 @@ namespace hwm
 
     bool lane::adjacency::check() const
     {
+        // could enforce symmetry here, but probably not necessary
         return !neighbor || !(neighbor->id.empty());
     }
 
@@ -114,6 +115,9 @@ namespace hwm
 
     bool network::check() const
     {
+        if(gamma <= 0.0f || gamma >= 1.0f)
+            return false;
+
         typedef strhash<road>::type::value_type rval;
         BOOST_FOREACH(const rval &r, roads)
         {
