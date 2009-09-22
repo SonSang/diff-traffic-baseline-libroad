@@ -96,7 +96,7 @@ namespace hwm
         lane_elt->set_attribute("speedlimit", boost::lexical_cast<str>(l.speedlimit));
         xml_write(l.start, lane_elt, "start");
         xml_write(l.end, lane_elt, "end");
-        xml_write_partition(l.road_memberships, lane_elt, "road_memberships");
+        xml_write_partition(l.road_memberships, lane_elt, "road_intervals");
         xml_write_partition(l.left, lane_elt, "left");
         xml_write_partition(l.right, lane_elt, "right");
     }
