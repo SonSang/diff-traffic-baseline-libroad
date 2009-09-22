@@ -145,6 +145,7 @@ namespace hwm
         xmlpp::Element *intersection_elt = elt->add_child("intersection");
         xmlpp::Element *incident_elt     = intersection_elt->add_child("incident");
 
+        intersection_elt->set_attribute("id", i.id);
         xml_write(i.incoming, incident_elt, "incoming");
         xml_write(i.outgoing, incident_elt, "outgoing");
         xml_write(i.states, intersection_elt, "states");
