@@ -15,8 +15,14 @@ if test -d .git -o -f .git
 	git update-index -q --refresh
 	test -z "$(git diff-index --name-only HEAD --)" ||
 	VN="$VN.dirty"
+	echo "$VN">version
 else
+    if test -f version
+    then
+	VN=$(cat version)
+    else
 	VN="unknown"
+    fi
 fi
 
 echo $(expr "$VN" : v*'\(.*\)')
