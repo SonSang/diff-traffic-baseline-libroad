@@ -97,8 +97,9 @@ namespace hwm
         xml_write(l.start, lane_elt, "start");
         xml_write(l.end, lane_elt, "end");
         xml_write_partition(l.road_memberships, lane_elt, "road_intervals");
-        xml_write_partition(l.left, lane_elt, "left");
-        xml_write_partition(l.right, lane_elt, "right");
+        xmlpp::Element *adj_elt = lane_elt->add_child("adjacency_intervals");
+        xml_write_partition(l.left,  adj_elt, "left");
+        xml_write_partition(l.right, adj_elt, "right");
     }
 
     template <class T>
