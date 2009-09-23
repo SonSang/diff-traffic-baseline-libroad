@@ -1,8 +1,7 @@
 #ifndef _PARTITION01_HPP_
 #define _PARTITION01_HPP_
 
-#include <map>
-#include <algorithm>
+#include "libroad_common.hpp"
 
 template <class T>
 struct partition01 : public std::map<float, T>
@@ -11,6 +10,7 @@ struct partition01 : public std::map<float, T>
     typedef typename std::map<float, T>::iterator       iterator;
     typedef typename std::map<float, T>::const_iterator const_iterator;
     typedef std::pair<const float, T>                   entry;
+    typedef intervalf                                   interval;
 
     partition01() : base()
     {}
@@ -20,15 +20,21 @@ struct partition01 : public std::map<float, T>
         return base::insert(std::make_pair(x, val)).first;
     }
 
-    float interval_length(const_iterator c_this_itr) const
+    interval containing_interval(const_iterator c_this_itr) const
     {
         const_iterator c_next_itr(c_this_itr);
         ++c_next_itr;
 
         if(c_next_itr == this->end())
-            return 1.0f - c_this_itr->first;
+            return vec2f(c_this_itr->first, 1.0f);
         else
-            return c_next_itr->first - c_this_itr->first;
+            return vec2f(c_this_itr->first, c_next_itr->first);
+    }
+
+    float interval_length(const_iterator c_this_itr) const
+    {
+        interval in(containing_interval(c_this_itr));
+        return in[1] - in[0];
     }
 
     iterator find(float x)
