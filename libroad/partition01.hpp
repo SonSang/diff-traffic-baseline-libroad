@@ -24,10 +24,8 @@ struct partition01 : public std::map<float, T>
     {
         const_iterator c_next_itr(boost::next(c_this_itr));
 
-        if(c_next_itr == this->end())
-            return vec2f(c_this_itr->first, 1.0f);
-        else
-            return vec2f(c_this_itr->first, c_next_itr->first);
+        return interval(c_this_itr->first,
+                        (c_next_itr == this->end()) ? 1.0f : c_this_itr->first);
     }
 
     float interval_length(const_iterator c_this_itr) const
@@ -38,20 +36,14 @@ struct partition01 : public std::map<float, T>
 
     iterator find(float x)
     {
-        iterator itr = this->upper_bound(x);
-        if(itr == this->begin())
-            return itr;
-        else
-            return --itr;
+        iterator itr(this->upper_bound(x));
+        return (itr == this->begin()) ? itr : --itr;
     }
 
     const_iterator find(float x) const
     {
-        const_iterator itr = this->upper_bound(x);
-        if(itr == this->begin())
-            return itr;
-        else
-            return --itr;
+        const_iterator itr(this->upper_bound(x));
+        return (itr == this->begin()) ? itr : --itr;
     }
 
     iterator begin()
