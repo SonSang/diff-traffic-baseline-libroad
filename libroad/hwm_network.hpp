@@ -1,5 +1,5 @@
-#ifndef _SUMO_NETWORK_HPP_
-#define _SUMO_NETWORK_HPP_
+#ifndef _HWM_NETWORK_HPP_
+#define _HWM_NETWORK_HPP_
 
 #include "partition01.hpp"
 #include "polyline_road.hpp"
