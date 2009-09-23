@@ -17,3 +17,5 @@ Makefile.in
 aclocal.m4
 autoscan.log
 autom4te.cache/
+GIT-VERSION-FILE
+version
