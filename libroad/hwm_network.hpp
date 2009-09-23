@@ -34,11 +34,10 @@ namespace hwm
             bool check() const;
             bool empty() const;
 
-            road *parent_road;
-            float interval[2];
-            float lane_position;
-
-            typedef partition01<road_membership> intervals;
+            typedef partition01<road_membership>  intervals;
+            road                                 *parent_road;
+            intervals::interval_t                 interval;
+            float                                 lane_position;
         };
 
         struct adjacency
@@ -46,9 +45,9 @@ namespace hwm
             bool check() const;
             bool empty() const;
 
-            lane *neighbor;
-            float neighbor_interval[2];
-            typedef partition01<adjacency> intervals;
+            typedef partition01<adjacency>  intervals;
+            lane                           *neighbor;
+            intervals::interval_t           neighbor_interval;
         };
 
         bool check() const;

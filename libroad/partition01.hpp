@@ -10,7 +10,7 @@ struct partition01 : public std::map<float, T>
     typedef typename std::map<float, T>::iterator       iterator;
     typedef typename std::map<float, T>::const_iterator const_iterator;
     typedef std::pair<const float, T>                   entry;
-    typedef intervalf                                   interval;
+    typedef intervalf                                   interval_t;
 
     partition01() : base()
     {}
@@ -20,17 +20,17 @@ struct partition01 : public std::map<float, T>
         return base::insert(std::make_pair(x, val)).first;
     }
 
-    interval containing_interval(const_iterator c_this_itr) const
+    interval_t containing_interval(const_iterator c_this_itr) const
     {
         const_iterator c_next_itr(boost::next(c_this_itr));
 
-        return interval(c_this_itr->first,
-                        (c_next_itr == this->end()) ? 1.0f : c_this_itr->first);
+        return interval_t(c_this_itr->first,
+                          (c_next_itr == this->end()) ? 1.0f : c_this_itr->first);
     }
 
     float interval_length(const_iterator c_this_itr) const
     {
-        interval in(containing_interval(c_this_itr));
+        interval_t in(containing_interval(c_this_itr));
         return in[1] - in[0];
     }
 
