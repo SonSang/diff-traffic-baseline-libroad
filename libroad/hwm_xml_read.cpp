@@ -54,7 +54,8 @@ namespace hwm
         }
         while(!is_closing_element(reader, "points"));
 
-        pr.initialize();
+        if(!pr.initialize())
+            throw std::exception();
 
         return read_to_close(reader, "line_rep");
     }

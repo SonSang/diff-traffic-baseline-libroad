@@ -55,25 +55,44 @@ polyline_road::~polyline_road()
 {
 }
 
-void polyline_road::initialize()
+bool polyline_road::initialize()
 {
-    clengths_.resize(points_.size());
-    normals_.resize(points_.size()-1);
+    const size_t N = points_.size();
+    clengths_.resize(N);
+    normals_.resize(N-1);
 
     clengths_[0] = 0.0f;
-    for(size_t i = 1; i < points_.size(); ++i)
+    for(size_t i = 1; i < N; ++i)
     {
         normals_[i-1] = points_[i] - points_[i-1];
         float len = tvmet::dot(normals_[i-1], normals_[i-1]);
-        if(len > 0.0f)
-            len = std::sqrt(len);
+        if(len < FLT_EPSILON)
+            return false;
 
+        len = std::sqrt(len);
         clengths_[i] = clengths_[i-1] + len;
 
         normals_[i-1] /= len;
     }
-
     inv_len_ = 1.0f/clengths_.back();
+
+    cmitres_.resize(N);
+
+    cmitres_[0] = 0.0f;
+    for(size_t i = 0; i < N - 2; ++i)
+    {
+        float dot    = tvmet::dot(normals_[i], normals_[i+1]);
+        if(std::abs(dot - 1.0f) < FLT_EPSILON)
+            return false;
+        float orient = normals_[i][1] * normals_[i+1][0] - normals_[i][0]*normals_[i+1][1];
+        float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f-dot)/(1.0f + dot)), orient);
+
+        cmitres_[i+1] += cmitres_[i] + mitre;
+    }
+
+    cmitres_[N-1] = cmitres_[N-2]; // + 0.0f;
+
+    return true;
 }
 
 inline size_t polyline_road::locate(float t) const

@@ -12,7 +12,7 @@ struct polyline_road
 
     ~polyline_road();
 
-    void   initialize();
+    bool initialize();
     size_t locate(float t) const;
     size_t locate_scale(float t, float &local) const;
     bool   check() const;
@@ -20,6 +20,7 @@ struct polyline_road
     std::vector<vec3f> points_;
     std::vector<vec3f> normals_;
     std::vector<float> clengths_;
+    std::vector<float> cmitres_;
 
     float inv_len_;
 };
