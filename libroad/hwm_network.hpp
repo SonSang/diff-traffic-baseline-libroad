@@ -4,6 +4,7 @@
 #include "partition01.hpp"
 #include "polyline_road.hpp"
 #include "libroad_common.hpp"
+#include "sumo_network.hpp"
 
 namespace hwm
 {
@@ -112,5 +113,7 @@ namespace hwm
 
     network load_xml_network(const char *filename);
     void    write_xml_network(const network &n, const char *filename);
+
+    network from_sumo(const str &name, float gamma, const sumo::network &n);
 };
 #endif
