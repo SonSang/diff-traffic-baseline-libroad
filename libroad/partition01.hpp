@@ -22,8 +22,7 @@ struct partition01 : public std::map<float, T>
 
     interval containing_interval(const_iterator c_this_itr) const
     {
-        const_iterator c_next_itr(c_this_itr);
-        ++c_next_itr;
+        const_iterator c_next_itr(boost::next(c_this_itr));
 
         if(c_next_itr == this->end())
             return vec2f(c_this_itr->first, 1.0f);
