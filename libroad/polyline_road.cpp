@@ -82,10 +82,10 @@ bool polyline_road::initialize()
     for(size_t i = 0; i < N - 2; ++i)
     {
         float dot    = tvmet::dot(normals_[i], normals_[i+1]);
-        if(std::abs(dot - 1.0f) < FLT_EPSILON)
+        if(std::abs(dot + 1.0f) < FLT_EPSILON)
             return false;
         float orient = normals_[i][1] * normals_[i+1][0] - normals_[i][0]*normals_[i+1][1];
-        float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f-dot)/(1.0f + dot)), orient);
+        float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f - dot)/(1.0f + dot)), orient);
 
         cmitres_[i+1] += cmitres_[i] + mitre;
     }
