@@ -31,6 +31,15 @@ namespace hwm
         return true;
     }
 
+    void network::translate(const vec3f &o)
+    {
+        typedef strhash<road>::type::value_type road_pair;
+        BOOST_FOREACH(road_pair &rp, roads)
+        {
+            rp.second.translate(o);
+        }
+    }
+
     typedef strhash<road>::type::iterator         road_itr;
     typedef strhash<lane>::type::iterator         lane_itr;
     typedef strhash<intersection>::type::iterator intersection_itr;

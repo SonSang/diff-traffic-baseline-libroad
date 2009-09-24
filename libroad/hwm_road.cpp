@@ -6,4 +6,9 @@ namespace hwm
     {
         return !id.empty() && rep.check();
     }
+
+    void road::translate(const vec3f &o)
+    {
+        rep.translate(o);
+    }
 }

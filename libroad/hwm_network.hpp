@@ -12,6 +12,8 @@ namespace hwm
     {
         bool check() const;
 
+        void translate(const vec3f &o);
+
         str           id;
         str           name;
         polyline_road rep;
@@ -102,6 +104,8 @@ namespace hwm
     struct network
     {
         bool check() const;
+
+        void translate(const vec3f &o);
 
         str                         name;
         float                       gamma;

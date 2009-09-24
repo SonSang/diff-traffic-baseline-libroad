@@ -1,5 +1,9 @@
 #include "polyline_road.hpp"
 
+polyline_road::~polyline_road()
+{
+}
+
 float polyline_road::length() const
 {
     return clengths_.back();
@@ -51,8 +55,12 @@ void polyline_road::point_frame(float t, mat4x4f &fr) const
         0.0f,             0.0f,     0.0f,  1.0f;
 }
 
-polyline_road::~polyline_road()
+void polyline_road::translate(const vec3f &o)
 {
+    BOOST_FOREACH(vec3f &pt, points_)
+    {
+        pt += o;
+    }
 }
 
 bool polyline_road::initialize()
