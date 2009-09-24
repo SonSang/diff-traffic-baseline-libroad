@@ -7,11 +7,11 @@ struct polyline_road
 {
     ~polyline_road();
 
-    float length     ()                       const;
-    void  point      (float t, vec3f   &pt)   const;
-    void  frame      (float t, mat3x3f &fr)   const;
-    void  point_frame(float t, mat4x4f &ptfr) const;
-    void  translate(const vec3f &o);
+    float   length     ()        const;
+    vec3f   point      (float t) const;
+    mat3x3f frame      (float t) const;
+    mat4x4f point_frame(float t) const;
+    void    translate(const vec3f &o);
 
     bool   initialize();
     size_t locate(float t) const;

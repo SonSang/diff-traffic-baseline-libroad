@@ -9,14 +9,14 @@ float polyline_road::length() const
     return clengths_.back();
 }
 
-void polyline_road::point(const float t, vec3f &pt) const
+vec3f polyline_road::point(const float t) const
 {
     float        local_t;
     const size_t idx = locate_scale(t, local_t);
-    pt               = points_[idx] + local_t*normals_[idx];
+    return vec3f(points_[idx] + local_t*normals_[idx]);
 }
 
-void polyline_road::frame(const float t, mat3x3f &fr) const
+mat3x3f polyline_road::frame(const float t) const
 {
     float local_t;
     const size_t idx = locate_scale(t, local_t);
@@ -26,16 +26,15 @@ void polyline_road::frame(const float t, mat3x3f &fr) const
     const vec3f right(normals_[idx][1]*rightlen, -normals_[idx][0]*rightlen, 0.0f);
     const vec3f up(tvmet::cross(right, normals_[idx]));
 
-    if(std::abs(tvmet::dot(up, up) - 1.0f) < FLT_EPSILON)
-        throw std::exception();
+    mat3x3f res;
+    res = normals_[idx][0], right[0], up[0],
+          normals_[idx][1], right[1], up[1],
+          normals_[idx][2], right[2], up[2];
 
-    fr =
-        normals_[idx][0], right[0], up[0],
-        normals_[idx][1], right[1], up[1],
-        normals_[idx][2], right[2], up[2];
+    return res;
 }
 
-void polyline_road::point_frame(const float t, mat4x4f &fr) const
+mat4x4f polyline_road::point_frame(const float t) const
 {
     float local_t;
     const size_t idx = locate_scale(t, local_t);
@@ -45,14 +44,12 @@ void polyline_road::point_frame(const float t, mat4x4f &fr) const
     const vec3f right(normals_[idx][1]*rightlen, -normals_[idx][0]*rightlen, 0.0f);
     const vec3f up(tvmet::cross(right, normals_[idx]));
 
-    if(std::abs(tvmet::dot(up, up) - 1.0f) < FLT_EPSILON)
-        throw std::exception();
-
-    fr =
-        normals_[idx][0], right[0], up[0], points_[idx][0] + local_t*normals_[idx][0],
-        normals_[idx][1], right[1], up[1], points_[idx][1] + local_t*normals_[idx][1],
-        normals_[idx][2], right[2], up[2], points_[idx][2] + local_t*normals_[idx][2],
-        0.0f,             0.0f,     0.0f,  1.0f;
+    mat4x4f fr;
+    fr = normals_[idx][0], right[0], up[0], points_[idx][0] + local_t*normals_[idx][0],
+         normals_[idx][1], right[1], up[1], points_[idx][1] + local_t*normals_[idx][1],
+         normals_[idx][2], right[2], up[2], points_[idx][2] + local_t*normals_[idx][2],
+         0.0f,             0.0f,     0.0f,  1.0f;
+    return fr;
 }
 
 void polyline_road::translate(const vec3f &o)
