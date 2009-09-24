@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         typedef hwm::lane::road_membership::intervals::entry rme;
         BOOST_FOREACH(const rme &rm, l.second.road_memberships)
         {
-            std::cout << rm.first << ": " << rm.second.parent_road->id << " [" << rm.second.interval[0] << "," << rm.second.interval[1] << "] " << rm.second.lane_position << " |";
+            std::cout << rm.first << ": " << rm.second.parent_road->id << " " << rm.second.interval << " " << rm.second.lane_position << " |";
         }
         std::cout << " } left {";
 
@@ -43,14 +43,14 @@ int main(int argc, char *argv[])
         BOOST_FOREACH(const ai &left, l.second.left)
         {
             if(left.second.neighbor)
-                std::cout << left.first << ": " << left.second.neighbor->id << " [" << left.second.neighbor_interval[0] << "," << left.second.neighbor_interval[1] << "] ";
+                std::cout << left.first << ": " << left.second.neighbor->id << " " << left.second.neighbor_interval << " ";
         }
         std::cout << " } right {";
 
         BOOST_FOREACH(const ai &right, l.second.right)
         {
             if(right.second.neighbor)
-                std::cout << right.first << ": " << right.second.neighbor->id << " [" << right.second.neighbor_interval[0] << "," << right.second.neighbor_interval[1] << "] ";
+                std::cout << right.first << ": " << right.second.neighbor->id << " " << right.second.neighbor_interval << " ";
         }
         std::cout << " } " << std::endl;
     }
