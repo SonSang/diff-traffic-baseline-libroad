@@ -9,25 +9,25 @@ float polyline_road::length() const
     return clengths_.back();
 }
 
-void polyline_road::point(float t, vec3f &pt) const
+void polyline_road::point(const float t, vec3f &pt) const
 {
-    float local;
-    size_t idx = locate_scale(t, local);
-    pt = points_[idx] + local*normals_[idx];
+    float        local_t;
+    const size_t idx = locate_scale(t, local_t);
+    pt               = points_[idx] + local_t*normals_[idx];
 }
 
-void polyline_road::frame(float t, mat3x3f &fr) const
+void polyline_road::frame(const float t, mat3x3f &fr) const
 {
-    float local;
-    size_t idx = locate_scale(t, local);
+    float local_t;
+    const size_t idx = locate_scale(t, local_t);
 
     //* Equal to tvmet::cross(normals_[idX], vec3f(0,0,1));
-    vec3f right(normals_[idx][1], -normals_[idx][0], 0.0f);
-    float rightlen = std::sqrt(tvmet::dot(right, right));
-    right /= rightlen;
+    const float rightlen = 1.0f/std::sqrt(normals_[idx][0]*normals_[idx][0] + normals_[idx][1]*normals_[idx][1]);
+    const vec3f right(normals_[idx][1]*rightlen, -normals_[idx][0]*rightlen, 0.0f);
+    const vec3f up(tvmet::cross(right, normals_[idx]));
 
-    vec3f up(tvmet::cross(right, normals_[idx]));
-    assert(std::abs(tvmet::dot(up, up) - 1.0f) < 1e-7f);
+    if(std::abs(tvmet::dot(up, up) - 1.0f) < FLT_EPSILON)
+        throw std::exception();
 
     fr =
         normals_[idx][0], right[0], up[0],
@@ -35,23 +35,23 @@ void polyline_road::frame(float t, mat3x3f &fr) const
         normals_[idx][2], right[2], up[2];
 }
 
-void polyline_road::point_frame(float t, mat4x4f &fr) const
+void polyline_road::point_frame(const float t, mat4x4f &fr) const
 {
-    float local;
-    size_t idx = locate_scale(t, local);
+    float local_t;
+    const size_t idx = locate_scale(t, local_t);
 
     //* Equal to tvmet::cross(normals_[idX], vec3f(0,0,1));
-    vec3f right(normals_[idx][1], -normals_[idx][0], 0.0f);
-    float rightlen = std::sqrt(tvmet::dot(right, right));
-    right /= rightlen;
+    const float rightlen = 1.0f/std::sqrt(normals_[idx][0]*normals_[idx][0] + normals_[idx][1]*normals_[idx][1]);
+    const vec3f right(normals_[idx][1]*rightlen, -normals_[idx][0]*rightlen, 0.0f);
+    const vec3f up(tvmet::cross(right, normals_[idx]));
 
-    vec3f up(tvmet::cross(right, normals_[idx]));
-    assert(std::abs(tvmet::dot(up, up) - 1.0f) < 1e-7);
+    if(std::abs(tvmet::dot(up, up) - 1.0f) < FLT_EPSILON)
+        throw std::exception();
 
     fr =
-        normals_[idx][0], right[0], up[0], points_[idx][0] + local*normals_[idx][0],
-        normals_[idx][1], right[1], up[1], points_[idx][1] + local*normals_[idx][1],
-        normals_[idx][2], right[2], up[2], points_[idx][2] + local*normals_[idx][2],
+        normals_[idx][0], right[0], up[0], points_[idx][0] + local_t*normals_[idx][0],
+        normals_[idx][1], right[1], up[1], points_[idx][1] + local_t*normals_[idx][1],
+        normals_[idx][2], right[2], up[2], points_[idx][2] + local_t*normals_[idx][2],
         0.0f,             0.0f,     0.0f,  1.0f;
 }
 
@@ -73,13 +73,11 @@ bool polyline_road::initialize()
     for(size_t i = 1; i < N; ++i)
     {
         normals_[i-1] = points_[i] - points_[i-1];
-        float len = tvmet::dot(normals_[i-1], normals_[i-1]);
+        const float len = std::sqrt(tvmet::dot(normals_[i-1], normals_[i-1]));
         if(len < FLT_EPSILON)
             return false;
 
-        len = std::sqrt(len);
         clengths_[i] = clengths_[i-1] + len;
-
         normals_[i-1] /= len;
     }
     inv_len_ = 1.0f/clengths_.back();
@@ -89,11 +87,11 @@ bool polyline_road::initialize()
     cmitres_[0] = 0.0f;
     for(size_t i = 0; i < N - 2; ++i)
     {
-        float dot    = tvmet::dot(normals_[i], normals_[i+1]);
+        const float dot = tvmet::dot(normals_[i], normals_[i+1]);
         if(std::abs(dot + 1.0f) < FLT_EPSILON)
             return false;
-        float orient = normals_[i][1] * normals_[i+1][0] - normals_[i][0]*normals_[i+1][1];
-        float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f - dot)/(1.0f + dot)), orient);
+        const float orient = normals_[i][1] * normals_[i+1][0] - normals_[i][0]*normals_[i+1][1];
+        const float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f - dot)/(1.0f + dot)), orient);
 
         cmitres_[i+1] += cmitres_[i] + mitre;
     }
@@ -103,30 +101,27 @@ bool polyline_road::initialize()
     return true;
 }
 
-inline size_t polyline_road::locate(float t) const
+inline size_t polyline_road::locate(const float t) const
 {
-    float scale_t = t*length();
-    std::vector<float>::const_iterator found = std::upper_bound(clengths_.begin(), clengths_.end(), scale_t);
-    size_t idx = found - clengths_.begin();
-    if(idx > 0)
-        return idx - 1;
-    else
-        return 0;
+    const float                              scale_t = t*length();
+    const std::vector<float>::const_iterator found   = std::upper_bound(clengths_.begin(), clengths_.end(), scale_t);
+    const size_t                             idx     = found - clengths_.begin();
+    return (idx > 0) ? idx - 1 : 0;
 }
 
-inline size_t polyline_road::locate_scale(float t, float &local) const
+inline size_t polyline_road::locate_scale(const float t, float &local_t) const
 {
-    float scale_t = t*length();
-    std::vector<float>::const_iterator found = std::upper_bound(clengths_.begin(), clengths_.end(), scale_t);
-    size_t idx = found - clengths_.begin();
+    const float                              scale_t = t*length();
+    const std::vector<float>::const_iterator found   = std::upper_bound(clengths_.begin(), clengths_.end(), scale_t);
+    const size_t                             idx     = found - clengths_.begin();
     if(idx > 0)
     {
-        local = (scale_t - clengths_[idx-1]) / (clengths_[idx] - clengths_[idx-1]);
+        local_t = (scale_t - clengths_[idx-1]) / (clengths_[idx] - clengths_[idx-1]);
         return idx - 1;
     }
     else
     {
-        local = 0.0f;
+        local_t = 0.0f;
         return 0;
     }
 }
