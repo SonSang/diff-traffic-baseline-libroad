@@ -52,11 +52,11 @@ def tan_circ(plist, radius=None):
 
     center0 = alpha * back + radius*back_t + p
     return (alpha * back + p, angle0, center0, radius, angle1, alpha * fwd + p)
-
-if __name__ == '__main__':
-    debug = True
     pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
 #    pts = numpy.array([[1.0, -2.0], [2.0, 4.0], [8.0, -1.0]])
+
+
+def run_tan_circ(pts, debug=False):
     lastpt = pts[0]
     pylab.clf()
     ax = pylab.subplot(111)
@@ -97,3 +97,37 @@ if __name__ == '__main__':
     ax.axis('equal')
 
     pylab.show()
+
+def tan_circ_vec(plist, radius):
+    p    = plist[1]
+    back = plist[0] - plist[1]
+    fwd  = plist[2] - plist[1]
+    blen = scipy.linalg.norm(back)
+    back /= blen
+    flen = scipy.linalg.norm(fwd)
+    fwd  /= flen
+
+    det = numpy.cross(back, fwd)
+    det /= scipy.linalg.norm(det)
+
+    back_t = numpy.cross(det, back)
+    fwd_t  = numpy.cross(fwd, det)
+
+    print radius*(fwd_t[0] - back_t[0])/(back[0] - fwd[0])
+    print radius*(fwd_t[1] - back_t[1])/(back[1] - fwd[1])
+
+    return None
+
+def run_tan_circ_vec(pts):
+    lastpt = pts[0]
+    for idx in xrange(1, len(pts)-1):
+        rad = 1.0
+        center = tan_circ_vec(pts[idx-1:idx+2], rad)
+
+if __name__ == '__main__':
+    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
+    #    pts = numpy.array([[1.0, -2.0], [2.0, 4.0], [8.0, -1.0]])
+    run_tan_circ(pts)
+
+    pts = numpy.array([[1.0, -2.0, 0.0], [2.0, 4.0, 0.0], [4.0, -1.0, 0.0]])
+    run_tan_circ_vec(pts)
