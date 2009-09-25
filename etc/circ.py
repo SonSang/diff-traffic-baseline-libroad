@@ -22,33 +22,27 @@ def tan_circ(plist, radius):
     back /= scipy.linalg.norm(back)
     fwd  /= scipy.linalg.norm(fwd)
 
-    det = back[0]*fwd[1] - back[1]*fwd[0]
+    det = back[1]*fwd[0] - back[0]*fwd[1]
 
-    beta = radius
-    if(det < 0):
+    if(det > 0):
         back_t = numpy.array([ back[1], -back[0]])
         fwd_t  = numpy.array([ -fwd[1],  fwd[0]])
-    elif det > 0:
+    elif det < 0:
         back_t = numpy.array([-back[1], back[0]])
         fwd_t  = numpy.array([  fwd[1], -fwd[0]])
     else:
         return (plist[2], None, None, None, plist[2])
 
-    A = numpy.array([[back[0], -fwd[0]],
-                     [back[1], -fwd[1]]])
-
-    B = numpy.array([[ fwd_t[0]-back_t[0]],
-                     [ fwd_t[1]-back_t[1]]])
-
-    alpha = scipy.linalg.solve(A, beta*B)
+    alpha = radius/det*numpy.array([[  -fwd[1] * (fwd_t[0] - back_t[0]) +  fwd[0] * (fwd_t[1] - back_t[1]) ],
+                                    [ -back[1] * (fwd_t[0] - back_t[0]) + back[0] * (fwd_t[1] - back_t[1]) ]])
 
     angle0 = math.atan2(-back_t[1], -back_t[0])*180.0/math.pi
     angle1 = math.atan2( -fwd_t[1],  -fwd_t[0])*180.0/math.pi
 
     angle0, angle1 = min_arc(angle0, angle1)
 
-    center0 = alpha[0] * back + beta*back_t + p
-    center1 = alpha[1] * fwd  + beta* fwd_t + p
+    center0 = alpha[0] * back + radius*back_t + p
+    # center1 = alpha[1] * fwd  + radius* fwd_t + p
     return (alpha[0] * back + p, angle0, center0, angle1, alpha[1] * fwd + p)
 
 if __name__ == '__main__':
