@@ -33,21 +33,19 @@ def tan_circ(plist, radius):
     else:
         return (plist[2], None, None, None, plist[2])
 
-    alpha = radius/det*numpy.array([[  -fwd[1] * (fwd_t[0] - back_t[0]) +  fwd[0] * (fwd_t[1] - back_t[1]) ],
-                                    [ -back[1] * (fwd_t[0] - back_t[0]) + back[0] * (fwd_t[1] - back_t[1]) ]])
+    alpha = radius*(fwd_t[0]-back_t[0])/(back[0] - fwd[0])
 
     angle0 = math.atan2(-back_t[1], -back_t[0])*180.0/math.pi
     angle1 = math.atan2( -fwd_t[1],  -fwd_t[0])*180.0/math.pi
 
     angle0, angle1 = min_arc(angle0, angle1)
 
-    center0 = alpha[0] * back + radius*back_t + p
-    # center1 = alpha[1] * fwd  + radius* fwd_t + p
-    return (alpha[0] * back + p, angle0, center0, angle1, alpha[1] * fwd + p)
+    center0 = alpha * back + radius*back_t + p
+    return (alpha * back + p, angle0, center0, angle1, alpha * fwd + p)
 
 if __name__ == '__main__':
     debug = False
-    pts = numpy.array([[0.0, 4.0], [4.0, 4.0], [4.0, 0.0], [0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
+    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0], [0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
     lastpt = pts[0]
     pylab.clf()
     ax = pylab.subplot(111)
@@ -79,9 +77,11 @@ if __name__ == '__main__':
     l0 = matplotlib.lines.Line2D(linedata[0], linedata[1], color='black', linewidth=2.0)
     ax.add_line(l0)
 
-    linedata = zip(pts[-2], pts[-1])
-    l1 = matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue', linewidth=1.0)
-    ax.add_line(l1)
+    if debug:
+        linedata = zip(pts[-2], pts[-1])
+        l1 = matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue', linewidth=1.0)
+        ax.add_line(l1)
+
     ax.axis('auto')
     ax.axis('equal')
 
