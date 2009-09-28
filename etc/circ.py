@@ -52,9 +52,6 @@ def tan_circ(plist, radius=None):
 
     center0 = alpha * back + radius*back_t + p
     return (alpha * back + p, angle0, center0, radius, angle1, alpha * fwd + p)
-    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
-#    pts = numpy.array([[1.0, -2.0], [2.0, 4.0], [8.0, -1.0]])
-
 
 def run_tan_circ(pts, debug=False):
     lastpt = pts[0]
