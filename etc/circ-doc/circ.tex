@@ -3,8 +3,13 @@
 \usepackage{subfigure}
 \usepackage{amsmath}
 \usepackage[letterpaper]{geometry}
+\title{Smoothing polylines with circles}
+\author{Jason Sewall}
+\date{October 4, 2009}
 \begin{document}
+\maketitle
 
+\section{The problem}
 We have an ordered sequence $P$ of $n$ 2D points:
 
 \begin{equation}
@@ -36,13 +41,48 @@ We wish to `smooth' this polyline to something like what is shown in Fig.~\ref{f
 
 Where $c_{i} = (o^{x}_{i}, o^{y}_{i})$ is the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
 
-\begin{figure}[h]
-\end{figure}
+\section{Formulation of the arcs $a_{i}$}
 
-For each interior point $p_{i}$, the limits on the associated arc $\mathbf{a}_{i}$ are closely associated with the triple of points
-$\left(
-  p_{i-1}, p_{i}, p_{i+1}
-\right)$.  More precisely, we are interested in the derived vectors $\mathbf{v}^{b}_{i} = p_{i-1} - p_{i}$ and $\mathbf{v}^{f}_{i} = p_{i+1} - p_{i}$. See Fig.~\ref{fig:interior-point}.
+\subsection{Definitions}
+
+For each interior point $p_{i}$, the associated arc $\mathbf{a}_{i}$ is determined closely associated with the triple of points:
+
+\begin{equation}
+  \label{eq:arc-triple}
+  T_{i} = \left(p_{i-1}, p_{i}, p_{i+1}\right)
+\end{equation}
+
+More precisely, we are interested in the derived vectors
+
+\begin{equation}
+  \label{eq:vectors}
+  \begin{split}
+  \mathbf{v}^{b}_{i} = p_{i-1} - p_{i}\\
+  \mathbf{v}^{f}_{i} = p_{i+1} - p_{i}
+  \end{split}
+\end{equation}
+
+their lengths:
+
+\begin{equation}
+  \label{eq:vector-lengths}
+  \begin{split}
+    L^{b}_{i} = |\mathbf{v}^{b}_{i}|\\
+    L^{f}_{i} = |\mathbf{v}^{f}_{i}|
+  \end{split}
+\end{equation}
+
+and the associated unit vectors:
+
+\begin{equation}
+  \label{eq:unit-vectors}
+  \begin{split}
+    \mathbf{n}^{b}_{i} = \frac{\mathbf{v}^{b}_{i}}{L^{b}_{i}} =\frac{\mathbf{v}^{b}_{i}}{|\mathbf{v}^{b}_{i}|}\\
+    \mathbf{n}^{f}_{i} = \frac{\mathbf{v}^{f}_{i}}{L^{f}_{i}} =\frac{\mathbf{v}^{f}_{i}}{|\mathbf{v}^{f}_{i}|}
+  \end{split}
+\end{equation}
+
+See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
 
 \begin{figure}[h]
   \centering
@@ -50,6 +90,8 @@ $\left(
   \caption{The interior point $p_{i}$ with backward vector $\mathbf{v}^{b}_{i}$ and forward vector $\mathbf{v}^{f}_{i}$. $\mathbf{b}_{i}$ is the bisector of these vectors}
   \label{fig:interior-point}
 \end{figure}
+
+\subsection{Computing the arc ranges}
 
 An interior point's associated backward and forward vectors determine the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; given $\mathbf{v}^{f}_{i}$ and $\mathbf{v}^{b}_{i}$, we have:
 
@@ -60,20 +102,31 @@ An interior point's associated backward and forward vectors determine the arc an
 
 Where $o$ is the sign of $\mathbf{v}^{b}_{i}\times\mathbf{v}^{f}_{i}$ --- specifying the orientation of the lines, and therefore the direction of $\mathbf{b}_{i}$
 
-Given an interior point, the range of allowable radii $r_{i}$ depends on the length of $\mathbf{v}^{b}_{i}$ and $\mathbf{v}^{a}_{i}$; we can see in Fig.~\ref{fig:interior-point} that were the radius to exceed some quantity, one or both of the points of tangency of the circle on the vectors (shown in the diagram as $\alpha_i\mathbf{v}^b_i/|\mathbf{v}^b_i|$ and $\alpha_i\mathbf{v}^f_i/|\mathbf{v}^f_i|$) may lie beyond the length(s) of the vectors.  For convenience, let us introduce the notation $\mathbf{n}^{f}_{i} = \mathbf{v}^f_i/|\mathbf{v}^f_i|$ and $\mathbf{n}^{b}_{i} = \mathbf{v}^b_i/|\mathbf{v}^b_i|$.  Now we can write:
+\subsection{Allowable radii}
+
+Given an interior point, the range of allowable radii $r_{i}$ depends on the length of $\mathbf{v}^{b}_{i}$ and $\mathbf{v}^{a}_{i}$; we can see in Fig.~\ref{fig:interior-point} that were the radius to exceed some quantity, one or both of the points of tangency of the circle on the vectors (shown in the diagram as $\alpha_i\mathbf{v}^b_i/|\mathbf{v}^b_i|$ and $\alpha_i\mathbf{v}^f_i/|\mathbf{v}^f_i|$) may lie beyond the length(s) of the vectors.
+
+Obviously, we know that
+
+\begin{equation}
+  \label{eq:rlow}
+  r_i > 0
+\end{equation}
+
+Now we must derive an upper bound on $r_{i}$, we based on the lengths $|\mathbf{v}^b_i|$, and $|\mathbf{v}^f_i|$.  For convenience, let us introduce the notation $\mathbf{n}^{f}_{i} = \mathbf{v}^f_i/|\mathbf{v}^f_i|$ and $\mathbf{n}^{b}_{i} = \mathbf{v}^b_i/|\mathbf{v}^b_i|$.  Now we can write:
 
 \begin{equation}
   \label{eq:dotnorm}
-  \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i} = \cos 2\theta
+  \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i} = \cos 2\theta_i
 \end{equation}
 
 and we are interested in
 
 \begin{align}
   \notag
-  \frac{r_i}{\alpha_{i}} &= \tan \theta\\
+  \frac{r_i}{\alpha_{i}} &= \tan \theta_i\\
   \label{eq:tantheta}
-  r_i &= \alpha_{i}\tan \theta
+  r_i &= \alpha_{i}\tan \theta_i
 \end{align}
 
 And we know from trigonometry that
@@ -91,13 +144,13 @@ We can combine Eq.~\eqref{eq:tantheta} with Eq.~\eqref{eq:tanident} to get
 
 \begin{align}
   \label{eq:radiustan}
-  r_{i} &= \alpha_i\frac{\sqrt{1-\cos^{2} 2\theta}}{1+\cos 2\theta}
+  r_{i} &= \alpha_i\frac{\sqrt{1-\cos^{2} 2\theta_i}}{1+\cos 2\theta_i}
 \end{align}
 
 And substituting Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan}, we get:
 
 \begin{align}
-  \label{eq:radiustan}
+  \label{eq:radius-alpha}
   r_{i} &= \alpha_i\frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}
 \end{align}
 
