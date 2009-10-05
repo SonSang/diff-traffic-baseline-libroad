@@ -14,7 +14,7 @@ We have an ordered sequence $P$ of $n$ 2D points:
 
 \begin{equation}
   \label{eq:points}
-  P = \{ p_{0}, p_{1},\ldots,p_{n-2},p_{n-1}\}
+  P = \left\{p_{0}, p_{1},\ldots,p_{n-2},p_{n-1}\right\}
 \end{equation}
 
 These points define a polyline with $n-1$ segments such as that in Fig.~\ref{fig:polyline}.  Let us assume that there are no two points adjacent in the sequence that are equal, and that there are no three adjacent points that are colinear; clearly we can eliminate of these adjacent repeated points or the central points in a colinear sequence without modifying the line's shape.
@@ -56,69 +56,56 @@ For each interior point $p_{i}$, the associated arc $\mathbf{a}_{i}$ is determin
 
 In particular, we are interested in the derived vectors
 
-\begin{equation}
-  \label{eq:vectors}
-  \begin{split}
-  \mathbf{v}^{b}_{i} = p_{i-1} - p_{i}\\
-  \mathbf{v}^{f}_{i} = p_{i+1} - p_{i}
-  \end{split}
-\end{equation}
+\begin{align}
+  \label{eq:vector-b}
+  \mathbf{v}^{b}_{i} &= p_{i-1} - p_{i}\\
+  \label{eq:vector-f}
+  \mathbf{v}^{f}_{i} &= p_{i+1} - p_{i}
+\end{align}
 
 their lengths:
 
-\begin{equation}
-  \label{eq:vector-lengths}
-  \begin{split}
-    L^{b}_{i} = |\mathbf{v}^{b}_{i}|\\
-    L^{f}_{i} = |\mathbf{v}^{f}_{i}|
-  \end{split}
-\end{equation}
+\begin{align}
+  \label{eq:vector-length-b}
+  L^{b}_{i} &= \left|\mathbf{v}^{b}_{i}\right|\\
+  \label{eq:vector-length-f}
+  L^{f}_{i} &= \left|\mathbf{v}^{f}_{i}\right|
+\end{align}
 
 and the associated unit vectors:
 
-\begin{equation}
-  \label{eq:unit-vectors}
-  \begin{split}
-    \mathbf{n}^{b}_{i} = \frac{\mathbf{v}^{b}_{i}}{L^{b}_{i}} =\frac{\mathbf{v}^{b}_{i}}{|\mathbf{v}^{b}_{i}|}\\
-    \mathbf{n}^{f}_{i} = \frac{\mathbf{v}^{f}_{i}}{L^{f}_{i}} =\frac{\mathbf{v}^{f}_{i}}{|\mathbf{v}^{f}_{i}|}
-  \end{split}
-\end{equation}
+\begin{align}
+  \label{eq:unit-vector-b}
+  \mathbf{n}^{b}_{i} &= \frac{\mathbf{v}^{b}_{i}}{L^{b}_{i}} &=\frac{\mathbf{v}^{b}_{i}}{\left|\mathbf{v}^{b}_{i}\right|}\\
+  \label{eq:unit-vectors-f}
+  \mathbf{n}^{f}_{i} &= \frac{\mathbf{v}^{f}_{i}}{L^{f}_{i}} &=\frac{\mathbf{v}^{f}_{i}}{\left|\mathbf{v}^{f}_{i}\right|}
+\end{align}
 
 \paragraph{Tangent points}
 
 The projections of $c_{i}-p_{i}$ onto $\mathbf{n}^{b}_{i}$ and onto $\mathbf{n}^{f}_{i}$ have equal length $\alpha_i$; then the tangent points of the circle on $\mathbf{v}^{b}_{i}$ and $\mathbf{v}^{b}_{i}$ are:
 
-\begin{equation}
-  \label{eq:alpha-vectors}
-  \begin{split}
-    (c_{i}-p_{i})\;\mathrm{proj}\; \mathbf{n}^{b}_{i} = \alpha_i\mathbf{n}^{b}_{i}\\
-    (c_{i}-p_{i})\;\mathrm{proj}\; \mathbf{n}^{f}_{i} = \alpha_i\mathbf{n}^{f}_{i}
-  \end{split}
-\end{equation}
+\begin{align}
+  \label{eq:alpha-vector-b}
+  \left(c_{i}-p_{i}\right)\;\mathrm{proj}\; \mathbf{n}^{b}_{i} &= \alpha_i\mathbf{n}^{b}_{i}\\
+  \label{eq:alpha-vector-f}
+  \left(c_{i}-p_{i}\right)\;\mathrm{proj}\; \mathbf{n}^{f}_{i} &= \alpha_i\mathbf{n}^{f}_{i}
+\end{align}
 
 \paragraph{Radius vectors}
 
 We are also interested in the (negative) radius vectors from these points to the center $c_{i}$:
 
-\begin{equation}
-  \label{eq:radius-vectors}
-   \begin{split}
-     \mathbf{r}^{b}_{i} = c_{i} - \left(\alpha\mathbf{n}^{b}_{i} - p_{i}\right)=\pm r_i\left( -{\mathbf{n}^{b}_{i}}_{y},  {\mathbf{n}^{b}_{i}}_{x} \right)\\
-     \mathbf{r}^{f}_{i} = c_{i} - \left(\alpha\mathbf{n}^{f}_{i} - p_{i}\right)=\pm r_i\left(  {\mathbf{n}^{f}_{i}}_{y}, -{\mathbf{n}^{f}_{i}}_{x} \right)\\
-   \end{split}
-\end{equation}
+\begin{align}
+  \label{eq:radius-vector-b}
+  \mathbf{r}^{b}_{i} &= c_{i} - \left(\alpha\mathbf{n}^{b}_{i} - p_{i}\right)&=\pm r_i\left( -{\mathbf{n}^{b}_{i}}_{y},  {\mathbf{n}^{b}_{i}}_{x} \right)\\
+  \label{eq:radius-vector-f}
+  \mathbf{r}^{f}_{i} &= c_{i} - \left(\alpha\mathbf{n}^{f}_{i} - p_{i}\right)&=\pm r_i\left(  {\mathbf{n}^{f}_{i}}_{y}, -{\mathbf{n}^{f}_{i}}_{x} \right)
+\end{align}
 
 Obviously, $\left|\mathbf{r}^{b}_{i}\right| = \left|\mathbf{r}^{f}_{i}\right| = r_{i}$.
 
-\begin{equation}
-  \label{eq:radius-vectors}
-   \begin{split}
-     \mathbf{r}^{b}_{i} = c_{i} - \left(\alpha\mathbf{n}^{b}_{i} - p_{i}\right)=\pm r_i\left( -{\mathbf{n}^{b}_{i}}_{y},  {\mathbf{n}^{b}_{i}}_{x} \right)\\
-     \mathbf{r}^{f}_{i} = c_{i} - \left(\alpha\mathbf{n}^{f}_{i} - p_{i}\right)=\pm r_i\left(  {\mathbf{n}^{f}_{i}}_{y}, -{\mathbf{n}^{f}_{i}}_{x} \right)\\
-   \end{split}
-\end{equation}
-
-The sign of the rightmost term in Eq.~\eqref{eq:radius-vectors} ($\pm$) is determined by the orientation of the triple $T_i$ (see Eq.~\eqref{eq:vectors}); that is to say:
+The sign of the rightmost term in Eqs.~\eqref{eq:radius-vector-b},~\eqref{eq:radius-vector-f} ($\pm$) is determined by the orientation of the triple $T_i$ (see Eqs.~\eqref{eq:vector-b}, ~\eqref{eq:vector-f}); that is to say:
 
 \begin{equation}
   \label{eq:orientation}
@@ -127,15 +114,14 @@ The sign of the rightmost term in Eq.~\eqref{eq:radius-vectors} ($\pm$) is deter
 
 \paragraph{The center}
 
-The center $c_{i}$ can be determined by combining Eqs.~\eqref{eq:radius-vectors} and~\eqref{eq:alpha-vectors}:
+The center $c_{i}$ can be determined by combining Eqs.~\eqref{eq:radius-vector-b},~\eqref{eq:radius-vector-f} and~\eqref{eq:alpha-vector-b}, ~\eqref{eq:alpha-vector-f}:
 
-\begin{equation}
-  \label{eq:center-vectors}
-  \begin{split}
-    c_{i} = p_{i} + \alpha_i\mathbf{n}^b_i + \mathbf{r}^{b}_{i}\\
-    c_{i} = p_{i} + \alpha_i\mathbf{n}^f_i + \mathbf{r}^{f}_{i}
-  \end{split}
-\end{equation}
+\begin{align}
+  \label{eq:center-vector-b}
+  c_{i} &= p_{i} + \alpha_i\mathbf{n}^b_i + \mathbf{r}^{b}_{i}\\
+  \label{eq:center-vector-f}
+  c_{i} &= p_{i} + \alpha_i\mathbf{n}^f_i + \mathbf{r}^{f}_{i}
+\end{align}
 
 We can also write $c_{i}$ in terms of the unit bisector $\mathbf{b}_{i}$:
 
@@ -157,13 +143,12 @@ See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
 
 For a given $T_i$, the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; are fixed regardless of the $c_i$ or $r_{i}$:
 
-\begin{equation}
-  \label{eq:angle-range}
-  \begin{split}
-    \theta^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
-    \theta^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
-  \end{split}
-\end{equation}
+\begin{align}
+  \label{eq:angle-range-b}
+  \theta^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
+  \label{eq:angle-range-f}
+  \theta^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
+\end{align}
 
 We can also relate the input vectors for a given $T_{i}$ to $\theta$:
 
@@ -172,7 +157,7 @@ We can also relate the input vectors for a given $T_{i}$ to $\theta$:
   \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i} = \cos 2\theta_i
 \end{equation}
 
-Clearly, Eqs.~\eqref{eq:angle-range} and~\eqref{eq:dotnorm} are independent of other arc parameters $c_{i}$, $r_{i}$, and $\alpha_i$.
+Clearly, Eqs.~\eqref{eq:angle-range-b},~\eqref{eq:angle-range-f} and~\eqref{eq:dotnorm} are independent of other arc parameters $c_{i}$, $r_{i}$, and $\alpha_i$.
 
 \subsection{Equation for $r_i$ and $\alpha_{i}$}
 
@@ -227,11 +212,11 @@ Obviously, $r_i > 0$ to satisfy the usual meaning of a radius.
 
 \paragraph{Upper bound}
 
-To derive an upper bound on $r_{i}$ based on the lengths $L^b_i$ and $L^f_i|$,  we see in Eq.~\eqref{eq:radius-alpha} that $r_{i}$ is linear in $a_{i}$; thus we need only pick the largest $\alpha_i$ that satisfies Eqs.~\eqref{eq:alphalimit-b} and~\eqref{eq:alphalimit-f}.  This is simply
+To derive an upper bound on $r_{i}$ based on the lengths $L^b_i$ and $L^f_i$, we see in Eq.~\eqref{eq:radius-alpha} that $r_{i}$ is linear in $a_{i}$; thus we need only pick the largest $\alpha_i$ that satisfies Eqs.~\eqref{eq:alphalimit-b} and~\eqref{eq:alphalimit-f}.  This is simply
 
 \begin{equation}
   \label{eq:alpha-max}
-  \alpha^{\max}_i = \min \{L^{b}_{i}, L^{f}_{i}\}
+  \alpha^{\max}_i = \min \left\{L^{b}_{i}, L^{f}_{i}\right\}
 \end{equation}
 
 So for bounds on $r_{i}$, we have
