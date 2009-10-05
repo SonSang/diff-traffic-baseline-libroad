@@ -172,7 +172,7 @@ def vec_fig(ax, pts):
     # normalized back vector
     a0 = matplotlib.patches.FancyArrowPatch(posA=pi, posB=vf+pi, arrowstyle='->', mutation_scale=30, lw=1.0)
     ax.add_line(a0)
-    ax.text(pi[0]+vb[0]+0.05, pi[1] + vb[1]+0.05, r"$\mathbf{v}^b_i/|\mathbf{v}^b_i|$", fontsize=15, verticalalignment='top')
+    ax.text(pi[0]+vb[0]+0.05, pi[1] + vb[1]+0.05, r"$\mathbf{n}^b_i$", fontsize=15, verticalalignment='top')
 
     # forward vector
     ax.text(pi[0]+1.2*vf[0], pi[1]+1.2*vf[1], r"$\mathbf{v}^f_i$", fontsize=15, verticalalignment='top')
@@ -182,14 +182,14 @@ def vec_fig(ax, pts):
     # normalized forward vector
     a1 = matplotlib.patches.FancyArrowPatch(posA=pi, posB=vb+pi, arrowstyle='->', mutation_scale=30, lw=1.0)
     ax.add_line(a1)
-    ax.text(pi[0]+vf[0]-0.05, pi[1] + vf[1]-0.05, r"$\mathbf{v}^f_i/|\mathbf{v}^f_i|$", fontsize=15, verticalalignment='top')
+    ax.text(pi[0]+vf[0]-0.05, pi[1] + vf[1]-0.03, r"$\mathbf{n}^f_i$", fontsize=15, verticalalignment='top')
 
     # draw bisector
     mid = vb + vf
     a0 = matplotlib.patches.FancyArrowPatch(posA=pi, posB=mid+pi, arrowstyle='->', mutation_scale=30, lw=1.0, ls='dotted')
     ax.add_line(a0)
 
-    ax.text(pi[0]+mid[0]+0.05, pi[1]+mid[1]-0.05, r"$\mathbf{b}_i$", fontsize=15, verticalalignment='top')
+    ax.text(pi[0]+mid[0]+0.02, pi[1]+mid[1]-0.02, r"$\mathbf{b}_i$", fontsize=15, verticalalignment='top')
 
     # compute angles
     anglef = math.atan2(vf[1], vf[0])
@@ -214,38 +214,41 @@ def vec_fig(ax, pts):
 
     # Draw radii
     st = pi + alpha*vb
-    ax.text(st[0]-0.2, st[1]-0.1, r"$\alpha_i\mathbf{v}^b_i/|\mathbf{v}^b_i|$", fontsize=15)
-    l0 = matplotlib.lines.Line2D((st[0], st[0]+rad*vb[1]),
-                                 (st[1], st[1]-rad*vb[0]), color='black', linewidth=1.0)
+    ax.text(st[0]-0.1, st[1]-0.05, r"$\alpha_i\mathbf{n}^b_i$", fontsize=15)
+    l0 = matplotlib.patches.FancyArrowPatch(posA=st,
+                                            posB=(st[0]+rad*vb[1], st[1]-rad*vb[0]), arrowstyle='->', mutation_scale=30, lw=1.0)
+
     ax.add_line(l0)
 
     ax.text(st[0] + 0.5*rad*vb[1],
             st[1] - 0.5*rad*vb[0]+0.08,
-            r"$r_i$", fontsize=15, verticalalignment='top')
+            r"$\mathbf{r}^{b}_i$", fontsize=15, verticalalignment='top')
     p = matplotlib.patches.RegularPolygon((pi[0] + (alpha - offs)*vb[0] + offs*vb[1],
                                            pi[1] + (alpha - offs)*vb[1] - offs*vb[0]),
                                           4, offs*math.sqrt(2.0), math.pi/4+math.atan2(vb[1], vb[0]), fill=None)
     ax.add_patch(p)
 
     st = pi + alpha*vf
-    ax.text(st[0]-0.1, st[1]-0.05, r"$\alpha_i\mathbf{v}^f_i/|\mathbf{v}^f_i|$", fontsize=15, verticalalignment='top')
-    l0 = matplotlib.lines.Line2D((st[0], st[0]-rad*vf[1]), (st[1], st[1]+rad*vf[0]), color='black', linewidth=1.0)
+    ax.text(st[0]-0.05, st[1]-0.02, r"$\alpha_i\mathbf{n}^f_i$", fontsize=15, verticalalignment='top')
+    l0 = matplotlib.patches.FancyArrowPatch(posA=st,
+                                            posB=(st[0]-rad*vf[1], st[1]+rad*vf[0]),
+                                            arrowstyle='->', mutation_scale=30, lw=1.0)
     ax.add_line(l0)
 
     ax.text(st[0] - 0.5*rad*vf[1]+0.01,
             st[1] + 0.5*rad*vf[0],
-            r"$r_i$", fontsize=15, verticalalignment='top')
+            r"$\mathbf{r}^{f}_i$", fontsize=15, verticalalignment='top')
     p = matplotlib.patches.RegularPolygon((pi[0] + (alpha - offs)*vf[0] - offs*vf[1],
                                            pi[1] + (alpha - offs)*vf[1] + offs*vf[0]),
                                           4, offs*math.sqrt(2.0), math.pi/4+math.atan2(vf[1], vf[0]), fill=None)
     ax.add_patch(p)
 
     # Draw circle center
-    circle = matplotlib.patches.Circle((st[0]-rad*vf[1], st[1]+rad*vf[0]), 0.03, ec='none', facecolor='black', fill=True)
+    circle = matplotlib.patches.Circle((st[0]-rad*vf[1], st[1]+rad*vf[0]), 0.02, ec='none', facecolor='black', fill=True)
     ax.add_patch(circle)
     ax.text(st[0]-rad*vf[1]+0.04, st[1]+rad*vf[0], r"$c_i$", fontsize=15, verticalalignment='top')
 
-    circle = matplotlib.patches.Circle(pi, 0.03, ec='none', facecolor='black', fill=True)
+    circle = matplotlib.patches.Circle(pi, 0.02, ec='none', facecolor='black', fill=True)
     ax.add_patch(circle)
 
     circle = matplotlib.patches.Arc((st[0]-rad*vf[1], st[1]+rad*vf[0]), 0.5, 0.5, 0.0, 90.0+angleb*180.0/math.pi, -90.0+anglef*180.0/math.pi, edgecolor='black', lw=1.0, fill=False)

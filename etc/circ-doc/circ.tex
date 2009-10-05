@@ -39,7 +39,7 @@ We wish to `smooth' this polyline to something like what is shown in Fig.~\ref{f
 \right)
 \end{equation}
 
-Where $c_{i} = (o^{x}_{i}, o^{y}_{i})$ is the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
+Where $c_{i}$ the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
 
 \section{Formulation of the arcs $a_{i}$}
 
@@ -52,7 +52,9 @@ For each interior point $p_{i}$, the associated arc $\mathbf{a}_{i}$ is determin
   T_{i} = \left(p_{i-1}, p_{i}, p_{i+1}\right)
 \end{equation}
 
-More precisely, we are interested in the derived vectors
+\paragraph{Vectors}
+
+In particular, we are interested in the derived vectors
 
 \begin{equation}
   \label{eq:vectors}
@@ -82,6 +84,37 @@ and the associated unit vectors:
   \end{split}
 \end{equation}
 
+\paragraph{Tangent points}
+
+The projection of $c_{i}-p_{i}$ onto $\mathbf{n}^{b}_{i}$ and onto $\mathbf{n}^{f}_{i}$ have equal length $\alpha_i$; then the tangent points of the circle on $\mathbf{v}^{b}_{i}$ and $\mathbf{v}^{b}_{i}$ are:
+
+\begin{equation}
+  \label{eq:alpha-vectors}
+  \begin{split}
+    (c_{i}-p_{i})\;\mathrm{proj}\; \mathbf{n}^{b}_{i} = \alpha_i\mathbf{n}^{b}_{i}\\
+    (c_{i}-p_{i})\;\mathrm{proj}\; \mathbf{n}^{f}_{i} = \alpha_i\mathbf{n}^{f}_{i}
+  \end{split}
+\end{equation}
+
+\paragraph{Radius vectors}
+
+We are also interested in the (negative) radius vectors from these points to the center $c_{i}$:
+
+\begin{equation}
+  \label{eq:radius-vectors}
+   \begin{split}
+     \mathbf{r}^{b}_{i} = c_{i} - \left(\alpha\mathbf{n}^{b}_{i} - p_{i}\right)=\pm r_i\left( -{\mathbf{n}^{b}_{i}}_{y},  {\mathbf{n}^{b}_{i}}_{x} \right)\\
+     \mathbf{r}^{f}_{i} = c_{i} - \left(\alpha\mathbf{n}^{f}_{i} - p_{i}\right)=\pm r_i\left(  {\mathbf{n}^{f}_{i}}_{y}, -{\mathbf{n}^{f}_{i}}_{x} \right)\\
+   \end{split}
+\end{equation}
+
+The sign of the rightmost term in Eq.~\eqref{eq:radius-vectors} ($\pm$) is determined by the orientation of the triple $T_i$ (see Eq.~\eqref{eq:vectors}); that is to say:
+
+\begin{equation}
+  \label{eq:orientation}
+  o = \mathrm{sign}\; \mathbf{n}^{b}_{i} \times \mathbf{n}^{f}_{i}
+\end{equation}
+
 See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
 
 \begin{figure}[h]
@@ -91,20 +124,27 @@ See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
   \label{fig:interior-point}
 \end{figure}
 
-\subsection{Computing the arc ranges}
+\subsection{Arc ranges}
 
-An interior point's associated backward and forward vectors determine the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; given $\mathbf{v}^{f}_{i}$ and $\mathbf{v}^{b}_{i}$, we have:
+For a given $T_i$, the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; are fixed regardless of the $c_i$ or $r_{i}$:
 
 \begin{align}
-  \theta^{0}_{i} &= -o\pi + \arctan \frac{{v^{b}_{i}}_{y}}{{v^{b}_{i}}_{x}}\\
-  \theta^{1}_{i} &=  o\pi + \arctan \frac{{v^{f}_{i}}_{y}}{{v^{f}_{i}}_{x}}
+  \theta^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
+  \theta^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
 \end{align}
-
-Where $o$ is the sign of $\mathbf{v}^{b}_{i}\times\mathbf{v}^{f}_{i}$ --- specifying the orientation of the lines, and therefore the direction of $\mathbf{b}_{i}$
 
 \subsection{Allowable radii}
 
-Given an interior point, the range of allowable radii $r_{i}$ depends on the length of $\mathbf{v}^{b}_{i}$ and $\mathbf{v}^{a}_{i}$; we can see in Fig.~\ref{fig:interior-point} that were the radius to exceed some quantity, one or both of the points of tangency of the circle on the vectors (shown in the diagram as $\alpha_i\mathbf{v}^b_i/|\mathbf{v}^b_i|$ and $\alpha_i\mathbf{v}^f_i/|\mathbf{v}^f_i|$) may lie beyond the length(s) of the vectors.
+For a given $T_{i}$, the range of suitable radii $r_{i}$ depends on $L^b_i$ and $L^f_i$; we can see in Fig.~\ref{fig:interior-point} that were $r_{i}$ to exceed some quantity, one or both of the points of tangency of the circle on the vectors may lie beyond the length(s) of the vectors --- precisely, we require:
+
+\begin{align}
+  \label{eq:alphalimit-b}
+  \alpha_i &\le L^{b}_{i}\\
+  \label{eq:alphalimit-f}
+  \alpha_i &\le L^{f}_{i}
+\end{align}
+
+\paragraph{Lower bound}
 
 Obviously, we know that
 
@@ -113,7 +153,9 @@ Obviously, we know that
   r_i > 0
 \end{equation}
 
-Now we must derive an upper bound on $r_{i}$, we based on the lengths $|\mathbf{v}^b_i|$, and $|\mathbf{v}^f_i|$.  For convenience, let us introduce the notation $\mathbf{n}^{f}_{i} = \mathbf{v}^f_i/|\mathbf{v}^f_i|$ and $\mathbf{n}^{b}_{i} = \mathbf{v}^b_i/|\mathbf{v}^b_i|$.  Now we can write:
+\paragraph{Upper bound}
+
+Now we must derive an upper bound on $r_{i}$, we based on the lengths $L^b_i$ and $L^f_i|$.  Now we can write:
 
 \begin{equation}
   \label{eq:dotnorm}
