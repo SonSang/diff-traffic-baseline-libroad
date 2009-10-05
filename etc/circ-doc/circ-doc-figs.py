@@ -278,21 +278,17 @@ if __name__ == '__main__':
     pts = numpy.array([[0.1, 1.0], [0.4, 0.2], [3.0, 0.3],[2.0, 1.2], [3.0, 2.0]])
 
     pylab.clf()
-    ax = pylab.axes([0,0,1,1])
-    ax = polyline_fig(ax, pts)
+    polyline_fig(pylab.axes([0,0,1,1]), pts)
     pylab.savefig("1.pdf")
 
     pylab.clf()
-    ax = pylab.axes([0,0,1,1])
-    ax = tan_circ_fig(ax, pts)
+    tan_circ_fig(pylab.axes([0,0,1,1]), pts)
     pylab.savefig("2.pdf")
 
     pylab.clf()
-    ax = pylab.axes([0,0,1,1])
-    ax = tan_circ_fig(ax, pts, True)
+    tan_circ_fig(pylab.axes([0,0,1,1]), pts, True)
     pylab.savefig("3.pdf")
 
     pylab.clf()
-    ax = pylab.axes([0,0,1,1])
-    ax = vec_fig(ax, pts[0:3])
+    vec_fig(pylab.axes([0,0,1,1]), pts[0:3])
     pylab.savefig("4.pdf", bbox_inches='tight', pad_inches=-1)
