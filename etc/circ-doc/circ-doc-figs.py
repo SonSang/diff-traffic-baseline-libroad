@@ -35,6 +35,7 @@ def polyline_fig(ax, pts):
     ydim = (oldax[3]-oldax[2])
     ax.axis([oldax[0]-xdim*0.05, oldax[1]+xdim*0.05,
              oldax[2]-ydim*0.05, oldax[3]+ydim*0.05])
+    ax.set_aspect('equal', 'box')
 
     return ax
 
@@ -137,6 +138,7 @@ def tan_circ_fig(ax, pts, debug=False):
     ydim = (oldax[3]-oldax[2])
     ax.axis([oldax[0]-xdim*0.05, oldax[1]+xdim*0.05,
              oldax[2]-ydim*0.05, oldax[3]+ydim*0.05])
+    ax.set_aspect('equal', 'box')
 
     return ax
 
@@ -262,32 +264,33 @@ def vec_fig(ax, pts):
             st[1]+rad*vf[0] - 0.17,
             r"$\pi-\theta_i$", fontsize=15, verticalalignment='top')
 
-    ax.axis('tight')
-    oldax = ax.axis()
-    xdim = (oldax[1]-oldax[0])
-    ydim = (oldax[3]-oldax[2])
-    ax.axis([oldax[0]-xdim*0.10, oldax[1]+xdim*0.10,
-             oldax[2]-ydim*0.10, oldax[3]+ydim*0.10])
+    # ax.axis('equal')
+    # oldax = ax.axis()
+    # xdim = (oldax[1]-oldax[0])
+    # ydim = (oldax[3]-oldax[2])
+    # ax.axis([oldax[0]-xdim*0.10, oldax[1]+xdim*0.10,
+    #          oldax[2]-ydim*0.10, oldax[3]+ydim*0.10])
+    ax.set_aspect('equal', 'box')
 
     return ax
 
 if __name__ == '__main__':
     pts = numpy.array([[0.1, 1.0], [0.4, 0.2], [3.0, 0.3],[2.0, 1.2], [3.0, 2.0]])
 
-    # pylab.clf()
-    # ax = pylab.axes([0,0,1,1])
-    # ax = polyline_fig(ax, pts)
-    # pylab.savefig("1.pdf")
+    pylab.clf()
+    ax = pylab.axes([0,0,1,1])
+    ax = polyline_fig(ax, pts)
+    pylab.savefig("1.pdf")
 
-    # pylab.clf()
-    # ax = pylab.axes([0,0,1,1])
-    # ax = tan_circ_fig(ax, pts)
-    # pylab.savefig("2.pdf")
+    pylab.clf()
+    ax = pylab.axes([0,0,1,1])
+    ax = tan_circ_fig(ax, pts)
+    pylab.savefig("2.pdf")
 
-    # pylab.clf()
-    # ax = pylab.axes([0,0,1,1])
-    # ax = tan_circ_fig(ax, pts, True)
-    # pylab.savefig("3.pdf")
+    pylab.clf()
+    ax = pylab.axes([0,0,1,1])
+    ax = tan_circ_fig(ax, pts, True)
+    pylab.savefig("3.pdf")
 
     pylab.clf()
     ax = pylab.axes([0,0,1,1])

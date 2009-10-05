@@ -115,22 +115,89 @@ The sign of the rightmost term in Eq.~\eqref{eq:radius-vectors} ($\pm$) is deter
   o = \mathrm{sign}\; \mathbf{n}^{b}_{i} \times \mathbf{n}^{f}_{i}
 \end{equation}
 
+\paragraph{The center}
+
+The center $c_{i}$ can be determined by combining Eqs.~\eqref{eq:radius-vectors} and~\eqref{eq:alpha-vectors}:
+
+\begin{equation}
+  \label{eq:center-vectors}
+  \begin{split}
+    c_{i} = p_{i} + \alpha_i\mathbf{n}^b_i + \mathbf{r}^{b}_{i}\\
+    c_{i} = p_{i} + \alpha_i\mathbf{n}^f_i + \mathbf{r}^{f}_{i}
+  \end{split}
+\end{equation}
+
+We can also write $c_{i}$ in terms of the unit bisector $\mathbf{b}_{i}$:
+
+\begin{equation}
+  \label{eq:center-bisector}
+  c_{i} = p_{i} + \sqrt{r_{i}^{2} + \alpha_{i}^{2}}\mathbf{b}_{i}
+\end{equation}
+
 See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=\columnwidth]{4}
-  \caption{The interior point $p_{i}$ with backward vector $\mathbf{v}^{b}_{i}$ and forward vector $\mathbf{v}^{f}_{i}$. $\mathbf{b}_{i}$ is the bisector of these vectors}
+  \caption{The interior point $p_{i}$ with backward vector $\mathbf{v}^{b}_{i}$ and forward vector $\mathbf{v}^{f}_{i}$. $\mathbf{b}_{i}$ is the unit bisector of these vectors}
   \label{fig:interior-point}
 \end{figure}
 
-\subsection{Arc ranges}
+\subsection{Angles}
 
 For a given $T_i$, the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; are fixed regardless of the $c_i$ or $r_{i}$:
 
+\begin{equation}
+  \label{eq:angle-range}
+  \begin{split}
+    \theta^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
+    \theta^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
+  \end{split}
+\end{equation}
+
+We can also relate the input vectors for a given $T_{i}$ to $\theta$:
+
+\begin{equation}
+  \label{eq:dotnorm}
+  \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i} = \cos 2\theta_i
+\end{equation}
+
+Clearly, Eqs.~\eqref{eq:angle-range} and~\eqref{eq:dotnorm} are independent of other arc parameters $c_{i}$, $r_{i}$, and $\alpha_i$.
+
+\subsection{Equation for $r_i$ and $\alpha_{i}$}
+
+For a given triple $T_{i}$, we would like a formula relating $r_{i}$, and $\alpha_{i}$.  From visual inspection of Fig.~\ref{fig:interior-point}, we can see that:
+
 \begin{align}
-  \theta^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
-  \theta^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
+  \notag
+  \frac{r_i}{\alpha_{i}} &= \tan \theta_i\\
+  \label{eq:tantheta}
+  r_i &= \alpha_{i}\tan \theta_i
+\end{align}
+
+We know from trigonometry that
+
+\begin{align}
+  \notag
+  \tan \frac{\phi}{2} &= \frac{\sin\phi}{1+\cos\phi}\\
+  \notag
+  \tan \theta &= \frac{\sin 2\theta}{1+\cos 2\theta}\\
+  \label{eq:tanident}
+  \tan \theta &= \frac{\sqrt{1-\cos^{2} 2\theta}}{1+\cos 2\theta}
+\end{align}
+
+We can combine Eq.~\eqref{eq:tantheta} with Eq.~\eqref{eq:tanident} to obtain
+
+\begin{align}
+  \label{eq:radiustan}
+  r_{i} &= \alpha_i\frac{\sqrt{1-\cos^{2} 2\theta_i}}{1+\cos 2\theta_i}
+\end{align}
+
+Finally, we can substitute Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan}, and obtain
+
+\begin{align}
+  \label{eq:radius-alpha}
+  r_{i} &= \alpha_i\frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}
 \end{align}
 
 \subsection{Allowable radii}
@@ -146,55 +213,23 @@ For a given $T_{i}$, the range of suitable radii $r_{i}$ depends on $L^b_i$ and 
 
 \paragraph{Lower bound}
 
-Obviously, we know that
-
-\begin{equation}
-  \label{eq:rlow}
-  r_i > 0
-\end{equation}
+Obviously, $r_i > 0$ to satisfy the usual meaning of a radius.
 
 \paragraph{Upper bound}
 
-Now we must derive an upper bound on $r_{i}$, we based on the lengths $L^b_i$ and $L^f_i|$.  Now we can write:
+To derive an upper bound on $r_{i}$ based on the lengths $L^b_i$ and $L^f_i|$,  we see in Eq.~\eqref{eq:radius-alpha} that $r_{i}$ is linear in $a_{i}$; thus we need only pick the largest $\alpha_i$ that satisfies Eqs.~\eqref{eq:alphalimit-b} and~\eqref{eq:alphalimit-f}.  This is simply
 
 \begin{equation}
-  \label{eq:dotnorm}
-  \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i} = \cos 2\theta_i
+  \label{eq:alpha-max}
+  \alpha^{\max}_i = \min \{L^{b}_{i}, L^{f}_{i}\}
 \end{equation}
 
-and we are interested in
+So for bounds on $r_{i}$, we have
 
-\begin{align}
-  \notag
-  \frac{r_i}{\alpha_{i}} &= \tan \theta_i\\
-  \label{eq:tantheta}
-  r_i &= \alpha_{i}\tan \theta_i
-\end{align}
-
-And we know from trigonometry that
-
-\begin{align}
-  \notag
-  \tan \frac{\phi}{2} &= \frac{\sin\phi}{1+\cos\phi}\\
-  \notag
-  \tan \theta &= \frac{\sin 2\theta}{1+\cos 2\theta}\\
-  \label{eq:tanident}
-  \tan \theta &= \frac{\sqrt{1-\cos^{2} 2\theta}}{1+\cos 2\theta}
-\end{align}
-
-We can combine Eq.~\eqref{eq:tantheta} with Eq.~\eqref{eq:tanident} to get
-
-\begin{align}
-  \label{eq:radiustan}
-  r_{i} &= \alpha_i\frac{\sqrt{1-\cos^{2} 2\theta_i}}{1+\cos 2\theta_i}
-\end{align}
-
-And substituting Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan}, we get:
-
-\begin{align}
-  \label{eq:radius-alpha}
-  r_{i} &= \alpha_i\frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}
-\end{align}
+\begin{equation}
+  \label{eq:rbounds}
+  r_{i} \in \left(0, \alpha^{\max}_i \frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}\right]
+\end{equation}
 
 \end{document}
 
