@@ -264,12 +264,12 @@ def vec_fig(ax, pts):
             st[1]+rad*vf[0] - 0.17,
             r"$\pi-\theta_i$", fontsize=15, verticalalignment='top')
 
-    # ax.axis('equal')
-    # oldax = ax.axis()
-    # xdim = (oldax[1]-oldax[0])
-    # ydim = (oldax[3]-oldax[2])
-    # ax.axis([oldax[0]-xdim*0.10, oldax[1]+xdim*0.10,
-    #          oldax[2]-ydim*0.10, oldax[3]+ydim*0.10])
+    ax.axis('equal')
+    oldax = ax.axis()
+    xdim = (oldax[1]-oldax[0])
+    ydim = (oldax[3]-oldax[2])
+    ax.axis([oldax[0]-xdim*0.10, oldax[1]+xdim*0.10,
+             oldax[2]+ydim*0.10, oldax[3]+ydim*0.10])
     ax.set_aspect('equal', 'box')
 
     return ax
