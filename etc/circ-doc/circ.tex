@@ -1,0 +1,109 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{amsmath}
+\usepackage[letterpaper]{geometry}
+\begin{document}
+
+We have an ordered sequence $P$ of $n$ 2D points:
+
+\begin{equation}
+  \label{eq:points}
+  P = \{ p_{0}, p_{1},\ldots,p_{n-2},p_{n-1}\}
+\end{equation}
+
+These points define a polyline with $n-1$ segments such as that in Fig.~\ref{fig:polyline}.  Let us assume that there are no two points adjacent in the sequence that are equal, and that there are no three adjacent points that are colinear; clearly we can eliminate of these adjacent repeated points or the central points in a colinear sequence without modifying the line's shape.
+
+\begin{figure}[h]
+  \centering
+  \subfigure[\label{fig:polyline} A polyline $P$]{\includegraphics[width=7cm]{1}}\hfill
+  \subfigure[\label{fig:smooth-polyline}A `smoothed' version of the polyline $P$]{\includegraphics[width=7cm]{2}}\\
+  \subfigure[\label{fig:debug-smooth-polyline}The polyline $P$ and an associated smoothed variant]{\includegraphics[width=7cm]{3}}
+  \caption{Polylines}
+\end{figure}
+
+We wish to `smooth' this polyline to something like what is shown in Fig.~\ref{fig:smooth-polyline}; we shall do this by replacing the region around each interior point $p_{i}$ of $P$, with a circular arc $\mathbf{a}_{i}$.  Each $\mathbf{a}_{i}$ is defined by:
+
+\begin{equation}
+  \label{eq:circ-def}
+\mathbf{a}_i=\left(
+  c_{i},
+  r_{i},
+  \theta^{0}_{i},
+  \theta^{1}_{i}
+\right)
+\end{equation}
+
+Where $c_{i} = (o^{x}_{i}, o^{y}_{i})$ is the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
+
+\begin{figure}[h]
+\end{figure}
+
+For each interior point $p_{i}$, the limits on the associated arc $\mathbf{a}_{i}$ are closely associated with the triple of points
+$\left(
+  p_{i-1}, p_{i}, p_{i+1}
+\right)$.  More precisely, we are interested in the derived vectors $\mathbf{v}^{b}_{i} = p_{i-1} - p_{i}$ and $\mathbf{v}^{f}_{i} = p_{i+1} - p_{i}$. See Fig.~\ref{fig:interior-point}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{4}
+  \caption{The interior point $p_{i}$ with backward vector $\mathbf{v}^{b}_{i}$ and forward vector $\mathbf{v}^{f}_{i}$. $\mathbf{b}_{i}$ is the bisector of these vectors}
+  \label{fig:interior-point}
+\end{figure}
+
+An interior point's associated backward and forward vectors determine the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; given $\mathbf{v}^{f}_{i}$ and $\mathbf{v}^{b}_{i}$, we have:
+
+\begin{align}
+  \theta^{0}_{i} &= -o\pi + \arctan \frac{{v^{b}_{i}}_{y}}{{v^{b}_{i}}_{x}}\\
+  \theta^{1}_{i} &=  o\pi + \arctan \frac{{v^{f}_{i}}_{y}}{{v^{f}_{i}}_{x}}
+\end{align}
+
+Where $o$ is the sign of $\mathbf{v}^{b}_{i}\times\mathbf{v}^{f}_{i}$ --- specifying the orientation of the lines, and therefore the direction of $\mathbf{b}_{i}$
+
+Given an interior point, the range of allowable radii $r_{i}$ depends on the length of $\mathbf{v}^{b}_{i}$ and $\mathbf{v}^{a}_{i}$; we can see in Fig.~\ref{fig:interior-point} that were the radius to exceed some quantity, one or both of the points of tangency of the circle on the vectors (shown in the diagram as $\alpha_i\mathbf{v}^b_i/|\mathbf{v}^b_i|$ and $\alpha_i\mathbf{v}^f_i/|\mathbf{v}^f_i|$) may lie beyond the length(s) of the vectors.  For convenience, let us introduce the notation $\mathbf{n}^{f}_{i} = \mathbf{v}^f_i/|\mathbf{v}^f_i|$ and $\mathbf{n}^{b}_{i} = \mathbf{v}^b_i/|\mathbf{v}^b_i|$.  Now we can write:
+
+\begin{equation}
+  \label{eq:dotnorm}
+  \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i} = \cos 2\theta
+\end{equation}
+
+and we are interested in
+
+\begin{align}
+  \notag
+  \frac{r_i}{\alpha_{i}} &= \tan \theta\\
+  \label{eq:tantheta}
+  r_i &= \alpha_{i}\tan \theta
+\end{align}
+
+And we know from trigonometry that
+
+\begin{align}
+  \notag
+  \tan \frac{\phi}{2} &= \frac{\sin\phi}{1+\cos\phi}\\
+  \notag
+  \tan \theta &= \frac{\sin 2\theta}{1+\cos 2\theta}\\
+  \label{eq:tanident}
+  \tan \theta &= \frac{\sqrt{1-\cos^{2} 2\theta}}{1+\cos 2\theta}
+\end{align}
+
+We can combine Eq.~\eqref{eq:tantheta} with Eq.~\eqref{eq:tanident} to get
+
+\begin{align}
+  \label{eq:radiustan}
+  r_{i} &= \alpha_i\frac{\sqrt{1-\cos^{2} 2\theta}}{1+\cos 2\theta}
+\end{align}
+
+And substituting Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan}, we get:
+
+\begin{align}
+  \label{eq:radiustan}
+  r_{i} &= \alpha_i\frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}
+\end{align}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
