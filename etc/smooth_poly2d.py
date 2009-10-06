@@ -5,6 +5,7 @@ import math
 import pylab
 import matplotlib
 import scipy.linalg
+import itertools as it
 
 def tan_theta(nb, nf):
     dot = numpy.dot(nb, nf)
@@ -45,9 +46,7 @@ def smooth_corner(pm, pi, pp, radius=None):
 
     o = orientation(nb, nf)
     if o == 0.0:
-        yield pm
-        yield pi
-        return
+        return None
 
     if not radius:
         lf_low = lf < lb
@@ -63,7 +62,6 @@ def smooth_corner(pm, pi, pp, radius=None):
         lf_low = True
 
     tb = nb*alpha + pi
-    tf = nf*alpha + pi
 
     rb = o*radius*rot_pi(nb)
     rf = o*radius*rot_n_pi(nf)
@@ -73,16 +71,27 @@ def smooth_corner(pm, pi, pp, radius=None):
     angle_b = math.atan2(rb[1], rb[0]) + math.pi
     angle_f = math.atan2(rf[1], rf[0]) + math.pi
 
-    for i in circle(center, radius, (angle_b, angle_f), o < 0.0, 5):
-        yield i
+    return  [center, radius, (angle_b, angle_f), o < 0.0]
+
+def poly_to_circ(pts, radius=None):
+    return it.ifilter(lambda x: x, (smooth_corner(pts[ct-1], pts[ct], pts[ct+1], radius) for ct in xrange(1, len(pts)-1) ))
+
+def smoothed_points(circles, res, offs=0):
+    curr_dir = None
+    for (center, rad, (angle_b, angle_f), dir) in circles:
+        if dir:
+            newrad = rad-offs
+        else:
+            newrad = rad+offs
+        for i in circle(center, newrad, (angle_b, angle_f), dir, res):
+            yield i
 
 if __name__ == '__main__':
     pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
 
-    out_pts = [pts[0]]
-    for ct in xrange(1, len(pts)-1):
-        out_pts += list(smooth_corner(pts[ct-1], pts[ct], pts[ct+1], 0.5))
-    out_pts.append(pts[-1])
+    circles = poly_to_circ(pts, 0.5)
+
+    out_pts = [pts[0]] + list(smoothed_points(circles, 8, -0.4))  + [pts[-1]]
 
     pylab.clf()
 
@@ -102,7 +111,7 @@ if __name__ == '__main__':
     xdim = (oldax[1]-oldax[0])
     ydim = (oldax[3]-oldax[2])
     ax.axis([oldax[0]-xdim*0.10, oldax[1]+xdim*0.10,
-             oldax[2]+ydim*0.10, oldax[3]+ydim*0.10])
+             oldax[2]-ydim*0.10, oldax[3]+ydim*0.10])
     ax.set_aspect('equal', 'box')
     pylab.show()
 
