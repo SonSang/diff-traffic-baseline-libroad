@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 
 import numpy
@@ -45,9 +44,8 @@ def circle_len(center, radius, angint, ccw, seg_len):
     if not ccw:
         adist *= -1
     nsteps = int(math.ceil(radius*abs(adist)/seg_len))
-    print nsteps
     steps = ( math.fmod(angint2[0] + (adist)*x/float(nsteps-1), 2*math.pi) for x in xrange(nsteps) )
-    return ( (radius*math.cos( theta ) + center[0], radius*math.sin( theta ) + center[1]) for theta in steps )
+    return ( numpy.array([radius*math.cos( theta ) + center[0], radius*math.sin( theta ) + center[1]]) for theta in steps )
 
 def smooth_corner(pm, pi, pp, radius=None):
     vb = pm - pi
@@ -100,6 +98,91 @@ def smoothed_points(circles, res, offs=0):
         for i in circle_len(center, newrad, (angle_b, angle_f), dir, res):
             yield i
 
+
+def triangle_angles(pt0, pt1, pt2):
+    v01 = pt1 -pt0
+    v01 /= scipy.linalg.norm(v01)
+
+    v02 = pt2 -pt0
+    v02 /= scipy.linalg.norm(v02)
+
+    v12 = pt2 - pt1
+    v12 /= scipy.linalg.norm(v12)
+
+    a0 = math.acos(numpy.dot(v01, v02))
+    a1 = math.acos(numpy.dot(-v01, v12))
+    a2 = 2*math.pi - (a0 + a1)
+
+    return (a0, a1, a2)
+
+def smoothed_points_poly(pts, circles, res, offs_range):
+    n0 = pts[1]-pts[0]
+    n0 /= scipy.linalg.norm(n0)
+    n0 = rot_pi(n0)
+
+    nend = pts[-1]-pts[-2]
+    nend /= scipy.linalg.norm(nend)
+    nend = rot_pi(nend)
+
+    low_side  = it.chain( [pts[0] + offs_range[0]*n0], smoothed_points(circles, res, offs_range[0]), [pts[-1] + offs_range[0]*nend])
+    high_side = it.chain( [pts[0] + offs_range[1]*n0], smoothed_points(circles, res, offs_range[1]), [pts[-1] + offs_range[1]*nend])
+
+    vrts = []
+    faces = []
+
+    vrts.append(low_side.next())
+    vrts.append(high_side.next())
+
+    base_low_vrt  = vrts[len(vrts)-2]
+    base_high_vrt = vrts[len(vrts)-1]
+
+    try:
+        low_cand_vrt = low_side.next()
+    except StopIteration:
+        low_cand_vrt = None
+
+    try:
+        high_cand_vrt = high_side.next()
+    except StopIteration:
+        high_cand_vrt = None
+
+    ## pick_vrt = True means high
+    ## False means low
+    while True:
+        if low_cand_vrt == None:
+            if high_cand_vrt == None:
+                break
+            else:
+                pick_vrt = True
+        elif high_cand_vrt == None:
+            pick_vrt = False
+        else:
+            angs_low  = triangle_angles(base_low_vrt, base_high_vrt, low_cand_vrt)
+            angs_high = triangle_angles(base_low_vrt, base_high_vrt, high_cand_vrt)
+            lmin = min(angs_low)
+            hmin = min(angs_high)
+            if lmin > hmin:
+                pick_vrt = True
+            else:
+                pick_vrt = False
+
+        if pick_vrt:
+            vrts.append(high_cand_vrt)
+            base_high_vrt = high_cand_vrt
+            try:
+                high_cand_vrt = high_side.next()
+            except StopIteration:
+                high_cand_vrt = None
+        else:
+            vrts.append(low_cand_vrt)
+            base_low_vrt = low_cand_vrt
+            try:
+                low_cand_vrt = low_side.next()
+            except StopIteration:
+                low_cand_vrt = None
+        faces.append([len(vrts)-3, len(vrts)-2, len(vrts)-1])
+    return (vrts, faces)
+
 if __name__ == '__main__':
     pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
 
@@ -120,6 +203,10 @@ if __name__ == '__main__':
     offs = 0.4
 
     out_pts2 = [pts[0] + offs*n0] + list(smoothed_points(circles, 0.5, offs))  + [pts[-1] + offs*nend]
+
+    (vrts, faces) =  smoothed_points_poly(pts, circles, 0.5, (-0.4, 0.4))
+    print vrts
+    print faces
 
     pylab.clf()
 
