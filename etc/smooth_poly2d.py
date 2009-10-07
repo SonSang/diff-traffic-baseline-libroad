@@ -7,6 +7,11 @@ import matplotlib
 import scipy.linalg
 import itertools as it
 
+import OpenGL.GL as GL
+import OpenGL.GLUT as GLUT
+import OpenGL.GLU as GLU
+import sys
+
 def tan_theta(nb, nf):
     dot = numpy.dot(nb, nf)
     return math.sqrt(1 - dot*dot) / ( 1 + dot )
@@ -214,12 +219,94 @@ def pylab_plot_mesh(vrts, faces):
     ax.set_aspect('equal', 'box')
     pylab.show()
 
+class MeshWindow(object):
+    def __init__(self, w, h, vrts, faces, fullscreen=False):
+        self.width = w
+        self.height = h
+        self.fullscreen = fullscreen
+        self.vrts = vrts
+        self.faces = faces
+        self.window = None
+    def InitGL(self):
+        """
+        A general OpenGL initialization function.  Sets all of the initial parameters.
+        We call this right after our OpenGL window is created.
+        """
+        GL.glClearColor(0.0, 0.0, 0.0, 0.0)        ## This Will Clear The Background Color To Black
+        GL.glShadeModel(GL.GL_SMOOTH)                 ## Enables Smooth Color Shading
+
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glLoadIdentity()                        ## Reset The Projection Matrix
+
+    def ReSizeGLScene(self, Width, Height):
+        """
+        The function called when our window is resized (which shouldn't happen if you enable fullscreen, below)
+        """
+        self.width  = Width
+        self.height = Height
+
+        GL.glViewport(0, 0, self.width, self.height)               ## Reset The Current Viewport And Perspective Transformation
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glLoadIdentity()
+        if self.width > self.height:
+            asp = float(self.width)/float(self.height)
+            GLU.gluOrtho2D(-asp, asp, -1.0, 1.0)
+        else:
+            asp = float(self.height)/float(self.width)
+            GLU.gluOrtho2D(-1.0, 1.0, -asp, asp)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+    def DrawGLScene(self):
+        """
+        The main drawing function.
+        """
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        GL.glLoadIdentity()
+        center = (0.0, 0.0)
+        extent = 5.0
+        GL.glScalef(2.0/extent, 2.0/extent, 1.0)
+        GL.glTranslatef(-center[0], -center[1], 0.5)
+
+        GL.glColor3f(1.0, 1.0, 1.0)
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+
+        GL.glBegin(GL.GL_TRIANGLES)
+        for ct in xrange(len(self.faces)):
+            for j in xrange(3):
+                GL.glVertex2f(self.vrts[self.faces[ct][j]][0], self.vrts[self.faces[ct][j]][1])
+        GL.glEnd()
+
+        GLUT.glutSwapBuffers()
+
+    def keyPressed(self, *args):
+        """
+        The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)
+        """
+        ## If escape is pressed, kill everything.
+        if args[0] == '\033':
+            sys.exit()
+    def go(self, argv):
+        GLUT.glutInit(argv)
+        GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA | GLUT.GLUT_DOUBLE | GLUT.GLUT_DEPTH)
+        GLUT.glutInitWindowSize(self.width, self.height)
+        GLUT.glutInitWindowPosition(0, 0)
+        self.window = GLUT.glutCreateWindow("Smoothed Polylines")
+        GLUT.glutDisplayFunc(self.DrawGLScene)
+
+        if self.fullscreen:
+            GLUT.glutFullScreen()
+
+        GLUT.glutIdleFunc(self.DrawGLScene)
+        GLUT.glutReshapeFunc(self.ReSizeGLScene)
+        GLUT.glutKeyboardFunc(self.keyPressed)
+
+        GLUT.glutMainLoop()
 
 if __name__ == '__main__':
     pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
 
-    circles = list(poly_to_circ(pts, 0.8))
+    circles = list(poly_to_circ(pts, 0.9))
 
-    (v, f) =  smoothed_points_poly(pts, circles, 0.2, (-0.1, 0.1))
+    (v, f) =  smoothed_points_poly(pts, circles, 0.1, (-0.05, 0.05))
 
-    pylab_plot_mesh(v, f)
+    tr = MeshWindow(640, 480, v, f)
+    tr.go(sys.argv)
