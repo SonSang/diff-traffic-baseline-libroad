@@ -160,9 +160,9 @@ def smoothed_points_poly(pts, circles, res, offs_range):
         else:
             angs_low  = triangle_angles(base_low_vrt, base_high_vrt, low_cand_vrt)
             angs_high = triangle_angles(base_low_vrt, base_high_vrt, high_cand_vrt)
-            lmin = min(angs_low)
-            hmin = min(angs_high)
-            if lmin > hmin:
+            lmax = max(angs_low)
+            hmax = max(angs_high)
+            if lmax > hmax:
                 pick_vrt = False
             else:
                 pick_vrt = True
@@ -189,29 +189,11 @@ def smoothed_points_poly(pts, circles, res, offs_range):
     return (vrts, faces)
 
 if __name__ == '__main__':
-    # pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
-
-    pts = numpy.array([[0.0, 4.0], [4.0, 4.0], [4.0, 0.0]])#,[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
+    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
 
     circles = list(poly_to_circ(pts, 0.8))
 
-    n0 = pts[1]-pts[0]
-    n0 /= scipy.linalg.norm(n0)
-    n0 = rot_pi(n0)
-
-    offs = -0.4
-
-    nend = pts[-1]-pts[-2]
-    nend /= scipy.linalg.norm(nend)
-    nend = rot_pi(nend)
-
-    out_pts = [pts[0] + offs*n0] + list(smoothed_points(circles, 0.5, offs))  + [pts[-1] + offs*nend]
-
-    offs = 0.4
-
-    out_pts2 = [pts[0] + offs*n0] + list(smoothed_points(circles, 0.5, offs))  + [pts[-1] + offs*nend]
-
-    (vrts, faces) =  smoothed_points_poly(pts, circles, 0.2, (-0.4, 0.4))
+    (vrts, faces) =  smoothed_points_poly(pts, circles, 0.2, (-0.1, 0.1))
 
     pylab.clf()
 
@@ -221,14 +203,6 @@ if __name__ == '__main__':
     for ct in xrange(len(pts)-1):
         linedata = zip(pts[ct], pts[ct+1])
         ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='black'))
-
-    # for ct in xrange(len(out_pts)-1):
-    #     linedata = zip(out_pts[ct], out_pts[ct+1])
-    #     ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue'))
-
-    # for ct in xrange(len(out_pts2)-1):
-    #     linedata = zip(out_pts2[ct], out_pts2[ct+1])
-    #     ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue'))
 
     for ct in xrange(len(faces)):
         for fno in xrange(3):
