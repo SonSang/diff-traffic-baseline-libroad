@@ -190,13 +190,7 @@ def smoothed_points_poly(pts, circles, res, offs_range):
 
     return (vrts, faces)
 
-if __name__ == '__main__':
-    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
-
-    circles = list(poly_to_circ(pts, 0.8))
-
-    (vrts, faces) =  smoothed_points_poly(pts, circles, 0.2, (-0.1, 0.1))
-
+def pylab_plot_mesh(vrts, faces):
     pylab.clf()
 
     ax = pylab.axes([0,0,1,1], frame_on=False, xticks=[], yticks=[])
@@ -220,3 +214,12 @@ if __name__ == '__main__':
     ax.set_aspect('equal', 'box')
     pylab.show()
 
+
+if __name__ == '__main__':
+    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
+
+    circles = list(poly_to_circ(pts, 0.8))
+
+    (v, f) =  smoothed_points_poly(pts, circles, 0.2, (-0.1, 0.1))
+
+    pylab_plot_mesh(v, f)
