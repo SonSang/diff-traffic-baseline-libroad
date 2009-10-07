@@ -85,17 +85,16 @@ def smooth_corner(pm, pi, pp, radius=None):
 
     return  [center, radius, (angle_b, angle_f), o < 0.0]
 
-def poly_to_circ(pts, radius=None):
-    return it.ifilter(lambda x: x, (smooth_corner(pts[ct-1], pts[ct], pts[ct+1], radius) for ct in xrange(1, len(pts)-1)))
+def poly_to_circ(p, radius=None):
+    return it.ifilter(lambda x: x, (smooth_corner(pts[ct-1], p[ct], p[ct+1], radius) for ct in xrange(1, len(pts)-1)))
 
-def smoothed_points(circles, res, offs=0):
-    curr_dir = None
-    for (center, rad, (angle_b, angle_f), dir) in circles:
-        if dir:
+def smoothed_points(c, res, offs=0):
+    for (center, rad, (angle_b, angle_f), d) in c:
+        if d:
             newrad = rad-offs
         else:
             newrad = rad+offs
-        for i in circle_len(center, newrad, (angle_b, angle_f), dir, res):
+        for i in circle_len(center, newrad, (angle_b, angle_f), d, res):
             yield i
 
 def triangle_angles(pt0, pt1, pt2):
@@ -132,6 +131,9 @@ def smoothed_points_poly(pts, circles, res, offs_range):
     vrts.append(low_side.next())
     vrts.append(high_side.next())
 
+    base_low_idx  = len(vrts)-2
+    base_high_idx = len(vrts)-1
+
     base_low_vrt  = vrts[len(vrts)-2]
     base_high_vrt = vrts[len(vrts)-1]
 
@@ -161,13 +163,16 @@ def smoothed_points_poly(pts, circles, res, offs_range):
             lmin = min(angs_low)
             hmin = min(angs_high)
             if lmin > hmin:
-                pick_vrt = True
-            else:
                 pick_vrt = False
+            else:
+                pick_vrt = True
+
+        faces.append([base_low_idx, base_high_idx, len(vrts)])
 
         if pick_vrt:
             vrts.append(high_cand_vrt)
             base_high_vrt = high_cand_vrt
+            base_high_idx = len(vrts)-1
             try:
                 high_cand_vrt = high_side.next()
             except StopIteration:
@@ -175,15 +180,18 @@ def smoothed_points_poly(pts, circles, res, offs_range):
         else:
             vrts.append(low_cand_vrt)
             base_low_vrt = low_cand_vrt
+            base_low_idx = len(vrts)-1
             try:
                 low_cand_vrt = low_side.next()
             except StopIteration:
                 low_cand_vrt = None
-        faces.append([len(vrts)-3, len(vrts)-2, len(vrts)-1])
+
     return (vrts, faces)
 
 if __name__ == '__main__':
-    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
+    # pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
+
+    pts = numpy.array([[0.0, 4.0], [4.0, 4.0], [4.0, 0.0]])#,[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0], [0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
 
     circles = list(poly_to_circ(pts, 0.8))
 
@@ -203,9 +211,7 @@ if __name__ == '__main__':
 
     out_pts2 = [pts[0] + offs*n0] + list(smoothed_points(circles, 0.5, offs))  + [pts[-1] + offs*nend]
 
-    (vrts, faces) =  smoothed_points_poly(pts, circles, 0.5, (-0.4, 0.4))
-    print vrts
-    print faces
+    (vrts, faces) =  smoothed_points_poly(pts, circles, 0.2, (-0.4, 0.4))
 
     pylab.clf()
 
@@ -216,13 +222,18 @@ if __name__ == '__main__':
         linedata = zip(pts[ct], pts[ct+1])
         ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='black'))
 
-    for ct in xrange(len(out_pts)-1):
-        linedata = zip(out_pts[ct], out_pts[ct+1])
-        ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue'))
+    # for ct in xrange(len(out_pts)-1):
+    #     linedata = zip(out_pts[ct], out_pts[ct+1])
+    #     ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue'))
 
-    for ct in xrange(len(out_pts2)-1):
-        linedata = zip(out_pts2[ct], out_pts2[ct+1])
-        ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue'))
+    # for ct in xrange(len(out_pts2)-1):
+    #     linedata = zip(out_pts2[ct], out_pts2[ct+1])
+    #     ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='blue'))
+
+    for ct in xrange(len(faces)):
+        for fno in xrange(3):
+            linedata = zip(vrts[faces[ct][fno]], vrts[faces[ct][(fno+1)%3]])
+            ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='red'))
 
     ax.axis('equal')
     oldax = ax.axis()
