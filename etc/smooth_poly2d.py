@@ -33,7 +33,7 @@ def circle_step(center, radius, angint, ccw, nsteps):
     if not ccw:
         adist *= -1
     steps = ( math.fmod(angint2[0] + (adist)*x/float(nsteps-1), 2*math.pi) for x in xrange(nsteps) )
-    return ( (radius*math.cos( theta ) + center[0], radius*math.sin( theta ) + center[1]) for theta in steps )
+    return ( numpy.array([radius*math.cos( theta ) + center[0], radius*math.sin( theta ) + center[1]]) for theta in steps )
 
 def circle_len(center, radius, angint, ccw, seg_len):
     angint2 = [ math.fmod(x + 2*math.pi, 2*math.pi) for x in angint ]
@@ -97,7 +97,6 @@ def smoothed_points(circles, res, offs=0):
             newrad = rad+offs
         for i in circle_len(center, newrad, (angle_b, angle_f), dir, res):
             yield i
-
 
 def triangle_angles(pt0, pt1, pt2):
     v01 = pt1 -pt0
