@@ -7,6 +7,7 @@ import matplotlib
 import scipy.linalg
 
 from matplotlib import rc
+from matplotlib.path import Path
 
 def polyline_fig(ax, pts):
     ax.set_frame_on(False)
@@ -33,8 +34,8 @@ def polyline_fig(ax, pts):
     oldax = ax.axis()
     xdim = (oldax[1]-oldax[0])
     ydim = (oldax[3]-oldax[2])
-    ax.axis([oldax[0]-xdim*0.05, oldax[1]+xdim*0.05,
-             oldax[2]-ydim*0.05, oldax[3]+ydim*0.05])
+    ax.axis([oldax[0]-xdim*0.03, oldax[1]+xdim*0.035,
+             oldax[2]-ydim*0.00, oldax[3]+ydim*0.00])
     ax.set_aspect('equal', 'box')
 
     return ax
@@ -119,6 +120,7 @@ def tan_circ_fig(ax, pts, debug=False):
             ax.text(center[0], center[1], "$c_{%d}$" % idx, fontsize=15, verticalalignment='top')
 
         circle = matplotlib.patches.Arc(center, 2*thisrad, 2*thisrad, 0.0, angle0*180.0/math.pi, angle1*180.0/math.pi, edgecolor='black', lw=1.0, fill=False)
+        circle._path = Path.arc(circle.theta1, circle.theta2)
         ax.add_patch(circle)
 
         lastpt = p1
@@ -136,8 +138,8 @@ def tan_circ_fig(ax, pts, debug=False):
     oldax = ax.axis()
     xdim = (oldax[1]-oldax[0])
     ydim = (oldax[3]-oldax[2])
-    ax.axis([oldax[0]-xdim*0.05, oldax[1]+xdim*0.05,
-             oldax[2]-ydim*0.05, oldax[3]+ydim*0.05])
+    ax.axis([oldax[0]-xdim*0.03, oldax[1]+xdim*0.035,
+             oldax[2]-ydim*0.005, oldax[3]+ydim*0.00])
     ax.set_aspect('equal', 'box')
 
     return ax
@@ -200,11 +202,13 @@ def vec_fig(ax, pts):
 
     # draw angle arcs
     circle = matplotlib.patches.Arc(pi, 0.5, 0.5, 0.0, anglem*180.0/math.pi, angleb*180.0/math.pi, edgecolor='black', lw=1.0, fill=False)
+    circle._path = Path.arc(circle.theta1, circle.theta2)
     ax.add_patch(circle)
 
     ax.text(pi[0]+0.015, pi[1]+0.20, r"$\theta_i$", fontsize=15, verticalalignment='top')
 
     circle = matplotlib.patches.Arc(pi, 0.5, 0.5, 0.0, anglef*180.0/math.pi, anglem*180.0/math.pi, edgecolor='black', lw=1.0, fill=False)
+    circle._path = Path.arc(circle.theta1, circle.theta2)
     ax.add_patch(circle)
 
     ax.text(pi[0]+0.15,  pi[1]+0.1,  r"$\theta_i$", fontsize=15, verticalalignment='top')
@@ -251,9 +255,11 @@ def vec_fig(ax, pts):
     ax.text(st[0]-rad*vf[1]+0.04, st[1]+rad*vf[0], r"$c_i$", fontsize=15, verticalalignment='top')
 
     circle = matplotlib.patches.Circle(pi, 0.02, ec='none', facecolor='black', fill=True)
+
     ax.add_patch(circle)
 
     circle = matplotlib.patches.Arc((st[0]-rad*vf[1], st[1]+rad*vf[0]), 0.5, 0.5, 0.0, 90.0+angleb*180.0/math.pi, -90.0+anglef*180.0/math.pi, edgecolor='black', lw=1.0, fill=False)
+    circle._path = Path.arc(circle.theta1, circle.theta2)
     ax.add_patch(circle)
 
     ax.text(st[0]-rad*vf[1] - 0.205,
@@ -268,8 +274,8 @@ def vec_fig(ax, pts):
     oldax = ax.axis()
     xdim = (oldax[1]-oldax[0])
     ydim = (oldax[3]-oldax[2])
-    ax.axis([oldax[0]-xdim*0.10, oldax[1]+xdim*0.10,
-             oldax[2]+ydim*0.10, oldax[3]+ydim*0.10])
+    ax.axis([oldax[0]-0.01, oldax[1]+xdim*0.035,
+             oldax[2], oldax[3]])
     ax.set_aspect('equal', 'box')
 
     return ax
