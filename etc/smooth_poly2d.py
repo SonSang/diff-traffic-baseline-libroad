@@ -23,11 +23,11 @@ def cot_theta(nb, nf):
 def orientation(nb, nf):
     return nb[0]*nf[1] - nf[0]*nb[1]
 
-def rot_pi(v):
-    return numpy.array([-v[1], v[0]])
+def rot_pi(vec):
+    return numpy.array([-vec[1], vec[0]])
 
-def rot_n_pi(v):
-    return numpy.array([v[1], -v[0]])
+def rot_n_pi(vec):
+    return numpy.array([vec[1], -vec[0]])
 
 def circle_step(center, radius, angint, ccw, nsteps):
     angint2 = [ math.fmod(x + 2*math.pi, 2*math.pi) for x in angint ]
@@ -93,7 +93,7 @@ def smooth_corner(pm, pi, pp, radius=None):
     return  [center, radius, (angle_b, angle_f), o < 0.0]
 
 def poly_to_circ(p, radius=None):
-    return it.ifilter(lambda x: x, (smooth_corner(pts[ct-1], p[ct], p[ct+1], radius) for ct in xrange(1, len(pts)-1)))
+    return it.ifilter(lambda x: x, (smooth_corner(p[ct-1], p[ct], p[ct+1], radius) for ct in xrange(1, len(p)-1)))
 
 def smoothed_points(c, res, offs=0):
     for (center, rad, (angle_b, angle_f), d) in c:
@@ -120,7 +120,7 @@ def triangle_angles(pt0, pt1, pt2):
 
     return (a0, a1, a2)
 
-def smoothed_points_poly(pts, circles, res, offs_range):
+def smoothed_points_poly(pts, c, res, offs_range):
     n0 = pts[1]-pts[0]
     n0 /= scipy.linalg.norm(n0)
     n0 = rot_pi(n0)
@@ -129,8 +129,8 @@ def smoothed_points_poly(pts, circles, res, offs_range):
     nend /= scipy.linalg.norm(nend)
     nend = rot_pi(nend)
 
-    low_side  = it.chain( [pts[0] + offs_range[0]*n0], smoothed_points(circles, res, offs_range[0]), [pts[-1] + offs_range[0]*nend])
-    high_side = it.chain( [pts[0] + offs_range[1]*n0], smoothed_points(circles, res, offs_range[1]), [pts[-1] + offs_range[1]*nend])
+    low_side  = it.chain( [pts[0] + offs_range[0]*n0], smoothed_points(c, res, offs_range[0]), [pts[-1] + offs_range[0]*nend])
+    high_side = it.chain( [pts[0] + offs_range[1]*n0], smoothed_points(c, res, offs_range[1]), [pts[-1] + offs_range[1]*nend])
 
     vrts = []
     faces = []
@@ -195,14 +195,14 @@ def smoothed_points_poly(pts, circles, res, offs_range):
 
     return (vrts, faces)
 
-def pylab_plot_mesh(vrts, faces):
+def pylab_plot_mesh(p, vrts, faces):
     pylab.clf()
 
     ax = pylab.axes([0,0,1,1], frame_on=False, xticks=[], yticks=[])
     ax.set_axis_off()
 
-    for ct in xrange(len(pts)-1):
-        linedata = zip(pts[ct], pts[ct+1])
+    for ct in xrange(len(p)-1):
+        linedata = zip(p[ct], p[ct+1])
         ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='black'))
 
     for ct in xrange(len(faces)):
