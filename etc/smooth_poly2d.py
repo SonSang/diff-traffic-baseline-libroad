@@ -66,6 +66,8 @@ def smooth_corner(pm, pi, pp, radius=None):
     o = orientation(nb, nf)
     if o == 0.0:
         return None
+    else:
+        o = math.copysign(1.0, o)
 
     if not radius:
         lf_low = lf < lb
@@ -80,12 +82,12 @@ def smooth_corner(pm, pi, pp, radius=None):
             print "Warning: radius is too large!"
         lf_low = True
 
-    tb = nb*alpha + pi
+    tb = nb*alpha
 
     rb = o*radius*rot_pi(nb)
     rf = o*radius*rot_n_pi(nf)
 
-    center = tb + rb
+    center = tb + rb + pi
 
     angle_b = math.atan2(rb[1], rb[0]) + math.pi
     angle_f = math.atan2(rf[1], rf[0]) + math.pi
