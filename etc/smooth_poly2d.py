@@ -44,6 +44,8 @@ def circle_len(center, radius, angint, ccw, seg_len):
     if not ccw:
         adist *= -1
     nsteps = int(math.ceil(radius*abs(adist)/seg_len))
+    if nsteps < 2:
+        nsteps = 2
     steps = ( math.fmod(angint2[0] + (adist)*x/float(nsteps-1), 2*math.pi) for x in xrange(nsteps) )
     return ( numpy.array([radius*math.cos( theta ) + center[0], radius*math.sin( theta ) + center[1]]) for theta in steps )
 
