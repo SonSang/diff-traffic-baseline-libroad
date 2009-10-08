@@ -173,7 +173,7 @@ def circle_len(center, radius, angint, ccw, seg_len):
     nsteps = int(math.ceil(radius*abs(adist)/seg_len))
     print nsteps
     steps = ( math.fmod(angint2[0] + (adist)*x/float(nsteps-1), 2*math.pi) for x in xrange(nsteps) )
-    return ( (radius*math.cos( theta ) + center[0], radius*math.sin( theta ) + center[1]) for theta in steps )
+    return (numpy.array([radius*math.cos( theta ) + center[0], radius*math.sin( theta ) + center[1]]) for theta in steps )
 
 def smooth_corner(pm, pi, pp, radius=None):
     vb = pm - pi
@@ -277,6 +277,155 @@ def offs_circ_fig(ax, pts):
              oldax[2]-ydim*0.005, oldax[3]+ydim*0.00])
     ax.set_aspect('equal', 'box')
 
+    return ax
+
+def disc_circ_fig(ax, pts):
+    ax.set_frame_on(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    rc('text', usetex=True)
+
+    circles = list(poly_to_circ(pts, 0.25))
+
+    c_pts = [pts[0]] + list(smoothed_points(circles, 0.2))  + [pts[-1]]
+
+    pylab.clf()
+
+    ax = pylab.axes([0,0,1,1], frame_on=False, xticks=[], yticks=[])
+    ax.set_axis_off()
+
+    for ct in xrange(len(c_pts)-1):
+        linedata = zip(c_pts[ct], c_pts[ct+1])
+        ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='black'))
+
+    ax.axis('equal')
+    oldax = ax.axis()
+    xdim = (oldax[1]-oldax[0])
+    ydim = (oldax[3]-oldax[2])
+    ax.axis([oldax[0]-xdim*0.03, oldax[1]+xdim*0.035,
+             oldax[2]-ydim*0.005, oldax[3]+ydim*0.00])
+    ax.set_aspect('equal', 'box')
+
+    return ax
+
+
+def triangle_angles(pt0, pt1, pt2):
+    v01 = pt1 -pt0
+    v01 /= scipy.linalg.norm(v01)
+
+    v02 = pt2 -pt0
+    v02 /= scipy.linalg.norm(v02)
+
+    v12 = pt2 - pt1
+    v12 /= scipy.linalg.norm(v12)
+
+    a0 = math.acos(numpy.dot(v01, v02))
+    a1 = math.acos(numpy.dot(-v01, v12))
+    a2 = 2*math.pi - (a0 + a1)
+
+    return (a0, a1, a2)
+
+def smoothed_points_poly(pts, c, res, offs_range):
+    n0 = pts[1]-pts[0]
+    n0 /= scipy.linalg.norm(n0)
+    n0 = rot_pi(n0)
+
+    nend = pts[-1]-pts[-2]
+    nend /= scipy.linalg.norm(nend)
+    nend = rot_pi(nend)
+
+    low_side  = it.chain( [pts[0] + offs_range[0]*n0], smoothed_points(c, res, offs_range[0]), [pts[-1] + offs_range[0]*nend])
+    high_side = it.chain( [pts[0] + offs_range[1]*n0], smoothed_points(c, res, offs_range[1]), [pts[-1] + offs_range[1]*nend])
+
+    vrts = []
+    faces = []
+
+    vrts.append(low_side.next())
+    vrts.append(high_side.next())
+
+    base_low_idx  = len(vrts)-2
+    base_high_idx = len(vrts)-1
+
+    base_low_vrt  = vrts[len(vrts)-2]
+    base_high_vrt = vrts[len(vrts)-1]
+
+    try:
+        low_cand_vrt = low_side.next()
+    except StopIteration:
+        low_cand_vrt = None
+
+    try:
+        high_cand_vrt = high_side.next()
+    except StopIteration:
+        high_cand_vrt = None
+
+    ## pick_vrt = True means high
+    ## False means low
+    while True:
+        if low_cand_vrt == None:
+            if high_cand_vrt == None:
+                break
+            else:
+                pick_vrt = True
+        elif high_cand_vrt == None:
+            pick_vrt = False
+        else:
+            angs_low  = triangle_angles(base_low_vrt, base_high_vrt, low_cand_vrt)
+            angs_high = triangle_angles(base_low_vrt, base_high_vrt, high_cand_vrt)
+            lmax = max(angs_low)
+            hmax = max(angs_high)
+            if lmax > hmax:
+                pick_vrt = False
+            else:
+                pick_vrt = True
+
+        faces.append([base_low_idx, base_high_idx, len(vrts)])
+
+        if pick_vrt:
+            vrts.append(high_cand_vrt)
+            base_high_vrt = high_cand_vrt
+            base_high_idx = len(vrts)-1
+            try:
+                high_cand_vrt = high_side.next()
+            except StopIteration:
+                high_cand_vrt = None
+        else:
+            vrts.append(low_cand_vrt)
+            base_low_vrt = low_cand_vrt
+            base_low_idx = len(vrts)-1
+            try:
+                low_cand_vrt = low_side.next()
+            except StopIteration:
+                low_cand_vrt = None
+
+    return (vrts, faces)
+
+def mesh_fig(ax, p):
+    pylab.clf()
+
+    circles = list(poly_to_circ(p, 0.25))
+
+    (v, f) =  smoothed_points_poly(p, circles, 0.1, (-0.1, 0.1))
+
+    ax = pylab.axes([0,0,1,1], frame_on=False, xticks=[], yticks=[])
+    ax.set_axis_off()
+
+    # for ct in xrange(len(p)-1):
+    #     linedata = zip(p[ct], p[ct+1])
+    #     ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='black'))
+
+    for ct in xrange(len(f)):
+        for fno in xrange(3):
+            linedata = zip(v[f[ct][fno]], v[f[ct][(fno+1)%3]])
+            ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='red'))
+
+    ax.axis('equal')
+    oldax = ax.axis()
+    xdim = (oldax[1]-oldax[0])
+    ydim = (oldax[3]-oldax[2])
+    ax.axis([oldax[0]-xdim*0.03, oldax[1]+xdim*0.035,
+             oldax[2]-ydim*0.005, oldax[3]+ydim*0.00])
+    ax.set_aspect('equal', 'box')
     return ax
 
 def vec_fig(ax, pts):
@@ -434,7 +583,14 @@ if __name__ == '__main__':
     # vec_fig(pylab.axes([0,0,1,1]), pts[0:3])
     # pylab.savefig("4.pdf", bbox_inches='tight', pad_inches=-1)
 
-    pylab.clf()
-    offs_circ_fig(pylab.axes([0,0,1,1]), pts)
-    pylab.savefig("5.pdf")
+    # pylab.clf()
+    # offs_circ_fig(pylab.axes([0,0,1,1]), pts)
+    # pylab.savefig("5.pdf")
 
+    # pylab.clf()
+    # disc_circ_fig(pylab.axes([0,0,1,1]), pts)
+    # pylab.savefig("6.pdf")
+
+    pylab.clf()
+    mesh_fig(pylab.axes([0,0,1,1]), pts)
+    pylab.savefig("7.pdf")

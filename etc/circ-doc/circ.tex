@@ -1,8 +1,29 @@
 \documentclass{article}
+\usepackage{hyperref}
+\hypersetup{
+    bookmarks=true,                             % show bookmarks bar?
+    unicode=false,                              % non-Latin characters in Acrobat's bookmarks
+    pdftoolbar=true,                            % show Acrobat's toolbar?
+    pdfmenubar=true,                            % show Acrobat's menu?
+    pdffitwindow=true,                          % page fit to window when opened
+    pdftitle={Smoothing polylines with circles},    % title
+    pdfauthor={Jason Sewall},                   % author
+    pdfsubject={}                      % subject of the document
+    pdfcreator={},                       % creator of the document
+    pdfproducer={},                     % producer of the document
+    pdfkeywords={},                     % list of keywords
+    pdfnewwindow=true,                          % links in new window
+    colorlinks=true,                            % false: boxed links; true: colored links
+    linkcolor=red,                              % color of internal links
+    citecolor=blue,                             % color of links to bibliography
+    filecolor=magenta,                          % color of file links
+    urlcolor=cyan                               % color of external links
+}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[letterpaper]{geometry}
 \usepackage{graphicx}
 \usepackage{subfigure}
-\usepackage{amsmath}
-\usepackage[letterpaper]{geometry}
 \title{Smoothing polylines with circles}
 \author{Jason Sewall}
 \date{October 4, 2009}
@@ -29,7 +50,7 @@ These points define a (planar) polyline with $n-1$ segments such as that in Fig.
   \caption{Polylines}
 \end{figure}
 
-We wish to `smooth' this polyline to something like what is shown in Fig.~\ref{fig:smooth-polyline}, which we shall refer to as $P_S$.  We construct $P_S$ by replacing the region around each interior point $p_{i}, i \in \mathbb{Z}\left[1, n-2\right]}$ of $P$ with a circular arc $\mathbf{a}_{i}$ and retaining the exterior points $p_0$ and $p_{n-1}$.  We abuse notation slightly and define
+We wish to `smooth' this polyline to something like what is shown in Fig.~\ref{fig:smooth-polyline}, which we shall refer to as $P_S$.  We construct $P_S$ by replacing the region around each interior point $p_{i}, i \in \mathbb{Z}\left[1, n-2\right]$ of $P$ with a circular arc $\mathbf{a}_{i}$ and retaining the exterior points $p_0$ and $p_{n-1}$.  We abuse notation slightly and define
 
 \begin{equation}
   \label{eq:p-smooth}
@@ -48,9 +69,7 @@ Where each $\mathbf{a}_{i}$ is defined by:
 \right)
 \end{equation}
 
-And here $c_{i}$ is the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
-
-
+And here $c_{i}$ is the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc ordered such that the shortest arc from $\theta^0_i$ to $\theta^1_i$ begins at the tangent point on $\overline{p_{i-1}p_i}$ and ends on the tangent point to $\overline{p_ip_{i+1}}$.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
 
 \subsection{Formulation of the arcs $a_{i}$}
 
@@ -255,7 +274,7 @@ For nondegenerate $P_S$ (i.e. with $n>2$), we have:
   % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\left(\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\theta^0_i - \theta^1_i\right| - 2\right)
 \end{align}
 
-\subsection{Offset polylines}
+\subsection{\label{sec:offset-polylines}Offset polylines}
 
 So far, given a planar polyline $P$ and either an $\alpha_i$ or $r_i$ for each interior point $P_i$, we can compute the smoothed polyline $P_S = p_0, a_1, a_2,\ldots\,a_{n-2}, p_{n-1}$ by computing the associated circle $a_i=\left(c_i, r_i, \theta^0_i, \theta^1_i\right)$ for each interior point of $P$ using Eq.~\eqref{eq:radius-alpha} to find $r_i$ or $\alpha_i$, one of Eqs.~\eqref{eq:center-vector-b},~\eqref{eq:center-vector-f}, or~\eqref{eq:center-bisector} to find $c_i$, and Eqs.~\eqref{eq:angle-range-b}, and ~\eqref{eq:angle-range-f} for $\theta^0_i$ and $\theta^1_i$.  We retain the original polyline $P$ external points $p_0$ and $p_{n-1}$ as the endpoints of $P_S$.
 
@@ -283,8 +302,44 @@ We must also choose new endpoints $p'_0$ and $p'_{n-1}$ for this line;  are the 
   p'_{n-1} &= p_{n-1} + d \left(-{\mathbf{n}^f_{n-2}}_y, {\mathbf{n}^f_{n-2}}_x\right)
 \end{align}
 
-\subsection{Generating new polyline approximations}
+\subsection{Discrete approximations of smooth polylines}
 
+To visually depict a smoothed polyline $P_S$, we may wish to compute a discrete representation.
+
+\subsubsection{Polylines}
+
+One obvious way to do this is by approximating the shape by a series of lines --- that is to say, a new polyline $P^*$.  See Fig. \ref{fig:disc-polyline}.
+
+\begin{figure}
+  \centering
+  \subfigure[\label{fig:disc-polyline}$P^*$: A polyline approximation of a smoothed polyline $P_S$]{\includegraphics[width=7cm]{6}}\hfill
+  \subfigure[\label{fig:mesh-polyline}A triangle mesh approximation of a `fattened' smoothed polyline $P_S$]{\includegraphics[width=7cm]{7}}
+  \caption{Discrete approximations of smoothed polylines}
+\end{figure}
+
+We must simply approximate each arc $a_i$ with an sequence $\Gamma_i$ of $q_i \in \mathbb{Z}_{>1}$ points, and connect those points with lines.  Then the sequence of $m = 2 + \sum^{n-2}_{i=1} q_i$ points in $P^*$ is simply:
+
+\begin{equation}
+  \label{eq:p-star}
+  P^*_S = \left(p_0, \Gamma^0_0, \ldots, \Gamma^{q_0-1}_0, \ldots, \Gamma^{0}_{n-2}, \ldots, \Gamma^{q_{n-2}-1}_{n-2},  p_{n-2}\right)
+\end{equation}
+
+We generate each $\Gamma_i$ using the standard parametric form of an arc:
+
+\begin{equation}
+  \label{eq:arc-segments}
+  \Gamma_i = \left(r_i \cos t + c_x, r_i \sin t + c_y\right)
+\end{equation}
+
+Where $t$ consists of $q_i$ evenly-spaced values in the range $\left[\theta^0_i, \theta^1_i\right]$ (inclusive).
+
+\subsubsection{Triangle meshes}
+
+A surface representation of a smoothed polygon can be easily computed from a pair of offset polygons (computed as in Sec.~\ref{sec:offset-polylines}).
+
+Given in input smoothed polygon $P_S$ and two smooth polygons offset from $P_S$, order the polygons by offset so that we have a `left' smoothed polygon $P^l_S$ with a lesser offset than the `right' smoothed polygon $P^r_S$.
+
+Now we can use any constrained triangulation technique to compute a planar triangle mesh with $P^l_S$ and $P^r_S$ as the boundaries; see Fig.~\ref{fig:mesh-polyline}.
 
 \subsection{Automatic computation of the $r_i$}
 
