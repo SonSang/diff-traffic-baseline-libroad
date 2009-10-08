@@ -8,11 +8,11 @@ import itertools as it
 
 def tan_theta(nb, nf):
     dot = numpy.dot(nb, nf)
-    return math.sqrt(1 - dot*dot) / ( 1 + dot )
+    return math.sqrt((1 - dot) / (1 + dot))
 
 def cot_theta(nb, nf):
     dot = numpy.dot(nb, nf)
-    return ( 1 + dot ) / math.sqrt(1 - dot*dot)
+    return math.sqrt((1 + dot) / (1 - dot))
 
 def axis_angle_matrix(theta, axis):
     c = math.cos(theta)

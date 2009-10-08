@@ -203,25 +203,23 @@ We know from trigonometry that
 
 \begin{align}
   \notag
-  \tan \frac{\phi}{2} &= \frac{\sin\phi}{1+\cos\phi}\\
-  \notag
-  \tan \theta &= \frac{\sin 2\theta}{1+\cos 2\theta}\\
+  \tan \frac{\phi}{2} &= \sqrt{\frac{1-\cos\phi}{1+\cos\phi}}\\
   \label{eq:tanident}
-  \tan \theta &= \frac{\sqrt{1-\cos^{2} 2\theta}}{1+\cos 2\theta}
+  \tan \theta &= \sqrt{\frac{1-\cos 2\theta}{1+\cos 2\theta}}
 \end{align}
 
 We can combine Eq.~\eqref{eq:tantheta} with Eq.~\eqref{eq:tanident} to obtain
 
 \begin{align}
   \label{eq:radiustan}
-  r_{i} &= \alpha_i\frac{\sqrt{1-\cos^{2} 2\theta_i}}{1+\cos 2\theta_i}
+  r_{i} &= \alpha_i\sqrt{\frac{1-\cos 2\theta}{1+\cos 2\theta}}
 \end{align}
 
 Finally, we can substitute Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan}, and obtain
 
 \begin{align}
   \label{eq:radius-alpha}
-  r_{i} &= \alpha_i\frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}
+  r_{i} &= \alpha_i\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}
 \end{align}
 
 \subsection{Length of a smoothed polyline}
@@ -250,7 +248,11 @@ For nondegenerate $P_S$ (i.e. with $n>2$), we have:
   \notag
   L\left(P_S\right) &= \sum^{n-2}_{i = 1} r_i\left|\theta^0_i - \theta^1_i\right| + \sum^{n-1}_{i=1} \left|p_i - p_{i-1}\right| - (\alpha_i - \alpha_{i-1})\\
   \label{eq:smoothpoly-len}
-  L\left(P_S\right) &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\theta^0_i - \theta^1_i\right| - 2\sum^{n-2}_{i=1} \alpha_i
+  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\theta^0_i - \theta^1_i\right| - 2\sum^{n-2}_{i=1} \alpha_i
+  % \notag
+  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\theta^0_i - \theta^1_i\right| - 2\alpha_i\\
+  % \label{eq:smoothpoly-len}
+  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\left(\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\theta^0_i - \theta^1_i\right| - 2\right)
 \end{align}
 
 \subsection{Offset polylines}

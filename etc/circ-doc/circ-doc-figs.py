@@ -147,11 +147,11 @@ def tan_circ_fig(ax, pts, debug=False):
 
 def tan_theta(nb, nf):
     dot = numpy.dot(nb, nf)
-    return math.sqrt(1 - dot*dot) / ( 1 + dot )
+    return math.sqrt((1 - dot) / (1 + dot))
 
 def cot_theta(nb, nf):
     dot = numpy.dot(nb, nf)
-    return ( 1 + dot ) / math.sqrt(1 - dot*dot)
+    return math.sqrt((1 + dot) / (1 - dot))
 
 def orientation(nb, nf):
     return nb[0]*nf[1] - nf[0]*nb[1]
