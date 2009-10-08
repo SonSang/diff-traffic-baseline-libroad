@@ -9,7 +9,9 @@
 \begin{document}
 \maketitle
 
-\section{The problem}
+\section{Smoothing two-dimensional polylines}
+
+\subsection{The problem}
 We have an ordered sequence $P$ of $n$ 2D points:
 
 \begin{equation}
@@ -41,9 +43,9 @@ We wish to `smooth' this polyline to something like what is shown in Fig.~\ref{f
 
 Where $c_{i}$ the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
 
-\section{Formulation of the arcs $a_{i}$}
+\subsection{Formulation of the arcs $a_{i}$}
 
-\subsection{Definitions}
+\subsubsection{Definitions}
 
 For each interior point $p_{i}$, the associated arc $\mathbf{a}_{i}$ is determined closely associated with the triple of points:
 
@@ -139,7 +141,7 @@ See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
   \label{fig:interior-point}
 \end{figure}
 
-\subsection{Angles}
+\subsubsection{Angles}
 
 For a given $T_i$, the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; are fixed regardless of the $c_i$ or $r_{i}$:
 
@@ -159,7 +161,7 @@ We can also relate the input vectors for a given $T_{i}$ to $\theta$:
 
 Clearly, Eqs.~\eqref{eq:angle-range-b},~\eqref{eq:angle-range-f} and~\eqref{eq:dotnorm} are independent of other arc parameters $c_{i}$, $r_{i}$, and $\alpha_i$.
 
-\subsection{Equation for $r_i$ and $\alpha_{i}$}
+\subsubsection{Equation for $r_i$ and $\alpha_{i}$}
 
 For a given triple $T_{i}$, we would like a formula relating $r_{i}$, and $\alpha_{i}$.  From visual inspection of Fig.~\ref{fig:interior-point}, we can see that:
 
@@ -195,7 +197,7 @@ Finally, we can substitute Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan},
   r_{i} &= \alpha_i\frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}
 \end{align}
 
-\subsection{Allowable radii}
+\subsubsection{Allowable radii}
 
 For a given $T_{i}$, the range of suitable radii $r_{i}$ depends on $L^b_i$ and $L^f_i$; we can see in Fig.~\ref{fig:interior-point} that were $r_{i}$ to exceed some quantity, one or both of the points of tangency of the circle on the vectors may lie beyond the length(s) of the vectors --- precisely, we require:
 
