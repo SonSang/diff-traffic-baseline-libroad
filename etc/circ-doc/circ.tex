@@ -72,7 +72,7 @@ Where each $\mathbf{a}_{i}$ is defined by:
 And here $c_{i}$ is the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc ordered such that the shortest arc from $\theta^0_i$ to $\theta^1_i$ begins at the tangent point on $\overline{p_{i-1}p_i}$ and ends on the tangent point to $\overline{p_ip_{i+1}}$.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
 
 \subsection{Formulation of the arcs $a_{i}$}
-
+\label{sec:formulation-arcs}
 \subsubsection{Definitions}
 
 For each interior point $p_{i}$, the associated arc $\mathbf{a}_{i}$ is determined closely associated with the triple of points:
@@ -343,8 +343,19 @@ Now we can use any constrained triangulation technique to compute a planar trian
 
 \subsection{Automatic computation of the $r_i$}
 
-\subsubsection{Allowable radii}
+In Sec.~\ref{sec:formulation-arcs}, we develop the tools to compute the arcs $a_{i}$ for a smoothed polyline $P_{S}$ given a polyline $P$.  Additional information is required for each $a_{i}$, namely either the radius $r_{i}$ or the $\alpha_i$ for that arc.  Given one, we can easily compute the other using Equation~\eqref{eq:radius-alpha}.
 
+Suppose that we have no idea what $r_{i}$ or $\alpha_{i}$ to assign to each arc; we would then like a method for automatically choosing the $r_{i}$ given only $P$ and some simple criteria.  Let's say that we would like to pick the $r_{i}$ such that the quantity
+
+\begin{equation}
+  \label{eq:optimize-radius}
+  \min_{i \in [1, n-1]} r_{i}
+\end{equation}
+
+is \emph{maximal}.  To begin, we need to know the range of $r_{i}$ (and correspondingly, the $\alpha_{i}$) that may be assigned to each $a_{i}$ given $T_{i}$.
+
+\subsubsection{Allowable radii}
+\label{sec:allowable-radii}
 For a given $T_{i}$, the range of suitable radii $r_{i}$ depends on $L^b_i$ and $L^f_i$; we can see in Fig.~\ref{fig:interior-point} that were $r_{i}$ to exceed some quantity, one or both of the points of tangency of the circle on the vectors may lie beyond the length(s) of the vectors --- precisely, we require:
 
 \begin{align}
@@ -373,6 +384,20 @@ So for bounds on $r_{i}$, we have
   \label{eq:rbounds}
   r_{i} \in \left(0, \alpha^{\max}_i \frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}\right]
 \end{equation}
+
+\subsubsection{Optimization problem}
+\label{sec:optimization}
+
+The bounds on $\alpha_i$ given in Equation~\eqref{eq:alpha-max} are valid for a $T_{i}$, but when we are concerned with the $\alpha_i$ for all of the interior points of $P$ we must consider the \emph{available} lengths $L^{b}_{i}-\alpha_{i-1}$ and $L^{f}_{i}+\alpha_{i+1}$.  Since each $r_{i}$ is proportional to the corresponding $\alpha_i$ (Equation~\eqref{eq:radius-alpha}), to satisfy Equation~\eqref{eq:optimize-radius}, we will want each $\alpha_i$ to be as large as possible
+
+\begin{align}
+  \notag
+  \alpha_i &= \min \left\{L^{b}_{i}-\alpha_{i-1}, L^{f}_{i}-\alpha_{i+1}\right\} \\
+  \label{eq:alpha-optimize}
+  &= \min \left\{L^{f}_{i-1}-\alpha_{i-1}, L^{f}_{i}-\alpha_{i+1}\right\}
+\end{align}
+
+Here we define $\alpha_0 = \alpha_{n-1} = 0$.
 
 \end{document}
 
