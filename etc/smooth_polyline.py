@@ -126,7 +126,7 @@ class smooth_polyline(object):
         A[2 * (self.N - 1) + 1,            0] = 1.0
         A[2 * (self.N - 1) + 2, self.N-1] = 1.0
         return A
-    def extract_line(self, resolution):
+    def extract_line(self, offset, resolution):
         res = numpy.zeros((1, self.p_start.shape[0]))
         res[0] = self.p_start
         for i in xrange(self.N):
@@ -134,7 +134,11 @@ class smooth_polyline(object):
             radius = self.radii[i]
             angle  = self.arcs[i]
             orient = self.orient[i]
-            circ = circlelen(center, radius, angle, orient < 0.0, resolution)
+            if orient < 0.0:
+                new_radius = radius - offset
+            else:
+                new_radius = radius + offset
+            circ = circlelen(center, new_radius, angle, orient < 0.0, resolution)
             s0 = res.shape[0]
             res.resize((s0 + circ.shape[0], res.shape[1]))
             res[s0:] = circ
@@ -145,9 +149,17 @@ class smooth_polyline(object):
 if __name__ == '__main__':
     cvxopt.solvers.options['show_progress'] = False
     p = polyline([[0.0, 4.0], [4.0, 3.0], [4.0, 0.0], [6.0, 0.0], [3.0, -2.0], [2.0, -1.0], [2.0, -4.0]])
+
     ps = smooth_polyline(p)
-    li = ps.extract_line(0.1)
+
     pylab.clf()
+
+    li = p.points
+    pylab.plot(li[:,0], li[:, 1])
+
+    li = ps.extract_line(0.0, 0.1)
+    pylab.plot(li[:,0], li[:, 1])
+    li = ps.extract_line(0.35, 0.01)
     pylab.plot(li[:,0], li[:, 1])
 
     pylab.gca().axis('equal')
