@@ -5,9 +5,6 @@ import math
 import cvxopt
 import cvxopt.solvers
 
-import pylab
-import matplotlib
-
 def cot_theta(nb, nf):
     dot = numpy.dot(nb, nf)
     return math.sqrt((1 + dot ) /(1 - dot))
@@ -249,6 +246,9 @@ def make_mesh(low_side, high_side):
 
 
 if __name__ == '__main__':
+    import pylab
+    import matplotlib
+
     cvxopt.solvers.options['show_progress'] = False
     p = polyline([[-4.0, 0.0, 0.0], [-4.0, 4.0, 0.5], [4.0, 4.0, 1.5], [4.0, -4.0, 2.5], [-4.0, -4.0, 3.5], [-4.0, 0.0, 4.0]])
     ps = smooth_polyline(p)
