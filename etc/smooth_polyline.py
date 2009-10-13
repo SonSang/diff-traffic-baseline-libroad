@@ -138,9 +138,14 @@ class smooth_polyline(object):
             else:
                 new_radius = radius + offset
             circ = circlelen(center, new_radius, angle, orient < 0.0, resolution)
+            dist = scipy.linalg.norm(res[-1] - circ[0])
             s0 = res.shape[0]
-            res.resize((s0 + circ.shape[0], res.shape[1]))
-            res[s0:] = circ
+            if dist < resolution:
+                res.resize((s0 + circ.shape[0]-1, res.shape[1]))
+                res[s0:] = circ[1:]
+            else:
+                res.resize((s0 + circ.shape[0], res.shape[1]))
+                res[s0:] = circ
         res.resize((res.shape[0] + 1, res.shape[1]))
         res[-1] = self.p_end + offset*self.perp_end
         return res
