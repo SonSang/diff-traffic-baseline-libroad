@@ -65,12 +65,12 @@ Where each $\mathbf{a}_{i}$ is defined by:
 \mathbf{a}_i=\left(
   c_{i},
   r_{i},
-  \theta^{0}_{i},
-  \theta^{1}_{i}
+  \phi^{0}_{i},
+  \phi^{1}_{i}
 \right)
 \end{equation}
 %
-And here $c_{i}$ is the center, $r_{i}$ is the radius, and $\theta^{0}_{i}, \theta^{1}_{i}$ are the angular extents of the arc ordered such that the shortest arc from $\theta^0_i$ to $\theta^1_i$ begins at the tangent point on $\overline{p_{i-1}p_i}$ and ends on the tangent point to $\overline{p_ip_{i+1}}$.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
+And here $c_{i}$ is the center, $r_{i}$ is the radius, and $\phi^{0}_{i}, \phi^{1}_{i}$ are the angular extents of the arc ordered such that the shortest arc from $\phi^0_i$ to $\phi^1_i$ begins at the tangent point on $\overline{p_{i-1}p_i}$ and ends on the tangent point to $\overline{p_ip_{i+1}}$.  See Fig. \ref{fig:debug-smooth-polyline}; each $\mathbf{a}_{i}$ is shown.
 %
 \subsection{Formulation of the arcs $a_{i}$}
 \label{sec:formulation-arcs}
@@ -180,16 +180,16 @@ See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
 %
 \subsubsection{Angles}
 %
-For a given $T_i$, the arc angles $\theta^0_i$ and $\theta^{1}_{i}$; are fixed regardless of the $c_i$ or $r_{i}$:
+For a given $T_i$, the arc angles $\phi^0_i$ and $\phi^{1}_{i}$; are fixed regardless of the $c_i$ or $r_{i}$:
 %
 \begin{align}
   \label{eq:angle-range-b}
-  \theta^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
+  \phi^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
   \label{eq:angle-range-f}
-  \theta^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
+  \phi^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
 \end{align}
 %
-The total arc length of $a_i$ (the angle $\left|\theta^0_i -\theta^1_i\right|$) is given by $2\left(\pi-\theta_i\right)$ (see Fig.~\ref{fig:interior-point})
+The total arc length of $a_i$ (the angle $\left|\phi^0_i -\phi^1_i\right|$) is given by $2\left(\pi-\theta_i\right)$ (see Fig.~\ref{fig:interior-point})
 %
 We can also relate the input vectors for a given $T_{i}$ to $\theta$:
 %
@@ -202,7 +202,7 @@ Similarly, we know
 %
 \begin{align}
   \notag
-  \left|\theta^0_i -\theta^1_i\right| &= 2\left(\pi-\theta_i\right)\\
+  \left|\phi^0_i -\phi^1_i\right| &= 2\left(\pi-\theta_i\right)\\
   \label{eq:arclen-dot}
   &= 2\pi-\arccos \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i}
 \end{align}
@@ -224,7 +224,7 @@ We know from trigonometry that
 %
 \begin{align}
   \notag
-  \tan \frac{\phi}{2} &= \sqrt{\frac{1-\cos\phi}{1+\cos\phi}}\\
+  \tan \frac{s}{2} &= \sqrt{\frac{1-\cos s}{1+\cos s}}\\
   \label{eq:tanident}
   \tan \theta &= \sqrt{\frac{1-\cos 2\theta}{1+\cos 2\theta}}
 \end{align}
@@ -247,11 +247,11 @@ Finally, we can substitute Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan},
 %
 It is useful to consider the length of a smoothed polyline $P_S$.  This will be the sum of the circumference of each arc $a_i$ plus the length of the straight line segments connected consecutive arcs and the segments connecting $p_0$ to $a_1$ and $a_{n-2}$ to $p_{n-2}$.
 
-The length $w_i$ of an arc $a_i = \left(c_i, r_i, \theta^0_i, \theta^1_i\right)$ is given by the standard formula:
+The length $w_i$ of an arc $a_i = \left(c_i, r_i, \phi^0_i, \phi^1_i\right)$ is given by the standard formula:
 %
 \begin{equation}
   \label{eq:circumference}
-  w_i  = 2\pi r_i \frac{\left|\theta^0_i - \theta^1_i\right|}{2\pi} = r_i \left|\theta^0_i - \theta^1_i\right|
+  w_i  = 2\pi r_i \frac{\left|\phi^0_i - \phi^1_i\right|}{2\pi} = r_i \left|\phi^0_i - \phi^1_i\right|
 \end{equation}
 %
 The length $s_i$ of a segment connecting two consecutive arcs $a_{i-1}$ and $a_i$ is simply the length of the original line from $p_{i-1}$ to $p_i$ minus the $\alpha_{i-1}$ and $\alpha_i$ of $a_{i-1}$ and $a_i$:
@@ -267,19 +267,19 @@ For nondegenerate $P_S$ (i.e. with $n>2$), we have:
 %
 \begin{align}
   \notag
-  L\left(P_S\right) &= \sum^{n-2}_{i = 1} r_i\left|\theta^0_i - \theta^1_i\right| + \sum^{n-1}_{i=1} \left|p_i - p_{i-1}\right| - (\alpha_i - \alpha_{i-1})\\
+  L\left(P_S\right) &= \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| + \sum^{n-1}_{i=1} \left|p_i - p_{i-1}\right| - (\alpha_i - \alpha_{i-1})\\
   \label{eq:smoothpoly-len}
-  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\theta^0_i - \theta^1_i\right| - 2\sum^{n-2}_{i=1} \alpha_i
+  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| - 2\sum^{n-2}_{i=1} \alpha_i
   % \notag
-  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\theta^0_i - \theta^1_i\right| - 2\alpha_i\\
+  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\phi^0_i - \phi^1_i\right| - 2\alpha_i\\
   % \label{eq:smoothpoly-len}
-  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\left(\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\theta^0_i - \theta^1_i\right| - 2\right)
+  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\left(\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\phi^0_i - \phi^1_i\right| - 2\right)
 \end{align}
 %
 \subsection{Offset polylines}
 \label{sec:offset-polylines}
 %
-So far, given a planar polyline $P$ and either an $\alpha_i$ or $r_i$ for each interior point $P_i$, we can compute the smoothed polyline $P_S = p_0, a_1, a_2,\ldots\,a_{n-2}, p_{n-1}$ by computing the associated circle $a_i=\left(c_i, r_i, \theta^0_i, \theta^1_i\right)$ for each interior point of $P$ using Eq.~\eqref{eq:radius-alpha} to find $r_i$ or $\alpha_i$, one of Eqs.~\eqref{eq:center-vector-b},~\eqref{eq:center-vector-f}, or~\eqref{eq:center-bisector} to find $c_i$, and Eqs.~\eqref{eq:angle-range-b}, and ~\eqref{eq:angle-range-f} for $\theta^0_i$ and $\theta^1_i$.  We retain the original polyline $P$ external points $p_0$ and $p_{n-1}$ as the endpoints of $P_S$.
+So far, given a planar polyline $P$ and either an $\alpha_i$ or $r_i$ for each interior point $P_i$, we can compute the smoothed polyline $P_S = p_0, a_1, a_2,\ldots\,a_{n-2}, p_{n-1}$ by computing the associated circle $a_i=\left(c_i, r_i, \phi^0_i, \phi^1_i\right)$ for each interior point of $P$ using Eq.~\eqref{eq:radius-alpha} to find $r_i$ or $\alpha_i$, one of Eqs.~\eqref{eq:center-vector-b},~\eqref{eq:center-vector-f}, or~\eqref{eq:center-bisector} to find $c_i$, and Eqs.~\eqref{eq:angle-range-b}, and ~\eqref{eq:angle-range-f} for $\phi^0_i$ and $\phi^1_i$.  We retain the original polyline $P$ external points $p_0$ and $p_{n-1}$ as the endpoints of $P_S$.
 
 Suppose we wish to compute a new smoothed polyline $P_S'$ that has the property that at every point, the nearest point on $P_S$ is exactly distance $d$ away and furthermore.  That is, $P_S'$ is `offset' from $P_S$ to one side by a signed distance $d$; see Fig.~\ref{fig:fattened-polyline}.  We used the convention that $d>0$ refers to a `right' offset (the lower blue line in Fig.~\ref{fig:fattened-polyline}) and $d<0$ to a `left' offset (the upper blue line in the same figure).
 %
@@ -294,7 +294,7 @@ The $a'_i$ corresponding to $P_S'$ (with signed offset $d$) can be derived from 
 %
 \begin{equation}
   \label{eq:arc-offset}
-  a'_i = \left(c_i, r_i + o_id, \theta^0_i, \theta^1_i\right)
+  a'_i = \left(c_i, r_i + o_id, \phi^0_i, \phi^1_i\right)
 \end{equation}
 %
 We must also choose new endpoints $p'_0$ and $p'_{n-1}$ for this line;  are the perpendiculars to $n^f_0$ and $n^f_{n-2}$ (from Eq.~\eqref{eq:unit-vectors-f}), scaled and added to $p_0$ and $p_{n-1}$, respectively:
@@ -334,7 +334,7 @@ We generate each $\Gamma_i$ using the standard parametric form of an arc:
   \Gamma_i = \left(r_i \cos t + c_x, r_i \sin t + c_y\right)
 \end{equation}
 %
-Where $t$ consists of $q_i$ evenly-spaced values in the range $\left[\theta^0_i, \theta^1_i\right]$ (inclusive).
+Where $t$ consists of $q_i$ evenly-spaced values in the range $\left[\phi^0_i, \phi^1_i\right]$ (inclusive).
 %
 \subsubsection{Triangle meshes}
 %
