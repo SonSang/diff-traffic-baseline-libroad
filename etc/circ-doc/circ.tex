@@ -89,39 +89,35 @@ For each interior point $p_{i}$, the associated arc $\mathbf{a}_{i}$ is determin
 In particular, we are interested in the derived vectors
 %
 \begin{align}
-  \label{eq:vector-b}
-  \mathbf{v}^{b}_{i} &= p_{i-1} - p_{i}\\
   \label{eq:vector-f}
-  \mathbf{v}^{f}_{i} &= p_{i+1} - p_{i}
+  \mathbf{v}_{i} &= p_{i+1} - p_{i}
 \end{align}
 %
 their lengths:
 %
 \begin{align}
-  \label{eq:vector-length-b}
-  L^{b}_{i} &= \left|\mathbf{v}^{b}_{i}\right|\\
   \label{eq:vector-length-f}
-  L^{f}_{i} &= \left|\mathbf{v}^{f}_{i}\right|
+  L_{i} &= \left|\mathbf{v}_{i}\right|
 \end{align}
 %
 and the associated unit vectors:
 %
 \begin{align}
-  \label{eq:unit-vector-b}
-  \mathbf{n}^{b}_{i} &= \frac{\mathbf{v}^{b}_{i}}{L^{b}_{i}} &=\frac{\mathbf{v}^{b}_{i}}{\left|\mathbf{v}^{b}_{i}\right|}\\
   \label{eq:unit-vectors-f}
-  \mathbf{n}^{f}_{i} &= \frac{\mathbf{v}^{f}_{i}}{L^{f}_{i}} &=\frac{\mathbf{v}^{f}_{i}}{\left|\mathbf{v}^{f}_{i}\right|}
+  \mathbf{n}_{i} &= \frac{\mathbf{v}_{i}}{L_{i}} =\frac{\mathbf{v}_{i}}{\left|\mathbf{v}_{i}\right|}
 \end{align}
+%
+Henceforth, when performing computations with a $T_i$, we shall frequently refer to $-\mathbf{n}_{i-1} = \frac{p_{i-1}-p_i}{\left|p_{i-1}-p_i\right|}$.
 %
 \paragraph{Tangent points}
 %
-The projections of $c_{i}-p_{i}$ onto $\mathbf{n}^{b}_{i}$ and onto $\mathbf{n}^{f}_{i}$ have equal length $\alpha_i$; then the tangent points of the circle on $\mathbf{v}^{b}_{i}$ and $\mathbf{v}^{b}_{i}$ are:
+The projections of $c_{i}-p_{i}$ onto $-\mathbf{n}_{i-1}$ and onto $\mathbf{n}_{i}$ have equal length $\alpha_i$; then the tangent points of the circle on $-\mathbf{v}_{i-1}$ and $\mathbf{v}_{i}$ are:
 %
 \begin{align}
   \label{eq:alpha-vector-b}
-  \left(c_{i}-p_{i}\right)\;\mathrm{proj}\; \mathbf{n}^{b}_{i} &= \alpha_i\mathbf{n}^{b}_{i}\\
+  \left(c_{i}-p_{i}\right)\;\mathrm{proj}\; -\mathbf{n}_{i-1} &= -\alpha_i\mathbf{n}_{i-1}\\
   \label{eq:alpha-vector-f}
-  \left(c_{i}-p_{i}\right)\;\mathrm{proj}\; \mathbf{n}^{f}_{i} &= \alpha_i\mathbf{n}^{f}_{i}
+  \left(c_{i}-p_{i}\right)\;\mathrm{proj}\; \mathbf{n}_{i} &= \alpha_i\mathbf{n}_{i}
 \end{align}
 %
 \paragraph{Radius vectors}
@@ -130,18 +126,18 @@ We are also interested in the (negative) radius vectors from these points to the
 %
 \begin{align}
   \label{eq:radius-vector-b}
-  \mathbf{r}^{b}_{i} &= c_{i} - \left(\alpha\mathbf{n}^{b}_{i} - p_{i}\right)&=\pm r_i\left( -{\mathbf{n}^{b}_{i}}_{y},  {\mathbf{n}^{b}_{i}}_{x} \right)\\
+  \mathbf{r}^{-}_{i} &= c_{i} - \left(-\alpha\mathbf{n}_{i-1} - p_{i}\right)&=\pm r_i\left( --{\mathbf{n}_{i-1}}_{y},  -{\mathbf{n}_{i-1}}_{x} \right)\\
   \label{eq:radius-vector-f}
-  \mathbf{r}^{f}_{i} &= c_{i} - \left(\alpha\mathbf{n}^{f}_{i} - p_{i}\right)&=\pm r_i\left(  {\mathbf{n}^{f}_{i}}_{y}, -{\mathbf{n}^{f}_{i}}_{x} \right)
+  \mathbf{r}^{+}_{i} &= c_{i} - \left(\alpha\mathbf{n}_{i} - p_{i}\right)&=\pm r_i\left(  {\mathbf{n}_{i}}_{y}, -{\mathbf{n}_{i}}_{x} \right)
 \end{align}
 %
-Obviously, $\left|\mathbf{r}^{b}_{i}\right| = \left|\mathbf{r}^{f}_{i}\right| = r_{i}$.
+Obviously, $\left|\mathbf{r}^{-}_{i}\right| = \left|\mathbf{r}^{+}_{i}\right| = r_{i}$.
 
-The sign of the rightmost term in Eqs.~\eqref{eq:radius-vector-b},~\eqref{eq:radius-vector-f} ($\pm$) is determined by the orientation of the triple $T_i$ (see Eqs.~\eqref{eq:vector-b}, ~\eqref{eq:vector-f}); that is to say:
+The sign of the rightmost term in Eqs.~\eqref{eq:radius-vector-b},~\eqref{eq:radius-vector-f} ($\pm$) is determined by the orientation of the triple $T_i$ (see Eq.~\eqref{eq:vector-f}); that is to say:
 %
 \begin{equation}
   \label{eq:orientation}
-  o_i = \mathrm{sign}\; \mathbf{n}^{b}_{i} \times \mathbf{n}^{f}_{i}
+  o_i = \mathrm{sign}\; -\mathbf{n}_{i-1} \times \mathbf{n}_{i}
 \end{equation}
 %
 \paragraph{The center}
@@ -150,9 +146,9 @@ The center $c_{i}$ can be determined by combining Eqs.~\eqref{eq:radius-vector-b
 %
 \begin{align}
   \label{eq:center-vector-b}
-  c_{i} &= p_{i} + \alpha_i\mathbf{n}^b_i + \mathbf{r}^{b}_{i}\\
+  c_{i} &= p_{i} + -\alpha_i\mathbf{n}_{i-1} + \mathbf{r}^{-}_{i}\\
   \label{eq:center-vector-f}
-  c_{i} &= p_{i} + \alpha_i\mathbf{n}^f_i + \mathbf{r}^{f}_{i}
+  c_{i} &= p_{i} + \alpha_i\mathbf{n}_i + \mathbf{r}^{+}_{i}
 \end{align}
 %
 We can also write $c_{i}$ in terms of the unit bisector $\mathbf{b}_{i}$:
@@ -166,7 +162,7 @@ Where $\mathbf{b}_i$ is of course given by:
 %
 \begin{equation}
   \label{eq:bisector}
-  \mathbf{b}_i = \frac{\mathbf{n}^b_i + \mathbf{n}^f_i}{\left|\mathbf{n}^b_i + \mathbf{n}^f_i\right|}
+  \mathbf{b}_i = \frac{-\mathbf{n}_{i-1} + \mathbf{n}_i}{\left|-\mathbf{n}_{i-1} + \mathbf{n}_i\right|}
 \end{equation}
 %
 See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
@@ -174,7 +170,7 @@ See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
 \begin{figure}[h]
   \centering
   \includegraphics[width=\columnwidth]{4}
-  \caption{The interior point $p_{i}$ with backward vector $\mathbf{v}^{b}_{i}$ and forward vector $\mathbf{v}^{f}_{i}$. $\mathbf{b}_{i}$ is the unit bisector of these vectors}
+  \caption{The interior point $p_{i}$ with backward vector $-\mathbf{v}_{i-1}$ and forward vector $\mathbf{v}_{i}$. $\mathbf{b}_{i}$ is the unit bisector of these vectors}
   \label{fig:interior-point}
 \end{figure}
 %
@@ -184,9 +180,9 @@ For a given $T_i$, the arc angles $\phi^0_i$ and $\phi^{1}_{i}$; are fixed regar
 %
 \begin{align}
   \label{eq:angle-range-b}
-  \phi^{0}_{i} &= \arctan \frac{{\mathbf{r}^{b}_{i}}_{y}}{{\mathbf{r}^{b}_{i}}_{x}}\\
+  \phi^{0}_{i} &= \arctan \frac{{\mathbf{r}^{-}_{i}}_{y}}{{\mathbf{r}^{-}_{i}}_{x}}\\
   \label{eq:angle-range-f}
-  \phi^{1}_{i} &= \arctan \frac{{\mathbf{r}^{f}_{i}}_{y}}{{\mathbf{r}^{f}_{i}}_{x}}
+  \phi^{1}_{i} &= \arctan \frac{{\mathbf{r}^{+}_{i}}_{y}}{{\mathbf{r}^{+}_{i}}_{x}}
 \end{align}
 %
 The total arc length of $a_i$ (the angle $\left|\phi^0_i -\phi^1_i\right|$) is given by $2\left(\pi-\theta_i\right)$ (see Fig.~\ref{fig:interior-point})
@@ -195,7 +191,7 @@ We can also relate the input vectors for a given $T_{i}$ to $\theta$:
 %
 \begin{equation}
   \label{eq:dotnorm}
-  \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i} = \cos 2\theta_i
+  \mathbf{n}_{i} \cdot -\mathbf{n}_{i-1} = \cos 2\theta_i
 \end{equation}
 %
 Similarly, we know
@@ -204,7 +200,7 @@ Similarly, we know
   \notag
   \left|\phi^0_i -\phi^1_i\right| &= 2\left(\pi-\theta_i\right)\\
   \label{eq:arclen-dot}
-  &= 2\pi-\arccos \mathbf{n}^{f}_{i} \cdot \mathbf{n}^{b}_{i}
+  &= 2\pi-\arccos \mathbf{n}_{i} \cdot -\mathbf{n}_{i-1}
 \end{align}
 %
 Clearly, Eqs.~\eqref{eq:angle-range-b},~\eqref{eq:angle-range-f} and~\eqref{eq:dotnorm} are independent of other arc parameters $c_{i}$, $r_{i}$, and $\alpha_i$.
@@ -240,7 +236,7 @@ Finally, we can substitute Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan},
 %
 \begin{align}
   \label{eq:radius-alpha}
-  r_{i} &= \alpha_i\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}
+  r_{i} &= \alpha_i\sqrt{\frac{1-\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}}
 \end{align}
 %
 \subsection{Length of a smoothed polyline}
@@ -271,9 +267,9 @@ For nondegenerate $P_S$ (i.e. with $n>2$), we have:
   \label{eq:smoothpoly-len}
   &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| - 2\sum^{n-2}_{i=1} \alpha_i
   % \notag
-  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\phi^0_i - \phi^1_i\right| - 2\alpha_i\\
+  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\sqrt{\frac{1-\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}}\left|\phi^0_i - \phi^1_i\right| - 2\alpha_i\\
   % \label{eq:smoothpoly-len}
-  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\left(\sqrt{\frac{1-\mathbf{n}^f_i\cdot \mathbf{n}^b_i}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}}\left|\phi^0_i - \phi^1_i\right| - 2\right)
+  % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\left(\sqrt{\frac{1-\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}}\left|\phi^0_i - \phi^1_i\right| - 2\right)
 \end{align}
 %
 \subsection{Offset polylines}
@@ -297,12 +293,12 @@ The $a'_i$ corresponding to $P_S'$ (with signed offset $d$) can be derived from 
   a'_i = \left(c_i, r_i + o_id, \phi^0_i, \phi^1_i\right)
 \end{equation}
 %
-We must also choose new endpoints $p'_0$ and $p'_{n-1}$ for this line;  are the perpendiculars to $n^f_0$ and $n^f_{n-2}$ (from Eq.~\eqref{eq:unit-vectors-f}), scaled and added to $p_0$ and $p_{n-1}$, respectively:
+We must also choose new endpoints $p'_0$ and $p'_{n-1}$ for this line;  are the perpendiculars to $n_0$ and $n_{n-2}$ (from Eq.~\eqref{eq:unit-vectors-f}), scaled and added to $p_0$ and $p_{n-1}$, respectively:
 %
 \begin{align}
   \label{eq:endpoints-prime}
-  p'_0 &= p_0 + d \left({\mathbf{n}^f_0}_y, -{\mathbf{n}^f_0}_x\right)\\
-  p'_{n-1} &= p_{n-1} + d \left(-{\mathbf{n}^f_{n-2}}_y, {\mathbf{n}^f_{n-2}}_x\right)
+  p'_0 &= p_0 + d \left({\mathbf{n}_0}_y, -{\mathbf{n}_0}_x\right)\\
+  p'_{n-1} &= p_{n-1} + d \left(-{\mathbf{n}_{n-2}}_y, {\mathbf{n}_{n-2}}_x\right)
 \end{align}
 %
 \subsection{Discrete approximations of smooth polylines}
@@ -360,13 +356,13 @@ is \emph{maximal}.  To begin, we need to know the range of $r_{i}$ (and correspo
 \subsubsection{Allowable radii}
 \label{sec:allowable-radii}
 %
-For a given $T_{i}$, the range of suitable radii $r_{i}$ depends on $L^b_i$ and $L^f_i$; we can see in Fig.~\ref{fig:interior-point} that were $r_{i}$ to exceed some quantity, one or both of the points of tangency of the circle on the vectors may lie beyond the length(s) of the vectors --- precisely, we require:
+For a given $T_{i}$, the range of suitable radii $r_{i}$ depends on $L_{i-1}$ and $L_i$; we can see in Fig.~\ref{fig:interior-point} that were $r_{i}$ to exceed some quantity, one or both of the points of tangency of the circle on the vectors may lie beyond the length(s) of the vectors --- precisely, we require:
 %
 \begin{align}
   \label{eq:alphalimit-b}
-  \alpha_i &\le L^{b}_{i}\\
+  \alpha_i &\le L_{i-1}\\
   \label{eq:alphalimit-f}
-  \alpha_i &\le L^{f}_{i}
+  \alpha_i &\le L_{i}
 \end{align}
 %
 \paragraph{Lower bound}
@@ -375,30 +371,30 @@ Obviously, $r_i > 0$ to satisfy the usual meaning of a radius.
 %
 \paragraph{Upper bound}
 %
-To derive an upper bound on $r_{i}$ based on the lengths $L^b_i$ and $L^f_i$, we see in Eq.~\eqref{eq:radius-alpha} that $r_{i}$ is linear in $a_{i}$; thus we need only pick the largest $\alpha_i$ that satisfies Eqs.~\eqref{eq:alphalimit-b} and~\eqref{eq:alphalimit-f}.  This is simply
+To derive an upper bound on $r_{i}$ based on the lengths $L_{i-1}$ and $L_i$, we see in Eq.~\eqref{eq:radius-alpha} that $r_{i}$ is linear in $a_{i}$; thus we need only pick the largest $\alpha_i$ that satisfies Eqs.~\eqref{eq:alphalimit-b} and~\eqref{eq:alphalimit-f}.  This is simply
 %
 \begin{equation}
   \label{eq:alpha-max}
-  \alpha^{\max}_i = \min \left\{L^{b}_{i}, L^{f}_{i}\right\}
+  \alpha^{\max}_i = \min \left\{L_{i-1}, L_{i}\right\}
 \end{equation}
 %
 So for bounds on $r_{i}$, we have
 %
 \begin{equation}
   \label{eq:rbounds}
-  r_{i} \in \left(0, \alpha^{\max}_i \frac{\sqrt{1-\left(\mathbf{n}^f_i\cdot \mathbf{n}^b_i\right)^{2}}}{1+\mathbf{n}^f_i\cdot \mathbf{n}^b_i}\right]
+  r_{i} \in \left(0, \alpha^{\max}_i \frac{\sqrt{1-\left(\mathbf{n}_i\cdot -\mathbf{n}_{i-1}\right)^{2}}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}\right]
 \end{equation}
 %
 \subsubsection{Optimization problem}
 \label{sec:optimization}
 %
-The bounds on $\alpha_i$ given in Equation~\eqref{eq:alpha-max} are valid for a $T_{i}$, but when we are concerned with the $\alpha_i$ for all of the interior points of $P$ we must consider the \emph{available} lengths $L^{b}_{i}-\alpha_{i-1}$ and $L^{f}_{i}+\alpha_{i+1}$.  Since each $r_{i}$ is proportional to the corresponding $\alpha_i$ (Equation~\eqref{eq:radius-alpha}), to satisfy Equation~\eqref{eq:optimize-radius}, we will want each $\alpha_i$ to be as large as possible
+The bounds on $\alpha_i$ given in Equation~\eqref{eq:alpha-max} are valid for a $T_{i}$, but when we are concerned with the $\alpha_i$ for all of the interior points of $P$ we must consider the \emph{available} lengths $L_{i-1}-\alpha_{i-1}$ and $L_{i}+\alpha_{i+1}$.  Since each $r_{i}$ is proportional to the corresponding $\alpha_i$ (Equation~\eqref{eq:radius-alpha}), to satisfy Equation~\eqref{eq:optimize-radius}, we will want each $\alpha_i$ to be as large as possible
 %
 \begin{align}
   \notag
-  \alpha_i &= \min \left\{L^{b}_{i}-\alpha_{i-1}, L^{f}_{i}-\alpha_{i+1}\right\} \\
+  \alpha_i &= \min \left\{L_{i-1}-\alpha_{i-1}, L_{i}-\alpha_{i+1}\right\} \\
   \label{eq:alpha-optimize}
-  &= \min \left\{L^{f}_{i-1}-\alpha_{i-1}, L^{f}_{i}-\alpha_{i+1}\right\}
+  &= \min \left\{L_{i-1}-\alpha_{i-1}, L_{i}-\alpha_{i+1}\right\}
 \end{align}
 %
 Here we define $\alpha_0 = \alpha_{n-1} = 0$.  The optimization problem with constraints from Equation~\eqref{eq:optimize-radius} and objective function given by Equation~\eqref{eq:alpha-optimize} is not amenable to familiar, efficient optimization tools.
@@ -410,7 +406,7 @@ Let us relax the constraints in Equation~\eqref{eq:alpha-optimize} to reflect th
 %
 \begin{equation}
   \label{eq:alpha-length-limit}
-  \alpha_i + \alpha_{i+1} \le L^f_i
+  \alpha_i + \alpha_{i+1} \le L_i
 \end{equation}
 %
 where again $\alpha_0 = \alpha_{n-1} = 0$.  We shall find the optimal solution, where we maximize Equation~\eqref{eq:optimize-radius} and then $\sum_i r_i$, through a two-stage process:
