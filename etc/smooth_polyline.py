@@ -77,14 +77,14 @@ class smooth_polyline(object):
             self.arcs[i][0] = math.atan2(rb[1], rb[0]) + math.pi
             self.arcs[i][1] = math.atan2(rf[1], rf[0]) + math.pi
     def calc_radii(self, pline, tan_thetas):
-        b = cvxopt.matrix(0.0, ( 2*(self.N-1) + 2, 1 ))
+        b = cvxopt.matrix(0.0, ( 2*(self.N-1) + 3, 1 ))
         b[0:self.N-1] = pline.lengths[1:self.N]
         b[-2] = pline.lengths[0]
         b[-1] = pline.lengths[self.N]
 
         # find which radius is the biggest minimum
         best_pick   = None
-        best_radius = None
+        best_alpha = None
         for pick in xrange(0, self.N):
             A = self.make_lp_A(tan_thetas, pick)
 
@@ -93,13 +93,14 @@ class smooth_polyline(object):
             c[pick, 0] = -tan_thetas[pick]
 
             sol = cvxopt.solvers.lp(c, A, b)
-            if not best_radius or best_radius < sol['x'][pick]:
+            if not best_alpha or best_alpha < sol['x'][pick]:
                 best_pick = pick
-                best_radius = sol['x'][pick]
+                best_alpha = sol['x'][pick]
 
         # now optimize the others given the smallest
         pick = best_pick
         A = self.make_lp_A(tan_thetas, pick)
+        b[self.N-1 + pick] = -best_alpha*tan_thetas[pick]
         c = cvxopt.matrix(0.0, (self.N, 1))
         # new objective function
         for i in xrange(self.N):
@@ -107,7 +108,7 @@ class smooth_polyline(object):
         sol = cvxopt.solvers.lp(c, A, b)
         return tan_thetas * numpy.array(sol['x']).T
     def make_lp_A(self, tan_thetas, pick):
-        A = cvxopt.matrix(0.0, (2*(self.N-1) + 2, self.N))
+        A = cvxopt.matrix(0.0, (2*(self.N-1) + 3, self.N))
         # constraints [0..N-1)
         for ct in xrange(0, self.N-1):
             A[ct, ct  ] = 1.0
@@ -118,12 +119,12 @@ class smooth_polyline(object):
         for ct in xrange(0, self.N):
             if ct != pick:
                 A[cno, pick] =  tan_thetas[pick]
-                A[cno, ct]   = -tan_thetas[ct]
-                cno += 1
+            A[cno, ct]   = -tan_thetas[ct]
+            cno += 1
 
         # end constraints
-        A[2 * (self.N - 1),            0] = 1.0
-        A[2 * (self.N - 1) + 1, self.N-1] = 1.0
+        A[2 * (self.N - 1) + 1,            0] = 1.0
+        A[2 * (self.N - 1) + 2, self.N-1] = 1.0
         return A
     def extract_line(self, resolution):
         res = numpy.zeros((1, self.p_start.shape[0]))
@@ -141,12 +142,13 @@ class smooth_polyline(object):
         res[-1] = self.p_end
         return res
 
-
 if __name__ == '__main__':
     cvxopt.solvers.options['show_progress'] = False
-    p = polyline([[0.0, 4.0], [4.0, 4.0], [4.0, 0.0], [6.0, 0.0]])
+    p = polyline([[0.0, 4.0], [4.0, 3.0], [4.0, 0.0], [6.0, 0.0], [3.0, -2.0], [2.0, -1.0], [2.0, -4.0]])
     ps = smooth_polyline(p)
     li = ps.extract_line(0.1)
     pylab.clf()
     pylab.plot(li[:,0], li[:, 1])
+
+    pylab.gca().axis('equal')
     pylab.show()
