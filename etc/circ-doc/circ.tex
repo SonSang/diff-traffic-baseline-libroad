@@ -126,9 +126,9 @@ We are also interested in the (negative) radius vectors from these points to the
 %
 \begin{align}
   \label{eq:radius-vector-b}
-  \mathbf{r}^{-}_{i} &= c_{i} - \left(-\alpha\mathbf{n}_{i-1} + p_{i}\right)=c_{i} + \left(\alpha\mathbf{n}_{i-1} - p_{i}\right)&=\pm r_i\left({\mathbf{n}_{i-1}}_{y},  -{\mathbf{n}_{i-1}}_{x} \right)\\
+  \mathbf{r}^{-}_{i} &= c_{i} - \left(-\alpha\mathbf{n}_{i-1} + p_{i}\right)=c_{i} + \left(\alpha\mathbf{n}_{i-1} - p_{i}\right)&=\pm r_i\left(\mathbf{n}_{i-1}^{y},  -\mathbf{n}_{i-1}^{x} \right)\\
   \label{eq:radius-vector-f}
-  \mathbf{r}^{+}_{i} &= c_{i} - \left(\alpha\mathbf{n}_{i} + p_{i}\right)&=\pm r_i\left(  {\mathbf{n}_{i}}_{y}, -{\mathbf{n}_{i}}_{x} \right)
+  \mathbf{r}^{+}_{i} &= c_{i} - \left(\alpha\mathbf{n}_{i} + p_{i}\right)&=\pm r_i\left(\mathbf{n}_{i}^{y}, -\mathbf{n}_{i}^{x} \right)
 \end{align}
 %
 Obviously, $\left|\mathbf{r}^{-}_{i}\right| = \left|\mathbf{r}^{+}_{i}\right| = r_{i}$.
@@ -180,9 +180,9 @@ For a given $T_i$, the arc angles $\phi^0_i$ and $\phi^{1}_{i}$; are fixed regar
 %
 \begin{align}
   \label{eq:angle-range-b}
-  \phi^{0}_{i} &= \arctan \frac{{\mathbf{r}^{-}_{i}}_{y}}{{\mathbf{r}^{-}_{i}}_{x}}\\
+  \phi^{0}_{i} &= \arctan \frac{{\mathbf{r}^{-}_{i}}^{y}}{{\mathbf{r}^{-}_{i}}^{x}}\\
   \label{eq:angle-range-f}
-  \phi^{1}_{i} &= \arctan \frac{{\mathbf{r}^{+}_{i}}_{y}}{{\mathbf{r}^{+}_{i}}_{x}}
+  \phi^{1}_{i} &= \arctan \frac{{\mathbf{r}^{+}_{i}}^{y}}{{\mathbf{r}^{+}_{i}}^{x}}
 \end{align}
 %
 The total arc length of $a_i$ (the angle $\left|\phi^0_i -\phi^1_i\right|$) is given by $2\left(\pi-\theta_i\right)$ (see Fig.~\ref{fig:interior-point})
@@ -309,8 +309,8 @@ We must also choose new endpoints $p'_0$ and $p'_{n-1}$ for this line;  are the 
 %
 \begin{align}
   \label{eq:endpoints-prime}
-  p'_0 &= p_0 + d \left({\mathbf{n}_0}_y, -{\mathbf{n}_0}_x\right)\\
-  p'_{n-1} &= p_{n-1} + d \left(-{\mathbf{n}_{n-2}}_y, {\mathbf{n}_{n-2}}_x\right)
+  p'_0 &= p_0 + d \left(\mathbf{n}_0^y, -\mathbf{n}_0^x\right)\\
+  p'_{n-1} &= p_{n-1} + d \left(-\mathbf{n}_{n-2}^y, \mathbf{n}_{n-2}^x\right)
 \end{align}
 %
 \subsection{Discrete approximations of smooth polylines}
@@ -339,7 +339,7 @@ We generate each $\Gamma_i$ using the standard parametric form of an arc:
 %
 \begin{equation}
   \label{eq:arc-segments}
-  \Gamma_i = \left(r_i \cos t + c_x, r_i \sin t + c_y\right)
+  \Gamma_i = \left(r_i \cos t + c^x, r_i \sin t + c^y\right)
 \end{equation}
 %
 Where $t$ consists of $q_i$ evenly-spaced values in the range $\left[\phi^0_i, \phi^1_i\right]$ (inclusive).
