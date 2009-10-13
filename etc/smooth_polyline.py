@@ -12,32 +12,35 @@ def cot_theta(nb, nf):
     dot = numpy.dot(nb, nf)
     return math.sqrt((1 + dot ) /(1 - dot))
 
-def orientation(nb, nf):
-    return nb[0]*nf[1] - nf[0]*nb[1]
+def axis_angle_matrix(theta, axis):
+    c = math.cos(theta)
+    s = math.sin(theta)
+    ux, uy, uz = axis[0], axis[1], axis[2]
+    return numpy.array(
+        [[ux*ux + (1.0-ux*ux)*c, ux*uy*(1.0-c) -  uz*s,  ux*uz*(1.0-c) +  uy*s],
+         [ux*uy*(1.0-c) +  uz*s, uy*uy + (1.0-uy*uy)*c,  uy*uz*(1.0-c) -  ux*s],
+         [ux*uz*(1.0-c) -  uy*s, uy*uz*(1.0-c) +  ux*s,  uz*uz + (1.0-uz*uz)*c]])
 
-def rot_pi(vec):
-    return numpy.array([-vec[1], vec[0]])
+def cross(nb, nf):
+    """[ x  y  z]
+       [bx by bz]
+       [fx fy fz]"""
+    return numpy.array([
+        nb[1]*nf[2] - nf[1]*nb[2],
+        nb[2]*nf[0] - nf[2]*nb[0],
+        nb[0]*nf[1] - nf[0]*nb[1]])
 
-def rot_n_pi(vec):
-    return numpy.array([vec[1], -vec[0]])
-
-def circlelen(center, radius, angint, ccw, seg_len):
-    angint2 = numpy.fmod(angint + 2*math.pi, 2*math.pi)
-    inorder = angint2[0] <= angint2[1]
-    adist = abs(angint2[1] - angint2[0])
-    if (not ccw and inorder) or (ccw and not inorder):
-        adist = 2*math.pi - adist
-    if not ccw:
-        adist *= -1
-    nsteps = int(math.ceil(radius*abs(adist)/seg_len))
+def circle_len(matrix, radius, range, seg_len):
+    nsteps = int(math.ceil(radius*range/seg_len))
     if nsteps < 2:
         nsteps = 2
-    steps = ( math.fmod(angint2[0] + (adist)*x/float(nsteps-1), 2*math.pi) for x in xrange(nsteps) )
-    res = numpy.zeros( (nsteps, len(center) ))
-    for i in xrange(nsteps):
-        theta = math.fmod(angint2[0] + (adist)*i/float(nsteps-1), 2*math.pi)
-        res[i] = radius*numpy.array([math.cos( theta ), math.sin( theta )]) + center
-    return res
+    steps = ( range*x/float(nsteps-1) for x in xrange(nsteps) )
+    for theta in steps:
+        s = math.sin(theta)
+        c = math.cos(theta)
+
+        numpy.dot(matrix, numpy.array([radius*c, radius*s, 0.0, 1.0]))
+        yield (numpy.dot(matrix, numpy.array([radius*c, radius*s, 0.0, 1.0]))[:3], numpy.dot(matrix[0:3,0:3], numpy.array([-s, c, 0.0])))
 
 class polyline(object):
     __slots__ = ["points", "N", "vectors", "lengths"]
@@ -51,40 +54,54 @@ class polyline(object):
             self.vectors[i] /= self.lengths[i]
 
 class smooth_polyline(object):
-    __slots__ = ["p_start", "perp_start", "p_end", "perp_end", "centers", "radii", "arcs", "orient", "N"]
+    __slots__ = ["p_start", "tan_start", "p_end", "tan_end", "frames", "radii", "arc", "N"]
     def __init__(self, pline, radii=None):
         self.N = pline.N-2
-        self.p_start = pline.points[0]
-        self.perp_start = rot_pi(pline.vectors[0])
-        self.p_end   = pline.points[pline.N-1]
-        self.perp_end = rot_pi(pline.vectors[pline.N-2])
+        self.p_start   = pline.points[0]
+        self.tan_start = pline.vectors[0]
+        self.p_end     = pline.points[pline.N-1]
+        self.tan_end   = pline.vectors[pline.N-2]
 
         tan_thetas   = numpy.zeros(self.N)
         for i in xrange(self.N):
             tan_thetas[i] = cot_theta(pline.vectors[i], pline.vectors[i+1])
         if radii == None:
-            self.radii = self.calc_radii(pline, tan_thetas).T
+            self.radii = self.calc_radii(pline, tan_thetas).T[:,0]
         else:
             self.radii = radii
 
-        self.centers = numpy.zeros((self.N, pline.points.shape[1]))
-        self.arcs    = numpy.zeros((self.N, 2))
-        self.orient  = numpy.zeros((self.N,))
+        self.frames = numpy.zeros((self.N, 4, 4))
+        self.arc    = numpy.zeros((self.N,))
 
         for i in xrange(self.N):
             alpha  = self.radii[i]/tan_thetas[i]
-            self.orient[i] = math.copysign(1.0, -orientation(pline.vectors[i], pline.vectors[i+1]))
-            rb = self.orient[i]*self.radii[i]*rot_pi(-pline.vectors[i])
-            rf = self.orient[i]*self.radii[i]*rot_n_pi(pline.vectors[i+1])
-            self.centers[i] = alpha*pline.vectors[i+1] + rf + pline.points[i+1]
-            self.arcs[i][0] = math.atan2(rb[1], rb[0]) + math.pi
-            self.arcs[i][1] = math.atan2(rf[1], rf[0]) + math.pi
+
+            self.frames[i][:3,2] = -cross(pline.vectors[i], pline.vectors[i+1])
+            laxis = scipy.linalg.norm(self.frames[i][:,2])
+            assert abs(laxis) > 1e-6
+            self.frames[i][:3,2] /= laxis
+
+            rot_pi2  = axis_angle_matrix( math.pi*0.5, self.frames[i][:3,2])
+            rot_npi2 = axis_angle_matrix(-math.pi*0.5, self.frames[i][:3,2])
+
+            rm = numpy.dot(rot_pi2,  -pline.vectors[i])
+            rp = numpy.dot(rot_npi2,  pline.vectors[i+1])
+
+            self.frames[i][:3,0] = -rm
+            self.frames[i][:3,1] = cross(self.frames[i][:3,2], rm)
+
+            tf = alpha*pline.vectors[i+1]
+            self.frames[i][:3,3] = tf + self.radii[i]*rp + pline.points[i+1]
+            self.frames[i][3,3]  = 1.0
+
+            self.arc[i] = math.pi - math.acos(numpy.dot(-pline.vectors[i], pline.vectors[i+1]))
+
     def calc_radii(self, pline, tan_thetas):
         b = cvxopt.matrix(0.0, ( 2*(self.N-1) + 3, 1 ))
         b[0:self.N+1] = pline.lengths
 
         # find which radius is the biggest minimum
-        best_pick   = None
+        best_pick  = None
         best_alpha = None
         for pick in xrange(0, self.N):
             A = self.make_lp_A(tan_thetas, pick)
@@ -126,29 +143,29 @@ class smooth_polyline(object):
             cno += 1
 
         return A
-    def extract_line(self, offset, resolution):
+    def extract_line(self, offset, resolution, up=numpy.array([0.0, 0.0, 1.0])):
         res = numpy.zeros((1, self.p_start.shape[0]))
-        res[0] = self.p_start + offset*self.perp_start
+        left0 = cross(up, self.tan_start)
+        l0len = scipy.linalg.norm(left0)
+        left0 /= l0len
+        res[0] = self.p_start + offset*left0
         for i in xrange(self.N):
-            center = self.centers[i]
+            frame  = self.frames[i]
             radius = self.radii[i]
-            angle  = self.arcs[i]
-            orient = self.orient[i]
-            if orient < 0.0:
-                new_radius = radius - offset
-            else:
-                new_radius = radius + offset
-            circ = circlelen(center, new_radius, angle, orient < 0.0, resolution)
-            dist = scipy.linalg.norm(res[-1] - circ[0])
-            s0 = res.shape[0]
-            if dist < resolution:
-                res.resize((s0 + circ.shape[0]-1, res.shape[1]))
-                res[s0:] = circ[1:]
-            else:
-                res.resize((s0 + circ.shape[0], res.shape[1]))
-                res[s0:] = circ
+            angle  = self.arc[i]
+            for (pos, tan) in circle_len(frame, radius, angle, resolution):
+                left = cross(up, tan)
+                llen = scipy.linalg.norm(left)
+                left /= llen
+                res.resize((res.shape[0] + 1, res.shape[1]))
+                res[-1] = pos + left*offset
+
         res.resize((res.shape[0] + 1, res.shape[1]))
-        res[-1] = self.p_end + offset*self.perp_end
+
+        leftend = cross(up, self.tan_end)
+        lendlen = scipy.linalg.norm(leftend)
+        leftend /= lendlen
+        res[-1] = self.p_end + offset*leftend
         return res
 
 def make_mesh(low_side, high_side):
@@ -233,7 +250,7 @@ def make_mesh(low_side, high_side):
 
 if __name__ == '__main__':
     cvxopt.solvers.options['show_progress'] = False
-    p = polyline([[0.0, 4.0], [4.0, 3.0], [4.0, 0.0], [6.0, 0.0], [3.0, -2.0], [2.0, -1.0], [2.0, -4.0], [0.5, -2.0], [0.5, -5.0], [1.0, -7.0], [0.0, -9], [5.0, -8], [7.5, -5], [10, -3]])
+    p = polyline([[-4.0, 0.0, 0.0], [-4.0, 4.0, 0.5], [4.0, 4.0, 1.5], [4.0, -4.0, 2.5], [-4.0, -4.0, 3.5], [-4.0, 0.0, 4.0]])
     ps = smooth_polyline(p)
 
     pylab.clf()
@@ -241,10 +258,10 @@ if __name__ == '__main__':
     li = p.points
     pylab.plot(li[:,0], li[:, 1])
 
-    li = ps.extract_line(0.0, 0.1)
+    li = ps.extract_line(0.0, 0.05)
     pylab.plot(li[:,0], li[:, 1], color='black')
-    high = ps.extract_line(0.2, 0.20)
-    low = ps.extract_line(-0.2, 0.20)
+    high = ps.extract_line(0.4, 0.5)
+    low = ps.extract_line(-0.4, 0.5)
 
     ax = pylab.gca()
 
@@ -253,7 +270,6 @@ if __name__ == '__main__':
         for fno in xrange(3):
             linedata = zip(vrts[faces[ct][fno]], vrts[faces[ct][(fno+1)%3]])
             ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='red'))
-
 
     pylab.gca().axis('equal')
     pylab.show()
