@@ -126,9 +126,9 @@ We are also interested in the (negative) radius vectors from these points to the
 %
 \begin{align}
   \label{eq:radius-vector-b}
-  \mathbf{r}^{-}_{i} &= c_{i} - \left(-\alpha\mathbf{n}_{i-1} - p_{i}\right)=c_{i} + \left(\alpha\mathbf{n}_{i-1} + p_{i}\right)&=\pm r_i\left({\mathbf{n}_{i-1}}_{y},  -{\mathbf{n}_{i-1}}_{x} \right)\\
+  \mathbf{r}^{-}_{i} &= c_{i} - \left(-\alpha\mathbf{n}_{i-1} + p_{i}\right)=c_{i} + \left(\alpha\mathbf{n}_{i-1} - p_{i}\right)&=\pm r_i\left({\mathbf{n}_{i-1}}_{y},  -{\mathbf{n}_{i-1}}_{x} \right)\\
   \label{eq:radius-vector-f}
-  \mathbf{r}^{+}_{i} &= c_{i} - \left(\alpha\mathbf{n}_{i} - p_{i}\right)&=\pm r_i\left(  {\mathbf{n}_{i}}_{y}, -{\mathbf{n}_{i}}_{x} \right)
+  \mathbf{r}^{+}_{i} &= c_{i} - \left(\alpha\mathbf{n}_{i} + p_{i}\right)&=\pm r_i\left(  {\mathbf{n}_{i}}_{y}, -{\mathbf{n}_{i}}_{x} \right)
 \end{align}
 %
 Obviously, $\left|\mathbf{r}^{-}_{i}\right| = \left|\mathbf{r}^{+}_{i}\right| = r_{i}$.
@@ -254,22 +254,30 @@ The length $w_i$ of an arc $a_i = \left(c_i, r_i, \phi^0_i, \phi^1_i\right)$ is 
   w_i  = 2\pi r_i \frac{\left|\phi^0_i - \phi^1_i\right|}{2\pi} = r_i \left|\phi^0_i - \phi^1_i\right|
 \end{equation}
 %
-The length $s_i$ of a segment connecting two consecutive arcs $a_{i-1}$ and $a_i$ is simply the length of the original line from $p_{i-1}$ to $p_i$ minus the $\alpha_{i-1}$ and $\alpha_i$ of $a_{i-1}$ and $a_i$:
+The length $s_i$ of a segment connecting two consecutive arcs $a_{i}$ and $a_{i+1}$ is simply the length of the original line from $p_i$ to $p_{i+1}$ ($L_i$) minus the $\alpha_i$ and $\alpha_{i+1}$ of $a_i$ and $a_{i+1}$:
 %
 \begin{equation}
   \label{eq:seglen}
-  s_i = \left|p_i - p_{i-1}\right| - (\alpha_i - \alpha_{i-1}) = L_{i-1} - (\alpha_i - \alpha_{i-1})
+  s_i = \left|p_{i+1} - p_{i}\right| - (\alpha_{i+1} + \alpha_{i}) = L_{i} - (\alpha_{i+1} + \alpha_{i})
 \end{equation}
 %
-If we define $\alpha_0 = \alpha_{n-1} = 0$ for the endpoints $p_0$ and $p_{i-1}$, we can use Eq.~\eqref{eq:seglen} for the beginning/end segments as well.
+If we define $\alpha_0 = \alpha_{n-1} = 0$ for the endpoints $p_0$ and $p_{n-1}$, we can use Eq.~\eqref{eq:seglen} for the beginning/end segments as well.
 
 For nondegenerate $P_S$ (i.e. with $n>2$), we have:
 %
 \begin{align}
   \notag
-  L\left(P_S\right) &= \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| + \sum^{n-1}_{i=1} \left|p_i - p_{i-1}\right| - (\alpha_i - \alpha_{i-1})\\
+  L\left(P_S\right) &= \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| + \sum^{n-2}_{i=0} s_i\\
+  \notag
+  &= \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| + \sum^{n-2}_{i=0} L_i - (\alpha_{i+1} - \alpha_{i})\\
+  \notag
+  &= \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| + L\left(P\right) - \sum^{n-2}_{i=0} \alpha_{i+1} - \sum^{n-2}_{i=0} \alpha_{i}\\
+  \notag
+  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| - \sum^{n-1}_{i=1} \alpha_{i} - \sum^{n-2}_{i=0} \alpha_{i}\\
+  \notag
+  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| - 2\sum^{n-2}_{i=1} \alpha_{i} - \alpha_0 - \alpha_{n-1}\\
   \label{eq:smoothpoly-len}
-  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| - 2\sum^{n-2}_{i=1} \alpha_i
+  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| - 2\alpha_i
   % \notag
   % &= L\left(P\right) + \sum^{n-2}_{i = 1} \alpha_i\sqrt{\frac{1-\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}}\left|\phi^0_i - \phi^1_i\right| - 2\alpha_i\\
   % \label{eq:smoothpoly-len}
@@ -352,7 +360,7 @@ Suppose that we have no idea what $r_{i}$ or $\alpha_{i}$ to assign to each arc;
 %
 \begin{equation}
   \label{eq:optimize-radius}
-  \min_{i \in [1, n-1]} r_{i}
+  \min_{i \in [1, n-2]} r_{i}
 \end{equation}
 %
 is \emph{maximal}.  To begin, we need to know the range of $r_{i}$ (and correspondingly, the $\alpha_{i}$) that may be assigned to each $a_{i}$ given $T_{i}$.
@@ -386,7 +394,7 @@ So for bounds on $r_{i}$, we have
 %
 \begin{equation}
   \label{eq:rbounds}
-  r_{i} \in \left(0, \alpha^{\max}_i \frac{\sqrt{1-\left(\mathbf{n}_i\cdot -\mathbf{n}_{i-1}\right)^{2}}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}\right]
+  r_{i} \in \left(0, \alpha^{\max}_i \alpha_i\sqrt{\frac{1+\mathbf{n}_i\cdot \mathbf{n}_{i-1}}{1-\mathbf{n}_i\cdot \mathbf{n}_{i-1}}}\right]
 \end{equation}
 %
 \subsubsection{Optimization problem}
@@ -420,10 +428,10 @@ where again $\alpha_0 = \alpha_{n-1} = 0$.  We shall find the optimal solution, 
   %
   \begin{equation}
     \label{eq:ordering-inequality}
-    r_k \le r_i \equiv, \quad i \in [1,n-2], i \ne k
+    r_k \le r_i \equiv \alpha_k \tan \theta_k \le \alpha_i \tan \theta_i, \quad i \in [1,n-2], i \ne k
   \end{equation}
   %
-\item Given the $k$ corresponding to the largest $r_k$ found in step 1, we solve a linear programming problem with the same constraints as in step 1 (namely Equations~\eqref{eq:alpha-length-limit} and~\eqref{eq:ordering-inequality}) but now maximizing $\sum_i r_i$.
+\item Given the $k$ corresponding to the largest $r_k$ found in step 1, we solve a linear programming problem with the same constraints as in step 1 (namely Equations~\eqref{eq:alpha-length-limit} and~\eqref{eq:ordering-inequality}) but now maximizing $\sum_i r_i = \sum_i \alpha_i \tan \theta_i$.
 \end{enumerate}
 %
 \end{document}
