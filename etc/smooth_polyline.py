@@ -6,6 +6,7 @@ import cvxopt
 import cvxopt.solvers
 
 import pylab
+import matplotlib
 
 def cot_theta(nb, nf):
     dot = numpy.dot(nb, nf)
@@ -150,10 +151,89 @@ class smooth_polyline(object):
         res[-1] = self.p_end + offset*self.perp_end
         return res
 
+def make_mesh(low_side, high_side):
+    def triangle_angles(pt0, pt1, pt2):
+        v01 = pt1 -pt0
+        v01 /= scipy.linalg.norm(v01)
+
+        v02 = pt2 -pt0
+        v02 /= scipy.linalg.norm(v02)
+
+        v12 = pt2 - pt1
+        v12 /= scipy.linalg.norm(v12)
+
+        a0 = math.acos(numpy.dot(v01, v02))
+        a1 = math.acos(numpy.dot(-v01, v12))
+        a2 = 2*math.pi - (a0 + a1)
+        return (a0, a1, a2)
+
+    vrts = []
+    faces = []
+
+    vrts.append(low_side.next())
+    vrts.append(high_side.next())
+
+    base_low_idx  = len(vrts)-2
+    base_high_idx = len(vrts)-1
+
+    base_low_vrt  = vrts[len(vrts)-2]
+    base_high_vrt = vrts[len(vrts)-1]
+
+    try:
+        low_cand_vrt = low_side.next()
+    except StopIteration:
+        low_cand_vrt = None
+
+    try:
+        high_cand_vrt = high_side.next()
+    except StopIteration:
+        high_cand_vrt = None
+
+    ## pick_vrt = True means high
+    ## False means low
+    while True:
+        if low_cand_vrt == None:
+            if high_cand_vrt == None:
+                break
+            else:
+                pick_vrt = True
+        elif high_cand_vrt == None:
+            pick_vrt = False
+        else:
+            angs_low  = triangle_angles(base_low_vrt, base_high_vrt, low_cand_vrt)
+            angs_high = triangle_angles(base_low_vrt, base_high_vrt, high_cand_vrt)
+            lmax = max(angs_low)
+            hmax = max(angs_high)
+            if lmax > hmax:
+                pick_vrt = False
+            else:
+                pick_vrt = True
+
+        faces.append([base_low_idx, base_high_idx, len(vrts)])
+
+        if pick_vrt:
+            vrts.append(high_cand_vrt)
+            base_high_vrt = high_cand_vrt
+            base_high_idx = len(vrts)-1
+            try:
+                high_cand_vrt = high_side.next()
+            except StopIteration:
+                high_cand_vrt = None
+        else:
+            vrts.append(low_cand_vrt)
+            base_low_vrt = low_cand_vrt
+            base_low_idx = len(vrts)-1
+            try:
+                low_cand_vrt = low_side.next()
+            except StopIteration:
+                low_cand_vrt = None
+
+    return (vrts, faces)
+
+
 if __name__ == '__main__':
     cvxopt.solvers.options['show_progress'] = False
-    p = polyline([[0.0, 4.0], [4.0, 3.0], [4.0, 0.0], [6.0, 0.0], [3.0, -2.0], [2.0, -1.0], [2.0, -4.0], [0.5, -2.0], [0.5, -5.0],
-                  [1.0, -7.0], [0.0, -9], [1.0, -8], [2.5, -5], [3, -3]])
+    p = polyline([[0.0, 4.0], [4.0, 3.0], [4.0, 0.0], [6.0, 0.0], [3.0, -2.0], [2.0, -1.0], [2.0, -4.0], [0.5, -2.0], [0.5, -5.0], [1.0, -7.0], [0.0, -9], [5.0, -8], [7.5, -5], [10, -3]])
     ps = smooth_polyline(p)
 
     pylab.clf()
@@ -163,10 +243,17 @@ if __name__ == '__main__':
 
     li = ps.extract_line(0.0, 0.1)
     pylab.plot(li[:,0], li[:, 1], color='black')
-    li = ps.extract_line(0.05, 0.01)
-    pylab.plot(li[:,0], li[:, 1], color='red')
-    li = ps.extract_line(-0.05, 0.01)
-    pylab.plot(li[:,0], li[:, 1], color='red')
+    high = ps.extract_line(0.2, 0.20)
+    low = ps.extract_line(-0.2, 0.20)
+
+    ax = pylab.gca()
+
+    (vrts, faces) = make_mesh((x for x in low), (x for x in high))
+    for ct in xrange(len(faces)):
+        for fno in xrange(3):
+            linedata = zip(vrts[faces[ct][fno]], vrts[faces[ct][(fno+1)%3]])
+            ax.add_line(matplotlib.lines.Line2D(linedata[0], linedata[1], color='red'))
+
 
     pylab.gca().axis('equal')
     pylab.show()
