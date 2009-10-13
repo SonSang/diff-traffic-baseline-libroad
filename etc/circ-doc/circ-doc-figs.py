@@ -453,24 +453,24 @@ def vec_fig(ax, pts):
 
     # Draw vectors
     # back vector
-    ax.text(pim[0]+0.05, pim[1]+0.05, r"$\mathbf{v}^b_i$", fontsize=15, verticalalignment='top')
+    ax.text(pim[0]+0.05, pim[1]+0.05, r"$-\mathbf{v}_{i-1}$", fontsize=15, verticalalignment='top')
     a0 = matplotlib.patches.FancyArrowPatch(posA=(pi[0], pi[1]), posB=(pim[0], pim[1]), arrowstyle='->', mutation_scale=30, lw=3.0, ls='dashed', ec='blue')
     ax.add_line(a0)
 
     # normalized back vector
     a0 = matplotlib.patches.FancyArrowPatch(posA=pi, posB=vf+pi, arrowstyle='->', mutation_scale=30, lw=1.0)
     ax.add_line(a0)
-    ax.text(pi[0]+vb[0]+0.05, pi[1] + vb[1]+0.05, r"$\mathbf{n}^b_i$", fontsize=15, verticalalignment='top')
+    ax.text(pi[0]+vb[0]+0.05, pi[1] + vb[1]+0.05, r"$-\mathbf{n}_{i-1}$", fontsize=15, verticalalignment='top')
 
     # forward vector
-    ax.text(pi[0]+1.2*vf[0], pi[1]+1.2*vf[1], r"$\mathbf{v}^f_i$", fontsize=15, verticalalignment='top')
+    ax.text(pi[0]+1.2*vf[0], pi[1]+1.2*vf[1], r"$\mathbf{v}_i$", fontsize=15, verticalalignment='top')
     a1 = matplotlib.patches.FancyArrowPatch(posA=(pi[0], pi[1]), posB=(pi[0]+1.2*vf[0], pi[1]+1.2*vf[1]), arrowstyle='->', mutation_scale=30, lw=3.0, ls='dashed', ec='blue')
     ax.add_line(a1)
 
     # normalized forward vector
     a1 = matplotlib.patches.FancyArrowPatch(posA=pi, posB=vb+pi, arrowstyle='->', mutation_scale=30, lw=1.0)
     ax.add_line(a1)
-    ax.text(pi[0]+vf[0]-0.05, pi[1] + vf[1]-0.03, r"$\mathbf{n}^f_i$", fontsize=15, verticalalignment='top')
+    ax.text(pi[0]+vf[0]-0.05, pi[1] + vf[1]-0.03, r"$\mathbf{n}_i$", fontsize=15, verticalalignment='top')
 
     # draw bisector
     mid = vb + vf
@@ -504,7 +504,7 @@ def vec_fig(ax, pts):
 
     # Draw radii
     st = pi + alpha*vb
-    ax.text(st[0]-0.1, st[1]-0.05, r"$\alpha_i\mathbf{n}^b_i$", fontsize=15)
+    ax.text(st[0]-0.15, st[1]-0.05, r"$-\alpha_i\mathbf{n}_{i-1}$", fontsize=15)
     l0 = matplotlib.patches.FancyArrowPatch(posA=st,
                                             posB=(st[0]+rad*vb[1], st[1]-rad*vb[0]), arrowstyle='->', mutation_scale=30, lw=1.0)
 
@@ -512,14 +512,14 @@ def vec_fig(ax, pts):
 
     ax.text(st[0] + 0.5*rad*vb[1],
             st[1] - 0.5*rad*vb[0]+0.08,
-            r"$\mathbf{r}^{b}_i$", fontsize=15, verticalalignment='top')
+            r"$\mathbf{r}^{-}_i$", fontsize=15, verticalalignment='top')
     p = matplotlib.patches.RegularPolygon((pi[0] + (alpha - offs)*vb[0] + offs*vb[1],
                                            pi[1] + (alpha - offs)*vb[1] - offs*vb[0]),
                                           4, offs*math.sqrt(2.0), math.pi/4+math.atan2(vb[1], vb[0]), fill=None)
     ax.add_patch(p)
 
     st = pi + alpha*vf
-    ax.text(st[0]-0.05, st[1]-0.02, r"$\alpha_i\mathbf{n}^f_i$", fontsize=15, verticalalignment='top')
+    ax.text(st[0]-0.05, st[1]-0.02, r"$\alpha_i\mathbf{n}_i$", fontsize=15, verticalalignment='top')
     l0 = matplotlib.patches.FancyArrowPatch(posA=st,
                                             posB=(st[0]-rad*vf[1], st[1]+rad*vf[0]),
                                             arrowstyle='->', mutation_scale=30, lw=1.0)
@@ -527,7 +527,7 @@ def vec_fig(ax, pts):
 
     ax.text(st[0] - 0.5*rad*vf[1]+0.01,
             st[1] + 0.5*rad*vf[0],
-            r"$\mathbf{r}^{f}_i$", fontsize=15, verticalalignment='top')
+            r"$\mathbf{r}^{+}_i$", fontsize=15, verticalalignment='top')
     p = matplotlib.patches.RegularPolygon((pi[0] + (alpha - offs)*vf[0] - offs*vf[1],
                                            pi[1] + (alpha - offs)*vf[1] + offs*vf[0]),
                                           4, offs*math.sqrt(2.0), math.pi/4+math.atan2(vf[1], vf[0]), fill=None)
@@ -579,9 +579,9 @@ if __name__ == '__main__':
     # tan_circ_fig(pylab.axes([0,0,1,1]), pts, True)
     # pylab.savefig("3.pdf")
 
-    # pylab.clf()
-    # vec_fig(pylab.axes([0,0,1,1]), pts[0:3])
-    # pylab.savefig("4.pdf", bbox_inches='tight', pad_inches=-1)
+    pylab.clf()
+    vec_fig(pylab.axes([0,0,1,1]), pts[0:3])
+    pylab.savefig("4.pdf", bbox_inches='tight', pad_inches=-1)
 
     # pylab.clf()
     # offs_circ_fig(pylab.axes([0,0,1,1]), pts)
@@ -591,6 +591,6 @@ if __name__ == '__main__':
     # disc_circ_fig(pylab.axes([0,0,1,1]), pts)
     # pylab.savefig("6.pdf")
 
-    pylab.clf()
-    mesh_fig(pylab.axes([0,0,1,1]), pts)
-    pylab.savefig("7.pdf")
+    # pylab.clf()
+    # mesh_fig(pylab.axes([0,0,1,1]), pts)
+    # pylab.savefig("7.pdf")

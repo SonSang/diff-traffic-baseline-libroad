@@ -126,7 +126,7 @@ We are also interested in the (negative) radius vectors from these points to the
 %
 \begin{align}
   \label{eq:radius-vector-b}
-  \mathbf{r}^{-}_{i} &= c_{i} - \left(-\alpha\mathbf{n}_{i-1} - p_{i}\right)&=\pm r_i\left( --{\mathbf{n}_{i-1}}_{y},  -{\mathbf{n}_{i-1}}_{x} \right)\\
+  \mathbf{r}^{-}_{i} &= c_{i} - \left(-\alpha\mathbf{n}_{i-1} - p_{i}\right)=c_{i} + \left(\alpha\mathbf{n}_{i-1} + p_{i}\right)&=\pm r_i\left({\mathbf{n}_{i-1}}_{y},  -{\mathbf{n}_{i-1}}_{x} \right)\\
   \label{eq:radius-vector-f}
   \mathbf{r}^{+}_{i} &= c_{i} - \left(\alpha\mathbf{n}_{i} - p_{i}\right)&=\pm r_i\left(  {\mathbf{n}_{i}}_{y}, -{\mathbf{n}_{i}}_{x} \right)
 \end{align}
@@ -146,7 +146,7 @@ The center $c_{i}$ can be determined by combining Eqs.~\eqref{eq:radius-vector-b
 %
 \begin{align}
   \label{eq:center-vector-b}
-  c_{i} &= p_{i} + -\alpha_i\mathbf{n}_{i-1} + \mathbf{r}^{-}_{i}\\
+  c_{i} &= p_{i} - \alpha_i\mathbf{n}_{i-1} + \mathbf{r}^{-}_{i}\\
   \label{eq:center-vector-f}
   c_{i} &= p_{i} + \alpha_i\mathbf{n}_i + \mathbf{r}^{+}_{i}
 \end{align}
@@ -162,7 +162,7 @@ Where $\mathbf{b}_i$ is of course given by:
 %
 \begin{equation}
   \label{eq:bisector}
-  \mathbf{b}_i = \frac{-\mathbf{n}_{i-1} + \mathbf{n}_i}{\left|-\mathbf{n}_{i-1} + \mathbf{n}_i\right|}
+  \mathbf{b}_i = \frac{\mathbf{n}_i-\mathbf{n}_{i-1}}{\left|\mathbf{n}_i-\mathbf{n}_{i-1}\right|}
 \end{equation}
 %
 See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
@@ -174,7 +174,7 @@ See Fig.~\ref{fig:interior-point} for a visual depiction of these quantities.
   \label{fig:interior-point}
 \end{figure}
 %
-\subsubsection{Angles}
+x\subsubsection{Angles}
 %
 For a given $T_i$, the arc angles $\phi^0_i$ and $\phi^{1}_{i}$; are fixed regardless of the $c_i$ or $r_{i}$:
 %
@@ -191,7 +191,7 @@ We can also relate the input vectors for a given $T_{i}$ to $\theta$:
 %
 \begin{equation}
   \label{eq:dotnorm}
-  \mathbf{n}_{i} \cdot -\mathbf{n}_{i-1} = \cos 2\theta_i
+  -\mathbf{n}_{i-1} \cdot \mathbf{n}_i = \cos 2\theta_i
 \end{equation}
 %
 Similarly, we know
@@ -199,8 +199,12 @@ Similarly, we know
 \begin{align}
   \notag
   \left|\phi^0_i -\phi^1_i\right| &= 2\left(\pi-\theta_i\right)\\
+  \notag
+  &= 2\pi-\arccos -\mathbf{n}_{i-1} \cdot \mathbf{n}_i \\
+  \notag
+  &= 2\pi-\left(\arccos \mathbf{n}_{i-1} \cdot \mathbf{n}_i - \pi\right)\\
   \label{eq:arclen-dot}
-  &= 2\pi-\arccos \mathbf{n}_{i} \cdot -\mathbf{n}_{i-1}
+  &= \pi-\arccos \mathbf{n}_{i-1} \cdot \mathbf{n}_i
 \end{align}
 %
 Clearly, Eqs.~\eqref{eq:angle-range-b},~\eqref{eq:angle-range-f} and~\eqref{eq:dotnorm} are independent of other arc parameters $c_{i}$, $r_{i}$, and $\alpha_i$.
@@ -234,10 +238,10 @@ We can combine Eq.~\eqref{eq:tantheta} with Eq.~\eqref{eq:tanident} to obtain
 %
 Finally, we can substitute Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan}, and obtain
 %
-\begin{align}
+\begin{equation}
   \label{eq:radius-alpha}
-  r_{i} &= \alpha_i\sqrt{\frac{1-\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}}
-\end{align}
+  r_{i} = \alpha_i\sqrt{\frac{1-\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}{1+\mathbf{n}_i\cdot -\mathbf{n}_{i-1}}} = \alpha_i\sqrt{\frac{1+\mathbf{n}_i\cdot \mathbf{n}_{i-1}}{1-\mathbf{n}_i\cdot \mathbf{n}_{i-1}}}
+\end{equation}
 %
 \subsection{Length of a smoothed polyline}
 %
@@ -254,7 +258,7 @@ The length $s_i$ of a segment connecting two consecutive arcs $a_{i-1}$ and $a_i
 %
 \begin{equation}
   \label{eq:seglen}
-  s_i = \left|p_i - p_{i-1}\right| - (\alpha_i - \alpha_{i-1})
+  s_i = \left|p_i - p_{i-1}\right| - (\alpha_i - \alpha_{i-1}) = L_{i-1} - (\alpha_i - \alpha_{i-1})
 \end{equation}
 %
 If we define $\alpha_0 = \alpha_{n-1} = 0$ for the endpoints $p_0$ and $p_{i-1}$, we can use Eq.~\eqref{eq:seglen} for the beginning/end segments as well.
