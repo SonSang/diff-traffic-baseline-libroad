@@ -6,6 +6,8 @@ import pylab
 import matplotlib
 import scipy.linalg
 import itertools as it
+import cvxopt
+import cvxopt.solvers
 
 import OpenGL.GL as GL
 import OpenGL.GLUT as GLUT
@@ -18,7 +20,7 @@ def tan_theta(nb, nf):
 
 def cot_theta(nb, nf):
     dot = numpy.dot(nb, nf)
-    return math.sqrt((1 + dot ) /(1 - dot*dot))
+    return math.sqrt((1 + dot ) /(1 - dot))
 
 def orientation(nb, nf):
     return nb[0]*nf[1] - nf[0]*nb[1]
@@ -78,7 +80,7 @@ def smooth_corner(pm, pi, pp, radius=None):
         radius = alpha*tan_theta(nb, nf)
     else:
         alpha = radius*cot_theta(nb, nf)
-        if(alpha > lb or alpha > lf):
+        if(alpha - lb > 1e-6  or alpha - lf > 1e-6):
             print "Warning: radius is too large!"
         lf_low = True
 
@@ -94,8 +96,8 @@ def smooth_corner(pm, pi, pp, radius=None):
 
     return  [center, radius, (angle_b, angle_f), o < 0.0]
 
-def poly_to_circ(p, radius=None):
-    return it.ifilter(lambda x: x, (smooth_corner(p[ct-1], p[ct], p[ct+1], radius) for ct in xrange(1, len(p)-1)))
+def poly_to_circ(p, radius):
+    return it.ifilter(lambda x: x, (smooth_corner(p[ct-1], p[ct], p[ct+1], radius[ct]) for ct in xrange(1, len(p)-1)))
 
 def smoothed_points(c, res, offs=0):
     for (center, rad, (angle_b, angle_f), d) in c:
@@ -303,12 +305,107 @@ class MeshWindow(object):
 
         GLUT.glutMainLoop()
 
-if __name__ == '__main__':
-    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0],[0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[0.0, -2.0], [6.0, -2.0], [6.0, 0.0]])
+def auto_radii(pts):
+    N = len(pts)
 
-    circles = list(poly_to_circ(pts, 0.9))
+    # constraints are:
+    # [0..N-3)       : a_i + a_{i+1} \le L_{i+1}
+    # [N-3, 2*(N-3)) : tan*a_{pick} - tan*a_{i} \le 0
+    # 2*(N-3)        : a_0 \le L_0
+    # 2*(N-3)+1      : a_{n-2} \le L_{n-2}
+
+    b = cvxopt.matrix(0.0, (N-3 + N-3 + 2, 1))
+
+    diffs = pts[1:] - pts[:-1]
+
+    the_tans = numpy.zeros(N-2)
+    for ct in xrange(0, N-2):
+        bv = -diffs[ct]/scipy.linalg.norm(diffs[ct])
+        fv =  diffs[ct+1]/scipy.linalg.norm(diffs[ct+1])
+        the_tans[ct] = tan_theta(bv, fv)
+
+    # constraints [0..N-3)
+    for ct in xrange(1, N-2):
+        b[ct-1] = scipy.linalg.norm(diffs[ct])
+
+    # constraints [N-3, 2*(N-3)) handled by allocation (zero)
+
+    # end constraints
+    ct = 0
+    b[-2] = scipy.linalg.norm(diffs[ct])
+
+    ct = N-2
+    b[-1] = scipy.linalg.norm(diffs[ct])
+
+    best_rad = None
+    best_pick = None
+    best_set = None
+    for pick in xrange(0, N-2):
+        A = cvxopt.matrix(0.0, (2*(N-3) + 2, N-2))
+        c = cvxopt.matrix(0.0, (N-2, 1))
+
+        # constraints [0..N-3)
+        for ct in xrange(0, N-3):
+            A[ct, ct  ] = 1.0
+            A[ct, ct+1] = 1.0
+
+        # constraints [N-3, 2*(N-3))
+        cno = N-3
+        for ct in xrange(0, N-2):
+            if ct != pick:
+                A[cno, pick] =  the_tans[pick]
+                A[cno, ct]   = -the_tans[ct]
+                cno += 1
+
+        # end constraints
+        A[2 * (N - 3),       0] = 1.0
+        A[2 * (N - 3) + 1, N-3] = 1.0
+
+        # objective function
+        c[pick, 0] = -the_tans[pick]
+
+        sol = cvxopt.solvers.lp(c, A, b)
+        if not best_rad or best_rad < sol['x'][pick]:
+            best_pick = pick
+            best_set = sol['x']
+            best_rad = best_set[pick]
+
+    pick = best_pick
+    A = cvxopt.matrix(0.0, (2*(N-3) + 2, N-2))
+    c = cvxopt.matrix(0.0, (N-2, 1))
+
+    # constraints [0..N-3)
+    for ct in xrange(0, N-3):
+        A[ct, ct  ] = 1.0
+        A[ct, ct+1] = 1.0
+
+    # constraints [N-3, 2*(N-3))
+    cno = N-3
+    for ct in xrange(0, N-2):
+        if ct != pick:
+            A[cno, pick] =  the_tans[pick]
+            A[cno, ct]   = -the_tans[ct]
+            cno += 1
+
+    # end constraints
+    A[2 * (N - 3),       0] = 1.0
+    A[2 * (N - 3) + 1, N-3] = 1.0
+
+    for i in xrange(N-2):
+        c[i] = -the_tans[i]
+
+    sol = cvxopt.solvers.lp(c, A, b)
+    return [0.0] + [the_tans[ct] * al for ct, al in enumerate(sol['x'])] + [0.0]
+
+if __name__ == '__main__':
+    cvxopt.solvers.options['show_progress'] = False
+    pts = numpy.array([[0.1, 4.0], [3.9, 4.2], [4.0, 0.0], [0.0, 0.0], [0.0, 2.0], [-2.0, 2.0], [-2.0, -2.0],[6.0, -2.0], [6.0, 0.0]])
+
+    radii = auto_radii(pts)
+
+    circles = list(poly_to_circ(pts, radii))
 
     (v, f) =  smoothed_points_poly(pts, circles, 0.1, (-0.05, 0.05))
 
-    tr = MeshWindow(640, 480, v, f)
-    tr.go(sys.argv)
+    rt = MeshWindow(640, 480, v, f)
+    rt.go(sys.argv)
