@@ -397,7 +397,30 @@ The bounds on $\alpha_i$ given in Equation~\eqref{eq:alpha-max} are valid for a 
   &= \min \left\{L^{f}_{i-1}-\alpha_{i-1}, L^{f}_{i}-\alpha_{i+1}\right\}
 \end{align}
 
-Here we define $\alpha_0 = \alpha_{n-1} = 0$.
+Here we define $\alpha_0 = \alpha_{n-1} = 0$.  The optimization problem with constraints from Equation~\eqref{eq:optimize-radius} and objective function given by Equation~\eqref{eq:alpha-optimize} is not amenable to familiar, efficient optimization tools.
+
+\subsubsection{Alternate Formulation}
+\label{sec:alt-form}
+
+Let us relax the constraints in Equation~\eqref{eq:alpha-optimize} to reflect the \emph{legal} states of the $\alpha_i$; we shall leave the maximization of these to the object functions.  Now we have the constraints
+
+\begin{equation}
+  \label{eq:alpha-length-limit}
+  \alpha_i + \alpha_{i+1} \le L^f_i
+\end{equation}
+
+where again $\alpha_0 = \alpha_{n-1} = 0$.  We shall find the optimal solution, where we maximize Equation~\eqref{eq:optimize-radius} and then $\sum_i r_i$, through a two-stage process:
+
+\begin{enumerate}
+\item For each $k\in [1,n-2]$, we solve the linear programming problem to maximize $r_k$ subject to the constraints in Equation~\eqref{eq:alpha-length-limit} and
+
+  \begin{equation}
+    \label{eq:ordering-inequality}
+    r_k \le r_i \equiv, \quad i \in [1,n-2], i \ne k
+  \end{equation}
+
+\item Given the $k$ corresponding to the largest $r_k$ found in step 1, we solve a linear programming problem with the same constraints as in step 1 (namely Equations~\eqref{eq:alpha-length-limit} and~\eqref{eq:ordering-inequality}) but now maximizing $\sum_i r_i$.
+\end{enumerate}
 
 \end{document}
 
