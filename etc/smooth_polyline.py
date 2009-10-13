@@ -50,11 +50,13 @@ class polyline(object):
             self.vectors[i] /= self.lengths[i]
 
 class smooth_polyline(object):
-    __slots__ = ["p_start", "p_end", "centers", "radii", "arcs", "orient", "N"]
+    __slots__ = ["p_start", "perp_start", "p_end", "perp_end", "centers", "radii", "arcs", "orient", "N"]
     def __init__(self, pline, radii=None):
         self.N = pline.N-2
         self.p_start = pline.points[0]
+        self.perp_start = rot_pi(pline.vectors[0])
         self.p_end   = pline.points[pline.N-1]
+        self.perp_end = rot_pi(pline.vectors[pline.N-2])
 
         tan_thetas   = numpy.zeros(self.N)
         for i in xrange(self.N):
@@ -128,7 +130,7 @@ class smooth_polyline(object):
         return A
     def extract_line(self, offset, resolution):
         res = numpy.zeros((1, self.p_start.shape[0]))
-        res[0] = self.p_start
+        res[0] = self.p_start + offset*self.perp_start
         for i in xrange(self.N):
             center = self.centers[i]
             radius = self.radii[i]
@@ -143,13 +145,13 @@ class smooth_polyline(object):
             res.resize((s0 + circ.shape[0], res.shape[1]))
             res[s0:] = circ
         res.resize((res.shape[0] + 1, res.shape[1]))
-        res[-1] = self.p_end
+        res[-1] = self.p_end + offset*self.perp_end
         return res
 
 if __name__ == '__main__':
     cvxopt.solvers.options['show_progress'] = False
-    p = polyline([[0.0, 4.0], [4.0, 3.0], [4.0, 0.0], [6.0, 0.0], [3.0, -2.0], [2.0, -1.0], [2.0, -4.0]])
-
+    p = polyline([[0.0, 4.0], [4.0, 3.0], [4.0, 0.0], [6.0, 0.0], [3.0, -2.0], [2.0, -1.0], [2.0, -4.0], [0.5, -2.0], [0.5, -5.0],
+                  [1.0, -7.0], [0.0, -9], [1.0, -8], [2.5, -5], [3, -3]])
     ps = smooth_polyline(p)
 
     pylab.clf()
@@ -158,9 +160,11 @@ if __name__ == '__main__':
     pylab.plot(li[:,0], li[:, 1])
 
     li = ps.extract_line(0.0, 0.1)
-    pylab.plot(li[:,0], li[:, 1])
-    li = ps.extract_line(0.35, 0.01)
-    pylab.plot(li[:,0], li[:, 1])
+    pylab.plot(li[:,0], li[:, 1], color='black')
+    li = ps.extract_line(0.05, 0.01)
+    pylab.plot(li[:,0], li[:, 1], color='red')
+    li = ps.extract_line(-0.05, 0.01)
+    pylab.plot(li[:,0], li[:, 1], color='red')
 
     pylab.gca().axis('equal')
     pylab.show()
