@@ -27,17 +27,12 @@ def cross(nb, nf):
         nb[2]*nf[0] - nf[2]*nb[0],
         nb[0]*nf[1] - nf[0]*nb[1]])
 
-def circle_len(matrix, radius, range, seg_len):
-    nsteps = int(math.ceil(radius*range/seg_len))
-    if nsteps < 2:
-        nsteps = 2
-    steps = ( range*x/float(nsteps-1) for x in xrange(nsteps) )
-    for theta in steps:
-        s = math.sin(theta)
-        c = math.cos(theta)
-
-        numpy.dot(matrix, numpy.array([radius*c, radius*s, 0.0, 1.0]))
-        yield (numpy.dot(matrix, numpy.array([radius*c, radius*s, 0.0, 1.0]))[:3], numpy.dot(matrix[0:3,0:3], numpy.array([-s, c, 0.0])))
+def circle_frame(theta, matrix, radius):
+    s = math.sin(theta)
+    c = math.cos(theta)
+    numpy.dot(matrix, numpy.array([radius*c, radius*s, 0.0, 1.0]))
+    return (numpy.dot(matrix, numpy.array([radius*c, radius*s, 0.0, 1.0]))[:3],
+            numpy.dot(matrix[0:3,0:3], numpy.array([-s, c, 0.0])))
 
 class polyline(object):
     __slots__ = ["points", "N", "vectors", "lengths"]
@@ -150,19 +145,55 @@ class smooth_polyline(object):
             frame  = self.frames[i]
             radius = self.radii[i]
             angle  = self.arc[i]
-            for (pos, tan) in circle_len(frame, radius, angle, resolution):
-                left = cross(up, tan)
-                llen = scipy.linalg.norm(left)
-                left /= llen
-                res.resize((res.shape[0] + 1, res.shape[1]))
-                res[-1] = pos + left*offset
 
-        res.resize((res.shape[0] + 1, res.shape[1]))
+            (pos, tan) = circle_frame(0, frame, radius)
+            left = cross(up, tan)
+            llen = scipy.linalg.norm(left)
+            left /= llen
+
+            point0 = pos + left*offset
+            dist = scipy.linalg.norm(point0 - res[-1])
+            if dist < 1e-3:
+                point0 = res[-1]
+                new_start = 1
+            else:
+                new_start = 0
+
+            (pos, tan) = circle_frame(angle, frame, radius)
+            left = cross(up, tan)
+            llen = scipy.linalg.norm(left)
+            left /= llen
+
+            pointend = pos + left*offset
+            new_points = [(0, point0), (angle,pointend)]
+            check = 0
+            while check < len(new_points)-1:
+                dist = scipy.linalg.norm(new_points[check+1][1]-new_points[check][1])
+                if dist > resolution:
+                    new_theta = (new_points[check+1][0]+new_points[check][0])*0.5
+                    (pos, tan) = circle_frame(new_theta, frame, radius)
+                    left = cross(up, tan)
+                    llen = scipy.linalg.norm(left)
+                    left /= llen
+                    new_points = new_points[:check+1] + [(new_theta, pos + left*offset)] + new_points[check+1:]
+                else:
+                    check += 1
+
+            start = res.shape[0]
+            res = numpy.resize(res, (start + len(new_points)-new_start, res.shape[1]))
+            for (ct, p) in enumerate(new_points[new_start:]):
+                res[start+ct] = p[1]
 
         leftend = cross(up, self.tan_end)
         lendlen = scipy.linalg.norm(leftend)
         leftend /= lendlen
-        res[-1] = self.p_end + offset*leftend
+        pointend = self.p_end + offset*leftend
+
+        dist = scipy.linalg.norm(pointend - res[-1])
+        if dist > 1e-3:
+            res = numpy.resize(res, (res.shape[0] + 1, res.shape[1]))
+            res[-1] = pointend
+
         return res
 
 def make_mesh(low_side, high_side):
@@ -251,6 +282,7 @@ if __name__ == '__main__':
 
     cvxopt.solvers.options['show_progress'] = False
     p = polyline([[-4.0, 0.0, 0.0], [-4.0, 4.0, 0.5], [4.0, 4.0, 1.5], [4.0, -4.0, 2.5], [-4.0, -4.0, 3.5], [-4.0, 0.0, 4.0]])
+
     ps = smooth_polyline(p)
 
     pylab.clf()
@@ -258,10 +290,8 @@ if __name__ == '__main__':
     li = p.points
     pylab.plot(li[:,0], li[:, 1])
 
-    li = ps.extract_line(0.0, 0.05)
-    pylab.plot(li[:,0], li[:, 1], color='black')
     high = ps.extract_line(0.4, 0.5)
-    low = ps.extract_line(-0.4, 0.5)
+    low = ps.extract_line(0.5, 0.5)
 
     ax = pylab.gca()
 
