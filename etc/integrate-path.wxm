@@ -1,0 +1,74 @@
+/* [wxMaxima batch file version 1] [ DO NOT EDIT BY HAND! ]*/
+/* [ Created with wxMaxima version 0.8.2 ] */
+
+/* [wxMaxima: input   start ] */
+4+4;
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+p(theta) := [r*sin(theta)*cos(phi) + l*sin(theta), r*cos(theta) + l*cos(theta)*cos(phi), r*sin(theta)*sin(phi)];
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+diff(p(theta),theta,1);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+%o6 . transpose(%o6);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+trigsimp((%o13) );
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+p(theta) := [r*sin(theta)*cos(phi) + l*sin(theta)/sqrt(sin(theta)^2 + cos(theta)^2*cos(phi)^2), r*cos(theta) + 
+l*cos(theta)*cos(phi)/sqrt(sin(theta)^2 + cos(theta)^2*cos(phi)^2), r*sin(theta)*sin(phi)];
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+diff(p(theta), theta,1);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+%o35 . transpose(%o35);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+trigsimp(%o36);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+subst(0, phi, (%o37) );
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+trigsimp((%o41) );
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+factor((%o43) );
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+subst(%pi/2, phi, (%o37));
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+factor((%o48) );
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+trigsimp((%o49) );
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+subst(0,l, %o37);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+factor((%o81) );
+/* [wxMaxima: input   end   ] */
+
+/* Maxima can't load/batch files which end with a comment! */
+"Created with wxMaxima"$
