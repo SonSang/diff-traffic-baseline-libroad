@@ -2,6 +2,7 @@ import numpy
 import math
 import scipy
 import scipy.linalg
+import scipy.integrate as integ
 
 import pylab
 
@@ -32,7 +33,7 @@ def circle_frame(theta, matrix, radius):
             numpy.dot(matrix[0:3,0:3], numpy.array([-s, c, 0.0])))
 
 def circle_points(frame, radius, offset, arc, up=numpy.array([0.0, 0.0, 1.0])):
-    nsteps = 100
+    nsteps = 800
     dtheta = arc/float(nsteps-1)
     points = []
     for i in xrange(nsteps):
@@ -46,41 +47,47 @@ def circle_points(frame, radius, offset, arc, up=numpy.array([0.0, 0.0, 1.0])):
 
     return points
 
-def plot_stuff():
-    arc = math.pi/2
-    nx = 1
-    ny = 100
-    nradii = 1
-    radii =   [1.0]#numpy.linspace(-1, 1, nradii)
-    yangles = numpy.linspace(0, math.pi/2, ny)
-    xangles = [0.0]
-    dists = numpy.zeros((nx, ny, nradii))
-    for (ri, radius) in enumerate(radii):
-        for (xi, xangle) in enumerate(xangles):
-            for (yi, yangle) in enumerate(yangles):
-                frame = numpy.array([[1.0, 0.0, 0.0, 0.0],
-                                     [0.0, 1.0, 0.0, 0.0],
-                                     [0.0, 0.0, 1.0, 0.0],
-                                     [0.0, 0.0, 0.0, 1.0]])
+def circ_len(phi, r, l, arc):
+    yangle = phi
+    frame = numpy.array([[1.0, 0.0, 0.0, 0.0],
+                         [0.0, 1.0, 0.0, 0.0],
+                         [0.0, 0.0, 1.0, 0.0],
+                         [0.0, 0.0, 0.0, 1.0]])
 
-                frame = numpy.dot(axis_angle_matrix(arc/2,  numpy.array([0.0, 0.0, 1.0])), frame)
-                frame = numpy.dot(axis_angle_matrix(xangle, numpy.array([1.0, 0.0, 0.0])), frame)
-                frame = numpy.dot(axis_angle_matrix(yangle, numpy.array([0.0, 1.0, 0.0])), frame)
+    frame = numpy.dot(axis_angle_matrix(math.pi/2-arc, numpy.array([0.0, 0.0, 1.0])), frame)
+    frame = numpy.dot(axis_angle_matrix(yangle, numpy.array([0.0, 1.0, 0.0])), frame)
 
-                pts = circle_points(frame, 10.0, radius, arc)
-                for i in xrange(1,len(pts)):
-                    dists[xi,yi,ri] += scipy.linalg.norm(pts[i]-pts[i-1])
+    pts = circle_points(frame, r, l, arc)
+    dist = 0
+    for i in xrange(1,len(pts)):
+        dist += scipy.linalg.norm(pts[i]-pts[i-1])
+    return dist
 
+def circ_arc(theta, phi, l, r):
+    c_theta = math.cos(theta)
+    s_theta = math.sin(theta)
+    c_phi = math.cos(phi)
+    s_phi = math.sin(phi)
 
-    pylab.clf()
-    for x in xrange(nx):
-        for r in xrange(nradii):
-            pylab.plot(yangles, dists[x,:,r] - 10.0*arc)
-    pylab.show()
+    numerator = math.sqrt(s_phi**4*r**2*c_theta**4-math.sqrt(1-s_phi**2*c_theta**2)* (2*l*c_phi*s_phi**2*r*c_theta**2-2*l*c_phi*r)-2*s_phi**2*r**2*c_theta**2+r**2-l**2*s_phi**2+ l**2)
 
-def
+    denom = s_theta**2+c_phi**2*c_theta**2
+
+    return numerator/denom
 
 if __name__ == '__main__':
+    radius = 1.0
+    offset = 1.0
 
+    phi = math.pi/2#math.pi/4
+    arc = math.pi/3
 
+    print (math.pi/2-arc/2, arc/2+math.pi/2)
+
+    val = integ.quad(lambda x: circ_arc(x, phi, offset, radius),
+                     math.pi/2-arc/2, arc/2+math.pi/2)
+
+    print val
+
+    print circ_len(phi, radius, -offset, arc)
 
