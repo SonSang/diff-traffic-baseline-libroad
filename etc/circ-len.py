@@ -33,16 +33,17 @@ def circle_frame(theta, matrix, radius):
             numpy.dot(matrix[0:3,0:3], numpy.array([-s, c, 0.0])))
 
 def circle_points(frame, radius, offset, arc, up=numpy.array([0.0, 0.0, 1.0])):
-    nsteps = 800
+    nsteps = 100
     dtheta = arc/float(nsteps-1)
     points = []
     for i in xrange(nsteps):
+
         theta = i*dtheta
         (pos, tan) = circle_frame(theta, frame, radius)
         left = cross(up, tan)
         llen = scipy.linalg.norm(left)
-        left /= llen
-
+        if(llen > 1e-6):
+            left /= llen
         points.append(pos + left*offset)
 
     return points
@@ -54,10 +55,11 @@ def circ_len(phi, r, l, arc):
                          [0.0, 0.0, 1.0, 0.0],
                          [0.0, 0.0, 0.0, 1.0]])
 
-    frame = numpy.dot(axis_angle_matrix(math.pi/2-arc, numpy.array([0.0, 0.0, 1.0])), frame)
+    frame = numpy.dot(axis_angle_matrix(math.pi/2, numpy.array([0.0, 0.0, 1.0])), frame)
     frame = numpy.dot(axis_angle_matrix(yangle, numpy.array([0.0, 1.0, 0.0])), frame)
 
     pts = circle_points(frame, r, l, arc)
+
     dist = 0
     for i in xrange(1,len(pts)):
         dist += scipy.linalg.norm(pts[i]-pts[i-1])
@@ -75,19 +77,52 @@ def circ_arc(theta, phi, l, r):
 
     return numerator/denom
 
+def circ_point(theta, phi, r):
+    c_theta = math.cos(theta)
+    s_theta = math.sin(theta)
+    c_phi = math.cos(phi)
+    s_phi = math.sin(phi)
+
+    return numpy.array([ r*s_theta*c_phi,
+                         r*c_theta,
+                         r*s_theta*s_phi ])
+
+def offs_vec(theta, phi):
+    c_theta = math.cos(theta)
+    s_theta = math.sin(theta)
+    c_phi = math.cos(phi)
+
+    v = numpy.array([ s_theta,
+                      c_theta*c_phi,
+                      0 ])
+    vlen = scipy.linalg.norm(v)
+    v /= vlen
+    return v
+
+def offs_point(theta, phi, r, l):
+    return circ_point(theta, phi, r) + l*offs_vec(theta, phi)
+
+def plot_phi_len(radius, offset, phi, arc, num=100):
+    circ_offs = 2*math.pi*(radius+offset)*(arc/(2*math.pi))
+    circ = 2*math.pi*(radius)*(arc/(2*math.pi))
+
+    dat = numpy.zeros((100, 2))
+    for (ct,i) in enumerate(numpy.linspace(0, math.pi/2, dat.shape[0])):
+        dat[ct,0] = i
+        dat[ct,1] = integ.quad(lambda x: circ_arc(x, i, offset, radius),
+                               math.pi/2-arc/2, math.pi/2+arc/2)[0]
+
+    print 'circ+offs', circ_offs
+    print 'circ', circ
+
+    pylab.clf()
+    pylab.plot(dat[:,0], dat[:,1])
+    pylab.plot(dat[:,0], numpy.ones(dat.shape[0])*circ_offs)
+    pylab.plot(dat[:,0], numpy.ones(dat.shape[0])*circ)
+    # xcoeff = numpy.polyfit(dat[:,0], numpy.divide((dat[:, 1]-circ), circ_offs-circ), 4)
+    # px = numpy.poly1d(xcoeff)
+    pylab.show()
+
 if __name__ == '__main__':
-    radius = 1.0
-    offset = 1.0
-
-    phi = math.pi/2#math.pi/4
-    arc = math.pi/3
-
-    print (math.pi/2-arc/2, arc/2+math.pi/2)
-
-    val = integ.quad(lambda x: circ_arc(x, phi, offset, radius),
-                     math.pi/2-arc/2, arc/2+math.pi/2)
-
-    print val
-
-    print circ_len(phi, radius, -offset, arc)
+    plot_phi_len(1.0, 1.0, math.pi/2, math.pi)
 
