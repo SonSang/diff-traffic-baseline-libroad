@@ -71,7 +71,8 @@ def circ_arc(theta, phi, l, r):
     c_phi = math.cos(phi)
     s_phi = math.sin(phi)
 
-    numerator = math.sqrt(s_phi**4*r**2*c_theta**4-math.sqrt(1-s_phi**2*c_theta**2)* (2*l*c_phi*s_phi**2*r*c_theta**2-2*l*c_phi*r)-2*s_phi**2*r**2*c_theta**2+r**2-l**2*s_phi**2+ l**2)
+    numerator = math.sqrt(  (r**2)*((s_phi**2)*(c_theta**2)*((s_phi**2)*(c_theta**2) - 2) + 1)
+                            + l*c_phi*(2*r*math.pow(1-(s_phi**2)*(c_theta**2), 1.5) + l*c_phi))
 
     denom = s_theta**2+c_phi**2*c_theta**2
 
