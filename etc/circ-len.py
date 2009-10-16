@@ -66,15 +66,15 @@ def circ_len(phi, r, l, arc):
     return dist
 
 def circ_arc(theta, phi, l, r):
-    c_theta = math.cos(theta)
-    s_theta = math.sin(theta)
-    c_phi = math.cos(phi)
-    s_phi = math.sin(phi)
+    c2_theta = math.cos(theta)**2
+    s2_theta = math.sin(theta)**2
+    c_phi    = math.cos(phi)
+    s2_phi   = math.sin(phi)**2
 
-    numerator = math.sqrt(  (r**2)*((s_phi**2)*(c_theta**2)*((s_phi**2)*(c_theta**2) - 2) + 1)
-                            + l*c_phi*(2*r*math.pow(1-(s_phi**2)*(c_theta**2), 1.5) + l*c_phi))
+    numerator = math.sqrt((r**2)*(s2_phi*c2_theta*(s2_phi*c2_theta - 2) + 1)
+                          + l*c_phi*(2*r*math.pow(1-s2_phi*c2_theta, 1.5) + l*c_phi))
 
-    denom = s_theta**2+c_phi**2*c_theta**2
+    denom = s2_theta + c_phi**2*c2_theta
 
     return numerator/denom
 
