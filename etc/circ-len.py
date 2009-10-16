@@ -125,5 +125,15 @@ def plot_phi_len(radius, offset, phi, arc, num=100):
     pylab.show()
 
 if __name__ == '__main__':
-    plot_phi_len(1.0, 1.0, math.pi/2, math.pi)
+    #    plot_phi_len(1.0, 1.0, math.pi/2, math.pi)
+    dat = numpy.zeros((10, 100, 2))
+    for (pct,phi) in enumerate(numpy.linspace(0, 7*math.pi/16, dat.shape[0])):
+        for (dct,i) in enumerate(numpy.linspace(math.pi/8, math.pi/2, dat.shape[1])):
+            dat[pct,dct,0] = i
+            dat[pct,dct,1] = integ.quad(lambda x: circ_arc(x, phi, 1.0, 1.0),
+                                        math.pi/8, i)[0]
 
+    pylab.clf()
+    for i in xrange(dat.shape[0]):
+        pylab.plot(dat[i,:,0], dat[i,:,1])
+    pylab.show()
