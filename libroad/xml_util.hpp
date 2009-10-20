@@ -6,8 +6,13 @@
 #include <libxml++/libxml++.h>
 #include <libxml++/parsers/textreader.h>
 
+//TODO
+#include <iostream>
+
 inline bool read_skip_comment(xmlpp::TextReader &reader)
 {
+
+    std::cout << "read_skip_comment\n";
     bool res;
     do
     {
@@ -38,6 +43,7 @@ inline bool get_attribute(str &res, xmlpp::TextReader &reader, const str &eltnam
 
 inline bool is_opening_element(const xmlpp::TextReader &reader, const str &name)
 {
+    std::cout << "is_opening_element\n";   
     return (reader.get_node_type() == xmlpp::TextReader::Element
             && reader.get_name() == name);
 }
@@ -70,6 +76,8 @@ inline bool read_to_close(xmlpp::TextReader &reader, const str &endtag)
 template <class closure, typename T>
 inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
+    std::cout << "read_map" << std::endl;
+
     bool ret;
     do
     {

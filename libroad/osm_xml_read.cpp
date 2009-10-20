@@ -142,7 +142,8 @@ namespace osm
 
     static inline bool xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
-        std::cout << "xml_read_nodes2\n";
+        std::cout << "xml_read_nodes2\n";    
+        is_opening_element(reader, "nodes");
         return (is_opening_element(reader, "nodes") &&
                 read_skip_comment(reader) &&
                 read_map(n, n.nodes, reader, "node", "nodes"));
