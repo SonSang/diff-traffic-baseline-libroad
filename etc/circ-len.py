@@ -79,6 +79,22 @@ def circ_arc(theta, phi, l, r):
 
     return numerator/denom
 
+class circ_arc_o(object):
+    def __init__(self, phi, l, r):
+        self.s2_phi   = math.sin(phi)**2
+        self.r2 = r**2
+        self.rt_coeff = 2*l*r*math.cos(phi)
+        self.numer_expr = self.r2 + l**2*(1.0 - self.s2_phi)
+    def __call__(self, theta):
+        subexpr = self.s2_phi*math.cos(theta)**2
+        subexpr1m = (1 - subexpr)
+
+        numerator = math.sqrt(self.r2*subexpr*(subexpr-2)
+                              + self.rt_coeff*math.sqrt(subexpr1m)*subexpr1m
+                              + self.numer_expr)
+
+        return numerator/subexpr1m
+
 def circ_point(theta, phi, r):
     c_theta = math.cos(theta)
     s_theta = math.sin(theta)
