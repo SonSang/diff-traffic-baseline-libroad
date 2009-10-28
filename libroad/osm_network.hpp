@@ -20,14 +20,17 @@ namespace osm
         int    nolanes;
         double speed;
         int    priority;
-        double length;
+        bool   oneway;
+
+    };
+
+    struct shape_t : public std::vector<vec2d>
+    {
     };
 
     struct edge
     {
-        struct shape_t : public std::vector<vec2d>
-        {
-        };
+
         typedef enum {center, right} SPREAD;
 
         str        id;
@@ -36,6 +39,7 @@ namespace osm
         edge_type* type;
         shape_t    shape;
         SPREAD     spread;
+        str        highway_class;
     };
 
     struct network
@@ -52,9 +56,12 @@ namespace osm
         bool check_edge(const edge &e) const;
         bool check_node(const node &n) const;
         bool check() const;
+        bool compute_edge_types();
+        bool draw_network();
     };
 
     network load_xml_network(const char *osm_file);
+
 }
 
 inline std::ostream &operator<<(std::ostream &o, const osm::node::TYPES &t)
@@ -118,6 +125,17 @@ inline std::istream &operator>>(std::istream &i, osm::edge::SPREAD &t)
 
     return i;
 }
+
+    template <class T>
+    static inline T* retrieve(typename strhash<T>::type &m, const str &id)
+    {
+        typedef typename strhash<T>::type val;
+        typename strhash<T>::type::iterator entry(m.find(id));
+        if(entry == m.end())
+            m.insert(entry, std::make_pair(id, T()));
+
+        return &(m[id]);
+    }
 
 
 #endif

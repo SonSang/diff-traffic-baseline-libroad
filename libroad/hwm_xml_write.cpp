@@ -46,6 +46,16 @@ namespace hwm
         }
     }
 
+    static inline void xml_write_empty(const lane::adjacency &rm, xmlpp::Element *elt)
+    {
+        xmlpp::Element *rm_elt = elt->add_child("lane_adjacency");
+    }
+
+    static inline void xml_write_empty(const lane::road_membership &rm, xmlpp::Element *elt)
+    {
+        xmlpp::Element *rm_elt = elt->add_child("road_membership");
+    }
+
     template <class T>
     static inline void xml_write_partition(const partition01<T> &p, xmlpp::Element *elt, const str &name)
     {
@@ -53,9 +63,9 @@ namespace hwm
         xmlpp::Element *interval_elt = overall_elt->add_child("interval");
 
         typename partition01<T>::const_iterator pit = p.begin();
+        xmlpp::Element *base_elt = interval_elt->add_child("base");
         if(!p.empty())
         {
-            xmlpp::Element *base_elt = interval_elt->add_child("base");
             xml_write(pit->second, base_elt);
             for(++pit; pit != p.end(); ++pit)
             {
@@ -64,7 +74,12 @@ namespace hwm
                 xml_write(pit->second, div_elt);
             }
         }
+        else
+        {
+            xml_write_empty(pit->second, base_elt);
+        }
     }
+
 
     static inline void xml_write(const lane::road_membership &rm, xmlpp::Element *elt)
     {

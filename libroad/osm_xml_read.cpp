@@ -6,7 +6,7 @@
 
 namespace osm
 {
-    static inline void read_shape(edge::shape_t &shape, const std::string &s)
+    static inline void read_shape(shape_t &shape, const std::string &s)
     {
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
         boost::char_separator<char> sep(" ");
@@ -52,22 +52,13 @@ namespace osm
         return &(n.types[id]);
     }
 
-    template <class T>
-    static inline T* retrieve(typename strhash<T>::type &m, const str &id)
-    {
-        typedef typename strhash<T>::type val;
-        typename strhash<T>::type::iterator entry(m.find(id));
-        if(entry == m.end())
-            m.insert(entry, std::make_pair(id, T()));
 
-        return &(m[id]);
-    }
 
     static inline bool xml_read(network &n, node &no, xmlpp::TextReader &reader)
     {
         bool res = get_attribute(no.id,    reader, "id") &&
-                   get_attribute(no.xy[0], reader, "x")  &&
-                   get_attribute(no.xy[1], reader, "y");
+                   get_attribute(no.xy[0], reader, "lat")  &&
+                   get_attribute(no.xy[1], reader, "lon");
         if(!res)
             return false;
 
@@ -77,91 +68,78 @@ namespace osm
         return true;
     }
 
-    static inline bool xml_read(network &n, edge_type &et, xmlpp::TextReader &reader)
+
+
+  static inline bool xml_read(network &n, edge &e, str id, xmlpp::TextReader &reader)
     {
-        return (get_attribute(et.id,       reader, "id")       &&
-                get_attribute(et.priority, reader, "priority") &&
-                get_attribute(et.nolanes,  reader, "nolanes")  &&
-                get_attribute(et.speed,    reader, "speed"));
-    }
-
-    static inline bool xml_read(network &n, edge &e, xmlpp::TextReader &reader)
-    {
-        if(!get_attribute(e.id, reader, "id"))
-            return false;
-
-        str from_id;
-        str to_id;
-        if(!(get_attribute(from_id, reader, "fromnode") &&
-             get_attribute(to_id,   reader, "tonode")))
+        bool ret;
+        bool first_node = true;
+        bool is_road = false;
+        do
         {
-            vec2d from;
-            vec2d to;
-            if(!(get_attribute(from[0], reader, "xfrom") &&
-                 get_attribute(from[1], reader, "yfrom") &&
-                 get_attribute(to[0],   reader, "xto")   &&
-                 get_attribute(to[1],   reader, "yto")))
-                return false;
+          ret = read_skip_comment(reader);
+          if (!ret)
+            return 1;
+          if (reader.get_node_type() == xmlpp::TextReader::Element){
+            if (reader.get_name() == "nd")
+              {
 
-            e.from = anon_node(n, from);
-            e.to   = anon_node(n, to);
+                str n_id;
+                node* current_node;
+                get_attribute(n_id, reader, "ref");
+                current_node = retrieve<node>(n.nodes, n_id);
+                std::cout << std::setprecision(9) << vec2d(current_node->xy) << "\n";
+                e.shape.push_back(vec2d(current_node->xy));
+
+                //Set the "to node" -- which is expected to be the last node --
+                //every time.  On the final iteration, the last node will be kept.
+                e.to = current_node;
+
+                //Save the first node as the "from" node
+                if (first_node){
+                  first_node = false;
+                  e.from = current_node;
+                }
+              }
+
+            if (reader.get_name() == "tag")
+              {
+                str k, v;
+                get_attribute(k, reader, "k");
+                std::cout << "k " << k << "\n";
+                if (k == "highway"){
+                  is_road = true;
+                  get_attribute(v, reader, "v");
+                  e.highway_class = v;
+                  std::cout << "class " << v << "\n";
+                }
+              }
+          }
+        }while(ret && !is_closing_element(reader, "way"));
+
+        std::cout << "size " << n.edges.size() << "\n";
+        if (!is_road){
+          n.edges.erase(id);
         }
-        else
-        {
-            e.from = retrieve<node>(n.nodes, from_id);
-            e.to   = retrieve<node>(n.nodes, to_id);
-        }
-
-        str type_id;
-        if(!get_attribute(type_id, reader, "type"))
-        {
-            int priority;
-            int nolanes;
-            double speed;
-            if(!(get_attribute(priority, reader, "priority") &&
-                 get_attribute(nolanes, reader, "nolanes") &&
-                 get_attribute(speed, reader, "speed")))
-                return false;
-
-            e.type = anon_edge_type(n, priority, nolanes, speed);
-        }
-        else
-        {
-            e.type = retrieve<edge_type>(n.types, type_id);
-        }
-
-        if(!get_attribute(e.spread, reader, "spread"))
-            e.spread = edge::right;
-
-        str shape_str;
-        if(get_attribute(shape_str, reader, "shape"))
-            read_shape(e.shape, shape_str);
+        std::cout << "size " << n.edges.size() << "\n";
 
         return true;
     }
 
     static inline bool xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
-        std::cout << "xml_read_nodes2\n";    
-        is_opening_element(reader, "nodes");
-        return (is_opening_element(reader, "nodes") &&
-                read_skip_comment(reader) &&
-                read_map(n, n.nodes, reader, "node", "nodes"));
+        std::cout << "xml_read_nodes2\n";
+        bool ret = read_skip_comment(reader);
+        std::cout << ret << "\n";
+        ret = ret and read_map_no_container(n, n.nodes, reader, "node", "nodes");
+        std::cout << ret << "\n";
+        return ret;
     }
-
-    static inline bool xml_read_types(network &n, xmlpp::TextReader &reader)
-    {
-        return (is_opening_element(reader, "types") &&
-                read_skip_comment(reader) &&
-                read_map(n, n.types, reader, "type", "types"));
-    }
-
 
     static inline bool xml_read_edges(network &n, xmlpp::TextReader &reader)
     {
-        return (is_opening_element(reader, "edges") &&
-                read_skip_comment(reader) &&
-                read_map(n, n.edges, reader, "edge", "edges"));
+        return (read_skip_comment(reader) &&
+                read_map_no_container_and_children(n, n.edges, reader, "way", "nd"));
     }
 
     static inline bool xml_read_nodes(network &n, const char *filename)
@@ -183,19 +161,10 @@ namespace osm
         }
     }
 
-    static inline bool xml_read_types(network &n, const char *filename)
-    {
-        xmlpp::TextReader reader(filename);
-
-        bool res = (read_skip_comment(reader) &&
-                    xml_read_types(n, reader));
-
-        reader.close();
-        return res;
-    }
-
     static inline bool xml_read_edges(network &n, const char *filename)
     {
+        std::cout << "xml_read_edges\n";
+
         xmlpp::TextReader reader(filename);
 
         bool res = (read_skip_comment(reader) &&
@@ -210,9 +179,12 @@ namespace osm
         network n;
         std::cout << "load_xml_network\n";
 
-        if(!(xml_read_nodes(n, osm_file))){
+        if(!((xml_read_nodes(n, osm_file)) && (xml_read_edges(n, osm_file)))){
+            std::cout << "exception thrown here\n";
             throw std::exception();
         }
+
+        n.compute_edge_types();
 
         return n;
     }

@@ -1,46 +1,88 @@
 #include <libroad/osm_network.hpp>
+#include <libroad/hwm_network.hpp>
 #include <iostream>
+#include <FL/Fl.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Box.H>
+#include <FL/gl.h>
+#include <FL/glu.h>
+#include <FL/glut.H>
+#include <FL/Fl_Gl_Window.H>
+#include <FL/Fl_Dial.H>
+#include <FL/Fl_Button.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Float_Input.H>
+
 
 #include <boost/foreach.hpp>
+
+class glWindow : public Fl_Gl_Window {
+  void draw();
+  int handle(int);
+
+  public:
+  glWindow(int X, int Y, int W, int H, const char *L) : Fl_Gl_Window(X, Y, W, H, L){}
+};
+
+int glWindow::handle(int event){ return 0;}
+
+
+osm::network net;
+
+void glWindow::draw(){
+  if (!valid()) {
+    valid(1);
+    glViewport(0,0,w(),h());
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    gluPerspective(60.0, (GLdouble) w()/(GLdouble) h(), 1.0, -1.0);
+    gluLookAt(0,0,1,0,0,0,0,1,0);
+    glMatrixMode (GL_MODELVIEW);
+    glLoadIdentity();
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
+
+  glClearColor(1, 1, 1, 1);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glLoadIdentity();
+
+  net.draw_network();
+
+  glLoadIdentity();
+}
+
+double timestep = 0.2;
+
+void timerCallback(void*)
+{
+    Fl::redraw();
+    Fl::repeat_timeout(timestep, timerCallback);
+}
 
 int main(int argc, char *argv[])
 {
     std::cout << "main" << std::endl;
-    osm::network net = osm::load_xml_network(argv[1]);
-/*
-    {
-        typedef std::pair<std::string, sumo::node> maptype;
-        BOOST_FOREACH(const maptype &n, net.nodes)
-        {
-            std::cout << n.second.id << " " << n.second.xy << " " << n.second.type << std::endl;
-        }
-    }
+    net = osm::load_xml_network(argv[1]);
+    //hwm::network hnet(hwm::from_osm("test", 0.5f, net));
+    //write_xml_network(hnet, "test_net.xml");
 
-    {
-        typedef std::pair<std::string, sumo::edge_type> maptype;
-        BOOST_FOREACH(const maptype &n, net.types)
-        {
-            std::cout << n.second.id << " " << n.second.priority << " " << n.second.nolanes << " " << n.second.speed << std::endl;
-        }
-    }
+    //if (hnet.check())
+    //    std::cerr << "Conversion seems to have worked\n";
 
-    {
-        typedef std::pair<std::string, sumo::edge> maptype;
-        BOOST_FOREACH(const maptype &n, net.edges)
-        {
-            std::cout << n.second.id << " " << n.second.from->id << " " << n.second.to->id << " " << n.second.type->id << " " << n.second.spread;
-            BOOST_FOREACH(const vec2d &v, n.second.shape)
-            {
-                std::cout << " [" << v[0] << ", " << v[1] << "]";
-            }
-            std::cout << std::endl;
-        }
-    }
 
-    if(net.check())
-        std::cout << "Network checks out" << std::endl;
-    else
-        std::cout << "Network doesn't check out" << std::endl;
-*/
-    return 0;
+    Fl_Double_Window *window = new Fl_Double_Window(500,500);
+    Fl::add_timeout(timestep, timerCallback);
+    glWindow* glWin = new glWindow(0, 0, window->w(), window->h(), 0);
+    glWin->mode(FL_DOUBLE);
+
+    window->end();
+    window->show(argc, argv);
+    glWin->show();
+
+    Fl::redraw();
+
+
+    return Fl::run();
 }
