@@ -198,17 +198,17 @@ namespace hwm
         {
             const osm::edge &e = ep.second;
 
-            ++node_degree[e.from->id];
-            ++node_degree[e.to->id];
+            ++node_degree[e.from];
+            ++node_degree[e.to];
 
             road &new_road = retrieve<road>(hnet.roads, e.id);
             new_road.name = new_road.id;
 
             new_road.rep.points_.reserve(2 + e.shape.size());
-            BOOST_FOREACH(const vec2d &v, e.shape)
+            BOOST_FOREACH(const osm::node &n, e.shape)
             {
-                new_road.rep.points_.push_back(vec3f(v[0],
-                                                     v[1],
+                new_road.rep.points_.push_back(vec3f(n.xy[0],
+                                                     n.xy[1],
                                                      0.0f));
             }
 
@@ -232,9 +232,9 @@ namespace hwm
 
             intersection *start_inters, *end_inters;
             {
-                intersection_itr the_inters = hnet.intersections.find(e.from->id);
+                intersection_itr the_inters = hnet.intersections.find(e.from);
                 start_inters                = (the_inters == hnet.intersections.end()) ? 0 : &(the_inters->second);
-                the_inters                  = hnet.intersections.find(e.to->id);
+                the_inters                  = hnet.intersections.find(e.to);
                 end_inters                  = (the_inters == hnet.intersections.end()) ? 0 : &(the_inters->second);
             }
 

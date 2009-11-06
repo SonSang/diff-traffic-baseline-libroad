@@ -6,52 +6,6 @@
 
 namespace osm
 {
-    static inline void read_shape(shape_t &shape, const std::string &s)
-    {
-        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-        boost::char_separator<char> sep(" ");
-        tokenizer                   tokens(s, sep);
-
-        BOOST_FOREACH(const std::string &vs, tokens)
-        {
-            boost::char_separator<char> csep(",");
-            tokenizer                   vtokens(vs, csep);
-            tokenizer::iterator         tok        = vtokens.begin();
-
-            double x = boost::lexical_cast<double>(*tok);
-            ++tok;
-            double y = boost::lexical_cast<double>(*tok);
-            shape.push_back(vec2d(x, y));
-        }
-    }
-
-    node *anon_node(network &n, vec2d &pos)
-    {
-        str id(boost::str(boost::format("anon_node%u") % n.anon_node_count++));
-
-        node no;
-        no.id      = id;
-        no.xy      = pos;
-        no.type    = node::unknown;
-        n.nodes[id] = no;
-
-        return &(n.nodes[id]);
-    }
-
-    edge_type *anon_edge_type(network &n, const int priority, const int nolanes, const double speed)
-    {
-        str id(boost::str(boost::format("anon_edge_type%u") % n.anon_edge_type_count++));
-
-        edge_type et;
-        et.id       = id;
-        et.priority = priority;
-        et.nolanes  = nolanes;
-        et.speed    = speed;
-        n.types[id]   = et;
-
-        return &(n.types[id]);
-    }
-
 
 
     static inline bool xml_read(network &n, node &no, xmlpp::TextReader &reader)
@@ -88,51 +42,53 @@ namespace osm
                 node* current_node;
                 get_attribute(n_id, reader, "ref");
                 current_node = retrieve<node>(n.nodes, n_id);
-                std::cout << std::setprecision(9) << vec2d(current_node->xy) << "\n";
-                e.shape.push_back(vec2d(current_node->xy));
+
+                e.shape.push_back(*current_node);
 
                 //Set the "to node" -- which is expected to be the last node --
                 //every time.  On the final iteration, the last node will be kept.
-                e.to = current_node;
+                e.to = current_node->id;
 
                 //Save the first node as the "from" node
                 if (first_node){
                   first_node = false;
-                  e.from = current_node;
+                  e.from = current_node->id;
                 }
               }
 
             if (reader.get_name() == "tag")
-              {
+            {
                 str k, v;
                 get_attribute(k, reader, "k");
-                std::cout << "k " << k << "\n";
-                if (k == "highway"){
-                  is_road = true;
-                  get_attribute(v, reader, "v");
-                  e.highway_class = v;
-                  std::cout << "class " << v << "\n";
+
+
+
+                if (k== "highway"){
+                    is_road = true;
+                    get_attribute(v, reader, "v");
+                    e.highway_class = v;
+
                 }
-              }
+            }
           }
         }while(ret && !is_closing_element(reader, "way"));
 
-        std::cout << "size " << n.edges.size() << "\n";
+
         if (!is_road){
           n.edges.erase(id);
         }
-        std::cout << "size " << n.edges.size() << "\n";
+
 
         return true;
     }
 
     static inline bool xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
-        std::cout << "xml_read_nodes2\n";
+
         bool ret = read_skip_comment(reader);
-        std::cout << ret << "\n";
+
         ret = ret and read_map_no_container(n, n.nodes, reader, "node", "nodes");
-        std::cout << ret << "\n";
+
         return ret;
     }
 

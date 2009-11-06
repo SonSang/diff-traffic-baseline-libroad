@@ -43,7 +43,6 @@ inline bool get_attribute(str &res, xmlpp::TextReader &reader, const str &eltnam
 
 inline bool is_opening_element(const xmlpp::TextReader &reader, const str &name)
 {
-    std::cout << "is_opening_element\n";    
 
     return (reader.get_node_type() == xmlpp::TextReader::Element
             && reader.get_name() == name);
@@ -77,7 +76,6 @@ inline bool read_to_close(xmlpp::TextReader &reader, const str &endtag)
 template <class closure, typename T>
 inline bool read_map_no_container_and_children(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &child_name)
 {
-    std::cout << "read_map\n";
     bool ret;
     do
     {
@@ -87,26 +85,23 @@ inline bool read_map_no_container_and_children(closure &c, T &themap, xmlpp::Tex
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
-            std::cout << "found element\n";
-            std::cout << reader.get_name() << " =? " << item_name << std::endl;
+
             if(reader.get_name() == item_name)
             {
                 str id(reader.get_attribute("id"));
 
-                std::cout << "way id " << id << std::endl;
 
                 typename T::iterator vp(themap.find(id));
-                std::cout << "here\n";
                 if(vp == themap.end())
                     vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
                 vp->second.id = vp->first;
-             
+
                 xml_read(c, themap[id], id, reader);
-             }            
+             }
         }
     }
     while(ret);
- 
+
     return ret;
 }
 
@@ -114,7 +109,6 @@ inline bool read_map_no_container_and_children(closure &c, T &themap, xmlpp::Tex
 template <class closure, typename T>
 inline bool read_map_no_container(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
-    std::cout << "read_map\n";
     bool ret;
     do
     {
@@ -124,24 +118,20 @@ inline bool read_map_no_container(closure &c, T &themap, xmlpp::TextReader &read
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
-            std::cout << "found element\n";
-            std::cout << reader.get_name() << " =? " << item_name << std::endl;
+
             if(reader.get_name() == item_name)
             {
                 str id(reader.get_attribute("id"));
 
-                std::cout << id << std::endl;
-
                 typename T::iterator vp(themap.find(id));
-                std::cout << "here\n";
                 if(vp == themap.end())
                     vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
                 vp->second.id = vp->first;
-                std::cout << "here\n";
+
 
                 if(!xml_read(c, themap[id], reader))
                     return false;
-            }            
+            }
         }
     }
     while(ret && !is_closing_element(reader, container_name));

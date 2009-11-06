@@ -63,10 +63,13 @@ void timerCallback(void*)
 
 int main(int argc, char *argv[])
 {
-    std::cout << "main" << std::endl;
     net = osm::load_xml_network(argv[1]);
+    net.compute_node_degrees();
+    net.join_logical_roads();
+    net.split_into_road_segments();
+
     //hwm::network hnet(hwm::from_osm("test", 0.5f, net));
-    //write_xml_network(hnet, "test_net.xml");
+     //write_xml_network(hnet, "test_net.xml");
 
     //if (hnet.check())
     //    std::cerr << "Conversion seems to have worked\n";

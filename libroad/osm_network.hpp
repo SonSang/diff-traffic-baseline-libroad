@@ -24,7 +24,7 @@ namespace osm
 
     };
 
-    struct shape_t : public std::vector<vec2d>
+    struct shape_t : public std::vector<node>
     {
     };
 
@@ -34,8 +34,8 @@ namespace osm
         typedef enum {center, right} SPREAD;
 
         str        id;
-        node*      from;
-        node*      to;
+        str      from;
+        str      to;
         edge_type* type;
         shape_t    shape;
         SPREAD     spread;
@@ -44,20 +44,28 @@ namespace osm
 
     struct network
     {
-        network() : anon_node_count(0), anon_edge_type_count(0)
+        network()
         {}
 
         strhash<node>::type      nodes;
-        size_t                   anon_node_count;
         strhash<edge_type>::type types;
-        size_t                   anon_edge_type_count;
         strhash<edge>::type      edges;
+
+        strhash<edge>::type      road_segs;
+
+        strhash<int>::type      node_degrees;
 
         bool check_edge(const edge &e) const;
         bool check_node(const node &n) const;
         bool check() const;
         bool compute_edge_types();
         bool draw_network();
+        //        bool compute_intersections();
+        bool compute_node_degrees();
+        bool join_logical_roads();
+        bool split_into_road_segments();
+        bool join(edge* , edge*);
+        bool check_nodes();
     };
 
     network load_xml_network(const char *osm_file);
