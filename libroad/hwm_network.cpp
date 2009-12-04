@@ -307,8 +307,28 @@ namespace hwm
                     newlanes[lanect]->right.insert(0.0f, la);
                 }
             }
+
+
+
         }
 
+        typedef std::pair<const str, hwm::intersection> intersect_pair;
+        BOOST_FOREACH(intersect_pair& i_pair, hnet.intersections)
+        {
+            assert(i_pair.second.incoming.size() > 0);
+            assert(i_pair.second.outgoing.size() > 0);
+            i_pair.second.states.push_back(hwm::intersection::state());
+            hwm::intersection::state::in_id in;
+            in.in_ref = 0;
+            in.fict_lane = i_pair.second.incoming[0];
+
+            hwm::intersection::state::out_id out;
+            out.out_ref = 0;
+            out.fict_lane = i_pair.second.outgoing[0];
+            i_pair.second.states[0].duration = 30;
+            i_pair.second.states[0].in_states.push_back(out);
+            i_pair.second.states[0].out_states.push_back(in);
+        }
         return hnet;
     }
 }
