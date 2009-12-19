@@ -2,6 +2,7 @@
 #define _OSM_NETWORK_HPP_
 
 #include "libroad_common.hpp"
+#include <vector>
 
 namespace osm
 {
@@ -42,6 +43,13 @@ namespace osm
         str        highway_class;
     };
 
+    struct intersection
+    {
+        std::vector<str> edges_ending_here;
+        std::vector<str> edges_starting_here;
+
+    };
+
     struct network
     {
         network()
@@ -50,22 +58,27 @@ namespace osm
         strhash<node>::type      nodes;
         strhash<edge_type>::type types;
         strhash<edge>::type      edges;
+        strhash<intersection>::type intersections;
 
         strhash<edge>::type      road_segs;
 
         strhash<int>::type      node_degrees;
+        strhash<std::vector<str> >::type  node_connections;
 
         bool check_edge(const edge &e) const;
         bool check_node(const node &n) const;
         bool check() const;
         bool compute_edge_types();
         bool draw_network();
-        //        bool compute_intersections();
+        bool create_intersections();
         bool compute_node_degrees();
         bool join_logical_roads();
         bool split_into_road_segments();
         bool join(edge* , edge*);
         bool check_nodes();
+        edge copy_no_shape(const edge& e);
+
+        static size_t new_edges_id;
     };
 
     network load_xml_network(const char *osm_file);
@@ -116,7 +129,7 @@ inline std::ostream &operator<<(std::ostream &o, const osm::edge::SPREAD &t)
         break;
     default:
         o << "unknown_spread_type";
-        break;
+       break;
     }
     return o;
 }

@@ -93,6 +93,7 @@ namespace hwm
             std::vector<in_id>  out_states;
         };
 
+
         bool check() const;
 
         str                id;

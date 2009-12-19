@@ -27,7 +27,7 @@ class glWindow : public Fl_Gl_Window {
 int glWindow::handle(int event){ return 0;}
 
 
-osm::network net;
+osm::network* net;
 
 void glWindow::draw(){
   if (!valid()) {
@@ -42,13 +42,12 @@ void glWindow::draw(){
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
-
   glClearColor(1, 1, 1, 1);
   glClear(GL_COLOR_BUFFER_BIT);
 
   glLoadIdentity();
 
-  net.draw_network();
+  net->draw_network();
 
   glLoadIdentity();
 }
@@ -63,13 +62,15 @@ void timerCallback(void*)
 
 int main(int argc, char *argv[])
 {
-    net = osm::load_xml_network(argv[1]);
-    net.compute_node_degrees();
-    net.join_logical_roads();
-    net.split_into_road_segments();
+    osm::network s_net(osm::load_xml_network(argv[1]));
+    net = &s_net;
+    net->compute_node_degrees();
+    net->join_logical_roads();
+    net->split_into_road_segments();
+    net->create_intersections();
 
-    //hwm::network hnet(hwm::from_osm("test", 0.5f, net));
-     //write_xml_network(hnet, "test_net.xml");
+    //hwm::network hnet(hwm::from_osm("test", 0.5f, *net));
+    //write_xml_network(hnet, "test_net.xml");
 
     //if (hnet.check())
     //    std::cerr << "Conversion seems to have worked\n";

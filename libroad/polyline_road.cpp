@@ -1,5 +1,7 @@
 #include "polyline_road.hpp"
 
+#include <iostream>
+
 polyline_road::~polyline_road()
 {
 }
@@ -82,16 +84,20 @@ bool polyline_road::initialize()
     cmitres_.resize(N);
 
     cmitres_[0] = 0.0f;
-    for(size_t i = 0; i < N - 2; ++i)
-    {
-        const float dot = tvmet::dot(normals_[i], normals_[i+1]);
-        if(std::abs(dot + 1.0f) < FLT_EPSILON)
-            return false;
-        const float orient = normals_[i][1] * normals_[i+1][0] - normals_[i][0]*normals_[i+1][1];
-        const float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f - dot)/(1.0f + dot)), orient);
+    if (N >= 2){
+        for(size_t i = 0; i < N - 2; ++i)
+        {
 
-        cmitres_[i+1] += cmitres_[i] + mitre;
+            const float dot = tvmet::dot(normals_[i], normals_[i+1]);
+            if(std::abs(dot + 1.0f) < FLT_EPSILON)
+                return false;
+            const float orient = normals_[i][1] * normals_[i+1][0] - normals_[i][0]*normals_[i+1][1];
+            const float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f - dot)/(1.0f + dot)), orient);
+
+            cmitres_[i+1] += cmitres_[i] + mitre;
+        }
     }
+
 
     cmitres_[N-1] = cmitres_[N-2]; // + 0.0f;
 
