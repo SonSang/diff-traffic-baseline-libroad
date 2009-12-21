@@ -22,8 +22,6 @@
 
 using namespace std;
 
-
-
 class car
 {
 public:
@@ -57,7 +55,6 @@ public:
 
 //Temporary
 strhash<double>::type lane_lengths;
-
 
 class micro : boost::noncopyable
 {
@@ -160,7 +157,7 @@ void timerCallback(void*)
     Fl::repeat_timeout(timestep, timerCallback);
 }
 
-//TODO need an actual computation of physical length from interval position
+//TODO TEMP need an actual computation of physical length from interval position
 double intr_to_len = 300;
 
 //
@@ -168,14 +165,20 @@ int cars_per_lane = 6;
 int main(int argc, char** argv)
 {
     hnet = hwm::load_xml_network(argv[1]);
+    write_xml_network(hnet, "test.xml");
+    //Can't export the xml network..
+
+
     //***********************
     // List of errors encountered and changes required. (Priority)
     // 1, Error: there is a lane with a blank id and no road membership. (Low)
+    // 2, Error: the road representation data is not correct in the road memberships.
 
     typedef pair<str, const hwm::lane&> lane_hash;
     BOOST_FOREACH(lane_hash _lane, hnet.lanes)
     {
         //TODO Why are there lanes being read with no read memberships and no id?
+        //Error 1
         if (_lane.second.road_memberships.size() > 0)
         {
             double p = 0.01;
@@ -188,7 +191,8 @@ int main(int argc, char** argv)
         }
     }
 
-    //Temproray: calculate total length of lanes
+    //Temproray: approximately calculate total length of lanes
+    //Error 2: Why isn't the representation data correct?  Causes SEGFAULTS.
     BOOST_FOREACH(lane_hash _lane, hnet.lanes)
     {
         lane_lengths[_lane.first] = _lane.second.length();
