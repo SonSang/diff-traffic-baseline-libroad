@@ -28,7 +28,7 @@ sumo_xml_to_hwm_LDFLAGS  = $(LDFLAGS)
 sumo_xml_to_hwm_LDADD    = $(top_builddir)/libroad/libroad.la
 
 if DO_VISUAL
-noinst_PROGRAMS += arc-road-test view-network
+noinst_PROGRAMS += arc-road-test view-network micro
 
 arc_road_test_SOURCES = arc-road-test.cpp
 arc_road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
@@ -39,4 +39,9 @@ view_network_SOURCES = view-network.cpp
 view_network_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 view_network_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
 view_network_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
+
+micro_SOURCES  = micro.cpp
+micro_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+micro_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
+micro_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
 endif
