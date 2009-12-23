@@ -1,4 +1,3 @@
-#include "micro.hpp"
 #include <libroad/hwm_network.hpp>
 
 #include <utility>
