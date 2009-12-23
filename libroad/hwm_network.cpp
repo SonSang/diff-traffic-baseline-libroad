@@ -2,6 +2,173 @@
 
 namespace hwm
 {
+    network::network(const network &n)
+    {
+        copy(n);
+    }
+
+    void network::copy(const network &n)
+    {
+        name  = n.name;
+        gamma = n.gamma;
+
+        roads         = n.roads;
+        lanes         = n.lanes;
+        intersections = n.intersections;
+
+        // Fill in pointers in lanes with other lanes
+        typedef strhash<lane>::type::value_type lval;
+        BOOST_FOREACH(lval &l, lanes)
+        {
+            const str &lane_id      = l.first;
+            lane      &current_lane = l.second;
+
+            // Find lane in 'n' that corresponds to this lane
+            const strhash<lane>::type::const_iterator other = n.lanes.find(lane_id);
+            assert(other != n.lanes.end());
+            assert(other->first == lane_id);
+
+            const lane &other_lane = other->second;
+
+            {
+                lane::road_membership::intervals::iterator       my_memb    = current_lane.road_memberships.begin();
+                lane::road_membership::intervals::const_iterator other_memb =   other_lane.road_memberships.begin();
+                for(; my_memb  != current_lane.road_memberships.end() &&
+                    other_memb !=   other_lane.road_memberships.end();
+                    ++my_memb, ++other_memb)
+                {
+                    assert(my_memb->second.parent_road);
+                    const strhash<road>::type::iterator my_road = roads.find(other_memb->second.parent_road->id);
+                    assert(my_road != roads.end());
+                    my_memb->second.parent_road = &(my_road->second);
+                }
+            }
+            {
+                lane::adjacency::intervals::iterator       my_adj    = current_lane.left.begin();
+                lane::adjacency::intervals::const_iterator other_adj =   other_lane.left.begin();
+                for(; my_adj  != current_lane.left.end() &&
+                    other_adj !=   other_lane.left.end();
+                    ++my_adj, ++other_adj)
+                {
+                    if(my_adj->second.neighbor)
+                    {
+                        const strhash<lane>::type::iterator my_lane = lanes.find(other_adj->second.neighbor->id);
+                        assert(my_lane != lanes.end());
+                        my_adj->second.neighbor = &(my_lane->second);
+                    }
+                }
+            }
+            {
+                lane::adjacency::intervals::iterator       my_adj    = current_lane.right.begin();
+                lane::adjacency::intervals::const_iterator other_adj =   other_lane.right.begin();
+                for(; my_adj  != current_lane.right.end() &&
+                    other_adj !=   other_lane.right.end();
+                    ++my_adj, ++other_adj)
+                {
+                    if(my_adj->second.neighbor)
+                    {
+                        const strhash<lane>::type::iterator my_lane = lanes.find(other_adj->second.neighbor->id);
+                        assert(my_lane != lanes.end());
+                        my_adj->second.neighbor = &(my_lane->second);
+                    }
+                }
+            }
+            if(current_lane.start.inters)
+            {
+                const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.start.inters->id);
+                assert(my_inters != intersections.end());
+                current_lane.start.inters = &(my_inters->second);
+            }
+            if(current_lane.end.inters)
+            {
+                const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.end.inters->id);
+                assert(my_inters != intersections.end());
+                current_lane.end.inters = &(my_inters->second);
+            }
+        }
+        typedef strhash<intersection>::type::value_type ival;
+        BOOST_FOREACH(ival &i, intersections)
+        {
+            const str    &intersection_id      = i.first;
+            intersection &current_intersection = i.second;
+
+            const strhash<intersection>::type::const_iterator other = n.intersections.find(i.first);
+            assert(other != n.intersections.end());
+            assert(other->first == intersection_id);
+
+            const intersection &other_intersection = other->second;
+
+            {
+                std::vector<lane*>::iterator       my_inc     = current_intersection.incoming.begin();
+                std::vector<lane*>::const_iterator other_inc  =   other_intersection.incoming.begin();
+                for(; my_inc  != current_intersection.incoming.end() &&
+                    other_inc !=   other_intersection.incoming.end();
+                    ++my_inc, ++other_inc)
+                {
+                    assert(*my_inc);
+                    const strhash<lane>::type::iterator my_lane = lanes.find((*other_inc)->id);
+                    assert(my_lane != lanes.end());
+                    *my_inc = &(my_lane->second);
+                }
+            }
+
+            {
+                std::vector<lane*>::iterator       my_out     = current_intersection.outgoing.begin();
+                std::vector<lane*>::const_iterator other_out  =   other_intersection.outgoing.begin();
+                for(; my_out  != current_intersection.outgoing.end() &&
+                    other_out !=   other_intersection.outgoing.end();
+                    ++my_out, ++other_out)
+                {
+                    assert(*my_out);
+                    const strhash<lane>::type::iterator my_lane = lanes.find((*other_out)->id);
+                    assert(my_lane != lanes.end());
+                    *my_out = &(my_lane->second);
+                }
+
+                std::vector<intersection::state>::iterator       my_state    = current_intersection.states.begin();
+                std::vector<intersection::state>::const_iterator other_state =   other_intersection.states.begin();
+                for(;  my_state != current_intersection.states.end() &&
+                    other_state !=   other_intersection.states.end();
+                    ++my_state, ++other_state)
+                {
+                    std::vector<intersection::state::out_id>::iterator       my_out    =    my_state->in_states.begin();
+                    std::vector<intersection::state::out_id>::const_iterator other_out = other_state->in_states.begin();
+                    for(;  my_out !=    my_state->in_states.end() &&
+                        other_out != other_state->in_states.end();
+                        ++my_out, ++other_out)
+                    {
+                        if(my_out->fict_lane)
+                        {
+                            const strhash<lane>::type::iterator my_lane = lanes.find(other_out->fict_lane->id);
+                            assert(my_lane != lanes.end());
+                            my_out->fict_lane = &(my_lane->second);
+                        }
+                    }
+                    std::vector<intersection::state::in_id>::iterator       my_in    =    my_state->out_states.begin();
+                    std::vector<intersection::state::in_id>::const_iterator other_in = other_state->out_states.begin();
+                    for(;  my_in !=    my_state->out_states.end() &&
+                        other_in != other_state->out_states.end();
+                        ++my_in, ++other_in)
+                    {
+                        if(my_in->fict_lane)
+                        {
+                            const strhash<lane>::type::iterator my_lane = lanes.find(other_in->fict_lane->id);
+                            assert(my_lane != lanes.end());
+                            my_in->fict_lane = &(my_lane->second);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    network &network::operator=(const network &n)
+    {
+        this->network::~network();
+        copy(n);
+        return *this;
+    }
+
     bool network::check() const
     {
         if(gamma <= 0.0f || gamma >= 1.0f)

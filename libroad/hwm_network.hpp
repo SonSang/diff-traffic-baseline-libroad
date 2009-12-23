@@ -103,6 +103,13 @@ namespace hwm
 
     struct network
     {
+        network() {};
+        network(const network &n);
+
+        void copy(const network &n);
+
+        network &operator=(const network &n);
+
         bool check() const;
 
         void translate(const vec3f &o);
