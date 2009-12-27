@@ -34,10 +34,13 @@ public:
     double accel;
     double dist;
 
+    //Maybe remove: redundant data, but faster access(?)
+    double lane_length;
+
     //Traj
     str id;
 
-    car(double p, double v, double scale){
+    car(double p, double v, double _lane_length){
         //All units are functions of meters d/or seconds
         pos = p;
         vel = v;
@@ -47,7 +50,8 @@ public:
         delta = 4;
         length = 5;
         accel = 0;
-        dist = p * scale;
+        lane_length = _lane_length;
+        dist = p * _lane_length;
     }
 };
 
@@ -78,6 +82,7 @@ public:
                 if (i == 0)
                 {
                     //Behavior will be determined by the state of the intersection at the end of the lane
+                    cars_in_lane[l.first][i].accel = 0.73;
                 }
                 else
                 {
@@ -92,7 +97,7 @@ public:
             {
                 c.dist += c.vel * timestep;
                 c.vel += c.accel * timestep;
-                c.pos = c.pos; //TODO The _INTERVAL_ position must be recalculated.  Lane memebership should be updated based an this.
+                c.pos = c.dist / c.lane_length; //TODO this does not need to be calculated here, if it is inefficient
             }
         }
     }
@@ -103,7 +108,7 @@ public:
 Globals for OpenGL Loop
  */
 double timestep = 0.033;
-hwm::network hnet;
+hwm::network* hnet;
 micro sim;
 
 
@@ -124,7 +129,7 @@ void glWindow::draw(){
         glMatrixMode (GL_PROJECTION);
         glLoadIdentity ();
         gluPerspective(60.0, (GLdouble) w()/(GLdouble) h(), 1.0, -1.0);
-        gluLookAt(0,0,600,0,0,0,0,1,0);
+        gluLookAt(0,0,800,0,0,0,0,1,0);
         glMatrixMode (GL_MODELVIEW);
         glLoadIdentity();
         glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -133,10 +138,11 @@ void glWindow::draw(){
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    sim.update(timestep, hnet.lanes);
+    cout << "Timestep " << endl;
+    sim.update(timestep, hnet->lanes);
 
     typedef pair<str, hwm::road> road_hash;
-    BOOST_FOREACH(road_hash r, hnet.roads)
+    BOOST_FOREACH(road_hash r, hnet->roads)
     {
         glLoadIdentity();
         glColor3f(0,0,0);
@@ -147,6 +153,32 @@ void glWindow::draw(){
         }
         glEnd();
     }
+
+    glColor3f(1,0,0);
+    typedef pair<str, const hwm::lane&> lane_hash;
+    BOOST_FOREACH(lane_hash l, hnet->lanes)
+    {
+        glLoadIdentity();
+
+        BOOST_FOREACH(const car& c, sim.cars_in_lane[l.first]){
+            glLoadIdentity();
+
+            vec3f car_pos = l.second.point(c.pos);
+            glTranslatef(car_pos[0], car_pos[1], car_pos[2]);
+
+            cout << "Car at " << car_pos[0]
+                 << " " << car_pos[1]
+                 << " " << car_pos[2] << endl;
+            cout << "Its p is " << c.pos << endl;
+
+            glBegin(GL_POLYGON);
+            glVertex3f(0,1,0);
+            glVertex3f(0,-1,0);
+            glVertex3f(5,1,0);
+            glVertex3f(5,-1,0);
+            glEnd();
+        }
+    }
 }
 
 
@@ -156,45 +188,29 @@ void timerCallback(void*)
     Fl::repeat_timeout(timestep, timerCallback);
 }
 
-//TODO TEMP need an actual computation of physical length from interval position
-double intr_to_len = 300;
 
-//
+void lane_test(const hwm::network&);
+
 int cars_per_lane = 6;
 int main(int argc, char** argv)
 {
-    hnet = hwm::load_xml_network(argv[1]);
-    write_xml_network(hnet, "test.xml");
-    //Can't export the xml network..
-
-
-    //***********************
-    // List of errors encountered and changes required. (Priority)
-    // 1, Error: there is a lane with a blank id and no road membership. (Low)
-    // 2, Error: the road representation data is not correct in the road memberships.
-
+    hnet = new hwm::network(hwm::load_xml_network(argv[1]));
     typedef pair<str, const hwm::lane&> lane_hash;
-    BOOST_FOREACH(lane_hash _lane, hnet.lanes)
+
+    BOOST_FOREACH(lane_hash _lane, hnet->lanes)
     {
-        //TODO Why are there lanes being read with no read memberships and no id?
-        //Error 1
-        if (_lane.second.road_memberships.size() > 0)
-        {
+        lane_lengths[_lane.first] = _lane.second.length();
+    }
+
+    BOOST_FOREACH(lane_hash _lane, hnet->lanes)
+    {
             double p = 0.01;
             for (int i = 0; i < cars_per_lane; i++)
             {
                 //TODO Just creating some cars here...
-                sim.cars_in_lane[_lane.second.id].push_back(car(p, 33, intr_to_len));
-                p += 0.04;
+                sim.cars_in_lane[_lane.second.id].push_back(car(p, 33, lane_lengths[_lane.first]));
+                p += 0.1;
             }
-        }
-    }
-
-    //Temproray: approximately calculate total length of lanes
-    //Error 2: Why isn't the representation data correct?  Causes SEGFAULTS.
-    BOOST_FOREACH(lane_hash _lane, hnet.lanes)
-    {
-        lane_lengths[_lane.first] = _lane.second.length();
     }
 
     Fl_Double_Window *window = new Fl_Double_Window(500,500);
@@ -209,4 +225,15 @@ int main(int argc, char** argv)
     return Fl::run();
 
     return 0;
+}
+
+
+void lane_test(const hwm::network& net)
+{
+    typedef pair<str, hwm::lane> lane_hash;
+    BOOST_FOREACH(const lane_hash& p, net.lanes)
+    {
+        if (p.second.road_memberships.size() > 0)
+            cout << p.second.point(0.5);
+    }
 }

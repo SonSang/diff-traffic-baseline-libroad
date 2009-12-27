@@ -13,7 +13,8 @@ vec3f polyline_road::point(const float t) const
 {
     float        local_t;
     const size_t idx = locate_scale(t, local_t);
-    return vec3f(points_[idx] + local_t*normals_[idx]);
+
+    return vec3f(points_[idx] + local_t*clengths_[idx+1]*normals_[idx]);
 }
 
 mat3x3f polyline_road::frame(const float t) const
