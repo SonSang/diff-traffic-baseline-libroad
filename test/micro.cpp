@@ -97,6 +97,8 @@ public:
             {
                 c.dist += c.vel * timestep;
                 c.vel += c.accel * timestep;
+                // cout << c.dist << " is the distance "
+                //      << c.lane_length << " is the lane lenth"<< endl;
                 c.pos = c.dist / c.lane_length; //TODO this does not need to be calculated here, if it is inefficient
             }
         }
@@ -129,7 +131,7 @@ void glWindow::draw(){
         glMatrixMode (GL_PROJECTION);
         glLoadIdentity ();
         gluPerspective(60.0, (GLdouble) w()/(GLdouble) h(), 1.0, -1.0);
-        gluLookAt(0,0,800,0,0,0,0,1,0);
+        gluLookAt(0,0,200,0,0,0,0,1,0);
         glMatrixMode (GL_MODELVIEW);
         glLoadIdentity();
         glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -138,7 +140,6 @@ void glWindow::draw(){
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    cout << "Timestep " << endl;
     sim.update(timestep, hnet->lanes);
 
     typedef pair<str, hwm::road> road_hash;
@@ -166,16 +167,16 @@ void glWindow::draw(){
             vec3f car_pos = l.second.point(c.pos);
             glTranslatef(car_pos[0], car_pos[1], car_pos[2]);
 
-            cout << "Car at " << car_pos[0]
-                 << " " << car_pos[1]
-                 << " " << car_pos[2] << endl;
-            cout << "Its p is " << c.pos << endl;
+            // cout << "Car at " << car_pos[0]
+            //      << " " << car_pos[1]
+            //      << " " << car_pos[2] << endl;
+            // cout << "Its p is " << c.pos << endl;
 
             glBegin(GL_POLYGON);
             glVertex3f(0,1,0);
             glVertex3f(0,-1,0);
-            glVertex3f(5,1,0);
             glVertex3f(5,-1,0);
+            glVertex3f(5,1,0);
             glEnd();
         }
     }
@@ -191,7 +192,7 @@ void timerCallback(void*)
 
 void lane_test(const hwm::network&);
 
-int cars_per_lane = 6;
+int cars_per_lane = 1;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
@@ -212,6 +213,8 @@ int main(int argc, char** argv)
                 p += 0.1;
             }
     }
+
+    lane_test(*hnet);
 
     Fl_Double_Window *window = new Fl_Double_Window(500,500);
     Fl::add_timeout(timestep, timerCallback);
@@ -234,6 +237,6 @@ void lane_test(const hwm::network& net)
     BOOST_FOREACH(const lane_hash& p, net.lanes)
     {
         if (p.second.road_memberships.size() > 0)
-            cout << p.second.point(0.5);
+            cout << p.second.point(0.5) << " is 0.5, -.5 is " << p.second.point(-0.5) << endl;
     }
 }
