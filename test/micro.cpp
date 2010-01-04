@@ -15,6 +15,8 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Float_Input.H>
+#include <unistd.h>
+
 
 using namespace std;
 
@@ -101,6 +103,49 @@ public:
             }
         }
     }
+
+
+    void settle(double timestep, const strhash<hwm::lane>::type& lanes){
+        double EPSILON = 0.1;
+        double max_accel = EPSILON;
+        typedef pair<str, hwm::lane> lane_hash;
+        do {
+            max_accel = EPSILON;
+            BOOST_FOREACH(const lane_hash& l, lanes)
+            {
+
+                for (int i = 0; i < cars_in_lane[l.first].size(); i++)
+                {
+                    if (i == cars_in_lane[l.first].size() - 1)
+                    {
+                        //Behavior will be determined by the state of the intersection at the end of the lane
+                        //ASSUMES car is moving positively
+                        car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
+
+                        cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
+                        cout << l.first << " " << i << " accel:" << cars_in_lane[l.first][i].accel << " dist:" << cars_in_lane[l.first][i].pos*cars_in_lane[l.first][i].lane_length << " vel:" << cars_in_lane[l.first][i].vel <<  endl;
+
+                        cars_in_lane[l.first][i].vel += cars_in_lane[l.first][i].accel * timestep;
+                        cars_in_lane[l.first][i].vel = max(cars_in_lane[l.first][i].vel, 0.0);
+                        if (abs(cars_in_lane[l.first][i].accel) > max_accel)
+                            max_accel = abs(cars_in_lane[l.first][i].accel);
+
+                    }
+                    else
+                    {
+
+                        cars_in_lane[l.first][i].accel = accel_calc(cars_in_lane[l.first][i + 1], cars_in_lane[l.first][i]);
+                        cout << l.first << " " << i << " accel:" << cars_in_lane[l.first][i].accel << " dist:" << cars_in_lane[l.first][i].pos*cars_in_lane[l.first][i].lane_length << " vel:" << cars_in_lane[l.first][i].vel <<  endl;
+
+                        cars_in_lane[l.first][i].vel += cars_in_lane[l.first][i].accel * timestep;
+                        cars_in_lane[l.first][i].vel = max(cars_in_lane[l.first][i].vel, 0.0);
+                        if (abs(cars_in_lane[l.first][i].accel) > max_accel)
+                            max_accel = abs(cars_in_lane[l.first][i].accel);
+                    }
+                }
+            }
+        } while (cout << max_accel << " is max" << endl,  max_accel > EPSILON);
+    }
 };
 
 
@@ -129,7 +174,7 @@ void glWindow::draw(){
         glMatrixMode (GL_PROJECTION);
         glLoadIdentity ();
         gluPerspective(60.0, (GLdouble) w()/(GLdouble) h(), 1.0, -1.0);
-        gluLookAt(0,0,300,0,0,0,0,1,0);
+        gluLookAt(0,0,200,0,0,0,0,1,0);
         glMatrixMode (GL_MODELVIEW);
         glLoadIdentity();
         glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -190,7 +235,7 @@ void timerCallback(void*)
 
 void lane_test(const hwm::network&);
 
-int cars_per_lane = 1;
+int cars_per_lane =3;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
@@ -203,16 +248,17 @@ int main(int argc, char** argv)
 
     BOOST_FOREACH(lane_hash _lane, hnet->lanes)
     {
-            double p = 0.01;
+            double p = 0.1;
             for (int i = 0; i < cars_per_lane; i++)
             {
                 //TODO Just creating some cars here...
-                sim.cars_in_lane[_lane.second.id].push_back(car(p, 15, lane_lengths[_lane.first]));
-                p += 0.1;
+                sim.cars_in_lane[_lane.second.id].push_back(car(p, 33, lane_lengths[_lane.first]));
+                //Cars need a minimal distance spacing
+                p += 0.4;
             }
     }
 
-    lane_test(*hnet);
+    sim.settle(timestep, hnet->lanes);
 
     Fl_Double_Window *window = new Fl_Double_Window(500,500);
     Fl::add_timeout(timestep, timerCallback);
