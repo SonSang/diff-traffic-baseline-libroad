@@ -33,6 +33,8 @@ public:
     double accel;
     double dist;
 
+    double _last_accel;
+
     //Maybe remove: redundant data, but faster access(?)
     double lane_length;
 
@@ -108,6 +110,7 @@ public:
     void settle(double timestep, const strhash<hwm::lane>::type& lanes){
         double EPSILON = 0.1;
         double max_accel = EPSILON;
+        double last_max_accel = 9999999;
         typedef pair<str, hwm::lane> lane_hash;
         do {
             max_accel = EPSILON;
@@ -123,28 +126,42 @@ public:
                         car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
 
                         cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
-                        cout << l.first << " " << i << " accel:" << cars_in_lane[l.first][i].accel << " dist:" << cars_in_lane[l.first][i].pos*cars_in_lane[l.first][i].lane_length << " vel:" << cars_in_lane[l.first][i].vel <<  endl;
+//                         cout << l.first << " " << i << " accel:" << cars_in_lane[l.first][i].accel << " dist:" << cars_in_lane[l.first][i].pos*cars_in_lane[l.first][i].lane_length << " vel:" << cars_in_lane[l.first][i].vel <<  " total:"
+//                              << cars_in_lane[l.first][i].lane_length << endl;
+
 
                         cars_in_lane[l.first][i].vel += cars_in_lane[l.first][i].accel * timestep;
                         cars_in_lane[l.first][i].vel = max(cars_in_lane[l.first][i].vel, 0.0);
                         if (abs(cars_in_lane[l.first][i].accel) > max_accel)
                             max_accel = abs(cars_in_lane[l.first][i].accel);
+
+
 
                     }
                     else
                     {
 
                         cars_in_lane[l.first][i].accel = accel_calc(cars_in_lane[l.first][i + 1], cars_in_lane[l.first][i]);
-                        cout << l.first << " " << i << " accel:" << cars_in_lane[l.first][i].accel << " dist:" << cars_in_lane[l.first][i].pos*cars_in_lane[l.first][i].lane_length << " vel:" << cars_in_lane[l.first][i].vel <<  endl;
+//                         cout << l.first << " " << i << " accel:" << cars_in_lane[l.first][i].accel << " dist:" << cars_in_lane[l.first][i].pos*cars_in_lane[l.first][i].lane_length << " vel:" << cars_in_lane[l.first][i].vel <<  " total:"
+//                              << cars_in_lane[l.first][i].lane_length << endl;
 
                         cars_in_lane[l.first][i].vel += cars_in_lane[l.first][i].accel * timestep;
                         cars_in_lane[l.first][i].vel = max(cars_in_lane[l.first][i].vel, 0.0);
                         if (abs(cars_in_lane[l.first][i].accel) > max_accel)
                             max_accel = abs(cars_in_lane[l.first][i].accel);
+
+
                     }
                 }
             }
-        } while (cout << max_accel << " is max" << endl,  max_accel > EPSILON);
+
+            if (max_accel >= last_max_accel)
+            {
+                cout << "The cars did not settle." << endl;
+                exit(0);
+            }
+            last_max_accel = max_accel;
+        } while (max_accel > EPSILON);
     }
 };
 
@@ -235,7 +252,7 @@ void timerCallback(void*)
 
 void lane_test(const hwm::network&);
 
-int cars_per_lane =3;
+int cars_per_lane = 2;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
