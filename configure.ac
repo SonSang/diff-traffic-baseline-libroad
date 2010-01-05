@@ -42,7 +42,7 @@ AS_IF([test x"$have_tvmet_conf" != xno],
        [AC_MSG_ERROR([Could not find tvmet-config. Please install tvmet!])])
 
 # Checks for libraries.
-AX_BOOST_BASE([1.40])
+AX_BOOST_BASE([1.39])
 
 # Checks for header files.
 

@@ -1,0 +1,33 @@
+#ifndef _ARC_ROAD_HPP_
+#define _ARC_ROAD_HPP_
+
+#include "libroad_common.hpp"
+#include "polyline_road.hpp"
+
+struct arc_road
+{
+    arc_road(const polyline_road &p);
+
+    float   length     ()        const;
+    vec3f   point      (float t) const;
+    mat3x3f frame      (float t) const;
+    mat4x4f point_frame(float t) const;
+    void    translate  (const vec3f &o);
+
+    std::vector<vec3f> extract_line(const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
+
+    bool   initialize();
+    size_t locate(float t) const;
+    size_t locate_scale(float t, float &local) const;
+    bool   check() const;
+
+    vec3f                p_start_;
+    vec3f                tan_start_;
+    vec3f                p_end_;
+    vec3f                tan_end_;
+    std::vector<mat4x4f> frames_;
+    std::vector<float>   radii_;
+    std::vector<float>   arcs_;
+};
+
+#endif

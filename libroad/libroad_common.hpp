@@ -49,6 +49,7 @@ typedef tvmet::Vector<double, 2>   vec2d;
 typedef tvmet::Vector<float, 2>    vec2f;
 typedef vec2f                      intervalf;
 typedef tvmet::Vector<float, 3>    vec3f;
+typedef tvmet::Vector<float, 4>    vec4f;
 typedef tvmet::Matrix<float, 3, 3> mat3x3f;
 typedef tvmet::Matrix<float, 4, 4> mat4x4f;
 #endif

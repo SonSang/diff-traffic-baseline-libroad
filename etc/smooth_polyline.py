@@ -286,17 +286,23 @@ if __name__ == '__main__':
     import matplotlib
 
     cvxopt.solvers.options['show_progress'] = False
-    p = polyline([[-4.0, 0.0, 0.0], [-4.0, 4.0, 0.5], [4.0, 4.0, 1.5], [4.0, -4.0, 2.5], [-4.0, -4.0, 3.5], [-4.0, 0.0, 4.0]])
+##    p = polyline([[-4.0, 0.0, 0.0], [-4.0, 4.0, 0.5], [4.0, 4.0, 1.5], [4.0, -4.0, 2.5], [-4.0, -4.0, 3.5], [-4.0, 0.0, 4.0]])
+    p = polyline([[0.0, 4.0, 0.0], [4.0, 3.0, 0.0], [4.0, 0.0, 0.0], [6.0, 0.0, 0.0], [3.0, -2.0, 0.0], [2.0, -1.0, 0.0], [2.0, -4.0, 0.0], [0.5, -2.0, 0.0], [0.5, -5.0, 0.0], [1.0, -7.0, 0.0], [0.0, -9, 0.0], [5.0, -8, 0.0], [7.5, -5, 0.0], [10, -3, 0.0]])
 
     ps = smooth_polyline(p)
+    for i in xrange(ps.N):
+        print "point  ", i
+        print "radius ", ps.radii[i]
+        print "arc    ", ps.arc[i]
+        print ps.frames[i]
 
     pylab.clf()
 
     li = p.points
     pylab.plot(li[:,0], li[:, 1])
 
-    high = ps.extract_line(0.4, 0.5)
-    low = ps.extract_line(0.5, 0.5)
+    high = ps.extract_line(0.1, 0.1)
+    low = ps.extract_line(0.2, 0.1)
 
     ax = pylab.gca()
 
