@@ -1,6 +1,6 @@
 #include "arc_road.hpp"
 
-mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
+static mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
 {
     const float c = std::cos(theta);
     const float s = std::sin(theta);
@@ -11,13 +11,13 @@ mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
     return res;
 }
 
-float cot_theta(const vec3f &nb, const vec3f &nf)
+static float cot_theta(const vec3f &nb, const vec3f &nf)
 {
     float d = tvmet::dot(nb, nf);
     return std::sqrt( (1.0 + d) / (1.0 - d) );
 }
 
-void circle_frame(vec3f &pos, vec3f &tan, const float theta, const mat4x4f &matrix, const float radius)
+static void circle_frame(vec3f &pos, vec3f &tan, const float theta, const mat4x4f &matrix, const float radius)
 {
     const float c = std::cos(theta);
     const float s = std::sin(theta);
@@ -92,8 +92,17 @@ std::vector<vec3f> arc_road::extract_line(const float offset, const float resolu
     const size_t N = frames_.size();
     for(size_t i = 0; i < N; ++i)
     {
-        std::list<std::pair<float,vec3f> > new_points;
-        bool new_start;
+        std::vector<std::pair<float,vec3f> > new_points;
+        {
+            vec3f pos;
+            vec3f tan;
+
+            circle_frame(pos, tan, arcs_[i], frames_[i], radii_[i]);
+            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+            const vec3f pointend(pos + left*offset);
+
+            new_points.push_back(std::make_pair(arcs_[i], pointend));
+        }
         {
             vec3f pos;
             vec3f tan;
@@ -108,54 +117,36 @@ std::vector<vec3f> arc_road::extract_line(const float offset, const float resolu
             if(distance >= 1e-3)
             {
                 new_points.push_back(std::make_pair(0, point0));
-                new_start = true;
+                result.push_back(point0);
             }
             else
-            {
                 new_points.push_back(std::make_pair(0, result.back()));
-                new_start = false;
-            }
-        }
-        {
-            vec3f pos;
-            vec3f tan;
-
-            circle_frame(pos, tan, arcs_[i], frames_[i], radii_[i]);
-            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-            const vec3f pointend(pos + left*offset);
-
-            new_points.push_back(std::make_pair(arcs_[i], pointend));
         }
 
-        std::list<std::pair<float, vec3f> >::iterator check = new_points.begin();
-
-        while(boost::next(check) != new_points.end())
+        while(new_points.size() > 1)
         {
-            const vec3f diff(boost::next(check)->second - check->second);
+            const std::pair<float, vec3f> &front = new_points[new_points.size()-1];
+            const std::pair<float, vec3f> &next  = new_points[new_points.size()-2];
+
+            const vec3f diff(front.second - next.second);
             const float distance(std::sqrt(tvmet::dot(diff, diff)));
             if (distance > resolution)
             {
-                const float new_theta = (boost::next(check)->first + check->first)/2;
+                const float new_theta = (next.first + front.first)/2;
                 vec3f pos;
                 vec3f tan;
                 circle_frame(pos, tan, new_theta, frames_[i], radii_[i]);
 
                 const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-                new_points.insert(boost::next(check), std::make_pair(new_theta, pos + left*offset));
+                new_points.push_back(std::make_pair(new_theta, pos + left*offset));
+                std::swap(new_points[new_points.size()-1], new_points[new_points.size()-2]);
             }
             else
-                ++check;
+            {
+                new_points.pop_back();
+                result.push_back(new_points.back().second);
+            }
         }
-
-        if(!new_start)
-            new_points.pop_front();
-
-        while(!new_points.empty())
-        {
-            result.push_back(new_points.front().second);
-            new_points.pop_front();
-        }
-
     }
 
     const vec3f leftend(tvmet::normalize(tvmet::cross(up, tan_end_)));
