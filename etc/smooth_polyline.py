@@ -301,8 +301,8 @@ if __name__ == '__main__':
     li = p.points
     pylab.plot(li[:,0], li[:, 1])
 
-    high = ps.extract_line(0.1, 0.1)
-    low = ps.extract_line(0.2, 0.1)
+    high = ps.extract_line(0.1, 2)
+    low = ps.extract_line(0.2, 2)
 
     ax = pylab.gca()
 

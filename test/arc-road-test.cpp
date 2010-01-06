@@ -21,18 +21,18 @@ int main(int argc, char *argv[])
 
     arc_road ar(pr);
 
-    // for(size_t i = 0; i < ar.frames_.size(); ++i)
-    // {
-    //     std::cout << "point  " << i << std::endl
-    //               << "radius " << ar.radii_[i] << std::endl
-    //               << "arc    " << ar.arcs_[i] << std::endl
-    //               << ar.frames_[i] << std::endl << std::endl;
-    // }
+    std::vector<vec3f> vrts;
+    std::vector<vec3i> tris;
+    ar.make_mesh(vrts, tris, 0.2, 0.1, 2);
 
-    std::vector<vec3f> res(ar.extract_line(0.1f, 2.0f));
-    for(size_t i = 0; i < res.size(); ++i)
+    for(size_t i = 0; i < vrts.size(); ++i)
     {
-        std::cout << i << " " << res[i] << std::endl;
+        std::cout << i << " " << vrts[i] << std::endl;
+    }
+
+    for(size_t i = 0; i < tris.size(); ++i)
+    {
+        std::cout << i << " " << tris[i] << std::endl;
     }
 
     return 0;

@@ -15,6 +15,8 @@ struct arc_road
     void    translate  (const vec3f &o);
 
     std::vector<vec3f> extract_line(const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
+    void make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
+                   const float low_offset, const float high_offset, const float resolution) const;
 
     bool   initialize();
     size_t locate(float t) const;

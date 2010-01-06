@@ -31,6 +31,76 @@ static void circle_frame(vec3f &pos, vec3f &tan, const float theta, const mat4x4
     tan[2] = t[2];
 }
 
+static vec3f triangle_angles(const vec3f &pt0, const vec3f &pt1, const vec3f &pt2)
+{
+    const vec3f v01(tvmet::normalize(pt1 - pt0));
+    const vec3f v02(tvmet::normalize(pt2 - pt0));
+    const vec3f v12(tvmet::normalize(pt2 - pt1));
+
+    const float a0 = std::acos(tvmet::dot(v01, v02));
+    const float a1 = std::acos(tvmet::dot(-v01, v12));
+    const float a2 = 2*M_PI - (a0 + a1);
+
+    return vec3f(a0, a1, a2);
+}
+
+static void make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
+                      const std::vector<vec3f> &low, const std::vector<vec3f> &high)
+{
+    vrts.clear();
+    faces.clear();
+
+    std::vector<vec3f>::const_iterator low_itr  = low.begin();
+    std::vector<vec3f>::const_iterator high_itr = high.begin();
+
+    vrts.push_back(*low_itr++);
+    vrts.push_back(*high_itr++);
+
+    size_t base_low_idx  = vrts.size()-2;
+    size_t base_high_idx = vrts.size()-1;
+
+    const vec3f *low_cand_vrt  = (low_itr == low.end()   ? 0 : &(*low_itr++));
+    const vec3f *high_cand_vrt = (high_itr == high.end() ? 0 : &(*high_itr++));
+
+    bool pick_vrt;
+    while(1)
+    {
+        if(!low_cand_vrt)
+        {
+            if(!high_cand_vrt)
+                break;
+            else
+                pick_vrt = true;
+        }
+        else if(!high_cand_vrt)
+            pick_vrt = false;
+        else
+        {
+            const vec3f angles_low (triangle_angles(vrts[base_low_idx], vrts[base_high_idx], *low_cand_vrt));
+            const vec3f angles_high(triangle_angles(vrts[base_low_idx], vrts[base_high_idx], *high_cand_vrt));
+            if(*std::max_element(angles_low.begin(), angles_low.end()) > *std::max_element(angles_high.begin(), angles_high.end()))
+                pick_vrt = false;
+            else
+                pick_vrt = true;
+        }
+
+        faces.push_back(vec3i(base_low_idx, base_high_idx, vrts.size()));
+
+        if(pick_vrt)
+        {
+            vrts.push_back(*high_cand_vrt);
+            base_high_idx = vrts.size()-1;
+            high_cand_vrt = (high_itr == high.end() ? 0 : &(*high_itr++));
+        }
+        else
+        {
+            vrts.push_back(*low_cand_vrt);
+            base_low_idx = vrts.size()-1;
+            low_cand_vrt = (low_itr == low.end() ? 0 : &(*low_itr++));
+        }
+    }
+}
+
 arc_road::arc_road(const polyline_road &p)
 {
     const size_t N = p.points_.size()-2;
@@ -157,4 +227,10 @@ std::vector<vec3f> arc_road::extract_line(const float offset, const float resolu
         result.push_back(pointend);
 
     return result;
+}
+
+void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
+                         const float low_offset, const float high_offset, const float resolution) const
+{
+    ::make_mesh(vrts, faces, extract_line(low_offset, resolution), extract_line(high_offset, resolution));
 }
