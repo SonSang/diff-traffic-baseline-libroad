@@ -78,6 +78,19 @@ public:
         typedef pair<str, hwm::lane> lane_hash;
         BOOST_FOREACH(const lane_hash& l, lanes)
         {
+            cout << " inters " << l.second.end.inters << endl;
+            if (l.second.end.inters != NULL)
+            {
+                int i_id = l.second.end.intersect_in_ref;
+
+                if (l.second.end.inters->states[0].in_states[i_id].out_ref != -1)
+                {
+                    cout << "in ref is " << i_id << endl;
+                    cout << "next lane id " << l.second.end.inters->states[0].in_states[i_id].out_ref << endl;
+                    cout << "next lane name " << l.second.end.inters->outgoing[l.second.end.inters->states[0].in_states[i_id].out_ref]->id << endl;
+                }
+            }
+
             for (int i = 0; i < cars_in_lane[l.first].size(); i++)
             {
                 if (i == cars_in_lane[l.first].size() - 1)
@@ -215,6 +228,19 @@ void glWindow::draw(){
         glEnd();
     }
 
+
+    BOOST_FOREACH(road_hash r, hnet->i_roads)
+    {
+        glLoadIdentity();
+        glColor3f(0,0,0);
+        glBegin(GL_LINE_STRIP);
+        BOOST_FOREACH(vec3f point, r.second.rep.points_)
+        {
+            glVertex3f(point[0], point[1], point[2]);
+        }
+        glEnd();
+    }
+
     glColor3f(1,0,0);
     typedef pair<str, const hwm::lane&> lane_hash;
     BOOST_FOREACH(lane_hash l, hnet->lanes)
@@ -256,6 +282,8 @@ int cars_per_lane = 2;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
+    hnet->build_intersection_roads();
+
     typedef pair<str, const hwm::lane&> lane_hash;
 
     BOOST_FOREACH(lane_hash _lane, hnet->lanes)

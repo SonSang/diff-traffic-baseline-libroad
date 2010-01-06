@@ -264,6 +264,55 @@ namespace hwm
         return entry->second;
     }
 
+    void network::build_intersection_roads(){
+        typedef std::pair<const str, hwm::intersection> intersect_pair;
+        BOOST_FOREACH(intersect_pair& i_pair, intersections)
+        {
+            BOOST_FOREACH(intersection::state& s, i_pair.second.states)
+            {
+                for(uint i = 0; i < s.out_states.size(); ++i)
+                {
+                    if (s.out_states[i].in_ref != -1){
+
+                        //Create a road from in_state[i] to out_state[i]
+                        std::stringstream tmp1, tmp2;
+                        tmp1 << s.out_states[i].in_ref;
+                        tmp2 << i;
+                        str road_name = i_pair.first + str("lane") + str(tmp1.str()) + str("to") + str(tmp2.str());
+                        std::cout << "road " << road_name << std::endl;
+
+                        strhash<road>::type::iterator thisRoad(i_roads.find(road_name));
+                        if (thisRoad == i_roads.end())
+                        {
+                            thisRoad = i_roads.insert(thisRoad, std::make_pair(road_name, road()));
+                            thisRoad->second.name = "intersection";
+
+                            //Build the road geometry
+                            //TODO --currently just connecting ending point of the incoming lane with the starting point of the outgoing lane.
+                            thisRoad->second.rep.points_.push_back(i_pair.second.incoming[s.out_states[i].in_ref]->point(1));
+                            thisRoad->second.rep.points_.push_back(i_pair.second.outgoing[i]->point(0));
+                            thisRoad->second.rep.initialize();
+                        }
+
+                        //Build a lane for this state;
+                        assert(s.in_states[s.out_states[i].in_ref].fict_lane == NULL);
+                        s.in_states[s.out_states[i].in_ref].fict_lane = new lane();
+                        lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
+                        l->id = road_name;
+                        l->road_memberships[0.0];
+                        l->road_memberships[0.0]->second.parent_road = &(thisRoad->second);
+                        l->road_memberships[0.0]->second.lane_position = 0;
+                        l->road_memberships[0.0]->second.interval[0] = 0;
+                        l->road_memberships[0.0]->second.interval[1] = 1;
+
+
+
+                    }
+                }
+            }
+        }
+    }
+
     network from_sumo(const str &name, const float gamma, const sumo::network &snet)
     {
         network hnet;

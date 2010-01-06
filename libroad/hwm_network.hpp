@@ -82,6 +82,10 @@ namespace hwm
 
     struct intersection
     {
+        ~intersection()
+        {
+        }
+
         struct state
         {
             struct in_id
@@ -90,19 +94,24 @@ namespace hwm
 
                 int   in_ref;
                 lane *fict_lane;
+
             };
 
+
+            //Should an out_id have a lane?
             struct out_id
             {
                 bool check() const;
 
                 int   out_ref;
                 lane *fict_lane;
+
             };
 
             bool check() const;
 
             enum {STARVATION=-1, STOP=-1};
+
 
             float duration;
             std::vector<out_id> in_states;
@@ -136,12 +145,16 @@ namespace hwm
 
         void bounding_box(vec3f &low, vec3f &high) const;
 
+        void build_intersection_roads();
+
         vec3f                       scale;
         str                         name;
         float                       gamma;
         strhash<road>::type         roads;
         strhash<lane>::type         lanes;
         strhash<intersection>::type intersections;
+        strhash<road>::type         i_roads;
+        strhash<road>::type         i_lanes;
     };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
