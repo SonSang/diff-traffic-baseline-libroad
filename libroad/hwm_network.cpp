@@ -294,19 +294,21 @@ namespace hwm
                             thisRoad->second.rep.initialize();
                         }
 
+
                         //Build a lane for this state;
                         assert(s.in_states[s.out_states[i].in_ref].fict_lane == NULL);
-                        s.in_states[s.out_states[i].in_ref].fict_lane = new lane();
-                        lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
+                        s.in_states[s.out_states[i].in_ref].fict_lane = new isect_lane();
+                        isect_lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
                         l->id = road_name;
                         l->road_memberships[0.0];
                         l->road_memberships[0.0]->second.parent_road = &(thisRoad->second);
                         l->road_memberships[0.0]->second.lane_position = 0;
                         l->road_memberships[0.0]->second.interval[0] = 0;
                         l->road_memberships[0.0]->second.interval[1] = 1;
-
-
-
+                        l->input = i_pair.second.incoming[s.out_states[i].in_ref];
+                        l->output = i_pair.second.outgoing[i];
+                        //TODO shrink speed limit
+                        l->speedlimit = l->input->speedlimit;
                     }
                 }
             }

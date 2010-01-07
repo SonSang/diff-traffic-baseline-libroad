@@ -83,7 +83,7 @@ public:
             {
                 int i_id = l.second.end.intersect_in_ref;
 
-                if (l.second.end.inters->states[0].in_states[i_id].out_ref != -1)
+                if (l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].out_ref != -1)
                 {
                     cout << "in ref is " << i_id << endl;
                     cout << "next lane id " << l.second.end.inters->states[0].in_states[i_id].out_ref << endl;
@@ -91,15 +91,33 @@ public:
                 }
             }
 
+            //Calculate accel for all cars in lanes
             for (int i = 0; i < cars_in_lane[l.first].size(); i++)
             {
                 if (i == cars_in_lane[l.first].size() - 1)
                 {
-                    //Behavior will be determined by the state of the intersection at the end of the lane
+                    //TODO Behavior will be determined by the state of the intersection at the end of the lane
                     //ASSUMES car is moving positively
-                    car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
+                    if (l.second.end.inters != NULL)
+                    {
+                        int i_id = l.second.end.intersect_in_ref;
 
-                    cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
+                        //Test if this lane is allowed through the intersection.
+                        if (l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].out_ref != -1)
+                        {
+                            cout <<"fict lane " <<  l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].fict_lane->id << endl;
+
+                            car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
+
+                            cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
+                        }
+                    }
+                    if (l.second.end.inters == NULL or (l.second.end.inters->states[l.second.end.inters->current_state].in_states[l.second.end.intersect_in_ref].out_ref != -1))
+                    {
+                        car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
+
+                        cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
+                    }
                 }
                 else
                 {
@@ -108,6 +126,7 @@ public:
             }
         }
 
+        //Update all cars in lanes
         BOOST_FOREACH(const lane_hash& l, lanes)
         {
             BOOST_FOREACH(car& c, cars_in_lane[l.first])
@@ -284,13 +303,14 @@ int main(int argc, char** argv)
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
     hnet->build_intersection_roads();
 
+    //Build hash for lane lengths.
     typedef pair<str, const hwm::lane&> lane_hash;
-
     BOOST_FOREACH(lane_hash _lane, hnet->lanes)
     {
         lane_lengths[_lane.first] = _lane.second.length();
     }
 
+    //Create some sample cars
     BOOST_FOREACH(lane_hash _lane, hnet->lanes)
     {
             double p = 0.1;
@@ -303,6 +323,7 @@ int main(int argc, char** argv)
             }
     }
 
+    //Make sure car configuration is numerically stable
     sim.settle(timestep, hnet->lanes);
 
     Fl_Double_Window *window = new Fl_Double_Window(500,500);

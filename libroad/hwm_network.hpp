@@ -93,7 +93,7 @@ namespace hwm
                 bool check() const;
 
                 int   in_ref;
-                lane *fict_lane;
+                isect_lane *fict_lane;
 
             };
 
@@ -104,7 +104,7 @@ namespace hwm
                 bool check() const;
 
                 int   out_ref;
-                lane *fict_lane;
+                isect_lane *fict_lane;
 
             };
 
