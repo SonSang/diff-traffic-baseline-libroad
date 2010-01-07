@@ -1,5 +1,7 @@
 noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm arc-road-test
 
+EXTRA_DIST = arcball.hpp
+
 road_test_SOURCES  = road-test.cpp
 road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 road_test_LDFLAGS  = $(LDFLAGS)
@@ -25,7 +27,11 @@ sumo_xml_to_hwm_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS)
 sumo_xml_to_hwm_LDFLAGS  = $(LDFLAGS)
 sumo_xml_to_hwm_LDADD    = $(top_builddir)/libroad/libroad.la
 
+if DO_VISUAL
+noinst_PROGRAMS += arc-road-test
+
 arc_road_test_SOURCES = arc-road-test.cpp
-arc_road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-arc_road_test_LDFLAGS  = $(LDFLAGS)
+arc_road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+arc_road_test_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
 arc_road_test_LDADD    = $(top_builddir)/libroad/libroad.la
+endif

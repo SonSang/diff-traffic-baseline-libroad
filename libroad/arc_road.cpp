@@ -101,6 +101,20 @@ static void make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
     }
 }
 
+struct idx_sort
+{
+    idx_sort(const std::vector<float> &v) : vec(v)
+    {
+    }
+
+    bool operator()(size_t x, size_t y) const
+    {
+        return (vec[x+1] - vec[x]) < (vec[y+1] - vec[y]);
+    }
+
+    const std::vector<float> &vec;
+};
+
 arc_road::arc_road(const polyline_road &p)
 {
     const size_t N = p.points_.size()-2;
@@ -114,9 +128,27 @@ arc_road::arc_road(const polyline_road &p)
     radii_ .resize(N);
     arcs_  .resize(N);
 
+    clengths_.resize(2*(N+1)+2);
+
+    clengths_[0] = 0.0f;
+    clengths_[1] = 0.0f;
+
+    std::vector<float> alphas(N+2, 0);
+    std::vector<size_t> indexes(N+1);
+    for(size_t i = 0; i < N+1; ++i)
+        indexes[i] = i;
+
+    idx_sort isort(alphas);
+    std::sort(indexes.begin(), indexes.end(), isort);
+
+    for(size_t i = 0; i < N+1; ++i)
+        std::cout << i << ":" << indexes[i] << " ";
+    std::cout << std::endl;
+
+    float last_alpha = 0.0f;
     for(size_t i = 0; i < N; ++i)
     {
-        float alpha = std::min( (p.clengths_[i+1] - p.clengths_[i]), (p.clengths_[i+2] - p.clengths_[i+1]) )/2;
+        float alpha = alphas[i+1];
         radii_[i] = alpha * cot_theta(p.normals_[i], p.normals_[i+1]);
 
         const vec3f laxis(tvmet::normalize(tvmet::cross(p.normals_[i+1], p.normals_[i])));
@@ -149,7 +181,41 @@ arc_road::arc_road(const polyline_road &p)
         frames_[i](3, 3) = 1.0f;
 
         arcs_[i] = M_PI - std::acos(tvmet::dot(-p.normals_[i], p.normals_[i+1]));
+
+        clengths_[2*(i+1)]   = clengths_[2*i] + p.clengths_[i+1] - p.clengths_[i] - last_alpha - alpha + radii_[i]*arcs_[i];
+        clengths_[2*(i+1)+1] = clengths_[2*i+1] + arcs_[i]*copysign(1.0, laxis[2]);
+
+        // inter_clengths_.resize(N+2);
+
+        // vec3f last_pos = p_start_;
+        // for(size_t i = 0; i < N; ++i)
+        // {
+        //     vec3f current_pos;
+        //     vec3f tan;
+        //     circle_frame(current_pos, tan, 0, frames_[i], radii_[i]);
+        //     const vec3f diff(current_pos - last_pos);
+
+        //     inter_clengths_[i+1] = inter_clengths_[i] + std::sqrt(tvmet::dot(diff, diff));
+
+        //     circle_frame(last_pos, tan, arcs_[i], frames_[i], radii_[i]);
+        // }
+        // const vec3f diff(p_end_ - last_pos);
+        // inter_clengths_[N+1] = inter_clengths_[N] + std::sqrt(tvmet::dot(diff, diff));
+        last_alpha = alpha;
     }
+
+    clengths_[2*(N+1)]   = clengths_[2*N] + p.clengths_[N+1] - p.clengths_[N] - last_alpha;
+    clengths_[2*(N+1)+1] = clengths_[2*N+1];
+}
+
+float arc_road::length(const float offset) const
+{
+    const size_t N = frames_.size();
+    return clengths_[2*(N+1)] + offset*clengths_[2*(N+1)+1];
+}
+
+vec3f arc_road::point(const float t, float offset) const
+{
 }
 
 std::vector<vec3f> arc_road::extract_line(const float offset, const float resolution, const vec3f &up) const
@@ -233,4 +299,31 @@ void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
                          const float low_offset, const float high_offset, const float resolution) const
 {
     ::make_mesh(vrts, faces, extract_line(low_offset, resolution), extract_line(high_offset, resolution));
+}
+
+size_t arc_road::locate(bool &arcp, const float t, const float offset) const
+{
+    const float scaled_t = t*length(offset);
+
+    size_t low = 0;
+    size_t high = clengths_.size();
+    while (low < high)
+    {
+        const size_t mid = low + ((high - low) / 2);
+        float lookup;
+        if (mid & 1) // mid is odd
+            lookup = clengths_[mid-1] + offset*clengths_[mid];
+        else if(mid)
+            lookup = offset*clengths_[mid-1] + clengths_[mid];
+        else
+            lookup = 0.0f;
+
+        if (lookup < scaled_t)
+            low = mid + 1;
+        else
+            //can't be high = mid-1: here A[mid] >= value,
+            //so high can't be < mid if A[mid] == value
+            high = mid;
+    }
+    return low;
 }
