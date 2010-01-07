@@ -132,18 +132,14 @@ namespace hwm
                     other_state !=   other_intersection.states.end();
                     ++my_state, ++other_state)
                 {
+                    *my_state = *other_state;
                     std::vector<intersection::state::out_id>::iterator       my_out    =    my_state->in_states.begin();
                     std::vector<intersection::state::out_id>::const_iterator other_out = other_state->in_states.begin();
                     for(;  my_out !=    my_state->in_states.end() &&
                         other_out != other_state->in_states.end();
                         ++my_out, ++other_out)
                     {
-                        if(my_out->fict_lane)
-                        {
-                            const strhash<lane>::type::iterator my_lane = lanes.find(other_out->fict_lane->id);
-                            assert(my_lane != lanes.end());
-                            my_out->fict_lane = &(my_lane->second);
-                        }
+                        my_out->fict_lane = 0;
                     }
                     std::vector<intersection::state::in_id>::iterator       my_in    =    my_state->out_states.begin();
                     std::vector<intersection::state::in_id>::const_iterator other_in = other_state->out_states.begin();
@@ -151,12 +147,7 @@ namespace hwm
                         other_in != other_state->out_states.end();
                         ++my_in, ++other_in)
                     {
-                        if(my_in->fict_lane)
-                        {
-                            const strhash<lane>::type::iterator my_lane = lanes.find(other_in->fict_lane->id);
-                            assert(my_lane != lanes.end());
-                            my_in->fict_lane = &(my_lane->second);
-                        }
+                        my_in->fict_lane = 0;
                     }
                 }
             }

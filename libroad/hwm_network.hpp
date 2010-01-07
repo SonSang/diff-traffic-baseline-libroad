@@ -80,6 +80,12 @@ namespace hwm
         float                      speedlimit;
     };
 
+    struct isect_lane : public lane
+    {
+        lane* input;
+        lane* output;
+    };
+
     struct intersection
     {
         ~intersection()
@@ -111,7 +117,6 @@ namespace hwm
             bool check() const;
 
             enum {STARVATION=-1, STOP=-1};
-
 
             float duration;
             std::vector<out_id> in_states;

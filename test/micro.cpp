@@ -41,6 +41,20 @@ public:
     //Traj
     str id;
 
+    car(){
+        //All units are functions of meters d/or seconds
+        pos = 0;
+        vel = 0;
+        a_max = 0.73;
+        a_pref = 1.67;
+        v_pref = 33;
+        delta = 4;
+        length = 5;
+        accel = 0;
+        lane_length = 0;
+        dist = 0;
+    }
+
     car(double p, double v, double _lane_length){
         //All units are functions of meters d/or seconds
         pos = p;
@@ -66,6 +80,8 @@ public:
     //This might be better as a deque
     strhash<vector<car> >::type cars_in_lane;
 
+    typedef pair<str, hwm::lane> lane_hash;
+
     double accel_calc(car l, car f){
         double s1 = 2;
         double s2 = 0;
@@ -74,57 +90,119 @@ public:
         return f.a_max*(1 - pow((f.vel / f.v_pref),f.delta) - pow((s_opt/(l.dist - f.dist - f.length)),2));
     }
 
-    void update(double timestep, const strhash<hwm::lane>::type& lanes){
-        typedef pair<str, hwm::lane> lane_hash;
-        BOOST_FOREACH(const lane_hash& l, lanes)
+    void calc_accel_at_isect(const lane_hash& l, car *thisCar)
+    {
+        int i_id = l.second.end.intersect_in_ref;
+
+        //TODO Have the intersections update their current state
+        //Test if this lane is allowed through the intersection.
+        if (l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].out_ref != -1)
         {
-            cout << " inters " << l.second.end.inters << endl;
-            if (l.second.end.inters != NULL)
-            {
-                int i_id = l.second.end.intersect_in_ref;
-
-                if (l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].out_ref != -1)
+            //Find the next car ahead or the amount of free space (up to the min_for_free_mvmnt limit.
+            hwm::isect_lane* fict_lane = l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].fict_lane;
+            hwm::lane* next_lane = NULL;
+            double min_for_free_mvmnt = 500;
+            double free_dist = (1 - thisCar->pos) * thisCar->lane_length; //Distance left in lane
+            bool active = false;
+            do{
+                if (cars_in_lane[fict_lane->id].size() == 0)
                 {
-                    cout << "in ref is " << i_id << endl;
-                    cout << "next lane id " << l.second.end.inters->states[0].in_states[i_id].out_ref << endl;
-                    cout << "next lane name " << l.second.end.inters->outgoing[l.second.end.inters->states[0].in_states[i_id].out_ref]->id << endl;
-                }
-            }
-
-            //Calculate accel for all cars in lanes
-            for (int i = 0; i < cars_in_lane[l.first].size(); i++)
-            {
-                if (i == cars_in_lane[l.first].size() - 1)
-                {
-                    //TODO Behavior will be determined by the state of the intersection at the end of the lane
-                    //ASSUMES car is moving positively
-                    if (l.second.end.inters != NULL)
+                    free_dist += fict_lane->length();
+                    if (free_dist > min_for_free_mvmnt)
                     {
-                        int i_id = l.second.end.intersect_in_ref;
+                        car ghost_car;
+                        ghost_car.vel = 0;
+                        ghost_car.dist = thisCar->dist + free_dist;
 
-                        //Test if this lane is allowed through the intersection.
-                        if (l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].out_ref != -1)
-                        {
-                            cout <<"fict lane " <<  l.second.end.inters->states[l.second.end.inters->current_state].in_states[i_id].fict_lane->id << endl;
-
-                            car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
-
-                            cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
-                        }
-                    }
-                    if (l.second.end.inters == NULL or (l.second.end.inters->states[l.second.end.inters->current_state].in_states[l.second.end.intersect_in_ref].out_ref != -1))
-                    {
-                        car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
-
-                        cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
+                        thisCar->accel = accel_calc(ghost_car, *thisCar);
+                        active = false;
                     }
                 }
                 else
                 {
-                    cars_in_lane[l.first][i].accel = accel_calc(cars_in_lane[l.first][i + 1], cars_in_lane[l.first][i]);
+                    //TODO There is a car in the lane
+                    thisCar->accel = accel_calc(cars_in_lane[fict_lane->id].back(), *thisCar);
+                    active = false;
+                }
+                if (active) //Check the next lane
+                {
+                    next_lane = fict_lane->output;
+                    if (cars_in_lane[next_lane->id].size() == 0)
+                    {
+                        free_dist += next_lane->length();
+                        if (free_dist > min_for_free_mvmnt)
+                        {
+                            car ghost_car;
+                            ghost_car.vel = 0;
+                            ghost_car.dist = thisCar->dist + free_dist;
+
+                            thisCar->accel = accel_calc(ghost_car, *thisCar);
+
+                            active = false;
+                        }
+                    }
+                    else
+                    {
+                        thisCar->accel = accel_calc(cars_in_lane[next_lane->id].back(), *thisCar);
+                        active = false;
+                    }
+                }
+                if (active) //Set up the next intersection lane if it is available, otherwise create a ghost.
+                {
+                    //A lane is available in the intersection.
+                    if (next_lane->end.inters->states[next_lane->end.inters->current_state].in_states[next_lane->end.intersect_in_ref].out_ref != -1)
+                    {
+                        fict_lane = next_lane->end.inters->states[next_lane->end.inters->current_state].in_states[next_lane->end.intersect_in_ref].fict_lane;
+                    }
+                    else
+                    {
+                        car ghost_car;
+                        ghost_car.vel = 0;
+                        ghost_car.dist = thisCar->dist + free_dist;
+
+                        thisCar->accel = accel_calc(ghost_car, *thisCar);
+
+                        active = false;
+                    }
+                }
+            }while(active);
+        }
+    }
+
+    void calc_all_accel(double timestep, const strhash<hwm::lane>::type& lanes)
+    {
+        BOOST_FOREACH(const lane_hash& l, lanes)
+        //Calculate accel for all cars in lanes
+        for (int i = 0; i < cars_in_lane[l.first].size(); i++)
+        {
+            car* thisCar = &cars_in_lane[l.first][i];
+            if (i == cars_in_lane[l.first].size() - 1)
+            {
+                //TODO Behavior will be determined by the state of the intersection at the end of the lane
+                if (l.second.end.inters != NULL)
+                {
+                    calc_accel_at_isect(l, thisCar);
+                }
+                if (l.second.end.inters == NULL or (l.second.end.inters->states[l.second.end.inters->current_state].in_states[l.second.end.intersect_in_ref].out_ref != -1))
+                {
+                    car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
+
+                    cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
                 }
             }
+            else
+            {
+                cars_in_lane[l.first][i].accel = accel_calc(cars_in_lane[l.first][i + 1], cars_in_lane[l.first][i]);
+            }
         }
+    }
+
+
+
+    void update(double timestep, const strhash<hwm::lane>::type& lanes){
+        typedef pair<str, hwm::lane> lane_hash;
+
+        this->calc_all_accel(timestep, lanes);
 
         //Update all cars in lanes
         BOOST_FOREACH(const lane_hash& l, lanes)
@@ -137,6 +215,8 @@ public:
             }
         }
     }
+
+
 
 
     void settle(double timestep, const strhash<hwm::lane>::type& lanes){
