@@ -1,4 +1,5 @@
 #include "arc_road.hpp"
+#include <boost/bimap.hpp>
 
 static mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
 {
@@ -115,6 +116,20 @@ struct idx_sort
     const std::vector<float> &vec;
 };
 
+struct slack_idx_cmp
+{
+    slack_idx_cmp(const std::vector<float> &v) : vec(v)
+    {
+    }
+
+    bool operator()(size_t x, size_t y) const
+    {
+        return vec[x] < vec[y];
+    }
+
+    const std::vector<float> &vec;
+};
+
 arc_road::arc_road(const polyline_road &p)
 {
     const size_t N = p.points_.size()-2;
@@ -146,6 +161,60 @@ arc_road::arc_road(const polyline_road &p)
             alphas[idx] = poly_lengths[idx];
             set[idx]    = true;
         }
+    }
+
+    for(size_t i = 0; i < N+1; ++i)
+        poly_lengths[i] = (p.clengths_[i+1] - p.clengths_[i]);
+
+    for(size_t i = 0; i < N+1; ++i)
+        indexes[i] = i;
+
+    std::vector<float> slacks(N, 0);
+    slacks[0] = std::min(poly_lengths[0] - alphas[0],
+                         poly_lengths[1] - alphas[1] - alphas[0]);
+
+    for(size_t i = 1; i < N-1; ++i)
+    {
+        slacks[i] = std::min(poly_lengths[i]   - alphas[i-1] - alphas[i],
+                             poly_lengths[i+1] - alphas[i+1] - alphas[i]);
+    }
+
+    slacks[N-1] = std::min(poly_lengths[N-1] - alphas[N-2]  - alphas[N-1],
+                           poly_lengths[N]                  - alphas[N-1]);
+    idx_sort ssort(slacks);
+
+    std::vector<size_t>::iterator current = indexes.begin();
+
+    while(current != indexes.end())
+    {
+        std::sort(current, indexes.end(), ssort);
+
+        alphas[*current] += slacks[*current];
+
+        if(*current > 0)
+        {
+            const size_t prev_idx = *current - 1;
+
+            if(prev_idx > 0)
+                slacks[prev_idx] = std::min(poly_lengths[prev_idx]   - alphas[prev_idx-1] - alphas[prev_idx],
+                                            poly_lengths[prev_idx+1] - alphas[prev_idx+1] - alphas[prev_idx]);
+            else
+                slacks[prev_idx] = std::min(poly_lengths[prev_idx]   - alphas[prev_idx],
+                                            poly_lengths[prev_idx+1] - alphas[prev_idx+1] - alphas[prev_idx]);
+
+        }
+        if(*current < N-1)
+        {
+            const size_t next_idx = *current + 1;
+
+            if(next_idx < N - 1)
+                slacks[next_idx] = std::min(poly_lengths[next_idx]   - alphas[next_idx-1] - alphas[next_idx],
+                                            poly_lengths[next_idx+1] - alphas[next_idx+1] - alphas[next_idx]);
+            else
+                slacks[next_idx] = std::min(poly_lengths[next_idx]   - alphas[next_idx-1] - alphas[next_idx],
+                                            poly_lengths[next_idx+1] - alphas[next_idx]);
+        }
+        ++current;
     }
 
     p_start_   = p.points_.front();
@@ -202,22 +271,6 @@ arc_road::arc_road(const polyline_road &p)
         clengths_[2*(i+1)]   = clengths_[2*i] + p.clengths_[i+1] - p.clengths_[i] - last_alpha - alpha + radii_[i]*arcs_[i];
         clengths_[2*(i+1)+1] = clengths_[2*i+1] + arcs_[i]*copysign(1.0, laxis[2]);
 
-        // inter_clengths_.resize(N+2);
-
-        // vec3f last_pos = p_start_;
-        // for(size_t i = 0; i < N; ++i)
-        // {
-        //     vec3f current_pos;
-        //     vec3f tan;
-        //     circle_frame(current_pos, tan, 0, frames_[i], radii_[i]);
-        //     const vec3f diff(current_pos - last_pos);
-
-        //     inter_clengths_[i+1] = inter_clengths_[i] + std::sqrt(tvmet::dot(diff, diff));
-
-        //     circle_frame(last_pos, tan, arcs_[i], frames_[i], radii_[i]);
-        // }
-        // const vec3f diff(p_end_ - last_pos);
-        // inter_clengths_[N+1] = inter_clengths_[N] + std::sqrt(tvmet::dot(diff, diff));
         last_alpha = alpha;
     }
 
