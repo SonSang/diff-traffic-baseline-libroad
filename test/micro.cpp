@@ -41,6 +41,8 @@ public:
     //Traj
     str id;
 
+    str lane_id;
+
     car(){
         //All units are functions of meters d/or seconds
         pos = 0;
@@ -198,22 +200,41 @@ public:
     }
 
 
-
     void update(double timestep, const strhash<hwm::lane>::type& lanes){
         typedef pair<str, hwm::lane> lane_hash;
+        typedef pair<str, hwm::intersection> isect_hash;
 
-        this->calc_all_accel(timestep, lanes);
+        calc_all_accel(timestep, lanes);
 
+        map<str, vector<car> > new_cars_in_lane;
         //Update all cars in lanes
         BOOST_FOREACH(const lane_hash& l, lanes)
         {
+            vector<car> new_list_of_cars;
             BOOST_FOREACH(car& c, cars_in_lane[l.first])
             {
                 c.dist += c.vel * timestep;
                 c.vel += c.accel * timestep;
                 c.pos = c.dist / c.lane_length; //TODO this does not need to be calculated here, if it is inefficient
+
+                if (c.dist < c.lane_length)
+                {
+                    new_list_of_cars.push_back(c);
+                }
+                else
+                {
+                    //ASSUMES car will not clear next lane in a timestep
+                    //Remove car from lane
+                    //->This is handled implicitly
+
+                    hwm::lane* new_lane = l.second.end.inters->states[l.second.end.inters->current_state].in_states[l.second.end.intersect_in_ref].fict_lane;
+                    new_cars_in_lane[new_lane->id].push_back(c);
+                }
             }
+            cars_in_lane[l.first] = new_list_of_cars;
         }
+
+        //TODO Need to isect lanes
     }
 
 
@@ -397,7 +418,9 @@ int main(int argc, char** argv)
             for (int i = 0; i < cars_per_lane; i++)
             {
                 //TODO Just creating some cars here...
-                sim.cars_in_lane[_lane.second.id].push_back(car(p, 33, lane_lengths[_lane.first]));
+                car tmp(p, 33, lane_lengths[_lane.first]);
+                tmp.lane_id = _lane.first;
+                sim.cars_in_lane[_lane.second.id].push_back(tmp);
                 //Cars need a minimal distance spacing
                 p += 0.4;
             }

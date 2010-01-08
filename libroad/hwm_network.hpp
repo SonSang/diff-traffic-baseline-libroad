@@ -159,7 +159,7 @@ namespace hwm
         strhash<lane>::type         lanes;
         strhash<intersection>::type intersections;
         strhash<road>::type         i_roads;
-        strhash<road>::type         i_lanes;
+        strhash<isect_lane>::type   i_lanes;
     };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));

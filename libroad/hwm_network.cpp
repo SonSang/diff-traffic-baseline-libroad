@@ -276,7 +276,7 @@ namespace hwm
                         if (thisRoad == i_roads.end())
                         {
                             thisRoad = i_roads.insert(thisRoad, std::make_pair(road_name, road()));
-                            thisRoad->second.name = "intersection";
+                            thisRoad->second.name = "Intersection"; //Not id.
 
                             //Build the road geometry
                             //TODO --currently just connecting ending point of the incoming lane with the starting point of the outgoing lane.
@@ -288,7 +288,8 @@ namespace hwm
 
                         //Build a lane for this state;
                         assert(s.in_states[s.out_states[i].in_ref].fict_lane == NULL);
-                        s.in_states[s.out_states[i].in_ref].fict_lane = new isect_lane();
+                        i_lanes[road_name];
+                        s.in_states[s.out_states[i].in_ref].fict_lane = &i_lanes[road_name];
                         isect_lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
                         l->id = road_name;
                         l->road_memberships[0.0];
