@@ -156,16 +156,14 @@ static void pick_ray(vec3f &origin, vec3f &dir, const float x, const float y, co
 class fltkview : public Fl_Gl_Window
 {
 public:
-    fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l), zoom(2.0),
+    fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
+                                                          zoom(2.0),
+                                                          low_bnd(0.0f), high_bnd(0.0f), low_res(0.1f), high_res(0.1f),
                                                           glew_state(GLEW_OK+1),
                                                           vertex_shader(0), pixel_shader(0), program(0), texture(0), num_tex(0), pick_vert(-1)
-
     {
         lastmouse[0] = 0.0f;
         lastmouse[1] = 0.0f;
-
-        low_bnd  = 0.0f;
-        high_bnd = 0.0f;
 
         this->resizable(this);
     }
@@ -317,20 +315,19 @@ public:
         {
             glColor3f(1.0, 0.0, 0.0);
             glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_line(low_bnd, 0.1f))
+            BOOST_FOREACH(const vec3f &p, ar->extract_line(low_bnd, low_res))
             {
                 glVertex3fv(p.data());
             }
             glEnd();
             glColor3f(0.0, 1.0, 0.0);
             glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_line(high_bnd, 0.1f))
+            BOOST_FOREACH(const vec3f &p, ar->extract_line(high_bnd, high_res))
             {
                 glVertex3fv(p.data());
             }
             glEnd();
         }
-
 
         glFlush();
         glFinish();
@@ -370,13 +367,9 @@ public:
                         }
 
                         if(min_dist < 0.6)
-                        {
                             pick_vert = min_pt;
-                        }
                         else
-                        {
                             pick_vert = -1;
-                        }
                     }
                     else
                     {
@@ -486,6 +479,18 @@ public:
             case 'r':
                 high_bnd += 0.1;
                 break;
+            case 'a':
+                low_res *= 0.5;
+                break;
+            case 's':
+                low_res *= 2.0;
+                break;
+            case 'd':
+                high_res *= 0.5;
+                break;
+            case 'f':
+                high_res *= 2.0;
+                break;
             default:
                 break;
             }
@@ -506,6 +511,8 @@ public:
 
     float low_bnd;
     float high_bnd;
+    float low_res;
+    float high_res;
 
     polyline_road *pr;
     arc_road      *ar;
