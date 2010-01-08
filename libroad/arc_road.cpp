@@ -109,7 +109,7 @@ struct idx_sort
 
     bool operator()(size_t x, size_t y) const
     {
-        return (vec[x+1] - vec[x]) < (vec[y+1] - vec[y]);
+        return vec[x] < vec[y];
     }
 
     const std::vector<float> &vec;
@@ -118,6 +118,35 @@ struct idx_sort
 arc_road::arc_road(const polyline_road &p)
 {
     const size_t N = p.points_.size()-2;
+
+    std::vector<float> poly_lengths(N+1);
+    for(size_t i = 0; i < N+1; ++i)
+        poly_lengths[i] = (p.clengths_[i+1] - p.clengths_[i])/2;
+    poly_lengths.front() *= 2;
+    poly_lengths.back()  *= 2;
+
+    std::vector<size_t> indexes(N+1);
+    for(size_t i = 0; i < N+1; ++i)
+        indexes[i] = i;
+    idx_sort isort(poly_lengths);
+    std::sort(indexes.begin(), indexes.end(), isort);
+
+    std::vector<float> alphas(N, 0);
+    std::vector<bool>  set(N, false);
+
+    BOOST_FOREACH(size_t idx, indexes)
+    {
+        if(idx != 0 && !set[idx-1])
+        {
+            alphas[idx-1] = poly_lengths[idx];
+            set[idx-1]    = true;
+        }
+        if(idx != N && !set[idx])
+        {
+            alphas[idx] = poly_lengths[idx];
+            set[idx]    = true;
+        }
+    }
 
     p_start_   = p.points_.front();
     tan_start_ = p.normals_.front();
@@ -133,22 +162,10 @@ arc_road::arc_road(const polyline_road &p)
     clengths_[0] = 0.0f;
     clengths_[1] = 0.0f;
 
-    std::vector<float> alphas(N+2, 0);
-    std::vector<size_t> indexes(N+1);
-    for(size_t i = 0; i < N+1; ++i)
-        indexes[i] = i;
-
-    idx_sort isort(alphas);
-    std::sort(indexes.begin(), indexes.end(), isort);
-
-    for(size_t i = 0; i < N+1; ++i)
-        std::cout << i << ":" << indexes[i] << " ";
-    std::cout << std::endl;
-
     float last_alpha = 0.0f;
     for(size_t i = 0; i < N; ++i)
     {
-        float alpha = alphas[i+1];
+        float alpha = alphas[i];
         radii_[i] = alpha * cot_theta(p.normals_[i], p.normals_[i+1]);
 
         const vec3f laxis(tvmet::normalize(tvmet::cross(p.normals_[i+1], p.normals_[i])));
