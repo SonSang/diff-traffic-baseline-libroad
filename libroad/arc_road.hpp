@@ -19,6 +19,14 @@ struct arc_road
                    const float low_offset, const float high_offset, const float resolution) const;
 
     bool   initialize();
+
+    // arc roads are made up of 'features', i.e. alternating straight segments and arcs
+    // so even features are segments (freqeuently degenerate) and odd features are arcs
+    // there are 2*N+1 features in a arc_road, where n is the number of interor points (i.e. frames_.size())
+    // this function returns the length of the road up to the start of the i-th feature
+    float  feature_base(size_t i, float offset) const;
+    // this function returns the length of the i-th feature itself
+    float  feature_size(size_t i, float offset) const;
     size_t locate(float t, float offset) const;
     size_t locate_scale(float t, float offset, float &local) const;
     bool   check() const;

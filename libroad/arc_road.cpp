@@ -403,6 +403,26 @@ void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
     ::make_mesh(vrts, faces, extract_line(low_offset, resolution), extract_line(high_offset, resolution));
 }
 
+float arc_road::feature_base(const size_t i, const float offset) const
+{
+    if(i & 1)
+        return clengths_[i-1] + offset*clengths_[i];
+    else if(i)
+        return offset*clengths_[i-1] + clengths_[i];
+    else
+        return clengths_[0] + offset*clengths_[1];
+}
+
+float arc_road::feature_size(const size_t i, const float offset) const
+{
+    if(i & 1)
+        return (clengths_[i+1] + offset*clengths_[i+2]) - (clengths_[i-1] + offset*clengths_[i]);
+    else if(i)
+        return (offset*clengths_[i+1] + clengths_[i+2]) - (offset*clengths_[i-1] + clengths_[i]);
+    else
+        return clengths_[i+1] + offset*clengths_[i+2];
+}
+
 size_t arc_road::locate(const float t, const float offset) const
 {
     const float scaled_t = t*length(offset);
