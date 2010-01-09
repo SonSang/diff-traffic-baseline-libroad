@@ -9,9 +9,9 @@ struct arc_road
     arc_road(const polyline_road &p);
 
     float   length     (float offset) const;
-    vec3f   point      (float t, float offset) const;
-    mat3x3f frame      (float t, float offset) const;
-    mat4x4f point_frame(float t, float offset) const;
+    vec3f   point      (float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
+    mat3x3f frame      (float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
+    mat4x4f point_frame(float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
     void    translate  (const vec3f &o);
 
     std::vector<vec3f> extract_line(const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
@@ -19,8 +19,8 @@ struct arc_road
                    const float low_offset, const float high_offset, const float resolution) const;
 
     bool   initialize();
-    size_t locate(bool &arcp, float t, float offset) const;
-    size_t locate_scale(float t, float &local) const;
+    size_t locate(float t, float offset) const;
+    size_t locate_scale(float t, float offset, float &local) const;
     bool   check() const;
 
     vec3f                p_start_;

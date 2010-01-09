@@ -284,8 +284,25 @@ float arc_road::length(const float offset) const
     return clengths_[2*(N+1)] + offset*clengths_[2*(N+1)+1];
 }
 
-vec3f arc_road::point(const float t, float offset) const
+vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
 {
+    vec3f pos;
+    vec3f tan;
+
+    float local;
+    const size_t idx = locate_scale(t, offset, local);
+    if(idx & 1)
+    {
+        circle_frame(pos, tan, local*arcs_[idx], frames_[idx], radii_[idx]);
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        return vec3f(pos + left*offset);
+    }
+    else
+    {
+        circle_frame(pos, tan, arcs_[idx-1], frames_[idx-1], radii_[idx-1]);
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        return vec3f(pos + left*offset + tan*local*(clengths_[idx] - offset*clengths_[idx-1]));
+    }
 }
 
 std::vector<vec3f> arc_road::extract_line(const float offset, const float resolution, const vec3f &up) const
@@ -371,7 +388,7 @@ void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
     ::make_mesh(vrts, faces, extract_line(low_offset, resolution), extract_line(high_offset, resolution));
 }
 
-size_t arc_road::locate(bool &arcp, const float t, const float offset) const
+size_t arc_road::locate(const float t, const float offset) const
 {
     const float scaled_t = t*length(offset);
 
@@ -391,9 +408,53 @@ size_t arc_road::locate(bool &arcp, const float t, const float offset) const
         if (lookup < scaled_t)
             low = mid + 1;
         else
-            //can't be high = mid-1: here A[mid] >= value,
-            //so high can't be < mid if A[mid] == value
             high = mid;
     }
+    return low;
+}
+
+size_t arc_road::locate_scale(const float t, const float offset, float &local) const
+{
+    const float scaled_t = t*length(offset);
+
+    size_t low  = 0;
+    size_t high = clengths_.size();
+    while (low < high)
+    {
+        const size_t mid = low + ((high - low) / 2);
+        float lookup;
+        if (mid & 1) // mid is odd
+            lookup = clengths_[mid-1] + offset*clengths_[mid];
+        else if(mid)
+            lookup = offset*clengths_[mid-1] + clengths_[mid];
+        else
+            lookup = 0.0f;
+
+        if (lookup < scaled_t)
+            low = mid + 1;
+        else
+            high = mid;
+    }
+
+    float lookup;
+    float base;
+    if(low & 1) // low is odd
+    {
+        lookup = clengths_[low-1] + offset*clengths_[low];
+        base   = clengths_[low+1];
+    }
+    else if(low)
+    {
+        lookup = offset*clengths_[low-1] + clengths_[low];
+        base   = offset*clengths_[low+1];
+    }
+    else
+    {
+        lookup = 0.0f;
+        base   = clengths_[1];
+    }
+
+    local = (scaled_t - lookup) / base;
+
     return low;
 }

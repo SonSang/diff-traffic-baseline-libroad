@@ -159,6 +159,7 @@ public:
     fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
                                                           zoom(2.0),
                                                           low_bnd(0.0f), high_bnd(0.0f), low_res(0.1f), high_res(0.1f),
+                                                          car_pos(0.0f),
                                                           glew_state(GLEW_OK+1),
                                                           vertex_shader(0), pixel_shader(0), program(0), texture(0), num_tex(0), pick_vert(-1)
     {
@@ -327,6 +328,19 @@ public:
                 glVertex3fv(p.data());
             }
             glEnd();
+
+            vec3f pos = ar->point(car_pos, low_bnd);
+            std::cout << car_pos << " " << pos << std::endl;
+            glColor3f(1.0, 1.0, 0.0);
+            glPushMatrix();
+            glTranslatef(pos[0], pos[1], pos[2]);
+            glBegin(GL_QUADS);
+            glVertex2f(-0.5, -0.5);
+            glVertex2f( 0.5, -0.5);
+            glVertex2f( 0.5,  0.5);
+            glVertex2f(-0.5,  0.5);
+            glEnd();
+            glPopMatrix();
         }
 
         glFlush();
@@ -491,6 +505,16 @@ public:
             case 'f':
                 high_res *= 2.0;
                 break;
+            case 't':
+                car_pos += 0.02f;
+                if(car_pos > 1.0f)
+                    car_pos = 1.0f;
+                break;
+            case 'g':
+                car_pos -= 0.02f;
+                if(car_pos < 0.0f)
+                    car_pos = 0.0f;
+                break;
             default:
                 break;
             }
@@ -513,6 +537,8 @@ public:
     float high_bnd;
     float low_res;
     float high_res;
+
+    float car_pos;
 
     polyline_road *pr;
     arc_road      *ar;
