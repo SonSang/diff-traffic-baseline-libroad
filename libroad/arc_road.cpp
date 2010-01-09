@@ -166,7 +166,8 @@ arc_road::arc_road(const polyline_road &p)
     for(size_t i = 0; i < N+1; ++i)
         poly_lengths[i] = (p.clengths_[i+1] - p.clengths_[i]);
 
-    for(size_t i = 0; i < N+1; ++i)
+    indexes.resize(N);
+    for(size_t i = 0; i < N; ++i)
         indexes[i] = i;
 
     std::vector<float> slacks(N, 0);
