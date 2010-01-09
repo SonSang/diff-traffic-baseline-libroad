@@ -515,6 +515,16 @@ public:
                 if(car_pos < 0.0f)
                     car_pos = 0.0f;
                 break;
+            case 'l':
+                if(ar)
+                {
+                    std::cout << "Lengths:\n"
+                              << "Original: " << ar->length(0) << '\n'
+                              << "Red:      " << ar->length(low_bnd) << '\n'
+                              << "Green:    " << ar->length(high_bnd) << std::endl;
+
+                }
+                break;
             default:
                 break;
             }
