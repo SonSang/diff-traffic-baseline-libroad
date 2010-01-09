@@ -297,15 +297,26 @@ vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
     const size_t idx = locate_scale(t, offset, local);
     if(idx & 1)
     {
-        circle_frame(pos, tan, local*arcs_[idx], frames_[idx], radii_[idx]);
+        const size_t real_idx = idx/2;
+        circle_frame(pos, tan, local*arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
         const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
         return vec3f(pos + left*offset);
     }
     else
     {
-        circle_frame(pos, tan, arcs_[idx-1], frames_[idx-1], radii_[idx-1]);
+        const size_t real_idx = idx/2;
+
+        if(real_idx == 0)
+        {
+            pos = p_start_;
+            tan = tan_start_;
+        }
+        else
+        {
+            circle_frame(pos, tan, arcs_[real_idx-1], frames_[real_idx-1], radii_[real_idx-1]);
+        }
         const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-        return vec3f(pos + left*offset + tan*local*(clengths_[idx] - offset*clengths_[idx-1]));
+        return vec3f(pos + left*offset + tan*local*(clengths_[real_idx] - offset*clengths_[idx-1]));
     }
 }
 
@@ -414,6 +425,11 @@ size_t arc_road::locate(const float t, const float offset) const
         else
             high = mid;
     }
+    if(low > 0)
+        --low;
+    while(low < clengths_.size() && clengths_[low] == clengths_[low+1])
+        ++low;
+
     return low;
 }
 
@@ -421,7 +437,7 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
 {
     const float scaled_t = t*length(offset);
 
-    size_t low  = 0;
+    size_t low = 0;
     size_t high = clengths_.size();
     while (low < high)
     {
@@ -439,6 +455,10 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
         else
             high = mid;
     }
+    if(low > 0)
+        --low;
+    while(low < clengths_.size() && clengths_[low] == clengths_[low+1])
+        ++low;
 
     float lookup;
     float base;
