@@ -230,12 +230,6 @@ arc_road::arc_road(const polyline_road &p)
     radii_ .resize(N);
     arcs_  .resize(N);
 
-    clengths_.resize(2*(N+1)+2);
-
-    clengths_[0] = 0.0f;
-    clengths_[1] = 0.0f;
-
-    float last_alpha = 0.0f;
     for(size_t i = 0; i < N; ++i)
     {
         float alpha = alphas[i];
@@ -271,21 +265,49 @@ arc_road::arc_road(const polyline_road &p)
         frames_[i](3, 3) = 1.0f;
 
         arcs_[i] = M_PI - std::acos(tvmet::dot(-p.normals_[i], p.normals_[i+1]));
-
-        clengths_[2*(i+1)]   = clengths_[2*i] + p.clengths_[i+1] - p.clengths_[i] - last_alpha - alpha + radii_[i]*arcs_[i];
-        clengths_[2*(i+1)+1] = clengths_[2*i+1] + arcs_[i]*copysign(1.0, laxis[2]);
-
-        last_alpha = alpha;
     }
 
-    clengths_[2*(N+1)]   = clengths_[2*N] + p.clengths_[N+1] - p.clengths_[N] - last_alpha;
-    clengths_[2*(N+1)+1] = clengths_[2*N+1];
+    for(size_t i = 0; i < N+1; ++i)
+    {
+        std::cout << i << ": " << poly_lengths[i] << std::endl;
+    }
+
+    arc_clengths_.resize(N+1);
+    arc_clengths_[0] = vec2f(0.0f, 0.0f);
+    for(size_t i = 0; i < N; ++i)
+    {
+        arc_clengths_[i+1] = arc_clengths_[i] + vec2f(radii_[i]*arcs_[i], arcs_[i]*copysign(1.0, frames_[i](2, 2)));
+    }
+
+    for(size_t i = 0; i < N+1; ++i)
+    {
+        std::cout << i << ": " << poly_lengths[i] << std::endl;
+    }
+
+    for(size_t i = 0; i < N; ++i)
+    {
+        poly_lengths[i]   -= alphas[i];
+        poly_lengths[i+1] -= alphas[i];
+    }
+
+    seg_clengths_.resize(N+2);
+    seg_clengths_[0] = 0.0f;
+    for(size_t i = 1; i < N+2; ++i)
+        seg_clengths_[i] = seg_clengths_[i-1] + poly_lengths[i-1];
+
+    for(size_t i = 0; i < N+2; ++i)
+    {
+        std::cout << i << ": " << seg_clengths_[i] << std::endl;
+    }
+    for(size_t i = 0; i < N+1; ++i)
+    {
+        std::cout << i << ": " << arc_clengths_[i] << std::endl;
+    }
 }
 
 float arc_road::length(const float offset) const
 {
-    const size_t N = frames_.size();
-    return clengths_[2*(N+1)] + offset*clengths_[2*(N+1)+1];
+    return feature_base(2*frames_.size()+1, offset);
 }
 
 vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
@@ -304,19 +326,18 @@ vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
     }
     else
     {
-        const size_t real_idx = idx/2;
+        const int real_idx = idx/2-1;
 
-        if(real_idx == 0)
+        if(real_idx < 0)
         {
             pos = p_start_;
             tan = tan_start_;
         }
         else
-        {
-            circle_frame(pos, tan, arcs_[real_idx-1], frames_[real_idx-1], radii_[real_idx-1]);
-        }
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
         const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-        return vec3f(pos + left*offset + tan*local*(clengths_[real_idx] - offset*clengths_[idx-1]));
+        return vec3f(pos + left*offset + tan*local*feature_size(idx, offset));
     }
 }
 
@@ -406,17 +427,27 @@ void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
 float arc_road::feature_base(const size_t i, const float offset) const
 {
     if(i & 1)
-        return offset*clengths_[i] + clengths_[i+1];
+    {
+        int seg_idx = i/2+1;
+        int arc_idx = i/2;
+
+        return seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
+    }
     else
-        return clengths_[i] + offset*clengths_[i+1];
+    {
+        if(i == 0)
+            return seg_clengths_[0];
+
+        int seg_idx = i/2;
+        int arc_idx = i/2;
+
+        return seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
+    }
 }
 
 float arc_road::feature_size(const size_t i, const float offset) const
 {
-    if(i & 1)
-        return (offset*clengths_[i+1] + clengths_[i+2]) - (offset*clengths_[i] + clengths_[i+1]);
-    else
-        return (clengths_[i+1] + offset*clengths_[i+2]) - (clengths_[i] + offset*clengths_[i+1]);
+    return feature_base(i+1, offset) - feature_base(i, offset);
 }
 
 size_t arc_road::locate(const float t, const float offset) const
@@ -437,7 +468,7 @@ size_t arc_road::locate(const float t, const float offset) const
     }
     if(low > 0)
         --low;
-    while(low < clengths_.size() && clengths_[low] == clengths_[low+1])
+    while(low < 2*frames_.size()+2 && feature_size(low, offset) == 0)
         ++low;
 
     return low;
@@ -461,7 +492,7 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     }
     if(low > 0)
         --low;
-    while(low < clengths_.size() && clengths_[low] == clengths_[low+1])
+    while(low < 2*frames_.size()+2 && feature_size(low, offset) == 0)
         ++low;
 
     float lookup = feature_base(low, offset);

@@ -38,7 +38,9 @@ struct arc_road
     std::vector<mat4x4f> frames_;
     std::vector<float>   radii_;
     std::vector<float>   arcs_;
-    std::vector<float>   clengths_;
+
+    std::vector<float>   seg_clengths_;
+    std::vector<vec2f>   arc_clengths_;
 };
 
 #endif
