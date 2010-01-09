@@ -406,21 +406,17 @@ void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
 float arc_road::feature_base(const size_t i, const float offset) const
 {
     if(i & 1)
-        return clengths_[i-1] + offset*clengths_[i];
-    else if(i)
-        return offset*clengths_[i-1] + clengths_[i];
+        return offset*clengths_[i] + clengths_[i+1];
     else
-        return clengths_[0] + offset*clengths_[1];
+        return clengths_[i] + offset*clengths_[i+1];
 }
 
 float arc_road::feature_size(const size_t i, const float offset) const
 {
     if(i & 1)
-        return (clengths_[i+1] + offset*clengths_[i+2]) - (clengths_[i-1] + offset*clengths_[i]);
-    else if(i)
-        return (offset*clengths_[i+1] + clengths_[i+2]) - (offset*clengths_[i-1] + clengths_[i]);
+        return (offset*clengths_[i+1] + clengths_[i+2]) - (offset*clengths_[i] + clengths_[i+1]);
     else
-        return clengths_[i+1] + offset*clengths_[i+2];
+        return (clengths_[i+1] + offset*clengths_[i+2]) - (clengths_[i] + offset*clengths_[i+1]);
 }
 
 size_t arc_road::locate(const float t, const float offset) const
@@ -428,17 +424,11 @@ size_t arc_road::locate(const float t, const float offset) const
     const float scaled_t = t*length(offset);
 
     size_t low = 0;
-    size_t high = clengths_.size();
+    size_t high = 2*frames_.size()+2;
     while (low < high)
     {
         const size_t mid = low + ((high - low) / 2);
-        float lookup;
-        if (mid & 1) // mid is odd
-            lookup = clengths_[mid-1] + offset*clengths_[mid];
-        else if(mid)
-            lookup = offset*clengths_[mid-1] + clengths_[mid];
-        else
-            lookup = 0.0f;
+        float lookup = feature_base(mid, offset);
 
         if (lookup < scaled_t)
             low = mid + 1;
@@ -458,17 +448,11 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     const float scaled_t = t*length(offset);
 
     size_t low = 0;
-    size_t high = clengths_.size();
+    size_t high = 2*frames_.size()+2;
     while (low < high)
     {
         const size_t mid = low + ((high - low) / 2);
-        float lookup;
-        if (mid & 1) // mid is odd
-            lookup = clengths_[mid-1] + offset*clengths_[mid];
-        else if(mid)
-            lookup = offset*clengths_[mid-1] + clengths_[mid];
-        else
-            lookup = 0.0f;
+        float lookup = feature_base(mid, offset);
 
         if (lookup < scaled_t)
             low = mid + 1;
@@ -480,23 +464,8 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     while(low < clengths_.size() && clengths_[low] == clengths_[low+1])
         ++low;
 
-    float lookup;
-    float base;
-    if(low & 1) // low is odd
-    {
-        lookup = clengths_[low-1] + offset*clengths_[low];
-        base   = clengths_[low+1];
-    }
-    else if(low)
-    {
-        lookup = offset*clengths_[low-1] + clengths_[low];
-        base   = offset*clengths_[low+1];
-    }
-    else
-    {
-        lookup = 0.0f;
-        base   = clengths_[1];
-    }
+    float lookup = feature_base(low, offset);
+    float base   = feature_size(low, offset);
 
     local = (scaled_t - lookup) / base;
 
