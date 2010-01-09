@@ -292,15 +292,18 @@ namespace hwm
                         s.in_states[s.out_states[i].in_ref].fict_lane = &i_lanes[road_name];
                         isect_lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
                         l->id = road_name;
-                        l->road_memberships[0.0];
-                        l->road_memberships[0.0]->second.parent_road = &(thisRoad->second);
-                        l->road_memberships[0.0]->second.lane_position = 0;
-                        l->road_memberships[0.0]->second.interval[0] = 0;
-                        l->road_memberships[0.0]->second.interval[1] = 1;
+                        hwm::lane::road_membership rm;
+                        rm.parent_road = &(thisRoad->second);
+                        rm.lane_position = 0;
+                        rm.interval[0] = 0.0f;
+                        rm.interval[1] = 1.0f;
+                        l->road_memberships.insert(0.0, rm);
+                        std::cout << l->road_memberships.size() << " should not be 0" << std::endl;
                         l->input = i_pair.second.incoming[s.out_states[i].in_ref];
                         l->output = i_pair.second.outgoing[i];
                         //TODO shrink speed limit
                         l->speedlimit = l->input->speedlimit;
+                        std::cout << l->length() << " is lane length " << std::endl;
                     }
                 }
             }

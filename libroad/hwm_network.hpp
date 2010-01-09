@@ -25,6 +25,8 @@ namespace hwm
 
     struct lane
     {
+        ~lane(){}
+
         struct terminus
         {
             bool check(bool start, const lane *parent) const;
@@ -82,6 +84,8 @@ namespace hwm
 
     struct isect_lane : public lane
     {
+        ~isect_lane(){}
+
         lane* input;
         lane* output;
     };
