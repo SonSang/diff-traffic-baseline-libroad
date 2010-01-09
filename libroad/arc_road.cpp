@@ -130,10 +130,28 @@ struct slack_idx_cmp
     const std::vector<float> &vec;
 };
 
+static float slack(const size_t idx, const std::vector<float> &lengths, const std::vector<float> &alphas)
+{
+    float low_slack;
+    if(idx > 0)
+        low_slack = lengths[idx] - alphas[idx-1] - alphas[idx];
+    else
+        low_slack = lengths[idx]                 - alphas[idx];
+
+    float high_slack;
+    if(idx < alphas.size()-1)
+        high_slack = lengths[idx+1] - alphas[idx+1] - alphas[idx];
+    else
+        high_slack = lengths[idx+1]                 - alphas[idx];
+
+    return std::min(low_slack, high_slack);
+}
+
 arc_road::arc_road(const polyline_road &p)
 {
     const size_t N = p.points_.size()-2;
 
+    // Compute first pass for alphas
     std::vector<float> poly_lengths(N+1);
     for(size_t i = 0; i < N+1; ++i)
         poly_lengths[i] = (p.clengths_[i+1] - p.clengths_[i])/2;
@@ -166,57 +184,42 @@ arc_road::arc_road(const polyline_road &p)
     for(size_t i = 0; i < N+1; ++i)
         poly_lengths[i] = (p.clengths_[i+1] - p.clengths_[i]);
 
+    // Now do 2nd pass to remove exess slack
     indexes.resize(N);
     for(size_t i = 0; i < N; ++i)
         indexes[i] = i;
 
     std::vector<float> slacks(N, 0);
-    slacks[0] = std::min(poly_lengths[0] - alphas[0],
-                         poly_lengths[1] - alphas[1] - alphas[0]);
 
-    for(size_t i = 1; i < N-1; ++i)
-    {
-        slacks[i] = std::min(poly_lengths[i]   - alphas[i-1] - alphas[i],
-                             poly_lengths[i+1] - alphas[i+1] - alphas[i]);
-    }
+    for(size_t i = 0; i < N; ++i)
+        slacks[i] = slack(i, poly_lengths, alphas);
 
-    slacks[N-1] = std::min(poly_lengths[N-1] - alphas[N-2]  - alphas[N-1],
-                           poly_lengths[N]                  - alphas[N-1]);
     idx_sort ssort(slacks);
-
     std::vector<size_t>::iterator current = indexes.begin();
-
     while(current != indexes.end())
     {
         std::sort(current, indexes.end(), ssort);
-
-        alphas[*current] += slacks[*current];
-
-        if(*current > 0)
+        if(slacks[*current] > 0.0)
         {
-            const size_t prev_idx = *current - 1;
 
-            if(prev_idx > 0)
-                slacks[prev_idx] = std::min(poly_lengths[prev_idx]   - alphas[prev_idx-1] - alphas[prev_idx],
-                                            poly_lengths[prev_idx+1] - alphas[prev_idx+1] - alphas[prev_idx]);
-            else
-                slacks[prev_idx] = std::min(poly_lengths[prev_idx]   - alphas[prev_idx],
-                                            poly_lengths[prev_idx+1] - alphas[prev_idx+1] - alphas[prev_idx]);
+            alphas[*current] += slacks[*current];
+            slacks[*current]  = 0.0f;
 
-        }
-        if(*current < N-1)
-        {
-            const size_t next_idx = *current + 1;
-
-            if(next_idx < N - 1)
-                slacks[next_idx] = std::min(poly_lengths[next_idx]   - alphas[next_idx-1] - alphas[next_idx],
-                                            poly_lengths[next_idx+1] - alphas[next_idx+1] - alphas[next_idx]);
-            else
-                slacks[next_idx] = std::min(poly_lengths[next_idx]   - alphas[next_idx-1] - alphas[next_idx],
-                                            poly_lengths[next_idx+1] - alphas[next_idx]);
+            if(*current > 0)
+            {
+                const size_t prev_idx = *current - 1;
+                slacks[prev_idx] = slack(prev_idx, poly_lengths, alphas);
+            }
+            if(*current < N-1)
+            {
+                const size_t next_idx = *current + 1;
+                slacks[next_idx] = slack(next_idx, poly_lengths, alphas);
+            }
         }
         ++current;
     }
+
+    // Now compute actual helper data
 
     p_start_   = p.points_.front();
     tan_start_ = p.normals_.front();
