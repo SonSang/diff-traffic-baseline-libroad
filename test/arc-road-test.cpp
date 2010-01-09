@@ -276,6 +276,38 @@ public:
             glEnd();
         }
 
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if(ar)
+        {
+            glColor3f(1.0, 0.0, 0.0);
+            glBegin(GL_LINE_STRIP);
+            BOOST_FOREACH(const vec3f &p, ar->extract_line(low_bnd, low_res))
+            {
+                glVertex3fv(p.data());
+            }
+            glEnd();
+            glColor3f(0.0, 1.0, 0.0);
+            glBegin(GL_LINE_STRIP);
+            BOOST_FOREACH(const vec3f &p, ar->extract_line(high_bnd, high_res))
+            {
+                glVertex3fv(p.data());
+            }
+            glEnd();
+
+            vec3f pos = ar->point(car_pos, low_bnd);
+            std::cout << "t: " << car_pos << " offset: " << low_bnd << " pos: " << pos << std::endl;
+            glColor3f(1.0, 1.0, 0.0);
+            glPushMatrix();
+            glTranslatef(pos[0], pos[1], pos[2]);
+            glBegin(GL_QUADS);
+            glVertex2f(-0.5, -0.5);
+            glVertex2f( 0.5, -0.5);
+            glVertex2f( 0.5,  0.5);
+            glVertex2f(-0.5,  0.5);
+            glEnd();
+            glPopMatrix();
+        }
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         glEnable(GL_TEXTURE_2D);
@@ -310,38 +342,6 @@ public:
         glUseProgram(0);
         glDisable(GL_POINT_SPRITE_ARB);
         glDisable(GL_TEXTURE_2D);
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        if(ar)
-        {
-            glColor3f(1.0, 0.0, 0.0);
-            glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_line(low_bnd, low_res))
-            {
-                glVertex3fv(p.data());
-            }
-            glEnd();
-            glColor3f(0.0, 1.0, 0.0);
-            glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_line(high_bnd, high_res))
-            {
-                glVertex3fv(p.data());
-            }
-            glEnd();
-
-            vec3f pos = ar->point(car_pos, low_bnd);
-            std::cout << car_pos << " " << pos << std::endl;
-            glColor3f(1.0, 1.0, 0.0);
-            glPushMatrix();
-            glTranslatef(pos[0], pos[1], pos[2]);
-            glBegin(GL_QUADS);
-            glVertex2f(-0.5, -0.5);
-            glVertex2f( 0.5, -0.5);
-            glVertex2f( 0.5,  0.5);
-            glVertex2f(-0.5,  0.5);
-            glEnd();
-            glPopMatrix();
-        }
 
         glFlush();
         glFinish();
