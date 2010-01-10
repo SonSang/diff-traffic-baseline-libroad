@@ -213,6 +213,36 @@ static void pick_ray(vec3f &origin, vec3f &dir, const float x, const float y, co
     }
 }
 
+static float ray_point_project(const vec3f &origin, const vec3f &dir, const vec3f &pt)
+{
+    // assumes dir is unit, so no divide by tvmet::dot(dir, dir);
+    return tvmet::dot(dir, pt-origin);
+}
+
+static vec3f ray_point_nearest(const vec3f &origin, const vec3f &dir, const vec3f &pt)
+{
+    return vec3f(origin + dir*ray_point_project(origin, dir, pt));
+}
+
+static float ray_point_distance2(const vec3f &origin, const vec3f &dir, const vec3f &pt)
+{
+    const vec3f diff(pt - ray_point_nearest(origin, dir, pt));
+    return tvmet::dot(diff, diff);
+}
+
+static float ray_plane_intersection_param(const vec3f &origin, const vec3f &dir, const vec3f &normal, const float support)
+{
+    const float denom = tvmet::dot(dir, normal);
+    assert(std::abs(denom) > 1e-8);
+
+    return (-tvmet::dot(origin, normal) + support)/denom;
+}
+
+static vec3f ray_plane_intersection(const vec3f &origin, const vec3f &dir, const vec3f &normal, const float support)
+{
+    return vec3f(origin + dir*ray_plane_intersection_param(origin, dir, normal, support));
+}
+
 class fltkview : public Fl_Gl_Window
 {
 public:
@@ -467,12 +497,11 @@ public:
                         float min_dist = FLT_MAX;
                         for(size_t i = 0; i < pr->points_.size(); ++i)
                         {
-                            const vec3f diff(res - pr->points_[i]);
-                            const float dist = std::sqrt(tvmet::dot(diff, diff));
-                            if(dist < min_dist)
+                            const float dist2(ray_point_distance2(origin, dir, pr->points_[i]));
+                            if(dist2 < min_dist)
                             {
                                 min_pt = i;
-                                min_dist = dist;
+                                min_dist = dist2;
                             }
                         }
 
