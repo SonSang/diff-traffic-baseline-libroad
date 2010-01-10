@@ -382,7 +382,8 @@ public:
             }
             glEnd();
 
-            vec3f pos = ar->point(car_pos, low_bnd);
+            mat4x4f trans(ar->point_frame(car_pos, low_bnd));
+            mat4x4f ttrans(tvmet::trans(trans));
             glColor3f(1.0, 1.0, 0.0);
 
             glDisable(GL_BLEND);
@@ -390,8 +391,9 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             glPushMatrix();
-            glTranslatef(pos[0], pos[1], pos[2]);
-            //glRotatef(me.orientation*180.0f*M_1_PI, 0.0f, 0.0f, 1.0f);
+
+            glMultMatrixf(ttrans.data());
+            glScalef(0.1, 0.1, 0.1);
             draw_car();
             glPopMatrix();
 

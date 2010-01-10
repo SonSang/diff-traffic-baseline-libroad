@@ -341,6 +341,85 @@ vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
     }
 }
 
+mat3x3f arc_road::frame(const float t, const float offset, const vec3f &up) const
+{
+    vec3f pos;
+    vec3f tan;
+
+    float local;
+    const size_t idx = locate_scale(t, offset, local);
+    if(idx & 1)
+    {
+        const size_t real_idx = idx/2;
+        circle_frame(pos, tan, local*arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+    }
+    else
+    {
+        const int real_idx = idx/2-1;
+
+        if(real_idx < 0)
+        {
+            pos = p_start_;
+            tan = tan_start_;
+        }
+        else
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
+        pos += tan*local*feature_size(idx, offset);
+    }
+
+    const vec3f left  (tvmet::normalize(tvmet::cross(up, tan)));
+    const vec3f new_up(tvmet::normalize(tvmet::cross(tan, left)));
+
+    pos += left*offset;
+
+    mat3x3f res;
+    res(0, 0) = tan[0]; res(0, 1) = left[0]; res(0, 2) = new_up[0];
+    res(1, 0) = tan[1]; res(1, 1) = left[1]; res(1, 2) = new_up[1];
+    res(2, 0) = tan[2]; res(2, 1) = left[2]; res(2, 2) = new_up[2];
+    return res;
+}
+
+mat4x4f arc_road::point_frame(const float t, const float offset, const vec3f &up) const
+{
+    vec3f pos;
+    vec3f tan;
+
+    float local;
+    const size_t idx = locate_scale(t, offset, local);
+    if(idx & 1)
+    {
+        const size_t real_idx = idx/2;
+        circle_frame(pos, tan, local*arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+    }
+    else
+    {
+        const int real_idx = idx/2-1;
+
+        if(real_idx < 0)
+        {
+            pos = p_start_;
+            tan = tan_start_;
+        }
+        else
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
+        pos += tan*local*feature_size(idx, offset);
+    }
+
+    const vec3f left  (tvmet::normalize(tvmet::cross(up, tan)));
+    const vec3f new_up(tvmet::normalize(tvmet::cross(tan, left)));
+
+    pos += left*offset;
+
+    mat4x4f res;
+    res(0, 0) = tan[0];res(0, 1) = left[0];res(0, 2) = new_up[0];res(0, 3) = pos[0];
+    res(1, 0) = tan[1];res(1, 1) = left[1];res(1, 2) = new_up[1];res(1, 3) = pos[1];
+    res(2, 0) = tan[2];res(2, 1) = left[2];res(2, 2) = new_up[2];res(2, 3) = pos[2];
+    res(3, 0) = 0.0f;  res(3, 1) = 0.0f;   res(3, 2) = 0.0f;     res(3, 3) = 1.0f;
+    return res;
+}
+
 std::vector<vec3f> arc_road::extract_line(const float offset, const float resolution, const vec3f &up) const
 {
     std::vector<vec3f> result;
