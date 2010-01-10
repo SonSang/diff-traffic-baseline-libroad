@@ -26,6 +26,17 @@ namespace hwm
         }
     }
 
+    static inline void xml_write(const arc_road &ar, xmlpp::Element *elt)
+    {
+        xmlpp::Element *ar_elt = elt->add_child("line_rep");
+        xmlpp::Element *pt_elt = ar_elt->add_child("points");
+
+        BOOST_FOREACH(const vec3f &pt, ar.points_)
+        {
+            pt_elt->add_child_text(boost::str(boost::format("%f %f %f 0.0\n") % pt[0] % pt[1] % pt[2]));
+        }
+    }
+
     static inline void xml_write(const road &r, xmlpp::Element *elt)
     {
         xmlpp::Element *road_elt = elt->add_child("road");

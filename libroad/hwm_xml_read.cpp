@@ -60,6 +60,52 @@ namespace hwm
         return read_to_close(reader, "line_rep");
     }
 
+    static inline bool xml_read(arc_road &ar, xmlpp::TextReader &reader)
+    {
+        assert(is_opening_element(reader, "line_rep"));
+
+        if(!read_to_open(reader, "points"))
+            return false;
+
+        do
+        {
+            if(!read_skip_comment(reader))
+                return false;
+
+            if(reader.get_node_type() == xmlpp::TextReader::Text ||
+               reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
+            {
+                std::string                 res(reader.get_value());
+                typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+                boost::char_separator<char> linesep("\n");
+                tokenizer                   linetokens(res, linesep);
+
+                BOOST_FOREACH(const std::string &ltok, linetokens)
+                {
+                    std::string trim_ltok(ltok);
+                    boost::trim_left(trim_ltok);
+                    if(!trim_ltok.empty())
+                    {
+                        std::stringstream instr(trim_ltok);
+
+                        vec3f pos;
+                        instr >> pos[0];
+                        instr >> pos[1];
+                        instr >> pos[2];
+
+                        ar.points_.push_back(pos);
+                    }
+                }
+            }
+        }
+        while(!is_closing_element(reader, "points"));
+
+        if(!ar.initialize())
+            throw std::exception();
+
+        return read_to_close(reader, "line_rep");
+    }
+
     static inline bool xml_read(network &n, intersection::state &s, xmlpp::TextReader &reader)
     {
         assert(is_opening_element(reader, "state"));
