@@ -384,19 +384,16 @@ public:
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        if(pr)
+        if(ar)
         {
             glColor3f(0.3, 0.3, 0.3);
             glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, pr->points_)
+            BOOST_FOREACH(const vec3f &p, ar->points_)
             {
                 glVertex3fv(p.data());
             }
             glEnd();
-        }
 
-        if(ar)
-        {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glColor3f(1.0, 0.0, 0.0);
             glBegin(GL_LINE_STRIP);
@@ -435,8 +432,8 @@ public:
         {
             glColor3f(1.0, 1.0, 1.0);
             glBegin(GL_LINES);
-            glVertex3f(pr->points_[pick_vert][0], pr->points_[pick_vert][1], -1000.0f);
-            glVertex3f(pr->points_[pick_vert][0], pr->points_[pick_vert][1],  1000.0f);
+            glVertex3f(ar->points_[pick_vert][0], ar->points_[pick_vert][1], -1000.0f);
+            glVertex3f(ar->points_[pick_vert][0], ar->points_[pick_vert][1],  1000.0f);
             glEnd();
         }
 
@@ -463,13 +460,13 @@ public:
         glDepthMask(GL_FALSE);
 
         glBegin(GL_POINTS);
-        for(size_t i = 0; i < pr->points_.size(); ++i)
+        for(size_t i = 0; i < ar->points_.size(); ++i)
         {
             if(i == pick_vert)
                 glColor3f(0.0, 1.0, 1.0);
             else
                 glColor3f(0.0, 0.0, 1.0);
-            glVertex3fv(pr->points_[i].data());
+            glVertex3fv(ar->points_[i].data());
         }
         glEnd();
 
@@ -503,9 +500,9 @@ public:
 
                         size_t min_pt;
                         float min_dist = FLT_MAX;
-                        for(size_t i = 0; i < pr->points_.size(); ++i)
+                        for(size_t i = 0; i < ar->points_.size(); ++i)
                         {
-                            const float dist2(ray_point_distance2(origin, dir, pr->points_[i]));
+                            const float dist2(ray_point_distance2(origin, dir, ar->points_[i]));
                             if(dist2 < min_dist)
                             {
                                 min_pt = i;
@@ -554,19 +551,18 @@ public:
                                 pick_ray(origin, dir, w()/2, h()/2, w(), h());
                                 const float fac = 1.0f - tvmet::dot(dir, vec3f(0.0f, 0.0f, 1.0f));
                                 const float scale = std::pow(2.0f, zoom-1.0f);
-                                pr->points_[pick_vert][2] += fac*(fy-lastmouse[1])*scale;
+                                ar->points_[pick_vert][2] += fac*(fy-lastmouse[1])*scale;
                             }
                             else
                             {
                                 vec3f origin;
                                 vec3f dir;
                                 pick_ray(origin, dir, x, y, w(), h());
-                                const vec3f inters(ray_plane_intersection(origin, dir, vec3f(0.0, 0.0, 1.0), pr->points_[pick_vert][2]));
-                                pr->points_[pick_vert] = inters;
+                                const vec3f inters(ray_plane_intersection(origin, dir, vec3f(0.0, 0.0, 1.0), ar->points_[pick_vert][2]));
+                                ar->points_[pick_vert] = inters;
                             }
 
-                            pr->initialize();
-                            *ar = arc_road(*pr);
+                            ar->initialize();
                         }
                     }
                     else
@@ -673,8 +669,6 @@ public:
     float high_res;
 
     float car_pos;
-
-    polyline_road *pr;
     arc_road      *ar;
 
     GLuint glew_state;
@@ -690,28 +684,25 @@ public:
 
 int main(int argc, char *argv[])
 {
-    polyline_road pr;
-    pr.points_.push_back(vec3f(0.0, 4.0, 0.0));
-    pr.points_.push_back(vec3f(4.0, 3.0, 0.0));
-    pr.points_.push_back(vec3f(4.0, 0.0, 0.0));
-    pr.points_.push_back(vec3f(6.0, 0.0, 0.0));
-    pr.points_.push_back(vec3f(3.0, -2.0, 0.0));
-    pr.points_.push_back(vec3f(2.0, -1.0, 0.0));
-    pr.points_.push_back(vec3f(2.0, -4.0, 0.0));
-    pr.points_.push_back(vec3f(0.5, -2.0, 0.0));
-    pr.points_.push_back(vec3f(0.5, -5.0, 0.0));
-    pr.points_.push_back(vec3f(1.0, -7.0, 0.0));
-    pr.points_.push_back(vec3f(0.0, -9, 0.0));
-    pr.points_.push_back(vec3f(5.0, -8, 0.0));
-    pr.points_.push_back(vec3f(7.5, -5, 0.0));
-    pr.points_.push_back(vec3f(10, -3, 0.0));
-    pr.initialize();
-
-    arc_road ar(pr);
+    arc_road ar;
+    ar.points_.push_back(vec3f(00.0, 40.0, 0.0));
+    ar.points_.push_back(vec3f(40.0, 30.0, 0.0));
+    ar.points_.push_back(vec3f(40.0, 00.0, 0.0));
+    ar.points_.push_back(vec3f(60.0, 00.0, 0.0));
+    ar.points_.push_back(vec3f(30.0, -20.0, 0.0));
+    ar.points_.push_back(vec3f(20.0, -10.0, 1.0));
+    ar.points_.push_back(vec3f(20.0, -40.0, 1.0));
+    ar.points_.push_back(vec3f(00.5, -20.0, 1.0));
+    ar.points_.push_back(vec3f(00.5, -50.0, 2.0));
+    ar.points_.push_back(vec3f(10.0, -70.0, 2.0));
+    ar.points_.push_back(vec3f(00.0, -90, 2.0));
+    ar.points_.push_back(vec3f(50.0, -80, 3.0));
+    ar.points_.push_back(vec3f(70.5, -50, 3.0));
+    ar.points_.push_back(vec3f(100, - 30, 3.0));
+    ar.initialize();
 
     fltkview mv(0, 0, 500, 500, "fltk View");
 
-    mv.pr = &pr;
     mv.ar = &ar;
 
     mv.take_focus();

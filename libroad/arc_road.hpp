@@ -6,8 +6,6 @@
 
 struct arc_road
 {
-    arc_road(const polyline_road &p);
-
     float   length     (float offset) const;
     vec3f   point      (float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
     mat3x3f frame      (float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
@@ -31,16 +29,15 @@ struct arc_road
     size_t locate_scale(float t, float offset, float &local) const;
     bool   check() const;
 
-    vec3f                p_start_;
-    vec3f                tan_start_;
-    vec3f                p_end_;
-    vec3f                tan_end_;
     std::vector<mat4x4f> frames_;
     std::vector<float>   radii_;
     std::vector<float>   arcs_;
 
     std::vector<float>   seg_clengths_;
     std::vector<vec2f>   arc_clengths_;
+
+    std::vector<vec3f>   points_;
+    std::vector<vec3f>   normals_;
 };
 
 #endif

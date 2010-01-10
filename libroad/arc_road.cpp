@@ -147,25 +147,40 @@ static float slack(const size_t idx, const std::vector<float> &lengths, const st
     return std::min(low_slack, high_slack);
 }
 
-arc_road::arc_road(const polyline_road &p)
+bool arc_road::initialize()
 {
-    const size_t N = p.points_.size()-2;
+    const size_t N_pts  = points_.size();
+    const size_t N_segs = N_pts - 1;
+    const size_t N_arcs = N_pts - 2;
+
+    normals_.resize(N_segs);
+    std::vector<float> lengths(N_segs);
+    for(size_t i = 1; i < N_pts; ++i)
+    {
+        normals_[i-1]    = points_[i] - points_[i-1];
+        const float len  = std::sqrt(tvmet::dot(normals_[i-1], normals_[i-1]));
+        if(len < FLT_EPSILON)
+            return false;
+        lengths[i-1]     = len;
+        normals_[i-1]   /= len;
+    }
 
     // Compute first pass for alphas
-    std::vector<float> poly_lengths(N+1);
-    for(size_t i = 0; i < N+1; ++i)
-        poly_lengths[i] = (p.clengths_[i+1] - p.clengths_[i])/2;
-    poly_lengths.front() *= 2;
-    poly_lengths.back()  *= 2;
+    std::vector<float> poly_lengths(N_segs);
+    poly_lengths[0]      = lengths[0];
+    for(size_t i = 0; i < N_segs; ++i)
+        poly_lengths[i]  = lengths[i]/2;
+    poly_lengths[N_arcs] = lengths[N_arcs];
 
-    std::vector<size_t> indexes(N+1);
-    for(size_t i = 0; i < N+1; ++i)
+    std::vector<size_t> indexes(N_segs);
+    for(size_t i = 0; i < N_segs; ++i)
         indexes[i] = i;
+
     idx_sort isort(poly_lengths);
     std::sort(indexes.begin(), indexes.end(), isort);
 
-    std::vector<float> alphas(N, 0);
-    std::vector<bool>  set(N, false);
+    std::vector<float> alphas(N_arcs, 0);
+    std::vector<bool>  set(N_arcs, false);
 
     BOOST_FOREACH(size_t idx, indexes)
     {
@@ -174,29 +189,26 @@ arc_road::arc_road(const polyline_road &p)
             alphas[idx-1] = poly_lengths[idx];
             set[idx-1]    = true;
         }
-        if(idx != N && !set[idx])
+        if(idx != N_arcs && !set[idx])
         {
             alphas[idx] = poly_lengths[idx];
             set[idx]    = true;
         }
     }
 
-    for(size_t i = 0; i < N+1; ++i)
-        poly_lengths[i] = (p.clengths_[i+1] - p.clengths_[i]);
+    // Now do 2nd pass to remove excess slack
+    for(size_t i = 0; i < N_segs; ++i)
+        poly_lengths[i] = lengths[i];
 
-    // Now do 2nd pass to remove exess slack
-    indexes.resize(N);
-    for(size_t i = 0; i < N; ++i)
-        indexes[i] = i;
-
-    std::vector<float> slacks(N, 0);
-
-    for(size_t i = 0; i < N; ++i)
+    std::vector<float> slacks(N_arcs, 0);
+    for(size_t i = 0; i < N_arcs; ++i)
         slacks[i] = slack(i, poly_lengths, alphas);
+    idx_sort           ssort(slacks);
 
-    idx_sort ssort(slacks);
-    std::vector<size_t>::iterator current = indexes.begin();
-    while(current != indexes.end())
+    indexes.resize(N_arcs);
+    for(size_t i = 0; i < N_arcs; ++i)
+        indexes[i] = i;
+    for(std::vector<size_t>::iterator current = indexes.begin(); current != indexes.end(); ++current)
     {
         std::sort(current, indexes.end(), ssort);
         if(slacks[*current] > 0.0)
@@ -210,99 +222,54 @@ arc_road::arc_road(const polyline_road &p)
                 const size_t prev_idx = *current - 1;
                 slacks[prev_idx] = slack(prev_idx, poly_lengths, alphas);
             }
-            if(*current < N-1)
+            if(*current < N_arcs-1)
             {
                 const size_t next_idx = *current + 1;
                 slacks[next_idx] = slack(next_idx, poly_lengths, alphas);
             }
         }
-        ++current;
     }
 
     // Now compute actual helper data
+    frames_.resize(N_arcs);
+    radii_ .resize(N_arcs);
+    arcs_  .resize(N_arcs);
 
-    p_start_   = p.points_.front();
-    tan_start_ = p.normals_.front();
-    p_end_     = p.points_.back();
-    tan_end_   = p.normals_.back();
-
-    frames_.resize(N);
-    radii_ .resize(N);
-    arcs_  .resize(N);
-
-    for(size_t i = 0; i < N; ++i)
+    for(size_t i = 0; i < N_arcs; ++i)
     {
-        float alpha = alphas[i];
-        radii_[i] = alpha * cot_theta(p.normals_[i], p.normals_[i+1]);
+        const float alpha = alphas[i];
+        radii_[i] = alpha * cot_theta(normals_[i], normals_[i+1]);
 
-        const vec3f laxis(tvmet::normalize(tvmet::cross(p.normals_[i+1], p.normals_[i])));
-
-        frames_[i](0, 2) = laxis[0];
-        frames_[i](1, 2) = laxis[1];
-        frames_[i](2, 2) = laxis[2];
-        frames_[i](3, 2) = 0.0f;
-
+        const vec3f   laxis(tvmet::normalize(tvmet::cross(normals_[i+1], normals_[i])));
         const mat3x3f rot_pi2(axis_angle_matrix(M_PI_2, laxis));
+        const vec3f   rm(rot_pi2*-normals_[i]);
+        const vec3f   rp(tvmet::trans(rot_pi2)*normals_[i+1]);
+        const vec3f   up(tvmet::cross(laxis,rm));
+        const vec3f   tf(alpha * normals_[i+1] + radii_[i]*rp + points_[i+1]);
 
-        const vec3f rm(rot_pi2*-p.normals_[i]);
-        const vec3f rp(tvmet::trans(rot_pi2)*p.normals_[i+1]);
-        const vec3f up(tvmet::cross(laxis,rm));
+        frames_[i](0, 0) = -rm[0]; frames_[i](0, 1) = up[0]; frames_[i](0, 2) = laxis[0]; frames_[i](0, 3) = tf[0];
+        frames_[i](1, 0) = -rm[1]; frames_[i](1, 1) = up[1]; frames_[i](1, 2) = laxis[1]; frames_[i](1, 3) = tf[1];
+        frames_[i](2, 0) = -rm[2]; frames_[i](2, 1) = up[2]; frames_[i](2, 2) = laxis[2]; frames_[i](2, 3) = tf[2];
+        frames_[i](3, 0) =   0.0f; frames_[i](3, 1) =  0.0f; frames_[i](3, 2) = 0.0f;     frames_[i](3, 3) =  1.0f;
 
-        frames_[i](0, 0) = -rm[0];
-        frames_[i](1, 0) = -rm[1];
-        frames_[i](2, 0) = -rm[2];
-        frames_[i](3, 0) = 0.0f;
-
-        frames_[i](0, 1) = up[0];
-        frames_[i](1, 1) = up[1];
-        frames_[i](2, 1) = up[2];
-        frames_[i](3, 1) = 0.0f;
-
-        const vec3f tf(alpha * p.normals_[i+1] + radii_[i]*rp + p.points_[i+1]);
-        frames_[i](0, 3) = tf[0];
-        frames_[i](1, 3) = tf[1];
-        frames_[i](2, 3) = tf[2];
-        frames_[i](3, 3) = 1.0f;
-
-        arcs_[i] = M_PI - std::acos(tvmet::dot(-p.normals_[i], p.normals_[i+1]));
+        arcs_[i] = M_PI - std::acos(tvmet::dot(-normals_[i], normals_[i+1]));
     }
 
-    for(size_t i = 0; i < N+1; ++i)
-    {
-        std::cout << i << ": " << poly_lengths[i] << std::endl;
-    }
-
-    arc_clengths_.resize(N+1);
+    arc_clengths_.resize(N_segs);
     arc_clengths_[0] = vec2f(0.0f, 0.0f);
-    for(size_t i = 0; i < N; ++i)
-    {
+    for(size_t i = 0; i < N_arcs; ++i)
         arc_clengths_[i+1] = arc_clengths_[i] + vec2f(radii_[i]*arcs_[i], arcs_[i]*copysign(1.0, frames_[i](2, 2)));
-    }
 
-    for(size_t i = 0; i < N+1; ++i)
-    {
-        std::cout << i << ": " << poly_lengths[i] << std::endl;
-    }
-
-    for(size_t i = 0; i < N; ++i)
+    for(size_t i = 0; i < N_arcs; ++i)
     {
         poly_lengths[i]   -= alphas[i];
         poly_lengths[i+1] -= alphas[i];
     }
 
-    seg_clengths_.resize(N+2);
+    seg_clengths_.resize(N_pts);
     seg_clengths_[0] = 0.0f;
-    for(size_t i = 1; i < N+2; ++i)
+    for(size_t i = 1; i < N_pts; ++i)
         seg_clengths_[i] = seg_clengths_[i-1] + poly_lengths[i-1];
-
-    for(size_t i = 0; i < N+2; ++i)
-    {
-        std::cout << i << ": " << seg_clengths_[i] << std::endl;
-    }
-    for(size_t i = 0; i < N+1; ++i)
-    {
-        std::cout << i << ": " << arc_clengths_[i] << std::endl;
-    }
 }
 
 float arc_road::length(const float offset) const
@@ -330,8 +297,8 @@ vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
 
         if(real_idx < 0)
         {
-            pos = p_start_;
-            tan = tan_start_;
+            pos = points_.front();
+            tan = normals_.front();
         }
         else
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
@@ -359,8 +326,8 @@ mat3x3f arc_road::frame(const float t, const float offset, const vec3f &up) cons
 
         if(real_idx < 0)
         {
-            pos = p_start_;
-            tan = tan_start_;
+            pos = points_.front();
+            tan = normals_.front();
         }
         else
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
@@ -398,8 +365,8 @@ mat4x4f arc_road::point_frame(const float t, const float offset, const vec3f &up
 
         if(real_idx < 0)
         {
-            pos = p_start_;
-            tan = tan_start_;
+            pos = points_.front();
+            tan = normals_.front();
         }
         else
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
@@ -424,8 +391,8 @@ std::vector<vec3f> arc_road::extract_line(const float offset, const float resolu
 {
     std::vector<vec3f> result;
 
-    const vec3f left0(tvmet::normalize(tvmet::cross(up, tan_start_)));
-    result.push_back(vec3f(p_start_ + offset*left0));
+    const vec3f left0(tvmet::normalize(tvmet::cross(up, normals_.front())));
+    result.push_back(vec3f(points_.front() + offset*left0));
 
     const size_t N = frames_.size();
     for(size_t i = 0; i < N; ++i)
@@ -487,8 +454,8 @@ std::vector<vec3f> arc_road::extract_line(const float offset, const float resolu
         }
     }
 
-    const vec3f leftend(tvmet::normalize(tvmet::cross(up, tan_end_)));
-    const vec3f pointend(p_end_ + offset*leftend);
+    const vec3f leftend(tvmet::normalize(tvmet::cross(up, normals_.back())));
+    const vec3f pointend(points_.back() + offset*leftend);
     const vec3f diff(pointend - result.back());
     const float distance(std::sqrt(tvmet::dot(diff, diff)));
     if(distance > 1e-3)
