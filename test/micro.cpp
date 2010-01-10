@@ -17,6 +17,8 @@
 #include <FL/Fl_Float_Input.H>
 #include <unistd.h>
 #include <deque>
+#include <algorithm>
+#include <limits>
 
 
 using namespace std;
@@ -46,6 +48,12 @@ public:
     int id;
 
     str lane_id;
+
+    bool operator==(const car& other) const
+    {
+        //Assumes we only check against cars in our lane.
+        return (dist == other.dist);
+    }
 
     car(){
         //All units are functions of meters d/or seconds
@@ -94,13 +102,18 @@ public:
         double s2 = 0;
         double T = 1.6;
 
+        if (f.vel < 0) f.vel = 0;
+
         double s_opt = s1 + T*f.vel + (f.vel*(f.vel - l.vel))/2*(sqrt(f.a_max*f.a_pref));
+
         double t =  f.a_max*(1 - pow((f.vel / f.v_pref),f.delta) - pow((s_opt/(l.dist - f.dist - f.length)),2));
 
+
+
+        // cout << f.id << " accel: " << t << " vel: " << f.vel << " l:pos-diff " << l.dist - f.dist << " l vel:" << l.vel << " l id " << l.id << endl;
+        // cout << f.id << " in lane " << f.lane_id  << " " << f.dist << " " << l.dist << " (" << l.id << ") "  << l.dist - f.dist << endl;
+
         assert(l.dist - f.dist > 0); //A leader needs to lead.
-
-        cout << f.id << " in lane " << f.lane_id  << " " << f.dist << " " << l.dist << " (" << l.id << ") "  << l.dist - f.dist << endl;
-
 
         return t;
     }
@@ -417,12 +430,13 @@ public:
 
 
     void new_settle(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::isect_lane>::type& i_lanes){
-        double EPSILON = 0.1;
+        double EPSILON = 1;
+        double INF = numeric_limits<double>::max();
         double max_accel = EPSILON;
-        double last_max_accel = 9999999;
+        double last_max_accel = INF;
         typedef pair<str, hwm::lane> lane_hash;
         do {
-            vector<car> to_erase;
+
             max_accel = EPSILON;
 
             calc_all_accel(timestep, lanes, i_lanes);
@@ -431,30 +445,44 @@ public:
             {
                 BOOST_FOREACH(car& c, cars_in_lane[l.first])
                 {
-                    c.vel += c.accel * timestep;
-                    if (std::abs(c.accel) > max_accel)
-                    {
-                        max_accel = std::abs(c.accel);
-                        cout << max_accel << endl;
-                    }
-                    if (std::abs(c._last_accel) >= std::abs(c.accel))
-                    {
-                        to_erase.push_back(c);
-                    }
-                    c._last_accel = c.accel;
-                }
-                BOOST_FOREACH(car& c, to_erase)
-                {
-                    cars_in_lane[l.first].erase(cars_in_lane[l.first].find(cars_in_lane[l.first].begin(), cars_in_lane[l.first].end(), c));
+                    c._last_accel = INF;
                 }
             }
 
-//             if (max_accel >= last_max_accel)
-//             {
-//                 cout << "The cars did not settle." << endl;
-//                 exit(0);
-//             }
+            BOOST_FOREACH(const lane_hash& l, lanes)
+            {
+                vector<car> to_erase;
+                BOOST_FOREACH(car& c, cars_in_lane[l.first])
+                {
+                    c.vel += c.accel * timestep;
+
+                    if (std::abs(c.accel) > max_accel)
+                    {
+                        max_accel = std::abs(c.accel);
+                    }
+
+                    if (std::abs(c.accel) > std::abs(c._last_accel))
+                    {
+                        to_erase.push_back(c);
+                    }
+
+                    c._last_accel = c.accel;
+                }
+
+                BOOST_FOREACH(car& c, to_erase)
+                {
+                    cars_in_lane[l.first].erase(find(cars_in_lane[l.first].begin(), cars_in_lane[l.first].end(), c));
+                    cout << "Car removed " << c.id << endl;
+                }
+            }
+
+            // if (max_accel >= last_max_accel)
+            // {
+            //     cout << "The cars did not settle." << endl;
+            //     exit(0);
+            // }
             last_max_accel = max_accel;
+            cout << "max: " << max_accel << endl;
         } while (max_accel > EPSILON);
 
     }
@@ -662,13 +690,13 @@ int main(int argc, char** argv)
                 tmp.id = rand();
                 sim.cars_in_lane[_lane.second.id].push_back(tmp);
                 //Cars need a minimal distance spacing
-                p += 0.5;
+                p += 0.4;
             }
         }
     }
 
     //Make sure car configuration is numerically stable
-    sim.new_settle(timestep, hnet->lanes, hnet->i_lanes);
+    sim.settle(timestep, hnet->lanes);
 
     Fl_Double_Window *window = new Fl_Double_Window(500,500);
     Fl::add_timeout(timestep, timerCallback);
