@@ -102,18 +102,16 @@ public:
         double s2 = 0;
         double T = 1.6;
 
-        if (f.vel < 0) f.vel = 0;
+        //if (f.vel < 0) f.vel = 0; //TODO Should this be taken into account?
 
         double s_opt = s1 + T*f.vel + (f.vel*(f.vel - l.vel))/2*(sqrt(f.a_max*f.a_pref));
 
         double t =  f.a_max*(1 - pow((f.vel / f.v_pref),f.delta) - pow((s_opt/(l.dist - f.dist - f.length)),2));
 
-
-
-        // cout << f.id << " accel: " << t << " vel: " << f.vel << " l:pos-diff " << l.dist - f.dist << " l vel:" << l.vel << " l id " << l.id << endl;
+        //cout << f.id << " accel: " << t << " vel: " << f.vel << " l:pos-diff " << l.dist - f.dist << " l vel:" << l.vel << " l id " << l.id << endl;
         // cout << f.id << " in lane " << f.lane_id  << " " << f.dist << " " << l.dist << " (" << l.id << ") "  << l.dist - f.dist << endl;
 
-        assert(l.dist - f.dist > 0); //A leader needs to lead.
+        //assert(l.dist - f.dist > 0); //A leader needs to lead.
 
         return t;
     }
@@ -264,10 +262,8 @@ public:
     }
 
 
-
-    void calc_all_accel(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::isect_lane>::type& i_lanes)
+    void calc_lane_accel(double timestep, const pair<const str, hwm::lane> l)
     {
-        BOOST_FOREACH(const lane_hash& l, lanes)
         //Calculate accel for all cars in lanes
         for (int i = 0; i < cars_in_lane[l.first].size(); i++)
         {
@@ -294,6 +290,14 @@ public:
                 thisCar->stopping = false;
                 cars_in_lane[l.first][i].accel = accel_calc(cars_in_lane[l.first][i + 1], cars_in_lane[l.first][i]);
             }
+        }
+    }
+
+    void calc_all_accel(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::isect_lane>::type& i_lanes)
+    {
+        BOOST_FOREACH(const lane_hash& l, lanes)
+        {
+            calc_lane_accel(timestep, l);
         }
 
         //Repeat for i_lanes
@@ -372,18 +376,26 @@ public:
                     //->This is handled implicitly
                     if (not isnan(c.dist) and  not isinf(c.dist))
                     {
+                        if ((l.second.end.intersect_in_ref != -1)
+                            and (l.second.end.inters != NULL)
+                            and (l.second.end.inters->states[l.second.end.inters->current_state].in_states[l.second.end.intersect_in_ref].fict_lane != NULL))
+                        {
+                            hwm::lane* new_lane = l.second.end.inters->states[l.second.end.inters->current_state].in_states[l.second.end.intersect_in_ref].fict_lane;
 
-                        hwm::lane* new_lane = l.second.end.inters->states[l.second.end.inters->current_state].in_states[l.second.end.intersect_in_ref].fict_lane;
-
-                        //Update position and distance.
-                        c.dist -= c.lane_length;
-                        c.lane_length = new_lane->length();
-                        c.pos = (float) c.dist / c.lane_length;
+                            //Update position and distance.
+                            c.dist -= c.lane_length;
+                            c.lane_length = new_lane->length();
+                            c.pos = (float) c.dist / c.lane_length;
 
 
-                        //                        cout << "Car changed lanes: " << c.id << endl;
-                        c.lane_id = new_lane->id;
-                        cars_in_lane[new_lane->id].insert(cars_in_lane[new_lane->id].begin(),c);
+                            //                        cout << "Car changed lanes: " << c.id << endl;
+                            c.lane_id = new_lane->id;
+                            cars_in_lane[new_lane->id].insert(cars_in_lane[new_lane->id].begin(),c);
+                        }
+                        else{
+                            c.dist = c.lane_length;
+                            c.pos = 1;
+                        }
                     }
                 }
             }
@@ -488,6 +500,86 @@ public:
     }
 
 
+    void newer_settle(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::isect_lane>::type& i_lanes){
+        double EPSILON = 1;
+        double EPSILON_2 = 0.01;
+        double INF = numeric_limits<double>::max();
+        double max_accel = EPSILON;
+        double last_max_accel = INF;
+        typedef pair<str, hwm::lane> lane_hash;
+
+        BOOST_FOREACH(const lane_hash& l, lanes)
+        {
+            BOOST_FOREACH(car& c, cars_in_lane[l.first])
+            {
+                c._last_accel = INF;
+            }
+        }
+
+        do {
+            max_accel = EPSILON;
+            BOOST_FOREACH(const lane_hash& l, lanes)
+            {
+                vector<car> to_erase;
+                for (deque<car>::reverse_iterator c = cars_in_lane[l.first].rbegin();
+                     c != cars_in_lane[l.first].rend();
+                     )
+                {
+                    //Try to settle a single car.  Throw it out if it cannot be settled.
+                    do{
+
+                        calc_lane_accel(timestep, l);
+
+                        c->vel += c->accel * timestep;
+                        c->vel = std::max(c->vel, 0.0);
+
+
+                        if (std::abs(c->accel) > max_accel)
+                        {
+                            max_accel = std::abs(c->accel);
+                        }
+
+                        if ((std::abs(c->accel) > std::abs(c->_last_accel))
+                            or (c->pos > 1) or ((std::abs(c->accel - c->_last_accel) < EPSILON_2) and (std::abs(c->accel) > EPSILON)))
+                        {
+                            deque<car>::reverse_iterator to_erase = c;
+                            c++;
+                            cars_in_lane[l.first].erase(to_erase.base());
+                            cout << "Erasing " << to_erase->id << endl;
+                            break;
+                        }
+                        else if (std::abs(c->accel) < EPSILON)
+                        {
+                            c++;
+                            break;
+                        }
+                        else
+                        {
+                            c->_last_accel = c->accel;
+                        }
+
+                    } while (true);
+
+                    if (c == cars_in_lane[l.first].rend())
+                        break;
+                }
+            }
+
+            // if (max_accel >= last_max_accel)
+            // {
+            //     cout << "The cars did not settle." << endl;
+            //     exit(0);
+            // }
+
+            last_max_accel = max_accel;
+            cout << "max: " << max_accel << endl;
+
+        } while (max_accel > EPSILON);
+    }
+
+
+
+
     void settle(double timestep, const strhash<hwm::lane>::type& lanes){
         double EPSILON = 0.1;
         double max_accel = EPSILON;
@@ -543,7 +635,7 @@ public:
 
 /******************
 Globals for OpenGL Loop
- */
+*/
 double timestep = 0.033;
 hwm::network* hnet;
 micro sim;
@@ -655,7 +747,7 @@ void timerCallback(void*)
 
 void lane_test(const hwm::network&);
 
-int cars_per_lane = 2;
+int cars_per_lane = 20;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
@@ -690,13 +782,13 @@ int main(int argc, char** argv)
                 tmp.id = rand();
                 sim.cars_in_lane[_lane.second.id].push_back(tmp);
                 //Cars need a minimal distance spacing
-                p += 0.4;
+                p += (15.0 / _lane.second.length());
             }
         }
     }
 
     //Make sure car configuration is numerically stable
-    sim.settle(timestep, hnet->lanes);
+    sim.newer_settle(timestep, hnet->lanes, hnet->i_lanes);
 
     Fl_Double_Window *window = new Fl_Double_Window(500,500);
     Fl::add_timeout(timestep, timerCallback);
