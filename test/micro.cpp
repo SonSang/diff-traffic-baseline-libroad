@@ -99,7 +99,7 @@ public:
 
         assert(l.dist - f.dist > 0); //A leader needs to lead.
 
-        cout << f.id << " in lane " << f.lane_id  << " " << f.dist << " " << l.dist << " " << l.dist - f.dist << endl;
+        //        cout << f.id << " in lane " << f.lane_id  << " " << f.dist << " " << l.dist << " (" << l.id << ") "  << l.dist - f.dist << endl;
 
 
         return t;
@@ -368,7 +368,7 @@ public:
                         c.pos = (float) c.dist / c.lane_length;
 
 
-                        cout << "Car changed lanes: " << c.id << endl;
+                        //                        cout << "Car changed lanes: " << c.id << endl;
                         c.lane_id = new_lane->id;
                         cars_in_lane[new_lane->id].insert(cars_in_lane[new_lane->id].begin(),c);
                     }
@@ -404,7 +404,7 @@ public:
                         c.lane_length = new_lane->length();
                         c.pos = (float) c.dist / c.lane_length;
 
-                        cout << "Car changed lanes: " << c.id << endl;
+                        //                        cout << "Car changed lanes: " << c.id << endl;
                         c.lane_id = new_lane->id;
                         cars_in_lane[new_lane->id].insert(cars_in_lane[new_lane->id].begin(),c);
                     }
@@ -585,7 +585,7 @@ void timerCallback(void*)
 
 void lane_test(const hwm::network&);
 
-int cars_per_lane = 5;
+int cars_per_lane = 7;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
