@@ -342,7 +342,6 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
-
     void draw()
     {
         if (!valid())
@@ -432,6 +431,15 @@ public:
             glDisable(GL_LIGHTING);
         }
 
+        if(pick_vert != -1 && (Fl::event_state() & FL_SHIFT) && (Fl::event_state() & FL_CTRL))
+        {
+            glColor3f(1.0, 1.0, 1.0);
+            glBegin(GL_LINES);
+            glVertex3f(pr->points_[pick_vert][0], pr->points_[pick_vert][1], -1000.0f);
+            glVertex3f(pr->points_[pick_vert][0], pr->points_[pick_vert][1],  1000.0f);
+            glEnd();
+        }
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         glEnable(GL_TEXTURE_2D);
@@ -483,6 +491,8 @@ public:
             {
                 int x = Fl::event_x();
                 int y = Fl::event_y();
+                float fx =   2.0f*x/(w()-1) - 1.0f;
+                float fy = -(2.0f*y/(h()-1) - 1.0f);
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
                     if(Fl::event_state() & FL_SHIFT)
@@ -490,10 +500,6 @@ public:
                         vec3f origin;
                         vec3f dir;
                         pick_ray(origin, dir, x, y, w(), h());
-                        float t = -origin[2]/dir[2];
-                        vec3f res(dir[0]*t + origin[0],
-                                  dir[1]*t + origin[1],
-                                  0.0);
 
                         size_t min_pt;
                         float min_dist = FLT_MAX;
@@ -514,27 +520,17 @@ public:
                     }
                     else
                     {
-                        float fx =   2.0f*x/(w()-1) - 1.0f;
-                        float fy = -(2.0f*y/(h()-1) - 1.0f);
                         nav.get_click(fx, fy);
                     }
                 }
                 else if(Fl::event_button() == FL_RIGHT_MOUSE)
                 {
-                    float fx =   2.0f*x/(w()-1) - 1.0f;
-                    float fy = -(2.0f*y/(h()-1) - 1.0f);
-
-                    lastmouse[0] = fx;
-                    lastmouse[1] = fy;
                 }
                 else if(Fl::event_button() == FL_MIDDLE_MOUSE)
                 {
-                    float fx =   2.0f*x/(w()-1) - 1.0f;
-                    float fy = -(2.0f*y/(h()-1) - 1.0f);
-
-                    lastmouse[0] = fx;
-                    lastmouse[1] = fy;
                 }
+                lastmouse[0] = fx;
+                lastmouse[1] = fy;
                 redraw();
             }
             take_focus();
@@ -543,21 +539,31 @@ public:
             {
                 int x = Fl::event_x();
                 int y = Fl::event_y();
+                float fx =  2.0f*x/(w()-1)-1.0f;
+                float fy = -(2.0f*y/(h()-1)-1.0f);
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
                     if(Fl::event_state() & FL_SHIFT)
                     {
                         if(pick_vert != -1)
                         {
-                            vec3f origin;
-                            vec3f dir;
-                            pick_ray(origin, dir, x, y, w(), h());
-                            float t = -origin[2]/dir[2];
-                            vec2f res(dir[0]*t + origin[0],
-                                      dir[1]*t + origin[1]);
-
-                            pr->points_[pick_vert][0] = res[0];
-                            pr->points_[pick_vert][1] = res[1];
+                            if(Fl::event_state() & FL_CTRL)
+                            {
+                                vec3f origin;
+                                vec3f dir;
+                                pick_ray(origin, dir, w()/2, h()/2, w(), h());
+                                const float fac = 1.0f - tvmet::dot(dir, vec3f(0.0f, 0.0f, 1.0f));
+                                const float scale = std::pow(2.0f, zoom-1.0f);
+                                pr->points_[pick_vert][2] += fac*(fy-lastmouse[1])*scale;
+                            }
+                            else
+                            {
+                                vec3f origin;
+                                vec3f dir;
+                                pick_ray(origin, dir, x, y, w(), h());
+                                const vec3f inters(ray_plane_intersection(origin, dir, vec3f(0.0, 0.0, 1.0), pr->points_[pick_vert][2]));
+                                pr->points_[pick_vert] = inters;
+                            }
 
                             pr->initialize();
                             *ar = arc_road(*pr);
@@ -565,15 +571,11 @@ public:
                     }
                     else
                     {
-                        float fx =  2.0f*x/(w()-1)-1.0f;
-                        float fy = -(2.0f*y/(h()-1)-1.0f);
                         nav.get_click(fx, fy, 1.0f, true);
                     }
                 }
                 else if(Fl::event_button() == FL_RIGHT_MOUSE)
                 {
-                    float fx =   2.0f*x/(w()-1) - 1.0f;
-                    float fy = -(2.0f*y/(h()-1) - 1.0f);
                     float scale = std::pow(2.0f, zoom-1.0f);
 
                     double update[3] = {
@@ -583,14 +585,9 @@ public:
                     };
 
                     nav.translate(update);
-
-                    lastmouse[0] = fx;
-                    lastmouse[1] = fy;
                 }
                 else if(Fl::event_button() == FL_MIDDLE_MOUSE)
                 {
-                    float fx =   2.0f*x/(w()-1) - 1.0f;
-                    float fy = -(2.0f*y/(h()-1) - 1.0f);
                     float scale = std::pow(1.5f, zoom-1.0f);
                     zoom += scale*(fy-lastmouse[1]);
                     if(zoom > 17.0f)
@@ -598,9 +595,9 @@ public:
                     else if(zoom < FLT_MIN)
                         zoom = FLT_MIN;
 
-                    lastmouse[0] = fx;
-                    lastmouse[1] = fy;
                 }
+                lastmouse[0] = fx;
+                lastmouse[1] = fy;
                 redraw();
             }
             take_focus();
