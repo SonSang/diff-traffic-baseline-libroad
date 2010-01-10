@@ -12,9 +12,16 @@ struct arc_road
     mat4x4f point_frame(float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
     void    translate  (const vec3f &o);
 
-    std::vector<vec3f> extract_line(const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
+    float parameter_map(float t, float offset) const;
+    float length_at_feature(size_t i, float p, float offset) const;
+
+    void extract_arc(std::vector<vec3f> &result, const size_t i, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const;
+
+    std::vector<vec3f> extract_line(const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
+    std::vector<vec3f> extract_center(const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
     void make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
-                   const float low_offset, const float high_offset, const float resolution) const;
+                   const vec2f &range,
+                   const vec2f &offsets, const float resolution) const;
 
     bool   initialize();
 

@@ -250,13 +250,15 @@ class fltkview : public Fl_Gl_Window
 public:
     fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
                                                           zoom(2.0),
-                                                          low_bnd(0.0f), high_bnd(0.0f), low_res(0.1f), high_res(0.1f),
+                                                          low_bnd(0.0f), high_bnd(0.0f), low_res(0.3f), high_res(0.3f),
                                                           car_pos(0.0f),
                                                           glew_state(GLEW_OK+1),
                                                           vertex_shader(0), pixel_shader(0), program(0), texture(0), num_tex(0), pick_vert(-1)
     {
         lastmouse[0] = 0.0f;
         lastmouse[1] = 0.0f;
+        extract[0] = 0.0f;
+        extract[1] = 1.0f;
 
         this->resizable(this);
     }
@@ -397,35 +399,74 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glColor3f(1.0, 0.0, 0.0);
             glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_line(low_bnd, low_res))
+            BOOST_FOREACH(const vec3f &p, ar->extract_center(extract, low_bnd, low_res))
             {
                 glVertex3fv(p.data());
             }
             glEnd();
             glColor3f(0.0, 1.0, 0.0);
             glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_line(high_bnd, high_res))
+            BOOST_FOREACH(const vec3f &p, ar->extract_center(extract, high_bnd, high_res))
             {
                 glVertex3fv(p.data());
             }
             glEnd();
 
-            mat4x4f trans(ar->point_frame(car_pos, low_bnd));
-            mat4x4f ttrans(tvmet::trans(trans));
-            glColor3f(1.0, 1.0, 0.0);
+            {
+                mat4x4f trans(ar->point_frame(car_pos, low_bnd));
+                mat4x4f ttrans(tvmet::trans(trans));
+                glColor3f(1.0, 1.0, 0.0);
 
-            glDisable(GL_BLEND);
-            glEnable(GL_LIGHTING);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glDisable(GL_BLEND);
+                glEnable(GL_LIGHTING);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            glPushMatrix();
+                glPushMatrix();
 
-            glMultMatrixf(ttrans.data());
-            draw_car();
-            glPopMatrix();
+                glMultMatrixf(ttrans.data());
+                draw_car();
+                glPopMatrix();
 
-            glEnable(GL_BLEND);
-            glDisable(GL_LIGHTING);
+                glEnable(GL_BLEND);
+                glDisable(GL_LIGHTING);
+            }
+            {
+                mat4x4f trans(ar->point_frame(extract[0], 0.0f));
+                mat4x4f ttrans(tvmet::trans(trans));
+                glColor3f(1.0, 0.0, 0.0);
+
+                glDisable(GL_BLEND);
+                glEnable(GL_LIGHTING);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+                glPushMatrix();
+
+                glMultMatrixf(ttrans.data());
+                draw_car();
+                glPopMatrix();
+
+                glEnable(GL_BLEND);
+                glDisable(GL_LIGHTING);
+            }
+
+            {
+                mat4x4f trans(ar->point_frame(extract[1], 0.0f));
+                mat4x4f ttrans(tvmet::trans(trans));
+                glColor3f(0.0, 0.0, 1.0);
+
+                glDisable(GL_BLEND);
+                glEnable(GL_LIGHTING);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+                glPushMatrix();
+
+                glMultMatrixf(ttrans.data());
+                draw_car();
+                glPopMatrix();
+
+                glEnable(GL_BLEND);
+                glDisable(GL_LIGHTING);
+            }
         }
 
         if(pick_vert != -1 && (Fl::event_state() & FL_SHIFT) && (Fl::event_state() & FL_CTRL))
@@ -635,6 +676,26 @@ public:
                 if(car_pos < 0.0f)
                     car_pos = 0.0f;
                 break;
+            case '1':
+                extract[0] -= 0.02f;
+                if(extract[0] < 0.0f)
+                    extract[0] = 0.0f;
+                break;
+            case '2':
+                extract[0] += 0.02f;
+                if(extract[0] > 1.0f)
+                    extract[0] = 1.0f;
+                break;
+            case '3':
+                extract[1] -= 0.02f;
+                if(extract[1] < 0.0f)
+                    extract[1] = 0.0f;
+                break;
+            case '4':
+                extract[1] += 0.02f;
+                if(extract[1] > 1.0f)
+                    extract[1] = 1.0f;
+                break;
             case 'l':
                 if(ar)
                 {
@@ -668,8 +729,8 @@ public:
     float low_res;
     float high_res;
 
-    float car_pos;
-    arc_road      *ar;
+    float     car_pos;
+    arc_road *ar;
 
     GLuint glew_state;
 
@@ -680,6 +741,8 @@ public:
     GLuint num_tex;
 
     int pick_vert;
+
+    vec2f extract;
 };
 
 int main(int argc, char *argv[])

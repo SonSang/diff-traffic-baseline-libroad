@@ -403,87 +403,182 @@ void arc_road::translate(const vec3f &o)
     }
 }
 
-std::vector<vec3f> arc_road::extract_line(const float offset, const float resolution, const vec3f &up) const
+float arc_road::parameter_map(const float t, const float offset) const
 {
-    std::vector<vec3f> result;
+    float center_local;
+    size_t feature_idx = locate_scale(t, 0.0f, center_local);
 
-    const vec3f left0(tvmet::normalize(tvmet::cross(up, normals_.front())));
-    result.push_back(vec3f(points_.front() + offset*left0));
+    return length_at_feature(feature_idx, center_local, offset)/length(offset);
+}
 
-    const size_t N = frames_.size();
-    for(size_t i = 0; i < N; ++i)
+float arc_road::length_at_feature(const size_t i, const float p, const float offset) const
+{
+    return feature_base(i, offset) + p*feature_size(i, offset);
+}
+
+void arc_road::extract_arc(std::vector<vec3f> &result, const size_t i, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
+{
+    assert(in_range[0] < in_range[1]);
+    assert(in_range[0] >= 0.0f);
+    assert(in_range[1] <= 1.0f);
+
+    std::vector<std::pair<float,vec3f> > new_points;
+
+    // add last point
     {
-        std::vector<std::pair<float,vec3f> > new_points;
-        {
-            vec3f pos;
-            vec3f tan;
+        vec3f pos;
+        vec3f tan;
 
-            circle_frame(pos, tan, arcs_[i], frames_[i], radii_[i]);
-            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-            const vec3f pointend(pos + left*offset);
+        circle_frame(pos, tan, in_range[1]*arcs_[i], frames_[i], radii_[i]);
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        const vec3f pointend(pos + left*offset);
 
-            new_points.push_back(std::make_pair(arcs_[i], pointend));
-        }
-        {
-            vec3f pos;
-            vec3f tan;
-
-            circle_frame(pos, tan, 0, frames_[i], radii_[i]);
-
-            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-            const vec3f point0(pos + left*offset);
-
-            const vec3f diff(point0 - result.back());
-            const float distance(std::sqrt(tvmet::dot(diff, diff)));
-            if(distance >= 1e-3)
-            {
-                new_points.push_back(std::make_pair(0, point0));
-                result.push_back(point0);
-            }
-            else
-                new_points.push_back(std::make_pair(0, result.back()));
-        }
-
-        while(new_points.size() > 1)
-        {
-            const std::pair<float, vec3f> &front = new_points[new_points.size()-1];
-            const std::pair<float, vec3f> &next  = new_points[new_points.size()-2];
-
-            const vec3f diff(front.second - next.second);
-            const float distance(std::sqrt(tvmet::dot(diff, diff)));
-            if (distance > resolution)
-            {
-                const float new_theta = (next.first + front.first)/2;
-                vec3f pos;
-                vec3f tan;
-                circle_frame(pos, tan, new_theta, frames_[i], radii_[i]);
-
-                const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-                new_points.push_back(std::make_pair(new_theta, pos + left*offset));
-                std::swap(new_points[new_points.size()-1], new_points[new_points.size()-2]);
-            }
-            else
-            {
-                new_points.pop_back();
-                result.push_back(new_points.back().second);
-            }
-        }
+        new_points.push_back(std::make_pair(in_range[1]*arcs_[i], pointend));
     }
 
-    const vec3f leftend(tvmet::normalize(tvmet::cross(up, normals_.back())));
-    const vec3f pointend(points_.back() + offset*leftend);
-    const vec3f diff(pointend - result.back());
-    const float distance(std::sqrt(tvmet::dot(diff, diff)));
-    if(distance > 1e-3)
-        result.push_back(pointend);
+    // add first point
+    {
+        vec3f pos;
+        vec3f tan;
+
+        circle_frame(pos, tan, in_range[0]*arcs_[i], frames_[i], radii_[i]);
+
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        const vec3f point0(pos + left*offset);
+
+        bool add_this = true;
+        if(!result.empty())
+        {
+            const vec3f diff(point0 - result.back());
+            const float distance(std::sqrt(tvmet::dot(diff, diff)));
+            add_this = (distance >= 1e-3);
+        }
+
+        if(add_this)
+        {
+            new_points.push_back(std::make_pair(in_range[0]*arcs_[i], point0));
+            result.push_back(point0);
+        }
+        else
+            new_points.push_back(std::make_pair(in_range[0]*arcs_[i], result.back()));
+    }
+
+    while(new_points.size() > 1)
+    {
+        const std::pair<float, vec3f> &front = new_points[new_points.size()-1];
+        const std::pair<float, vec3f> &next  = new_points[new_points.size()-2];
+
+        const vec3f diff(front.second - next.second);
+        const float distance(std::sqrt(tvmet::dot(diff, diff)));
+        if (distance > resolution)
+        {
+            assert(next.first - front.first > 1e-3);
+            const float new_theta = (next.first + front.first)/2;
+            vec3f pos;
+            vec3f tan;
+            circle_frame(pos, tan, new_theta, frames_[i], radii_[i]);
+
+            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+            new_points.push_back(std::make_pair(new_theta, pos + left*offset));
+            std::swap(new_points[new_points.size()-1], new_points[new_points.size()-2]);
+        }
+        else
+        {
+            new_points.pop_back();
+            result.push_back(new_points.back().second);
+        }
+    }
+}
+
+std::vector<vec3f> arc_road::extract_center(const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
+{
+    const vec2f new_range(parameter_map(in_range[0], offset), parameter_map(in_range[1], offset));
+    return extract_line(new_range, offset, resolution, up);
+}
+
+std::vector<vec3f> arc_road::extract_line(const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
+{
+    std::vector<vec3f> result;
+    result.clear();
+
+    vec2f range(in_range);
+    bool reversed = range[0] > range[1];
+    if(reversed)
+        std::swap(range[0], range[1]);
+
+    float        start_local;
+    size_t       start_arc;
+    const size_t start_feature = locate_scale(range[0], offset, start_local);
+
+    float        end_local;
+    const size_t end_feature   = locate_scale(range[1], offset, end_local);
+
+    if(start_feature & 1)
+    {
+        if(start_feature == end_feature)
+            extract_arc(result, start_feature/2, vec2f(start_local, end_local), offset, resolution, up);
+        else
+            extract_arc(result, start_feature/2, vec2f(start_local, 1.0f),      offset, resolution, up);
+        start_arc = start_feature/2 + 1;
+    }
+    else
+    {
+        vec3f pos, tan;
+        const int real_idx = start_feature/2-1;
+        if(real_idx < 0)
+        {
+            pos = points_.front();
+            tan = normals_.front();
+        }
+        else
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        result.push_back(vec3f(pos + left*offset + tan*start_local*feature_size(start_feature, offset)));
+
+        start_arc = start_feature/2;
+    }
+    const size_t end_arc = end_feature/2;
+    for(size_t i = start_arc; i < end_arc; ++i)
+        extract_arc(result, i, vec2f(0.0, 1.0), offset, resolution, up);
+
+    if(end_feature & 1)
+    {
+        if(start_feature != end_feature)
+            extract_arc(result, end_feature/2, vec2f(0.0, end_local), offset, resolution, up);
+    }
+    else
+    {
+        vec3f pos, tan;
+        const int real_idx = end_feature/2-1;
+        if(real_idx < 0)
+        {
+            pos = points_.front();
+            tan = normals_.front();
+        }
+        else
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        const vec3f end_point = vec3f(pos + left*offset + tan*end_local*feature_size(end_feature, offset));
+
+        const vec3f diff(end_point - result.back());
+        const float distance(std::sqrt(tvmet::dot(diff, diff)));
+        if(distance > 1e-3)
+            result.push_back(end_point);
+    }
+
+    if(reversed)
+        std::reverse(result.begin(), result.end());
 
     return result;
 }
 
 void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
-                         const float low_offset, const float high_offset, const float resolution) const
+                         const vec2f &range,
+                         const vec2f &offsets, const float resolution) const
 {
-    ::make_mesh(vrts, faces, extract_line(low_offset, resolution), extract_line(high_offset, resolution));
+    ::make_mesh(vrts, faces, extract_line(range, offsets[0], resolution), extract_line(range, offsets[1], resolution));
 }
 
 float arc_road::feature_base(const size_t i, const float offset) const
@@ -575,5 +670,3 @@ bool arc_road::check() const
     && arc_clengths_.size() == N_pts-1
     && normals_.size()       == N_pts-1;
 }
-
-
