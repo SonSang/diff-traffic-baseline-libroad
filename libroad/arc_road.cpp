@@ -389,6 +389,20 @@ mat4x4f arc_road::point_frame(const float t, const float offset, const vec3f &up
     return res;
 }
 
+void arc_road::translate(const vec3f &o)
+{
+    BOOST_FOREACH(vec3f &pt, points_)
+    {
+        pt += o;
+    }
+
+    BOOST_FOREACH(mat4x4f &fr, frames_)
+    {
+        for(int i = 0; i < 3; ++i)
+            fr(i, 3) += o[i];
+    }
+}
+
 std::vector<vec3f> arc_road::extract_line(const float offset, const float resolution, const vec3f &up) const
 {
     std::vector<vec3f> result;
