@@ -270,6 +270,8 @@ bool arc_road::initialize()
     seg_clengths_[0] = 0.0f;
     for(size_t i = 1; i < N_pts; ++i)
         seg_clengths_[i] = seg_clengths_[i-1] + poly_lengths[i-1];
+
+    return true;
 }
 
 float arc_road::length(const float offset) const
