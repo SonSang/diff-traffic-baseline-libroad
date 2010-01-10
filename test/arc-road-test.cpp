@@ -8,6 +8,8 @@
 #include "arcball.hpp"
 #include "libroad/arc_road.hpp"
 
+static const float PT_SIZE = 2.0f;
+
 static inline tvmet::XprVector<tvmet::VectorConstReference<float, 3>, 3> cvec3f(const float *mem)
 {
     return tvmet::cvector_ref<float,3>(mem);
@@ -441,7 +443,7 @@ public:
         glEnable(GL_POINT_SPRITE_ARB);
         glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_NV);
-        glPointSize(0.6);
+        glPointSize(PT_SIZE);
 
         glUseProgram(program);
         GLuint texLoc = glGetUniformLocation(program, "splatTexture");
@@ -505,7 +507,7 @@ public:
                             }
                         }
 
-                        if(min_dist < 0.6)
+                        if(min_dist < PT_SIZE*PT_SIZE)
                             pick_vert = min_pt;
                         else
                             pick_vert = -1;
