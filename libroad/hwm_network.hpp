@@ -3,6 +3,7 @@
 
 #include "partition01.hpp"
 #include "polyline_road.hpp"
+#include "arc_road.hpp"
 #include "libroad_common.hpp"
 #include "sumo_network.hpp"
 
@@ -14,9 +15,9 @@ namespace hwm
 
         void translate(const vec3f &o);
 
-        str           id;
-        str           name;
-        polyline_road rep;
+        str      id;
+        str      name;
+        arc_road rep;
     };
 
     struct intersection;
