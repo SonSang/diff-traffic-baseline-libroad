@@ -564,3 +564,16 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
 
     return low;
 }
+
+bool arc_road::check() const
+{
+    const size_t N_pts       = points_.size();
+    return frames_.size()   == N_pts-2
+    && radii_.size()        == N_pts-2
+    && arcs_.size()         == N_pts-2
+    && seg_clengths_.size() == N_pts
+    && arc_clengths_.size() == N_pts-1
+    && normals_.size()       == N_pts-1;
+}
+
+
