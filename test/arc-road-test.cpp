@@ -8,7 +8,7 @@
 #include "arcball.hpp"
 #include "libroad/arc_road.hpp"
 
-static inline tvmet::XprVector<tvmet::VectorConstReference<float, 3>, 3> cvec3f(const float* mem)
+static inline tvmet::XprVector<tvmet::VectorConstReference<float, 3>, 3> cvec3f(const float *mem)
 {
     return tvmet::cvector_ref<float,3>(mem);
 }
@@ -318,7 +318,7 @@ public:
             glViewport(0, 0, w(), h());
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 2.0f, 100.0f);
+            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 10.0f, 500.0f);
 
             glMatrixMode(GL_MODELVIEW);
             glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -393,13 +393,11 @@ public:
             glPushMatrix();
 
             glMultMatrixf(ttrans.data());
-            glScalef(0.1, 0.1, 0.1);
             draw_car();
             glPopMatrix();
 
             glEnable(GL_BLEND);
             glDisable(GL_LIGHTING);
-
         }
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
