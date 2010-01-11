@@ -40,10 +40,10 @@ struct car_draw
                                    {              car_rear_axle,  car_width/4, 0.0f},  //2
                                    {-(car_length-car_rear_axle),  car_width/2, 0.0f},  //3
 
-                                   {-(car_length-car_rear_axle), -car_width/2,         car_height},  //4
+                                   {-(car_length-car_rear_axle), -car_width/2,       car_height},  //4
                                    {              car_rear_axle, -car_width/4, car_height*13/15},  //5
                                    {              car_rear_axle,            0, car_height*13/15},  //6
-                                   {-(car_length-car_rear_axle),            0,       car_height}}; //7
+                                   {-(car_length-car_rear_axle),            0,      car_height}};  //7
 
         const unsigned int ofaces[6][4] = {{ 7, 6, 5, 4}, // bottom
                                            { 0, 1, 2, 3}, // top
@@ -120,7 +120,7 @@ struct network_draw
 
     void initialize(const hwm::network *net, const float lane_width)
     {
-        std::vector<vec3f> lane_points;
+        std::vector<vertex> lane_points;
 
         typedef std::pair<const str, hwm::lane> lmap_itr;
         BOOST_FOREACH(const lmap_itr &l, net->lanes)
@@ -128,7 +128,7 @@ struct network_draw
             lane_starts.push_back(lane_points.size());
 
             const hwm::lane &la = l.second;
-            std::vector<vec3f> pts;
+            std::vector<vertex> pts;
             typedef hwm::lane::road_membership::intervals::entry rme;
             BOOST_FOREACH(const rme &rm_entry, la.road_memberships)
             {
@@ -149,7 +149,7 @@ struct network_draw
 
         glGenBuffersARB(1, &v_vbo);
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, lane_points.size()*3*sizeof(float), &(lane_points[0]), GL_STATIC_DRAW_ARB);
+        glBufferDataARB(GL_ARRAY_BUFFER_ARB, lane_points.size()*sizeof(vertex), &(lane_points[0]), GL_STATIC_DRAW_ARB);
 
         assert(glGetError() == GL_NO_ERROR);
     }
@@ -158,7 +158,7 @@ struct network_draw
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, 0);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
 
         assert(glGetError() == GL_NO_ERROR);
         glMultiDrawArrays(GL_LINE_LOOP, &(lane_starts[0]), &(lane_counts[0]), lane_starts.size());

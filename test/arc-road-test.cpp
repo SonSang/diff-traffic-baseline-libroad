@@ -400,22 +400,22 @@ public:
             glColor3f(1.0, 0.0, 0.0);
             glBegin(GL_LINE_STRIP);
             {
-                std::vector<vec3f> pts;
+                std::vector<vertex> pts;
                 ar->extract_center(pts, extract, low_bnd, low_res);
-                BOOST_FOREACH(const vec3f &p, pts)
+                BOOST_FOREACH(const vertex &p, pts)
                 {
-                    glVertex3fv(p.data());
+                    glVertex3fv(p.first.data());
                 }
             }
             glEnd();
             glColor3f(0.0, 1.0, 0.0);
             glBegin(GL_LINE_STRIP);
             {
-                std::vector<vec3f> pts;
+                std::vector<vertex> pts;
                 ar->extract_center(pts, extract, high_bnd, high_res);
-                BOOST_FOREACH(const vec3f &p, pts)
+                BOOST_FOREACH(const vertex &p, pts)
                 {
-                    glVertex3fv(p.data());
+                    glVertex3fv(p.first.data());
                 }
             }
             glEnd();

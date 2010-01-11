@@ -4,6 +4,8 @@
 #include "libroad_common.hpp"
 #include "polyline_road.hpp"
 
+typedef std::pair<vec3f, vec3f> vertex;
+
 struct arc_road
 {
     float   length     (float offset) const;
@@ -16,11 +18,11 @@ struct arc_road
     float parameter_map(float t, float offset) const;
     float length_at_feature(size_t i, float p, float offset) const;
 
-    void extract_arc(std::vector<vec3f> &result, const size_t i, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const;
+    void extract_arc   (std::vector<vertex> &result, const size_t i, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const;
 
-    void extract_line(std::vector<vec3f> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
-    void extract_center(std::vector<vec3f> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
-    void make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
+    void extract_line  (std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
+    void extract_center(std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
+    void make_mesh(std::vector<vertex> &vrts, std::vector<vec3i> &faces,
                    const vec2f &range,
                    const vec2f &offsets, const float resolution) const;
 
