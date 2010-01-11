@@ -45,23 +45,43 @@ static vec3f triangle_angles(const vec3f &pt0, const vec3f &pt1, const vec3f &pt
     return vec3f(a0, a1, a2);
 }
 
-static void make_mesh(std::vector<vertex> &vrts, std::vector<vec3i> &faces,
-                      const std::vector<vertex> &low, const std::vector<vertex> &high)
+static void make_mesh(std::vector<vec3i> &faces, const std::vector<vertex> &vrts,
+                      const vec2i &low_range, const vec2i &high_range)
 {
-    vrts.clear();
-    faces.clear();
+    int low_dir  = copysign(1, low_range[1] -low_range[0]);
+    int high_dir = copysign(1, high_range[1]-high_range[0]);
 
-    std::vector<vertex>::const_iterator low_itr  = low.begin();
-    std::vector<vertex>::const_iterator high_itr = high.begin();
+    int low_itr  = low_range[0];
+    if(low_dir < 0)
+        low_itr += low_dir;
 
-    vrts.push_back(*low_itr++);
-    vrts.push_back(*high_itr++);
+    int high_itr = high_range[0];
+    if(high_dir < 0)
+        high_itr += high_dir;
 
-    size_t base_low_idx  = vrts.size()-2;
-    size_t base_high_idx = vrts.size()-1;
+    int base_low_idx  = low_itr;
+    int base_high_idx = high_itr;
 
-    const vertex *low_cand_vrt  = (low_itr == low.end()   ? 0 : &(*low_itr++));
-    const vertex *high_cand_vrt = (high_itr == high.end() ? 0 : &(*high_itr++));
+    low_itr  += low_dir;
+    high_itr += high_dir;
+
+    const vertex *low_cand_vrt;
+    if( (low_dir < 0 && low_itr < low_range[1]) || (low_dir > 0 && low_itr >= low_range[1]) )
+        low_cand_vrt = 0;
+    else
+    {
+        low_cand_vrt = &(vrts[low_itr]);
+        low_itr += low_dir;
+    }
+
+    const vertex *high_cand_vrt;
+    if( (high_dir < 0 && high_itr < high_range[1]) || (high_dir > 0 && high_itr >= high_range[1]) )
+        high_cand_vrt = 0;
+    else
+    {
+        high_cand_vrt = &(vrts[high_itr]);
+        high_itr += high_dir;
+    }
 
     bool pick_vrt;
     while(1)
@@ -85,19 +105,29 @@ static void make_mesh(std::vector<vertex> &vrts, std::vector<vec3i> &faces,
                 pick_vrt = true;
         }
 
-        faces.push_back(vec3i(base_low_idx, base_high_idx, vrts.size()));
-
         if(pick_vrt)
         {
-            vrts.push_back(*high_cand_vrt);
-            base_high_idx = vrts.size()-1;
-            high_cand_vrt = (high_itr == high.end() ? 0 : &(*high_itr++));
+            faces.push_back(vec3i(base_low_idx, base_high_idx, high_cand_vrt - &(vrts[0])));
+            base_high_idx = high_cand_vrt - &(vrts[0]);
+            if( (high_dir < 0 && high_itr < high_range[1]) || (high_dir > 0 && high_itr >= high_range[1]) )
+                high_cand_vrt = 0;
+            else
+            {
+                high_cand_vrt = &(vrts[high_itr]);
+                high_itr += high_dir;
+            }
         }
         else
         {
-            vrts.push_back(*low_cand_vrt);
-            base_low_idx = vrts.size()-1;
-            low_cand_vrt = (low_itr == low.end() ? 0 : &(*low_itr++));
+            faces.push_back(vec3i(base_low_idx, base_high_idx, low_cand_vrt - &(vrts[0])));
+            base_low_idx = low_cand_vrt - &(vrts[0]);
+            if( (low_dir < 0 && low_itr < low_range[1]) || (low_dir > 0 && low_itr >= low_range[1]) )
+                low_cand_vrt = 0;
+            else
+            {
+                low_cand_vrt = &(vrts[low_itr]);
+                low_itr += low_dir;
+            }
         }
     }
 }
@@ -642,10 +672,10 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3i> &faces,
                          const vec2f &range,
                          const vec2f &offsets, const float resolution) const
 {
-    std::vector<vertex> low_pts, high_pts;
-    extract_center(low_pts, range, offsets[0], resolution);
-    extract_center(high_pts, range, offsets[1], resolution);
-    ::make_mesh(vrts, faces, low_pts, high_pts);
+    extract_center(vrts, range, offsets[0], resolution);
+    size_t r1 = vrts.size();
+    extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
+    ::make_mesh(faces, vrts, vec2i(0, r1), vec2i(vrts.size(), r1));
 }
 
 float arc_road::feature_base(const size_t i, const float offset) const
