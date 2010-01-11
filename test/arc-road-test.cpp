@@ -399,16 +399,24 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glColor3f(1.0, 0.0, 0.0);
             glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_center(extract, low_bnd, low_res))
             {
-                glVertex3fv(p.data());
+                std::vector<vec3f> pts;
+                ar->extract_center(pts, extract, low_bnd, low_res);
+                BOOST_FOREACH(const vec3f &p, pts)
+                {
+                    glVertex3fv(p.data());
+                }
             }
             glEnd();
             glColor3f(0.0, 1.0, 0.0);
             glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(const vec3f &p, ar->extract_center(extract, high_bnd, high_res))
             {
-                glVertex3fv(p.data());
+                std::vector<vec3f> pts;
+                ar->extract_center(pts, extract, high_bnd, high_res);
+                BOOST_FOREACH(const vec3f &p, pts)
+                {
+                    glVertex3fv(p.data());
+                }
             }
             glEnd();
 

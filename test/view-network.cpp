@@ -132,7 +132,8 @@ struct network_draw
             BOOST_FOREACH(const rme &rm_entry, la.road_memberships)
             {
                 const hwm::lane::road_membership &rm = rm_entry.second;
-                const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rm.interval, rm.lane_position-lane_width*0.5, 0.5f));
+                std::vector<vec3f> pts;
+                rm.parent_road->rep.extract_center(pts, rm.interval, rm.lane_position-lane_width*0.5, 0.5f);
                 lane_points.insert(lane_points.end(), pts.begin(), pts.end());
             }
             typedef hwm::lane::road_membership::intervals::const_reverse_iterator rme_it;
@@ -140,7 +141,8 @@ struct network_draw
             {
                 const hwm::lane::road_membership &rm = current->second;
                 const vec2f rev_interval(rm.interval[1], rm.interval[0]);
-                const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rev_interval, rm.lane_position+lane_width*0.5, 0.5f));
+                std::vector<vec3f> pts;
+                rm.parent_road->rep.extract_center(pts, rev_interval, rm.lane_position+lane_width*0.5, 0.5f);
                 lane_points.insert(lane_points.end(), pts.begin(), pts.end());
             }
 
