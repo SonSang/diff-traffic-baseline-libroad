@@ -37,7 +37,7 @@ arc_road_test_LDADD    = $(top_builddir)/libroad/libroad.la
 
 view_network_SOURCES = view-network.cpp
 view_network_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-view_network_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS)
+view_network_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
 view_network_LDADD    = $(top_builddir)/libroad/libroad.la
 
 

@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Menu_Button.H>
@@ -19,55 +20,93 @@ static const float CAR_LENGTH = 4.5f;
 //* This is the position of the car's axle from the FRONT bumper of the car
 static const float CAR_REAR_AXLE = 3.5f;
 
-static GLuint init_draw_car()
+struct car_draw
 {
-    static const float verts[][3] = {{-(CAR_LENGTH-CAR_REAR_AXLE), -0.3f*LANE_WIDTH, 0.0f},  //0
-                                     {              CAR_REAR_AXLE,-0.15f*LANE_WIDTH, 0.0f},  //1
-                                     {              CAR_REAR_AXLE, 0.15f*LANE_WIDTH, 0.0f},  //2
-                                     {-(CAR_LENGTH-CAR_REAR_AXLE),  0.3f*LANE_WIDTH, 0.0f},  //3
+    car_draw() : v_vbo(0), n_vbo(0)
+    {}
 
-                                     {-(CAR_LENGTH-CAR_REAR_AXLE), -0.3f*LANE_WIDTH, 1.5f},  //4
-                                     {              CAR_REAR_AXLE,-0.15f*LANE_WIDTH, 1.3f},  //5
-                                     {              CAR_REAR_AXLE, 0.00f*LANE_WIDTH, 1.3f},  //6
-                                     {-(CAR_LENGTH-CAR_REAR_AXLE),  0.0f*LANE_WIDTH, 1.5f}}; //7
-
-    static const int faces[6][4] = {{ 7, 6, 5, 4}, // bottom
-                                    { 0, 1, 2, 3}, // top
-                                    { 1, 5, 4, 0}, // left side
-                                    { 0, 3, 7, 4}, // back
-                                    { 3, 7, 6, 2}, // right side
-                                    { 5, 6, 2, 1}};// front
-
-    GLuint car_list = glGenLists(1);
-    glPushMatrix();
-    glNewList(car_list, GL_COMPILE);
-    glBegin(GL_QUADS);
-    for(int i = 0; i < 6; ++i)
+    bool initialized() const
     {
-        const vec3f d10 (cvec3f(verts[faces[i][1]]) - cvec3f(verts[faces[i][0]]));
-        const vec3f d20 (cvec3f(verts[faces[i][2]]) - cvec3f(verts[faces[i][0]]));
-        vec3f norm(tvmet::cross(d10, d20));
-        float norm_len = std::sqrt(tvmet::dot(norm, norm));
-        norm /= norm_len;
-        glNormal3f(norm[0], norm[1], norm[2]);
-        for(int j = 0; j < 4; ++j)
-            glVertex3fv(&(verts[faces[i][j]][0]));
+        return v_vbo && n_vbo;
     }
-    glEnd();
-    glEndList();
-    glPopMatrix();
 
-    return car_list;
-}
+    void initialize(const float car_width,
+                    const float car_length,
+                    const float car_height,
+                    const float car_rear_axle)
+    {
+        const float overts[][3] = {{-(car_length-car_rear_axle), -car_width/2, 0.0f},  //0
+                                   {              car_rear_axle, -car_width/4, 0.0f},  //1
+                                   {              car_rear_axle,  car_width/4, 0.0f},  //2
+                                   {-(car_length-car_rear_axle),  car_width/2, 0.0f},  //3
 
-static void draw_car()
-{
-    static GLuint car_list = 0;
+                                   {-(car_length-car_rear_axle), -car_width/2,         car_height},  //4
+                                   {              car_rear_axle, -car_width/4, car_height*13/15},  //5
+                                   {              car_rear_axle,            0, car_height*13/15},  //6
+                                   {-(car_length-car_rear_axle),            0,       car_height}}; //7
 
-    if(!car_list)
-        car_list = init_draw_car();
-    glCallList(car_list);
-}
+        const unsigned int ofaces[6][4] = {{ 7, 6, 5, 4}, // bottom
+                                           { 0, 1, 2, 3}, // top
+                                           { 1, 5, 4, 0}, // left side
+                                           { 0, 3, 7, 4}, // back
+                                           { 3, 7, 6, 2}, // right side
+                                           { 5, 6, 2, 1}};// front
+
+        std::vector<vec3f>        verts  (24);
+        std::vector<vec3f>        normals(24);
+
+        for(int i = 0; i < 6; ++i)
+        {
+            const vec3f d10 (cvec3f(overts[ofaces[i][1]]) - cvec3f(overts[ofaces[i][0]]));
+            const vec3f d20 (cvec3f(overts[ofaces[i][2]]) - cvec3f(overts[ofaces[i][0]]));
+            vec3f norm(tvmet::normalize(tvmet::cross(d10, d20)));
+
+            for(int j = 0; j < 4; ++j)
+            {
+                verts[i*4+j]   = cvec3f(overts[ofaces[i][j]]);
+                normals[i*4+j] = norm;
+            }
+        }
+
+        glGenBuffersARB(1, &v_vbo);
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBufferDataARB(GL_ARRAY_BUFFER_ARB, 24*3*sizeof(float), &(verts[0]), GL_STATIC_DRAW_ARB);
+
+        glGenBuffersARB(1, &n_vbo);
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, n_vbo);
+        glBufferDataARB(GL_ARRAY_BUFFER_ARB, 24*3*sizeof(float), &(normals[0]), GL_STATIC_DRAW_ARB);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    void draw() const
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, n_vbo);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, 0, 0);
+
+        assert(glGetError() == GL_NO_ERROR);
+        glDrawArrays(GL_QUADS, 0, 24);
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    ~car_draw()
+    {
+        if(v_vbo)
+            glDeleteBuffersARB(1, &v_vbo);
+        if(n_vbo)
+            glDeleteBuffersARB(1, &n_vbo);
+    }
+
+    GLuint v_vbo;
+    GLuint n_vbo;
+};
 
 static bool rm_invert(double A[16], double Ainv[16])
 {
@@ -201,7 +240,8 @@ public:
     fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
                                                           zoom(2.0),
                                                           car_pos(0.0f),
-                                                          pick_vert(-1)
+                                                          pick_vert(-1),
+                                                          glew_state(GLEW_OK+1)
     {
         lastmouse[0] = 0.0f;
         lastmouse[1] = 0.0f;
@@ -235,6 +275,17 @@ public:
         glMaterialfv( GL_FRONT, GL_SHININESS, &shininess);
     }
 
+    void init_glew()
+    {
+        glew_state = glewInit();
+        if (GLEW_OK != glew_state)
+        {
+            /* Problem: glewInit failed, something is seriously wrong. */
+            std::cerr << "Error: " << glewGetErrorString(glew_state)  << std::endl;
+        }
+        std::cerr << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+    }
+
     void draw()
     {
         if (!valid())
@@ -253,6 +304,15 @@ public:
             glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
             glEnable(GL_LINE_SMOOTH);
+
+            if(GLEW_OK != glew_state)
+                init_glew();
+
+            if(!car_drawer.initialized())
+                car_drawer.initialize(0.6*LANE_WIDTH,
+                                      CAR_LENGTH,
+                                      1.5f,
+                                      CAR_REAR_AXLE);
 
             setup_light();
         }
@@ -314,7 +374,7 @@ public:
 
                     glPushMatrix();
                     glMultMatrixf(ttrans.data());
-                    draw_car();
+                    car_drawer.draw();
                     glPopMatrix();
                 }
 
@@ -423,9 +483,11 @@ public:
     float lastmouse[2];
 
     float         car_pos;
+    car_draw      car_drawer;
     hwm::network *net;
 
     int pick_vert;
+    GLuint glew_state;
 };
 
 int main(int argc, char *argv[])
