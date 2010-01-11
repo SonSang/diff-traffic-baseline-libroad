@@ -32,6 +32,45 @@ namespace hwm
         return !parent_road;
     }
 
+    float   lane::road_membership::length     () const
+    {
+        return std::abs(parent_road->rep.length(interval[0], lane_position) -
+                        parent_road->rep.length(interval[1], lane_position));
+    }
+
+    vec3f   lane::road_membership::point      (float t, const vec3f &up) const
+    {
+        if(interval[0] > interval[1])
+            t = 1 - t;
+        return parent_road->rep.point(t, lane_position, up);
+    }
+
+    mat3x3f lane::road_membership::frame      (float t, const vec3f &up) const
+    {
+        bool reversed = (interval[0] > interval[1]);
+        if(reversed)
+            t = 1 - t;
+        mat3x3f res(parent_road->rep.frame(t, lane_position, up));
+
+        if(reversed)
+        {//flip res
+        }
+        return res;
+    }
+
+    mat4x4f lane::road_membership::point_frame(float t, const vec3f &up) const
+    {
+        bool reversed = (interval[0] > interval[1]);
+        if(reversed)
+            t = 1 - t;
+        mat4x4f res(parent_road->rep.point_frame(t*std::abs(interval[0]-interval[1])+interval[0], lane_position, up));
+
+        if(reversed)
+        {//flip res
+        }
+        return res;
+    }
+
     bool lane::adjacency::check() const
     {
         // could enforce symmetry here, but probably not necessary
@@ -78,5 +117,37 @@ namespace hwm
         {
             rmie.second.scale_offsets(lane_width);
         }
+    }
+
+    float   lane::length     () const
+    {
+        float total = 0.0f;
+        BOOST_FOREACH(const road_membership::intervals::entry &rmie, road_memberships)
+        {
+            total += rmie.second.length();
+        }
+
+        return total;
+    }
+
+    vec3f   lane::point      (float t, const vec3f &up) const
+    {
+        float local;
+        road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
+        return rmici->second.point(local, up);
+    }
+
+    mat3x3f lane::frame      (float t, const vec3f &up) const
+    {
+        float local;
+        road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
+        return rmici->second.frame(local, up);
+    }
+
+    mat4x4f lane::point_frame(float t, const vec3f &up) const
+    {
+        float local;
+        road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
+        return rmici->second.point_frame(local, up);
     }
 }

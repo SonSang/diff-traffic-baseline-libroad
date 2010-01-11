@@ -38,6 +38,10 @@ namespace hwm
             bool empty() const;
 
             void scale_offsets(float lane_width);
+            float   length     () const;
+            vec3f   point      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
+            mat3x3f frame      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
+            mat4x4f point_frame(float t, const vec3f &up=vec3f(0, 0, 1)) const;
 
             typedef partition01<road_membership>  intervals;
             road                                 *parent_road;
@@ -57,6 +61,11 @@ namespace hwm
 
         bool check() const;
         void scale_offsets(float lane_width);
+
+        float   length     () const;
+        vec3f   point      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
+        mat3x3f frame      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
+        mat4x4f point_frame(float t, const vec3f &up=vec3f(0, 0, 1)) const;
 
         str                        id;
         road_membership::intervals road_memberships;
