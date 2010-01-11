@@ -492,55 +492,55 @@ public:
                 glEnable(GL_BLEND);
                 glDisable(GL_LIGHTING);
             }
-        }
 
-        if(pick_vert != -1 && (Fl::event_state() & FL_SHIFT) && (Fl::event_state() & FL_CTRL))
-        {
-            glColor3f(1.0, 1.0, 1.0);
-            glBegin(GL_LINES);
-            glVertex3f(ar->points_[pick_vert][0], ar->points_[pick_vert][1], -1000.0f);
-            glVertex3f(ar->points_[pick_vert][0], ar->points_[pick_vert][1],  1000.0f);
+            if(pick_vert != -1 && (Fl::event_state() & FL_SHIFT) && (Fl::event_state() & FL_CTRL))
+            {
+                glColor3f(1.0, 1.0, 1.0);
+                glBegin(GL_LINES);
+                glVertex3f(ar->points_[pick_vert][0], ar->points_[pick_vert][1], -1000.0f);
+                glVertex3f(ar->points_[pick_vert][0], ar->points_[pick_vert][1],  1000.0f);
+                glEnd();
+            }
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            glEnable(GL_TEXTURE_2D);
+
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_BLEND);
+
+            // setup point sprites
+            glEnable(GL_POINT_SPRITE_ARB);
+            glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+            glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_NV);
+            glPointSize(PT_SIZE);
+
+            glUseProgram(program);
+            GLuint texLoc = glGetUniformLocation(program, "splatTexture");
+            glUniform1i(texLoc, 0);
+
+            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glBindTexture(GL_TEXTURE_2D, texture);
+
+            glDepthMask(GL_FALSE);
+
+            glBegin(GL_POINTS);
+            for(size_t i = 0; i < ar->points_.size(); ++i)
+            {
+                if(i == pick_vert)
+                    glColor3f(0.0, 1.0, 1.0);
+                else
+                    glColor3f(0.0, 0.0, 1.0);
+                glVertex3fv(ar->points_[i].data());
+            }
             glEnd();
+
+            glUseProgram(0);
+            glDisable(GL_POINT_SPRITE_ARB);
+            glDisable(GL_TEXTURE_2D);
+
+            glDepthMask(GL_TRUE);
         }
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        glEnable(GL_TEXTURE_2D);
-
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_BLEND);
-
-        // setup point sprites
-        glEnable(GL_POINT_SPRITE_ARB);
-        glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_NV);
-        glPointSize(PT_SIZE);
-
-        glUseProgram(program);
-        GLuint texLoc = glGetUniformLocation(program, "splatTexture");
-        glUniform1i(texLoc, 0);
-
-        glActiveTextureARB(GL_TEXTURE0_ARB);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glDepthMask(GL_FALSE);
-
-        glBegin(GL_POINTS);
-        for(size_t i = 0; i < ar->points_.size(); ++i)
-        {
-            if(i == pick_vert)
-                glColor3f(0.0, 1.0, 1.0);
-            else
-                glColor3f(0.0, 0.0, 1.0);
-            glVertex3fv(ar->points_[i].data());
-        }
-        glEnd();
-
-        glUseProgram(0);
-        glDisable(GL_POINT_SPRITE_ARB);
-        glDisable(GL_TEXTURE_2D);
-
-        glDepthMask(GL_TRUE);
 
         glFlush();
         glFinish();
