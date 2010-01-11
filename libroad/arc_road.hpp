@@ -7,6 +7,7 @@
 struct arc_road
 {
     float   length     (float offset) const;
+    float   length     (float t, float offset) const;
     vec3f   point      (float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
     mat3x3f frame      (float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;
     mat4x4f point_frame(float t, float offset, const vec3f &up=vec3f(0, 0, 1)) const;

@@ -300,6 +300,14 @@ float arc_road::length(const float offset) const
     return feature_base(2*frames_.size()+1, offset);
 }
 
+float arc_road::length(const float t, const float offset) const
+{
+    float center_local;
+    size_t feature_idx = locate_scale(t, 0.0f, center_local);
+
+    return length_at_feature(feature_idx, center_local, offset);
+}
+
 vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
 {
     vec3f pos;
@@ -426,10 +434,7 @@ void arc_road::translate(const vec3f &o)
 
 float arc_road::parameter_map(const float t, const float offset) const
 {
-    float center_local;
-    size_t feature_idx = locate_scale(t, 0.0f, center_local);
-
-    return length_at_feature(feature_idx, center_local, offset)/length(offset);
+    return length(t, offset)/length(offset);
 }
 
 float arc_road::length_at_feature(const size_t i, const float p, const float offset) const
