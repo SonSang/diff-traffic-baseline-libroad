@@ -241,7 +241,8 @@ public:
                                                           zoom(2.0),
                                                           car_pos(0.0f),
                                                           pick_vert(-1),
-                                                          glew_state(GLEW_OK+1)
+                                                          glew_state(GLEW_OK+1),
+                                                          light_position(50.0, 100.0, 50.0, 1.0)
     {
         lastmouse[0] = 0.0f;
         lastmouse[1] = 0.0f;
@@ -251,7 +252,6 @@ public:
 
     void setup_light()
     {
-        static const GLfloat light_position[] = { 0.0, 100.0, 0.0, 1.0 };
         static const GLfloat amb_light_rgba[] = { 0.1, 0.1, 0.1, 1.0 };
         static const GLfloat diff_light_rgba[] = { 0.7, 0.7, 0.7, 1.0 };
         static const GLfloat spec_light_rgba[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -264,7 +264,7 @@ public:
         glEnable(GL_COLOR_MATERIAL);
         glPushMatrix();
         glLoadIdentity();
-        glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position.data());
         glPopMatrix();
         glLightfv(GL_LIGHT0, GL_AMBIENT, amb_light_rgba );
         glLightfv(GL_LIGHT0, GL_DIFFUSE, diff_light_rgba );
@@ -325,6 +325,8 @@ public:
 
         nav.get_rotation();
         glMultMatrixd(nav.world_mat());
+
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position.data());
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_LIGHTING);
@@ -488,6 +490,7 @@ public:
 
     int pick_vert;
     GLuint glew_state;
+    vec4f light_position;
 };
 
 int main(int argc, char *argv[])
