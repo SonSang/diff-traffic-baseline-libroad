@@ -299,6 +299,27 @@ public:
                     }
                 }
                 glEnd();
+
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glEnable(GL_LIGHTING);
+
+                {
+                    mat4x4f trans(la.point_frame(car_pos));
+                    mat4x4f ttrans(tvmet::trans(trans));
+                    glColor3f(1.0, 1.0, 0.0);
+
+                    glDisable(GL_BLEND);
+                    glEnable(GL_LIGHTING);
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+                    glPushMatrix();
+                    glMultMatrixf(ttrans.data());
+                    draw_car();
+                    glPopMatrix();
+                }
+
+                glEnable(GL_BLEND);
+                glDisable(GL_LIGHTING);
             }
         }
 
