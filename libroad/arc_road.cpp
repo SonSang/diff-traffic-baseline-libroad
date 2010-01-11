@@ -318,7 +318,7 @@ vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
     {
         const int real_idx = idx/2-1;
 
-        if(real_idx < 0)
+        if(real_idx < 0 || frames_.empty())
         {
             pos = points_.front();
             tan = normals_.front();
@@ -347,7 +347,7 @@ mat3x3f arc_road::frame(const float t, const float offset, const vec3f &up) cons
     {
         const int real_idx = idx/2-1;
 
-        if(real_idx < 0)
+        if(real_idx < 0 || frames_.empty())
         {
             pos = points_.front();
             tan = normals_.front();
@@ -386,7 +386,7 @@ mat4x4f arc_road::point_frame(const float t, const float offset, const vec3f &up
     {
         const int real_idx = idx/2-1;
 
-        if(real_idx < 0)
+        if(real_idx < 0 || frames_.empty())
         {
             pos = points_.front();
             tan = normals_.front();
@@ -546,7 +546,7 @@ std::vector<vec3f> arc_road::extract_line(const vec2f &in_range, const float off
     {
         vec3f pos, tan;
         const int real_idx = start_feature/2-1;
-        if(real_idx < 0)
+        if(real_idx < 0 || frames_.empty())
         {
             pos = points_.front();
             tan = normals_.front();
@@ -572,7 +572,7 @@ std::vector<vec3f> arc_road::extract_line(const vec2f &in_range, const float off
     {
         vec3f pos, tan;
         const int real_idx = end_feature/2-1;
-        if(real_idx < 0)
+        if(real_idx < 0 || frames_.empty())
         {
             pos = points_.front();
             tan = normals_.front();
