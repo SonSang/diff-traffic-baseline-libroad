@@ -149,11 +149,32 @@ static float slack(const size_t idx, const std::vector<float> &lengths, const st
 
 bool arc_road::initialize()
 {
+    normals_.resize(points_.size()-1);
+    for(size_t i = 1; i < points_.size(); ++i)
+        normals_[i-1]    = points_[i] - points_[i-1];
+
+    size_t fill = 1;
+    for(size_t i = 1; i < normals_.size(); ++i)
+    {
+        const vec3f cp(tvmet::cross(normals_[i-1], normals_[i]));
+        if(tvmet::dot(cp, cp) > 1e-6)
+        {
+            if(fill != i)
+                points_[fill] = points_[i];
+            ++fill;
+        }
+    }
+    if(fill != normals_.size())
+        points_[fill] = points_[normals_.size()];
+    ++fill;
+    points_.resize(fill);
+
     const size_t N_pts  = points_.size();
     const size_t N_segs = N_pts - 1;
     const size_t N_arcs = N_pts - 2;
 
     normals_.resize(N_segs);
+
     std::vector<float> lengths(N_segs);
     for(size_t i = 1; i < N_pts; ++i)
     {
