@@ -29,8 +29,8 @@ static GLuint init_draw_car()
 
                                      {-(CAR_LENGTH-CAR_REAR_AXLE), -0.3f*LANE_WIDTH, 1.5f},  //4
                                      {              CAR_REAR_AXLE,-0.15f*LANE_WIDTH, 1.3f},  //5
-                                     {              CAR_REAR_AXLE, 0.15f*LANE_WIDTH, 1.3f},  //6
-                                     {-(CAR_LENGTH-CAR_REAR_AXLE),  0.3f*LANE_WIDTH, 1.5f}}; //7
+                                     {              CAR_REAR_AXLE, 0.00f*LANE_WIDTH, 1.3f},  //6
+                                     {-(CAR_LENGTH-CAR_REAR_AXLE),  0.0f*LANE_WIDTH, 1.5f}}; //7
 
     static const int faces[6][4] = {{ 7, 6, 5, 4}, // bottom
                                     { 0, 1, 2, 3}, // top
