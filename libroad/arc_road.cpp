@@ -636,8 +636,8 @@ void arc_road::make_mesh(std::vector<vec3f> &vrts, std::vector<vec3i> &faces,
                          const vec2f &offsets, const float resolution) const
 {
     std::vector<vec3f> low_pts, high_pts;
-    extract_line(low_pts, range, offsets[0], resolution);
-    extract_line(high_pts, range, offsets[1], resolution);
+    extract_center(low_pts, range, offsets[0], resolution);
+    extract_center(high_pts, range, offsets[1], resolution);
     ::make_mesh(vrts, faces, low_pts, high_pts);
 }
 
