@@ -18,6 +18,15 @@ namespace hwm
                 !parent_road->id.empty());
     }
 
+    void lane::road_membership::scale_offsets(const float lane_width)
+    {
+        if(lane_position < 0)
+            lane_position +=  0.5f;
+        else if(lane_position > 0)
+            lane_position += -0.5f;
+        lane_position *= lane_width;
+    }
+
     bool lane::road_membership::empty() const
     {
         return !parent_road;
@@ -61,5 +70,13 @@ namespace hwm
         }
 
         return true;
+    }
+
+    void lane::scale_offsets(const float lane_width)
+    {
+        BOOST_FOREACH(road_membership::intervals::entry &rmie, road_memberships)
+        {
+            rmie.second.scale_offsets(lane_width);
+        }
     }
 }

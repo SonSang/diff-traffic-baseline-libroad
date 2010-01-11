@@ -207,6 +207,15 @@ namespace hwm
         }
     }
 
+    void network::scale_offsets(const float lane_width)
+    {
+        typedef strhash<lane>::type::value_type lane_pair;
+        BOOST_FOREACH(lane_pair &lp, lanes)
+        {
+            lp.second.scale_offsets(lane_width);
+        }
+    }
+
     typedef strhash<road>::type::iterator         road_itr;
     typedef strhash<lane>::type::iterator         lane_itr;
     typedef strhash<intersection>::type::iterator intersection_itr;

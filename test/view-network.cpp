@@ -14,13 +14,13 @@ static inline tvmet::XprVector<tvmet::VectorConstReference<float, 3>, 3> cvec3f(
     return tvmet::cvector_ref<float,3>(mem);
 }
 
+static const float LANE_WIDTH = 2.5f;
+static const float CAR_LENGTH = 4.5f;
+//* This is the position of the car's axle from the FRONT bumper of the car
+static const float CAR_REAR_AXLE = 3.5f;
+
 static GLuint init_draw_car()
 {
-    static const float LANE_WIDTH = 2.5f;
-    static const float CAR_LENGTH = 4.5f;
-//* This is the position of the car's axle from the FRONT bumper of the car
-    static const float CAR_REAR_AXLE = 3.5f;
-
     static const float verts[][3] = {{-(CAR_LENGTH-CAR_REAR_AXLE), -0.3f*LANE_WIDTH, 0.0f},  //0
                                      {              CAR_REAR_AXLE,-0.15f*LANE_WIDTH, 0.0f},  //1
                                      {              CAR_REAR_AXLE, 0.15f*LANE_WIDTH, 0.0f},  //2
@@ -396,6 +396,7 @@ public:
 int main(int argc, char *argv[])
 {
     hwm::network net(hwm::load_xml_network(argv[1]));
+    net.scale_offsets(LANE_WIDTH);
 
     std::cerr << "HWM net loaded successfully" << std::endl;
 

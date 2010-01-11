@@ -37,6 +37,8 @@ namespace hwm
             bool check() const;
             bool empty() const;
 
+            void scale_offsets(float lane_width);
+
             typedef partition01<road_membership>  intervals;
             road                                 *parent_road;
             intervals::interval_t                 interval;
@@ -54,6 +56,7 @@ namespace hwm
         };
 
         bool check() const;
+        void scale_offsets(float lane_width);
 
         str                        id;
         road_membership::intervals road_memberships;
@@ -112,7 +115,7 @@ namespace hwm
         network &operator=(const network &n);
 
         bool check() const;
-
+        void scale_offsets(float lane_width);
         void translate(const vec3f &o);
 
         str                         name;
