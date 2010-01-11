@@ -6,11 +6,13 @@
 template <class T>
 struct partition01 : public std::map<float, T>
 {
-    typedef std::map<float, T>                          base;
-    typedef typename std::map<float, T>::iterator       iterator;
-    typedef typename std::map<float, T>::const_iterator const_iterator;
-    typedef std::pair<const float, T>                   entry;
-    typedef intervalf                                   interval_t;
+    typedef std::map<float, T>                                  base;
+    typedef typename std::map<float, T>::iterator               iterator;
+    typedef typename std::map<float, T>::reverse_iterator       reverse_iterator;
+    typedef typename std::map<float, T>::const_reverse_iterator const_reverse_iterator;
+    typedef typename std::map<float, T>::const_iterator         const_iterator;
+    typedef std::pair<const                                     float, T>                   entry;
+    typedef intervalf                                           interval_t;
 
     partition01() : base()
     {}
