@@ -108,6 +108,84 @@ struct car_draw
     GLuint n_vbo;
 };
 
+struct network_draw
+{
+    network_draw() : v_vbo(0), n_vbo(0), f_vbo(0), net(0)
+    {}
+
+    bool initialized() const
+    {
+        return net && v_vbo;
+    }
+
+    void initialize(const hwm::network *net, const float lane_width)
+    {
+        std::vector<vec3f> lane_points;
+
+        typedef std::pair<const str, hwm::lane> lmap_itr;
+        BOOST_FOREACH(const lmap_itr &l, net->lanes)
+        {
+            lane_starts.push_back(lane_points.size());
+
+            const hwm::lane &la = l.second;
+            typedef hwm::lane::road_membership::intervals::entry rme;
+            BOOST_FOREACH(const rme &rm_entry, la.road_memberships)
+            {
+                const hwm::lane::road_membership &rm = rm_entry.second;
+                const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rm.interval, rm.lane_position-lane_width*0.5, 0.5f));
+                lane_points.insert(lane_points.end(), pts.begin(), pts.end());
+            }
+            typedef hwm::lane::road_membership::intervals::const_reverse_iterator rme_it;
+            for(rme_it current = la.road_memberships.rbegin(); current != la.road_memberships.rend(); ++current)
+            {
+                const hwm::lane::road_membership &rm = current->second;
+                const vec2f rev_interval(rm.interval[1], rm.interval[0]);
+                const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rev_interval, rm.lane_position+lane_width*0.5, 0.5f));
+                lane_points.insert(lane_points.end(), pts.begin(), pts.end());
+            }
+
+            lane_counts.push_back(lane_points.size()-lane_starts.back());
+        }
+
+        glGenBuffersARB(1, &v_vbo);
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBufferDataARB(GL_ARRAY_BUFFER_ARB, lane_points.size()*3*sizeof(float), &(lane_points[0]), GL_STATIC_DRAW_ARB);
+
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    void draw()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawArrays(GL_LINE_LOOP, &(lane_starts[0]), &(lane_counts[0]), lane_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    ~network_draw()
+    {
+        if(v_vbo)
+            glDeleteBuffersARB(1, &v_vbo);
+        if(n_vbo)
+            glDeleteBuffersARB(1, &n_vbo);
+        if(f_vbo)
+            glDeleteBuffersARB(1, &f_vbo);
+    }
+
+    GLuint v_vbo;
+    GLuint n_vbo;
+    GLuint f_vbo;
+
+    std::vector<GLint>    lane_starts;
+    std::vector<GLsizei>  lane_counts;
+    hwm::network         *net;
+};
+
 static bool rm_invert(double A[16], double Ainv[16])
 {
     double swap_space[4];
@@ -314,6 +392,9 @@ public:
                                       1.5f,
                                       CAR_REAR_AXLE);
 
+            if(!network_drawer.initialized())
+                network_drawer.initialize(net, LANE_WIDTH);
+
             setup_light();
         }
 
@@ -328,61 +409,39 @@ public:
 
         glLightfv(GL_LIGHT0, GL_POSITION, light_position.data());
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDisable(GL_LIGHTING);
-
         if(net)
         {
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDisable(GL_LIGHTING);
+
+            glColor3f(1.0, 1.0, 1.0);
+            network_drawer.draw();
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_LIGHTING);
+
             typedef std::pair<const str, hwm::lane> lmap_itr;
             BOOST_FOREACH(const lmap_itr &l, net->lanes)
             {
                 const hwm::lane &la = l.second;
-                glColor3f(0.3, 0.3, 0.3);
-                glBegin(GL_LINE_LOOP);
-                typedef hwm::lane::road_membership::intervals::entry rme;
-                BOOST_FOREACH(const rme &rm_entry, la.road_memberships)
-                {
-                    const hwm::lane::road_membership &rm = rm_entry.second;
-                    const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rm.interval, rm.lane_position-LANE_WIDTH*0.5, 0.5f));
-                    BOOST_FOREACH(const vec3f &p, pts)
-                    {
-                        glVertex3fv(p.data());
-                    }
-                }
-                typedef hwm::lane::road_membership::intervals::const_reverse_iterator rme_it;
-                for(rme_it current = la.road_memberships.rbegin(); current != la.road_memberships.rend(); ++current)
-                {
-                    const hwm::lane::road_membership &rm = current->second;
-                    const vec2f rev_interval(rm.interval[1], rm.interval[0]);
-                    const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rev_interval, rm.lane_position+LANE_WIDTH*0.5, 0.5f));
-                    BOOST_FOREACH(const vec3f &p, pts)
-                    {
-                        glVertex3fv(p.data());
-                    }
-                }
-                glEnd();
 
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                mat4x4f trans(la.point_frame(car_pos));
+                mat4x4f ttrans(tvmet::trans(trans));
+                glColor3f(1.0, 1.0, 0.0);
+
+                glDisable(GL_BLEND);
                 glEnable(GL_LIGHTING);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-                {
-                    mat4x4f trans(la.point_frame(car_pos));
-                    mat4x4f ttrans(tvmet::trans(trans));
-                    glColor3f(1.0, 1.0, 0.0);
-
-                    glDisable(GL_BLEND);
-                    glEnable(GL_LIGHTING);
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-                    glPushMatrix();
-                    glMultMatrixf(ttrans.data());
-                    car_drawer.draw();
-                    glPopMatrix();
-                }
-
-                glEnable(GL_BLEND);
-                glDisable(GL_LIGHTING);
+                glPushMatrix();
+                glMultMatrixf(ttrans.data());
+                car_drawer.draw();
+                glPopMatrix();
             }
+
+            glEnable(GL_BLEND);
+            glDisable(GL_LIGHTING);
         }
 
         glFlush();
@@ -486,6 +545,7 @@ public:
 
     float         car_pos;
     car_draw      car_drawer;
+    network_draw  network_drawer;
     hwm::network *net;
 
     int pick_vert;
