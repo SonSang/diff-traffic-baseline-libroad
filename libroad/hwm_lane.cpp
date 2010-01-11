@@ -40,35 +40,22 @@ namespace hwm
 
     vec3f   lane::road_membership::point      (float t, const vec3f &up) const
     {
-        if(interval[0] > interval[1])
-            t = 1 - t;
+        t = t*(interval[1]-interval[0])+interval[0];
         return parent_road->rep.point(t, lane_position, up);
     }
 
     mat3x3f lane::road_membership::frame      (float t, const vec3f &up) const
     {
-        bool reversed = (interval[0] > interval[1]);
-        if(reversed)
-            t = 1 - t;
-        mat3x3f res(parent_road->rep.frame(t, lane_position, up));
-
-        if(reversed)
-        {//flip res
-        }
-        return res;
+        const bool reversed = (interval[0] > interval[1]);
+        t = t*(interval[1]-interval[0])+interval[0];
+        return parent_road->rep.frame(t, lane_position, reversed, up);
     }
 
     mat4x4f lane::road_membership::point_frame(float t, const vec3f &up) const
     {
-        bool reversed = (interval[0] > interval[1]);
-        if(reversed)
-            t = 1 - t;
-        mat4x4f res(parent_road->rep.point_frame(t*std::abs(interval[0]-interval[1])+interval[0], lane_position, up));
-
-        if(reversed)
-        {//flip res
-        }
-        return res;
+        const bool reversed = (interval[0] > interval[1]);
+        t = t*(interval[1]-interval[0])+interval[0];
+        return parent_road->rep.point_frame(t, lane_position, reversed, up);
     }
 
     bool lane::adjacency::check() const

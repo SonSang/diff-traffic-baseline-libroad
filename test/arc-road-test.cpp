@@ -413,7 +413,7 @@ public:
             glEnd();
 
             {
-                mat4x4f trans(ar->point_frame(car_pos, low_bnd));
+                mat4x4f trans(ar->point_frame(car_pos, low_bnd, false));
                 mat4x4f ttrans(tvmet::trans(trans));
                 glColor3f(1.0, 1.0, 0.0);
 
@@ -431,7 +431,7 @@ public:
                 glDisable(GL_LIGHTING);
             }
             {
-                mat4x4f trans(ar->point_frame(extract[0], 0.0f));
+                mat4x4f trans(ar->point_frame(extract[0], 0.0f, false));
                 mat4x4f ttrans(tvmet::trans(trans));
                 glColor3f(1.0, 0.0, 0.0);
 
@@ -450,7 +450,7 @@ public:
             }
 
             {
-                mat4x4f trans(ar->point_frame(extract[1], 0.0f));
+                mat4x4f trans(ar->point_frame(extract[1], 0.0f, false));
                 mat4x4f ttrans(tvmet::trans(trans));
                 glColor3f(0.0, 0.0, 1.0);
 

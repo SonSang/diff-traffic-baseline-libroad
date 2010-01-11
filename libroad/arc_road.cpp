@@ -339,7 +339,7 @@ vec3f arc_road::point(const float t, const float offset, const vec3f &up) const
     }
 }
 
-mat3x3f arc_road::frame(const float t, const float offset, const vec3f &up) const
+mat3x3f arc_road::frame(const float t, float offset, const bool reverse, const vec3f &up) const
 {
     vec3f pos;
     vec3f tan;
@@ -364,6 +364,12 @@ mat3x3f arc_road::frame(const float t, const float offset, const vec3f &up) cons
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
 
         pos += tan*local*feature_size(idx, offset);
+    }
+
+    if(reverse)
+    {
+        tan    *= -1;
+        offset *= -1;
     }
 
     const vec3f left  (tvmet::normalize(tvmet::cross(up, tan)));
@@ -378,7 +384,7 @@ mat3x3f arc_road::frame(const float t, const float offset, const vec3f &up) cons
     return res;
 }
 
-mat4x4f arc_road::point_frame(const float t, const float offset, const vec3f &up) const
+mat4x4f arc_road::point_frame(const float t, float offset, bool reverse, const vec3f &up) const
 {
     vec3f pos;
     vec3f tan;
@@ -403,6 +409,12 @@ mat4x4f arc_road::point_frame(const float t, const float offset, const vec3f &up
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
 
         pos += tan*local*feature_size(idx, offset);
+    }
+
+    if(reverse)
+    {
+        tan    *= -1;
+        offset *= -1;
     }
 
     const vec3f left  (tvmet::normalize(tvmet::cross(up, tan)));
@@ -694,5 +706,5 @@ bool arc_road::check() const
     && arcs_.size()         == N_pts-2
     && seg_clengths_.size() == N_pts
     && arc_clengths_.size() == N_pts-1
-    && normals_.size()       == N_pts-1;
+    && normals_.size()      == N_pts-1;
 }
