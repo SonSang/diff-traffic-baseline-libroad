@@ -274,12 +274,26 @@ public:
             typedef std::pair<const str, hwm::lane> lmap_itr;
             BOOST_FOREACH(const lmap_itr &l, net->lanes)
             {
+                const hwm::lane &la = l.second;
                 glColor3f(0.3, 0.3, 0.3);
-                glBegin(GL_LINE_STRIP);
+                glBegin(GL_LINE_LOOP);
                 typedef hwm::lane::road_membership::intervals::entry rme;
-                BOOST_FOREACH(const rme &rm, l.second.road_memberships)
+                BOOST_FOREACH(const rme &rm_entry, la.road_memberships)
                 {
-                    BOOST_FOREACH(const vec3f &p, rm.second.parent_road->rep.points_)
+                    const hwm::lane::road_membership &rm = rm_entry.second;
+                    const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rm.interval, rm.lane_position-LANE_WIDTH*0.5, 0.5f));
+                    BOOST_FOREACH(const vec3f &p, pts)
+                    {
+                        glVertex3fv(p.data());
+                    }
+                }
+                typedef hwm::lane::road_membership::intervals::const_reverse_iterator rme_it;
+                for(rme_it current = la.road_memberships.rbegin(); current != la.road_memberships.rend(); ++current)
+                {
+                    const hwm::lane::road_membership &rm = current->second;
+                    const vec2f rev_interval(rm.interval[1], rm.interval[0]);
+                    const std::vector<vec3f> pts(rm.parent_road->rep.extract_center(rev_interval, rm.lane_position+LANE_WIDTH*0.5, 0.5f));
+                    BOOST_FOREACH(const vec3f &p, pts)
                     {
                         glVertex3fv(p.data());
                     }
