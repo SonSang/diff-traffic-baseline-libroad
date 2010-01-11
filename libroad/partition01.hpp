@@ -27,7 +27,7 @@ struct partition01 : public std::map<float, T>
         const_iterator c_next_itr(boost::next(c_this_itr));
 
         return interval_t(c_this_itr->first,
-                          (c_next_itr == this->end()) ? 1.0f : c_this_itr->first);
+                          (c_next_itr == this->end()) ? 1.0f : c_next_itr->first);
     }
 
     float interval_length(const_iterator c_this_itr) const
