@@ -106,7 +106,32 @@ namespace hwm
         }
     }
 
-    float   lane::length     () const
+    void lane::make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, const float lane_width, const float resolution) const
+    {
+        int start_high = static_cast<int>(verts.size());
+
+        std::vector<vertex> new_verts;
+        typedef hwm::lane::road_membership::intervals::entry rme;
+        BOOST_FOREACH(const rme &rm_entry, road_memberships)
+        {
+            const hwm::lane::road_membership &rm = rm_entry.second;
+            rm.parent_road->rep.extract_center(new_verts, rm.interval, rm.lane_position-lane_width*0.5, resolution);
+        }
+        int end_high = static_cast<int>(verts.size() + new_verts.size());
+        typedef hwm::lane::road_membership::intervals::const_reverse_iterator rme_it;
+        for(rme_it current = road_memberships.rbegin(); current != road_memberships.rend(); ++current)
+        {
+            const hwm::lane::road_membership &rm = current->second;
+            const vec2f rev_interval(rm.interval[1], rm.interval[0]);
+            rm.parent_road->rep.extract_center(new_verts, rev_interval, rm.lane_position+lane_width*0.5, resolution);
+        }
+
+        verts.insert(verts.end(), new_verts.begin(), new_verts.end());
+
+        ::make_mesh(faces, verts, vec2i(start_high, end_high), vec2i(verts.size(), end_high));
+    }
+
+    float lane::length     () const
     {
         float total = 0.0f;
         BOOST_FOREACH(const road_membership::intervals::entry &rmie, road_memberships)

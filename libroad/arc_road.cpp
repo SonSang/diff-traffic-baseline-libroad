@@ -45,8 +45,8 @@ static vec3f triangle_angles(const vec3f &pt0, const vec3f &pt1, const vec3f &pt
     return vec3f(a0, a1, a2);
 }
 
-static void make_mesh(std::vector<vec3i> &faces, const std::vector<vertex> &vrts,
-                      const vec2i &low_range, const vec2i &high_range)
+void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
+               const vec2i &low_range, const vec2i &high_range)
 {
     int low_dir  = copysign(1, low_range[1] -low_range[0]);
     int high_dir = copysign(1, high_range[1]-high_range[0]);
@@ -107,7 +107,7 @@ static void make_mesh(std::vector<vec3i> &faces, const std::vector<vertex> &vrts
 
         if(pick_vrt)
         {
-            faces.push_back(vec3i(base_low_idx, base_high_idx, high_cand_vrt - &(vrts[0])));
+            faces.push_back(vec3u(base_low_idx, base_high_idx, high_cand_vrt - &(vrts[0])));
             base_high_idx = high_cand_vrt - &(vrts[0]);
             if( (high_dir < 0 && high_itr < high_range[1]) || (high_dir > 0 && high_itr >= high_range[1]) )
                 high_cand_vrt = 0;
@@ -119,7 +119,7 @@ static void make_mesh(std::vector<vec3i> &faces, const std::vector<vertex> &vrts
         }
         else
         {
-            faces.push_back(vec3i(base_low_idx, base_high_idx, low_cand_vrt - &(vrts[0])));
+            faces.push_back(vec3u(base_low_idx, base_high_idx, low_cand_vrt - &(vrts[0])));
             base_low_idx = low_cand_vrt - &(vrts[0]);
             if( (low_dir < 0 && low_itr < low_range[1]) || (low_dir > 0 && low_itr >= low_range[1]) )
                 low_cand_vrt = 0;
@@ -668,7 +668,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
     }
 }
 
-void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3i> &faces,
+void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                          const vec2f &range,
                          const vec2f &offsets, const float resolution) const
 {

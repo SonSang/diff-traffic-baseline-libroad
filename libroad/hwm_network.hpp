@@ -38,6 +38,7 @@ namespace hwm
             bool empty() const;
 
             void scale_offsets(float lane_width);
+
             float   length     () const;
             vec3f   point      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
             mat3x3f frame      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
@@ -61,6 +62,8 @@ namespace hwm
 
         bool check() const;
         void scale_offsets(float lane_width);
+
+        void make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, float lane_width, float resolution) const;
 
         float   length     () const;
         vec3f   point      (float t, const vec3f &up=vec3f(0, 0, 1)) const;

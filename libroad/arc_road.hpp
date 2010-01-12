@@ -6,6 +6,9 @@
 
 typedef std::pair<vec3f, vec3f> vertex;
 
+void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
+               const vec2i &low_range, const vec2i &high_range);
+
 struct arc_road
 {
     float   length     (float offset) const;
@@ -22,7 +25,7 @@ struct arc_road
 
     void extract_line  (std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
     void extract_center(std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
-    void make_mesh(std::vector<vertex> &vrts, std::vector<vec3i> &faces,
+    void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                    const vec2f &range,
                    const vec2f &offsets, const float resolution) const;
 

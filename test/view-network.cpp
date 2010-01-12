@@ -110,79 +110,101 @@ struct car_draw
 
 struct network_draw
 {
-    network_draw() : v_vbo(0), n_vbo(0), f_vbo(0), net(0)
+    network_draw() : v_vbo(0), f_vbo(0), net(0)
     {}
 
     bool initialized() const
     {
-        return net && v_vbo;
+        return net && v_vbo && f_vbo;
     }
 
     void initialize(const hwm::network *net, const float lane_width)
     {
         std::vector<vertex> lane_points;
+        std::vector<vec3u>  lane_faces;
 
         typedef std::pair<const str, hwm::lane> lmap_itr;
         BOOST_FOREACH(const lmap_itr &l, net->lanes)
         {
-            lane_starts.push_back(lane_points.size());
+            lane_vert_starts.push_back(lane_points.size());
+            lane_face_starts.push_back(lane_faces.size());
 
-            const hwm::lane &la = l.second;
-            std::vector<vertex> pts;
-            typedef hwm::lane::road_membership::intervals::entry rme;
-            BOOST_FOREACH(const rme &rm_entry, la.road_memberships)
-            {
-                const hwm::lane::road_membership &rm = rm_entry.second;
-                rm.parent_road->rep.extract_center(pts, rm.interval, rm.lane_position-lane_width*0.5, 0.5f);
-            }
-            typedef hwm::lane::road_membership::intervals::const_reverse_iterator rme_it;
-            for(rme_it current = la.road_memberships.rbegin(); current != la.road_memberships.rend(); ++current)
-            {
-                const hwm::lane::road_membership &rm = current->second;
-                const vec2f rev_interval(rm.interval[1], rm.interval[0]);
-                rm.parent_road->rep.extract_center(pts, rev_interval, rm.lane_position+lane_width*0.5, 0.5f);
-            }
+            l.second.make_mesh(lane_points, lane_faces, lane_width, 2.0f);
 
-            lane_points.insert(lane_points.end(), pts.begin(), pts.end());
-            lane_counts.push_back(lane_points.size()-lane_starts.back());
+            lane_vert_counts.push_back(lane_points.size()-lane_vert_starts.back());
+            lane_face_counts.push_back(lane_faces.size() -lane_face_starts.back());
+        }
+        BOOST_FOREACH(GLsizei &i, lane_face_counts)
+        {
+            i *= 3;
+        }
+        BOOST_FOREACH(size_t &i, lane_face_starts)
+        {
+            i *= sizeof(vec3u);
         }
 
         glGenBuffersARB(1, &v_vbo);
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glBufferDataARB(GL_ARRAY_BUFFER_ARB, lane_points.size()*sizeof(vertex), &(lane_points[0]), GL_STATIC_DRAW_ARB);
 
+        glGenBuffersARB(1, &f_vbo);
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+        glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, lane_faces.size()*sizeof(vec3i), &(lane_faces[0]), GL_STATIC_DRAW_ARB);
+
         assert(glGetError() == GL_NO_ERROR);
     }
 
-    void draw()
+    void draw_wire()
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
 
         assert(glGetError() == GL_NO_ERROR);
-        glMultiDrawArrays(GL_LINE_LOOP, &(lane_starts[0]), &(lane_counts[0]), lane_starts.size());
+        glMultiDrawArrays(GL_LINE_LOOP, &(lane_vert_starts[0]), &(lane_vert_counts[0]), lane_vert_starts.size());
 
         glDisableClientState(GL_VERTEX_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
     }
 
+    void draw_solid()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(sizeof(vec3f)));
+
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawElements(GL_TRIANGLES, &(lane_face_counts[0]), GL_UNSIGNED_INT, reinterpret_cast<const GLvoid**>(&(lane_face_starts[0])), lane_face_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+    }
+
+
     ~network_draw()
     {
         if(v_vbo)
             glDeleteBuffersARB(1, &v_vbo);
-        if(n_vbo)
-            glDeleteBuffersARB(1, &n_vbo);
         if(f_vbo)
             glDeleteBuffersARB(1, &f_vbo);
     }
 
     GLuint v_vbo;
-    GLuint n_vbo;
     GLuint f_vbo;
 
-    std::vector<GLint>    lane_starts;
-    std::vector<GLsizei>  lane_counts;
+    std::vector<GLint>    lane_vert_starts;
+    std::vector<GLsizei>  lane_vert_counts;
+    std::vector<size_t>   lane_face_starts;
+    std::vector<GLsizei>  lane_face_counts;
     hwm::network         *net;
 };
 
@@ -415,8 +437,10 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDisable(GL_LIGHTING);
 
-            glColor3f(1.0, 1.0, 1.0);
-            network_drawer.draw();
+            glColor3f(0.5, 0.5, 0.5);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_LIGHTING);
+            network_drawer.draw_solid();
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);

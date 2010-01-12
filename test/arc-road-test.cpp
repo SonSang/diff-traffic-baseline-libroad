@@ -424,12 +424,12 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             std::vector<vertex> v;
-            std::vector<vec3i> f;
+            std::vector<vec3u> f;
             ar->make_mesh(v, f, vec2f(0.0, 1.0), vec2f(-0.5, 0.5), 2.0);
             glBegin(GL_TRIANGLES);
-            BOOST_FOREACH(const vec3i &fa, f)
+            BOOST_FOREACH(const vec3u &fa, f)
             {
-                BOOST_FOREACH(const int &idx, fa)
+                BOOST_FOREACH(const unsigned int &idx, fa)
                 {
                     glNormal3fv(v[idx].second.data());
                     glVertex3fv(v[idx].first.data());
