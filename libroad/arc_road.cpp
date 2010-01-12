@@ -725,7 +725,7 @@ size_t arc_road::locate(const float t, const float offset) const
     const float scaled_t = t*length(offset);
 
     size_t low = 0;
-    size_t high = 2*frames_.size()+2;
+    size_t high = 2*frames_.size()+1;
     while (low < high)
     {
         const size_t mid = low + ((high - low) / 2);
@@ -738,7 +738,7 @@ size_t arc_road::locate(const float t, const float offset) const
     }
     if(low > 0)
         --low;
-    while(low < 2*frames_.size()+2 && feature_size(low, offset) == 0)
+    while(low < 2*frames_.size() && feature_size(low, offset) == 0)
         ++low;
 
     return low;
@@ -749,7 +749,7 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     const float scaled_t = t*length(offset);
 
     size_t low = 0;
-    size_t high = 2*frames_.size()+2;
+    size_t high = 2*frames_.size()+1;
     while (low < high)
     {
         const size_t mid = low + ((high - low) / 2);
@@ -762,7 +762,7 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     }
     if(low > 0)
         --low;
-    while(low < 2*frames_.size()+2 && feature_size(low, offset) == 0)
+    while(low < 2*frames_.size() && feature_size(low, offset) == 0)
         ++low;
 
     float lookup = feature_base(low, offset);
