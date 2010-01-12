@@ -17,6 +17,7 @@ struct arc_road
     mat3x3f frame      (float t, float offset, bool reverse, const vec3f &up=vec3f(0, 0, 1)) const;
     mat4x4f point_frame(float t, float offset, bool reverse, const vec3f &up=vec3f(0, 0, 1)) const;
     void    translate  (const vec3f &o);
+    void    bounding_box(vec3f &low, vec3f &high) const;
 
     float parameter_map(float t, float offset) const;
     float length_at_feature(size_t i, float p, float offset) const;

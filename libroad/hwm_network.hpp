@@ -14,6 +14,7 @@ namespace hwm
         bool check() const;
 
         void translate(const vec3f &o);
+        void bounding_box(vec3f &low, vec3f &high) const;
 
         str      id;
         str      name;
@@ -128,7 +129,12 @@ namespace hwm
 
         bool check() const;
         void scale_offsets(float lane_width);
+
+        void center();
+
         void translate(const vec3f &o);
+
+        void bounding_box(vec3f &low, vec3f &high) const;
 
         str                         name;
         float                       gamma;

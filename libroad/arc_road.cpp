@@ -474,6 +474,20 @@ void arc_road::translate(const vec3f &o)
     }
 }
 
+void arc_road::bounding_box(vec3f &low, vec3f &high) const
+{
+    BOOST_FOREACH(const vec3f &pt, points_)
+    {
+        for(size_t i = 0; i < 3; ++i)
+        {
+            if(pt[i] < low[i])
+                low[i] = pt[i];
+            if(pt[i] > high[i])
+                high[i] = pt[i];
+        }
+    }
+}
+
 float arc_road::parameter_map(const float t, const float offset) const
 {
     return length(t, offset)/length(offset);

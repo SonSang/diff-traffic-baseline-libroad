@@ -216,6 +216,24 @@ namespace hwm
         }
     }
 
+    void network::center()
+    {
+        vec3f low(FLT_MAX);
+        vec3f high(-FLT_MAX);
+        bounding_box(low, high);
+        const vec3f center((low+high)/2);
+        translate(vec3f(-center));
+    }
+
+    void network::bounding_box(vec3f &low, vec3f &high) const
+    {
+        typedef strhash<road>::type::value_type rval;
+        BOOST_FOREACH(const rval &rv, roads)
+        {
+            rv.second.bounding_box(low, high);
+        }
+    }
+
     typedef strhash<road>::type::iterator         road_itr;
     typedef strhash<lane>::type::iterator         lane_itr;
     typedef strhash<intersection>::type::iterator intersection_itr;

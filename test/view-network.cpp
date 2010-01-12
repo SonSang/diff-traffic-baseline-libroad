@@ -580,6 +580,7 @@ int main(int argc, char *argv[])
 {
     hwm::network net(hwm::load_xml_network(argv[1]));
     net.scale_offsets(LANE_WIDTH);
+    net.center();
 
     std::cerr << "HWM net loaded successfully" << std::endl;
 
