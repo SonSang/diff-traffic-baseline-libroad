@@ -130,7 +130,7 @@ namespace hwm
         bool check() const;
         void scale_offsets(float lane_width);
 
-        void center();
+        void center(bool z=false);
 
         void translate(const vec3f &o);
 

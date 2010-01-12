@@ -216,12 +216,14 @@ namespace hwm
         }
     }
 
-    void network::center()
+    void network::center(const bool z)
     {
         vec3f low(FLT_MAX);
         vec3f high(-FLT_MAX);
         bounding_box(low, high);
-        const vec3f center((low+high)/2);
+        vec3f center((low+high)/2);
+        if(!z)
+            center[2] = 0;
         translate(vec3f(-center));
     }
 
