@@ -1,28 +1,20 @@
-#include <libroad/hwm_network.hpp>
-#include <utility>
-#include <iostream>
-#include <cmath>
-#include <boost/foreach.hpp>
-#include <boost/utility.hpp>
+#include <GL/glew.h>
 #include <FL/Fl.H>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_Box.H>
+#include <FL/Fl_Gl_Window.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/gl.h>
 #include <FL/glu.h>
-#include <FL/glut.H>
-#include <FL/Fl_Gl_Window.H>
-#include <FL/Fl_Dial.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Double_Window.H>
-#include <FL/Fl_Float_Input.H>
-#include <unistd.h>
-#include <deque>
-#include <algorithm>
-#include <limits>
-
+#include "FL/glut.h"
+#include "arcball.hpp"
+#include "libroad/hwm_network.hpp"
+#include "libroad/hwm_draw.hpp"
 
 using namespace std;
 
+static const float LANE_WIDTH = 2.5f;
+static const float CAR_LENGTH = 4.5f;
+//* This is the position of the car's axle from the FRONT bumper of the car
+static const float CAR_REAR_AXLE = 3.5f;
 
 class car
 {
@@ -640,103 +632,280 @@ double timestep = 0.033;
 hwm::network* hnet;
 micro sim;
 
-
-class glWindow : public Fl_Gl_Window {
-    void draw();
-    int handle(int);
-
+class fltkview : public Fl_Gl_Window
+{
 public:
-    glWindow(int X, int Y, int W, int H, const char *L) : Fl_Gl_Window(X, Y, W, H, L){}
+    fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
+                                                          zoom(2.0),
+                                                          car_pos(0.0f),
+                                                          pick_vert(-1),
+                                                          glew_state(GLEW_OK+1),
+                                                          light_position(50.0, 100.0, 50.0, 1.0)
+    {
+        lastmouse[0] = 0.0f;
+        lastmouse[1] = 0.0f;
+
+        this->resizable(this);
+    }
+
+    void setup_light()
+    {
+        static const GLfloat amb_light_rgba[] = { 0.1, 0.1, 0.1, 1.0 };
+        static const GLfloat diff_light_rgba[] = { 0.7, 0.7, 0.7, 1.0 };
+        static const GLfloat spec_light_rgba[] = { 1.0, 1.0, 1.0, 1.0 };
+        static const GLfloat spec_material[] = { 1.0, 1.0, 1.0, 1.0 };
+        static const GLfloat material[] = { 1.0, 1.0, 1.0, 1.0 };
+        static const GLfloat shininess = 100.0;
+
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+        glEnable(GL_COLOR_MATERIAL);
+        glPushMatrix();
+        glLoadIdentity();
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position.data());
+        glPopMatrix();
+        glLightfv(GL_LIGHT0, GL_AMBIENT, amb_light_rgba );
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, diff_light_rgba );
+        glLightfv(GL_LIGHT0, GL_SPECULAR, spec_light_rgba );
+        glMaterialfv( GL_FRONT, GL_AMBIENT, material );
+        glMaterialfv( GL_FRONT, GL_DIFFUSE, material );
+        glMaterialfv( GL_FRONT, GL_SPECULAR, spec_material );
+        glMaterialfv( GL_FRONT, GL_SHININESS, &shininess);
+    }
+
+    void init_glew()
+    {
+        glew_state = glewInit();
+        if (GLEW_OK != glew_state)
+        {
+            /* Problem: glewInit failed, something is seriously wrong. */
+            std::cerr << "Error: " << glewGetErrorString(glew_state)  << std::endl;
+        }
+        std::cerr << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+    }
+
+    void draw()
+    {
+        if (!valid())
+        {
+            glViewport(0, 0, w(), h());
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 10.0f, 5000.0f);
+
+            glMatrixMode(GL_MODELVIEW);
+            glClearColor(0.0, 0.0, 0.0, 0.0);
+
+            glEnable(GL_DEPTH_TEST);
+
+            glHint(GL_LINE_SMOOTH_HINT,    GL_NICEST);
+            glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+
+            glEnable(GL_LINE_SMOOTH);
+
+            if(GLEW_OK != glew_state)
+                init_glew();
+
+            if(!car_drawer.initialized())
+                car_drawer.initialize(0.6*LANE_WIDTH,
+                                      CAR_LENGTH,
+                                      1.5f,
+                                      CAR_REAR_AXLE);
+
+            if(!network_drawer.initialized())
+                network_drawer.initialize(hnet, LANE_WIDTH);
+
+            setup_light();
+
+            bb[0] = vec3f(FLT_MAX);
+            bb[1] = vec3f(-FLT_MAX);
+            hnet->bounding_box(bb[0], bb[1]);
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+        glLoadIdentity();
+
+        glTranslatef(0.0f, 0.0f, -std::pow(2.0f, zoom));
+
+        nav.get_rotation();
+        glMultMatrixd(nav.world_mat());
+
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position.data());
+
+        sim.update(timestep, hnet->lanes, hnet->i_lanes);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDisable(GL_LIGHTING);
+        glColor3f(0.1, 0.2, 0.1);
+        glPushMatrix();
+        glTranslatef(0.0, 0.0, bb[0][2]-0.05f);
+        glBegin(GL_QUADS);
+        glVertex2f(bb[0][0], bb[0][1]);
+        glVertex2f(bb[1][0], bb[0][1]);
+        glVertex2f(bb[1][0], bb[1][1]);
+        glVertex2f(bb[0][0], bb[1][1]);
+        glEnd();
+        glPopMatrix();
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDisable(GL_LIGHTING);
+
+        glColor3f(0.5, 0.5, 0.5);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_LIGHTING);
+        network_drawer.draw_solid();
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDisable(GL_LIGHTING);
+
+        typedef pair<str, hwm::road> road_hash;
+        BOOST_FOREACH(road_hash r, hnet->i_roads)
+        {
+            glColor3f(0,0,0);
+            glBegin(GL_LINE_STRIP);
+            BOOST_FOREACH(vec3f point, r.second.rep.points_)
+            {
+                glVertex3f(point[0], point[1], point[2]);
+            }
+            glEnd();
+        }
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_LIGHTING);
+
+        typedef pair<str, const hwm::lane&> lane_hash;
+        BOOST_FOREACH(lane_hash l, hnet->lanes)
+        {
+            BOOST_FOREACH(const car& c, sim.cars_in_lane[l.first])
+            {
+                mat4x4f trans(l.second.point_frame(c.pos));
+                mat4x4f ttrans(tvmet::trans(trans));
+                glColor3f(1.0, 0.0, 0.0);
+
+                glPushMatrix();
+                glMultMatrixf(ttrans.data());
+                car_drawer.draw();
+                glPopMatrix();
+            }
+        }
+
+        for (strhash<hwm::isect_lane>::type::iterator l = hnet->i_lanes.begin(); l != hnet->i_lanes.end(); l++)
+        {
+            BOOST_FOREACH(const car& c, sim.cars_in_lane[l->first])
+            {
+                mat4x4f trans(l->second.point_frame(c.pos));
+                mat4x4f ttrans(tvmet::trans(trans));
+                glColor3f(1.0, 0.0, 0.0);
+
+                glPushMatrix();
+                glMultMatrixf(ttrans.data());
+                car_drawer.draw();
+                glPopMatrix();
+            }
+        }
+
+        glDisable(GL_LIGHTING);
+
+        glFlush();
+        glFinish();
+    }
+
+    int handle(int event)
+    {
+        switch(event)
+        {
+        case FL_PUSH:
+            {
+                int x = Fl::event_x();
+                int y = Fl::event_y();
+                float fx =   2.0f*x/(w()-1) - 1.0f;
+                float fy = -(2.0f*y/(h()-1) - 1.0f);
+                if(Fl::event_button() == FL_LEFT_MOUSE)
+                {
+                    nav.get_click(fx, fy);
+                }
+                else if(Fl::event_button() == FL_RIGHT_MOUSE)
+                {
+                }
+                else if(Fl::event_button() == FL_MIDDLE_MOUSE)
+                {
+                }
+                lastmouse[0] = fx;
+                lastmouse[1] = fy;
+                redraw();
+            }
+            take_focus();
+            return 1;
+        case FL_DRAG:
+            {
+                int x = Fl::event_x();
+                int y = Fl::event_y();
+                float fx =  2.0f*x/(w()-1)-1.0f;
+                float fy = -(2.0f*y/(h()-1)-1.0f);
+                if(Fl::event_button() == FL_LEFT_MOUSE)
+                {
+                    nav.get_click(fx, fy, 1.0f, true);
+                }
+                else if(Fl::event_button() == FL_RIGHT_MOUSE)
+                {
+                    float scale = std::pow(2.0f, zoom-1.0f);
+
+                    double update[3] = {
+                        (fx-lastmouse[0])*scale,
+                        (fy-lastmouse[1])*scale,
+                        0.0f
+                    };
+
+                    nav.translate(update);
+                }
+                else if(Fl::event_button() == FL_MIDDLE_MOUSE)
+                {
+                    float scale = std::pow(1.5f, zoom-1.0f);
+                    zoom += scale*(fy-lastmouse[1]);
+                    if(zoom > 17.0f)
+                        zoom = 17.0f;
+                    else if(zoom < FLT_MIN)
+                        zoom = FLT_MIN;
+
+                }
+                lastmouse[0] = fx;
+                lastmouse[1] = fy;
+                redraw();
+            }
+            take_focus();
+            return 1;
+        case FL_KEYBOARD:
+            switch(Fl::event_key())
+            {
+            default:
+                break;
+            }
+            redraw();
+            return 1;
+        case FL_MOUSEWHEEL:
+            take_focus();
+            return 1;
+        default:
+            // pass other events to the base class...
+            return Fl_Gl_Window::handle(event);
+        }
+    }
+
+    arcball nav;
+    float zoom;
+    float lastmouse[2];
+
+    float              car_pos;
+    hwm::car_draw      car_drawer;
+    hwm::network_draw  network_drawer;
+
+    vec3f bb[2];
+
+    int pick_vert;
+    GLuint glew_state;
+    vec4f light_position;
 };
-
-int glWindow::handle(int event){ return 0;}
-
-void glWindow::draw(){
-    if (!valid()) {
-        valid(1);
-        glViewport(0,0,w(),h());
-        glMatrixMode (GL_PROJECTION);
-        glLoadIdentity ();
-        gluPerspective(60.0, (GLdouble) w()/(GLdouble) h(), 1.0, -1.0);
-        gluLookAt(0,0,200,0,0,0,0,1,0);
-        glMatrixMode (GL_MODELVIEW);
-        glLoadIdentity();
-        glEnable (GL_BLEND); glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    sim.update(timestep, hnet->lanes, hnet->i_lanes);
-
-    typedef pair<str, hwm::road> road_hash;
-    BOOST_FOREACH(road_hash r, hnet->roads)
-    {
-        glLoadIdentity();
-        glColor3f(0,0,0);
-        glBegin(GL_LINE_STRIP);
-        BOOST_FOREACH(vec3f point, r.second.rep.points_)
-        {
-            glVertex3f(point[0], point[1], point[2]);
-        }
-        glEnd();
-    }
-
-
-    BOOST_FOREACH(road_hash r, hnet->i_roads)
-    {
-        glLoadIdentity();
-        glColor3f(0,0,0);
-        glBegin(GL_LINE_STRIP);
-        BOOST_FOREACH(vec3f point, r.second.rep.points_)
-        {
-            glVertex3f(point[0], point[1], point[2]);
-        }
-        glEnd();
-    }
-
-    glColor3f(1,0,0);
-    typedef pair<str, const hwm::lane&> lane_hash;
-    BOOST_FOREACH(lane_hash l, hnet->lanes)
-    {
-        glLoadIdentity();
-
-        BOOST_FOREACH(const car& c, sim.cars_in_lane[l.first]){
-            glLoadIdentity();
-
-            vec3f car_pos = l.second.point(c.pos);
-            glTranslatef(car_pos[0], car_pos[1], car_pos[2]);
-
-            glBegin(GL_POLYGON);
-            glVertex3f(0,1,0);
-            glVertex3f(0,-1,0);
-            glVertex3f(5,-1,0);
-            glVertex3f(5,1,0);
-            glEnd();
-        }
-    }
-
-
-    for (strhash<hwm::isect_lane>::type::iterator l = hnet->i_lanes.begin(); l != hnet->i_lanes.end(); l++)
-    {
-        glLoadIdentity();
-
-        BOOST_FOREACH(const car& c, sim.cars_in_lane[l->first]){
-            glLoadIdentity();
-
-            vec3f car_pos = l->second.point(c.pos);
-            glTranslatef(car_pos[0], car_pos[1], car_pos[2]);
-
-            glBegin(GL_POLYGON);
-            glVertex3f(0,1,0);
-            glVertex3f(0,-1,0);
-            glVertex3f(5,-1,0);
-            glVertex3f(5,1,0);
-            glEnd();
-        }
-    }
-}
-
 
 void timerCallback(void*)
 {
@@ -744,13 +913,12 @@ void timerCallback(void*)
     Fl::repeat_timeout(timestep, timerCallback);
 }
 
-
-void lane_test(const hwm::network&);
-
 int cars_per_lane = 20;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
+    hnet->scale_offsets(LANE_WIDTH);
+    hnet->center();
     hnet->build_intersection_roads();
 
     //Build hash for lane lengths.
@@ -790,27 +958,13 @@ int main(int argc, char** argv)
     //Make sure car configuration is numerically stable
     sim.newer_settle(timestep, hnet->lanes, hnet->i_lanes);
 
-    Fl_Double_Window *window = new Fl_Double_Window(500,500);
+    fltkview mv(0, 0, 500, 500, "fltk View");
+
     Fl::add_timeout(timestep, timerCallback);
-    glWindow* glWin = new glWindow(0, 0, window->w(), window->h(), 0);
-    glWin->mode(FL_DOUBLE);
 
-    window->end();
-    window->show(argc, argv);
-    glWin->show();
+    mv.take_focus();
+    Fl::visual(FL_DOUBLE|FL_DEPTH);
 
+    mv.show(1, argv);
     return Fl::run();
-
-    return 0;
-}
-
-
-void lane_test(const hwm::network& net)
-{
-    typedef pair<str, hwm::lane> lane_hash;
-    BOOST_FOREACH(const lane_hash& p, net.lanes)
-    {
-        if (p.second.road_memberships.size() > 0)
-            cout << p.second.point(0.5) << " is 0.5, -.5 is " << p.second.point(-0.5) << endl;
-    }
 }
