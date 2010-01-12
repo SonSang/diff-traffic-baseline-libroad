@@ -417,6 +417,13 @@ public:
                 network_drawer.initialize(net, LANE_WIDTH);
 
             setup_light();
+
+            if(net)
+            {
+                bb[0] = vec3f(FLT_MAX);
+                bb[1] = vec3f(-FLT_MAX);
+                net->bounding_box(bb[0], bb[1]);
+            }
         }
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -432,6 +439,18 @@ public:
 
         if(net)
         {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDisable(GL_LIGHTING);
+            glColor3f(0.1, 0.2, 0.1);
+            glPushMatrix();
+            glTranslatef(0.0, 0.0, bb[0][2]-0.05f);
+            glBegin(GL_QUADS);
+            glVertex2f(bb[0][0], bb[0][1]);
+            glVertex2f(bb[1][0], bb[0][1]);
+            glVertex2f(bb[1][0], bb[1][1]);
+            glVertex2f(bb[0][0], bb[1][1]);
+            glEnd();
+            glPopMatrix();
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDisable(GL_LIGHTING);
@@ -570,6 +589,8 @@ public:
     car_draw      car_drawer;
     network_draw  network_drawer;
     hwm::network *net;
+
+    vec3f bb[2];
 
     int pick_vert;
     GLuint glew_state;
