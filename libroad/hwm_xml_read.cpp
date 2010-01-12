@@ -14,7 +14,7 @@ namespace hwm
         return &(m[id]);
     }
 
-    static inline bool xml_read(polyline_road &pr, xmlpp::TextReader &reader)
+    static inline bool xml_read(network &n, polyline_road &pr, xmlpp::TextReader &reader)
     {
         assert(is_opening_element(reader, "line_rep"));
 
@@ -47,7 +47,7 @@ namespace hwm
                         instr >> pos[1];
                         instr >> pos[2];
 
-                        pr.points_.push_back(pos);
+                        pr.points_.push_back(vec3f(pos*n.scale));
                     }
                 }
             }
@@ -60,7 +60,7 @@ namespace hwm
         return read_to_close(reader, "line_rep");
     }
 
-    static inline bool xml_read(arc_road &ar, xmlpp::TextReader &reader)
+    static inline bool xml_read(network &n, arc_road &ar, xmlpp::TextReader &reader)
     {
         assert(is_opening_element(reader, "line_rep"));
 
@@ -93,7 +93,7 @@ namespace hwm
                         instr >> pos[1];
                         instr >> pos[2];
 
-                        ar.points_.push_back(pos);
+                        ar.points_.push_back(vec3f(pos*n.scale));
                     }
                 }
             }
@@ -317,7 +317,7 @@ namespace hwm
         if(!read_to_open(reader, "line_rep"))
             return false;
 
-        if(!xml_read(r.rep, reader))
+        if(!xml_read(n, r.rep, reader))
             return false;
 
         return read_to_close(reader, "road");
@@ -453,9 +453,10 @@ namespace hwm
         return res;
     }
 
-    network load_xml_network(const char *filename)
+    network load_xml_network(const char *filename, const vec3f &scale)
     {
         network n;
+        n.scale = scale;
         xmlpp::TextReader reader(filename);
 
         if(!read_skip_comment(reader))

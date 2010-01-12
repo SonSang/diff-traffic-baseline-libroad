@@ -9,6 +9,7 @@ namespace hwm
 
     void network::copy(const network &n)
     {
+        scale = n.scale;
         name  = n.name;
         gamma = n.gamma;
 
@@ -174,6 +175,12 @@ namespace hwm
         if(gamma <= 0.0f || gamma >= 1.0f)
             return false;
 
+        BOOST_FOREACH(const float &f, scale)
+        {
+            if(f == 0)
+                return false;
+        }
+
         typedef strhash<road>::type::value_type rval;
         BOOST_FOREACH(const rval &r, roads)
         {
@@ -262,6 +269,7 @@ namespace hwm
         network hnet;
         hnet.name  = name;
         hnet.gamma = gamma;
+        hnet.scale = vec3f(1.0, 1.0, 1.0);
 
         strhash<size_t>::type node_degree;
         BOOST_FOREACH(const node_pair &np, snet.nodes)

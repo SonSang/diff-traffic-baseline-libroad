@@ -578,7 +578,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-    hwm::network net(hwm::load_xml_network(argv[1]));
+    hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 15.0f)));
     net.scale_offsets(LANE_WIDTH);
     net.center();
 

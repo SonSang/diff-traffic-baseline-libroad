@@ -136,6 +136,7 @@ namespace hwm
 
         void bounding_box(vec3f &low, vec3f &high) const;
 
+        vec3f                       scale;
         str                         name;
         float                       gamma;
         strhash<road>::type         roads;
@@ -143,7 +144,7 @@ namespace hwm
         strhash<intersection>::type intersections;
     };
 
-    network load_xml_network(const char *filename);
+    network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void    write_xml_network(const network &n, const char *filename);
 
     network from_sumo(const str &name, float gamma, const sumo::network &n);
