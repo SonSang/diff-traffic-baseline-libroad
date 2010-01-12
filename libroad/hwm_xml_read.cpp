@@ -249,7 +249,8 @@ namespace hwm
 
         bool res = true;
         while(res && !(is_opening_element(reader, "dead_end") ||
-                       is_opening_element(reader, "intersection_ref")))
+                       is_opening_element(reader, "intersection_ref") ||
+                       is_opening_element(reader, "lane_ref")))
             res = read_skip_comment(reader);
 
         if(!res)
@@ -288,6 +289,15 @@ namespace hwm
             if(!read_to_close(reader, "intersection_ref"))
                 return false;
         }
+        else if(is_opening_element(reader, "lane_ref"))
+        {
+            lt.inters           = 0;
+            lt.intersect_in_ref = -1;
+            if(!read_to_close(reader, "lane_ref"))
+                return false;
+        }
+        else
+            return false;
 
         return read_to_close(reader, tag);
     }
