@@ -290,6 +290,7 @@ bool arc_road::initialize()
     {
         const float alpha = alphas[i];
         radii_[i] = alpha * cot_theta(normals_[i], normals_[i+1]);
+        assert(std::isfinite(radii_[i]));
 
         const vec3f   laxis(tvmet::normalize(tvmet::cross(normals_[i+1], normals_[i])));
         const mat3x3f rot_pi2(axis_angle_matrix(M_PI_2, laxis));
@@ -715,6 +716,7 @@ float arc_road::feature_base(const size_t i, const float offset) const
 
 float arc_road::feature_size(const size_t i, const float offset) const
 {
+    assert(i < 2*frames_.size()+1);
     return feature_base(i+1, offset) - feature_base(i, offset);
 }
 
@@ -767,6 +769,8 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     float base   = feature_size(low, offset);
 
     local = (scaled_t - lookup) / base;
+
+    assert(local >= 0.0f);
 
     return low;
 }
