@@ -25,7 +25,7 @@ namespace osm
 
     };
 
-    struct shape_t : public std::vector<node>
+    struct shape_t : public std::vector<node*>
     {
     };
 
@@ -65,6 +65,7 @@ namespace osm
         strhash<int>::type      node_degrees;
         strhash<std::vector<str> >::type  node_connections;
 
+        bool scale_and_translate();
         bool check_edge(const edge &e) const;
         bool check_node(const node &n) const;
         bool check() const;

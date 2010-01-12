@@ -43,7 +43,7 @@ namespace osm
                 get_attribute(n_id, reader, "ref");
                 current_node = retrieve<node>(n.nodes, n_id);
 
-                e.shape.push_back(*current_node);
+                e.shape.push_back(current_node);
 
                 //Set the "to node" -- which is expected to be the last node --
                 //every time.  On the final iteration, the last node will be kept.

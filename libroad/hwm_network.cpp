@@ -183,7 +183,7 @@ namespace hwm
 
     vec2d bias;
     bool first_for_convert = true;
-    osm::node last;
+    const osm::node* last;
     network from_osm(const str &name, const float gamma, const osm::network &snet)
     {
         typedef strhash<osm::node>::type::value_type      node_pair;
@@ -211,21 +211,15 @@ namespace hwm
 
             new_road.rep.points_.reserve(2 + e.shape.size());
 
-            if (first_for_convert)
-            {
-                bias = e.shape[0].xy;
 
-                first_for_convert = false;
-            }
-
-            BOOST_FOREACH(const osm::node &n, e.shape)
+            BOOST_FOREACH(const osm::node *n, e.shape)
             {
-                new_road.rep.points_.push_back(vec3f((n.xy[0] - bias[0])*10000,
-                                                     (n.xy[1] - bias[1])*10000,
+                new_road.rep.points_.push_back(vec3f(n->xy[0],
+                                                     n->xy[1],
                                                      0.0f));
-                if (n.id != e.shape[0].id)
+                if (n->id != e.shape[0]->id)
                 {
-                    assert(sqrt(pow(n.xy[0] - last.xy[0],2) + pow(n.xy[1] - last.xy[1],2)) > 1e-7);
+                    assert(sqrt(pow(n->xy[0] - last->xy[0],2) + pow(n->xy[1] - last->xy[1],2)) > 1e-7);
                 }
                 last = n;
             }

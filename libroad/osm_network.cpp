@@ -18,8 +18,7 @@
 
 vec2d bias, prev;
 bool first_for_display = 1;
-double scale = 20.0;
-
+double scale = 157253.2964;
 
 using boost::fusion::at_c;
 
@@ -38,6 +37,9 @@ namespace osm
 
     bool network::draw_network()
     {
+
+        if (first_for_display)
+            std::cout << "Drawing .. " << std::endl;
 
         glColor3f(0,0,0);
 
@@ -60,45 +62,20 @@ namespace osm
             glColor3f(at_c<0>(colors[i]),
                       at_c<1>(colors[i]),
                       at_c<2>(colors[i]));
-            vec2d pt = e_nodes[0].xy;
-            if (first_for_display)
-            {
-                first_for_display = 0;
-                bias = pt;
-            }
 
-            glVertex3f((pt[0] - bias[0])*scale,
-                       (pt[1] - bias[1])*scale,
-                       0);
-            for(int i = 1; i < e_nodes.size(); i++)
+            for(int j = 0; j < e_nodes.size(); j++)
             {
-                glVertex3f((e_nodes[i].xy[0] - bias[0])*scale,
-                           (e_nodes[i].xy[1] - bias[1])*scale,
+                if (first_for_display)
+                    std::cout << e_nodes[j]->xy[0] << " " << e_nodes[j]->xy[1] << std::endl;
+                glVertex3f((e_nodes[j]->xy[0]),
+                           (e_nodes[j]->xy[1]),
                            0);
             }
-            // BOOST_FOREACH(node& n, e_nodes)
-            // {
-            //     vec2dg pt = n.xy;
-            //     if (first_for_display)
-            //     {
-            //         first_for_display = 0;
-            //         bias = pt;
-            //     }
-            //     glColor3f(at_c<0>(colors[i]), at_c<1>(colors[i]), at_c<2>(colors[i]));
-            //     glVertex3f((pt[0] - bias[0])*scale, (pt[1] - bias[1])*scale, 0);
 
-            //     //Don't write the second point for the first segment of the road. (Previous point does not exist.)
-            //     if ((pt[0] != e_nodes[0].xy[0]) and
-            //               (pt[1] != e_nodes[0].xy[1]))
-            //     {
-            //         glVertex3f((prev[0] - bias[0])*scale, (prev[1] - bias[1])*scale, 0);
-            //     }
-
-            //     prev = pt;
-            // }
             glEnd();
             i++;
         }
+        first_for_display = false;
 
     }
 
@@ -113,19 +90,19 @@ namespace osm
         {
             const osm::edge &e = ep.second;
 
-            BOOST_FOREACH(const osm::node &n, e.shape)
+            BOOST_FOREACH(const osm::node *n, e.shape)
             {
-                node_degrees[n.id]++;
+                node_degrees[n->id]++;
             }
         }
     }
 
     bool network::join(osm::edge* a, osm::edge* b)
     {
-        assert(a->shape[0].id == a->from);
-        assert(a->shape[a->shape.size() - 1].id == a->to);
-        assert(b->shape[0].id == b->from);
-        assert(b->shape[b->shape.size() - 1].id == b->to);
+        assert(a->shape[0]->id == a->from);
+        assert(a->shape[a->shape.size() - 1]->id == a->to);
+        assert(b->shape[0]->id == b->from);
+        assert(b->shape[b->shape.size() - 1]->id == b->to);
         assert(a->to == b->from);
 
         uint a_size = a->shape.size();
@@ -162,50 +139,112 @@ namespace osm
             }
         }
 
-
-        double tmp_offset = 0.005;
+        //Pull back roads to make room for intersections.
+        //TODO use geometric method to create exact intersection geometry.
+        double tmp_offset = 20;
         BOOST_FOREACH(const osm::intr_pair &ip, intersections)
         {
             const intersection& i = ip.second;
-            std::cout << "starting count " << i.edges_starting_here.size() << std::endl;
-            std::cout << "ending count " << i.edges_ending_here.size() << std::endl;
 
             BOOST_FOREACH(const str& edge_id, i.edges_starting_here)
             {
-                vec2d start_seg = edges[edge_id].shape[1].xy;
-                start_seg -= edges[edge_id].shape[0].xy;
+                double len_thus_far = 0;
+                double _len = 0;
+                //Remove elements until the next segment's length is greater than offset - previous segments.
+                int new_start = -1;
+                do{
+                    //TODO could go infinite for tiny roads.
+                    len_thus_far += _len;
+                    new_start++;
+                    vec2d start = edges[edge_id].shape[new_start + 1]->xy;
+                    start -= edges[edge_id].shape[new_start]->xy;
+                    _len = sqrt(start[0]*start[0] + start[1]*start[1]);
+                }while (len_thus_far + _len<= tmp_offset); //TODO degenerate case when equal.
+
+                //Modify geometry to make room for intersection.
+                vec2d start_seg = edges[edge_id].shape[new_start + 1]->xy;
+                start_seg -= edges[edge_id].shape[new_start]->xy;
 
                 double len = sqrt(start_seg[0]*start_seg[0] + start_seg[1]*start_seg[1]);
-                double factor = (len - tmp_offset)/len;
+                double factor = (len - (tmp_offset - len_thus_far))/len;
                 start_seg *= factor;
-                edges[edge_id].shape[0].xy[0] = edges[edge_id].shape[1].xy[0] - start_seg[0];
-                edges[edge_id].shape[0].xy[1] = edges[edge_id].shape[1].xy[1] - start_seg[1];
 
+                edges[edge_id].shape[new_start] = new node(*edges[edge_id].shape[new_start]);
+                edges[edge_id].shape[new_start]->xy[0] = edges[edge_id].shape[new_start + 1]->xy[0] - start_seg[0];
+                edges[edge_id].shape[new_start]->xy[1] = edges[edge_id].shape[new_start + 1]->xy[1] - start_seg[1];
+
+                if (new_start != 0)
+                {
+                    edges[edge_id].shape.erase(edges[edge_id].shape.begin(), edges[edge_id].shape.begin() + new_start);
+                }
             }
+
+
+
             BOOST_FOREACH(const str& edge_id, i.edges_ending_here)
             {
-                vec2d end_seg = (edges[edge_id].shape.end()--)->xy;
+                double len_thus_far = 0;
+                double _len = 0;
+                int new_end = edges[edge_id].shape.size();
+                do{
+                    //TODO could go infinite for tiny roads.
+                    len_thus_far += _len;
+                    new_end--;
+                    vec2d seg = edges[edge_id].shape[new_end]->xy;
+                    seg -= edges[edge_id].shape[new_end - 1]->xy;
+                    _len = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
+                }while(len_thus_far + _len <= tmp_offset);
 
-                end_seg -=  ((edges[edge_id].shape.end()--)--)->xy;
+                int size = edges[edge_id].shape.size();
+                vec2d end_seg = edges[edge_id].shape[new_end]->xy;
 
+                end_seg -=  edges[edge_id].shape[new_end - 1]->xy;
 
                 double len = sqrt(end_seg[0]*end_seg[0] + end_seg[1]*end_seg[1]);
-                double factor = (len - tmp_offset)/len;
-                std::cout << end_seg << std::endl;
-                std::cout << factor << std::endl;
+                double factor = (len - (tmp_offset - len_thus_far))/len;
+
                 end_seg *= factor;
-                std::cout << end_seg << std::endl;
 
-                (edges[edge_id].shape.end()--)->xy[0] = ((edges[edge_id].shape.end()--)--)->xy[0] + end_seg[0];
-                (edges[edge_id].shape.end()--)->xy[1] = ((edges[edge_id].shape.end()--)--)->xy[1] + end_seg[1];
+                edges[edge_id].shape[new_end] = new node(*edges[edge_id].shape[new_end]);
 
+                edges[edge_id].shape[new_end]->xy[0] = edges[edge_id].shape[new_end - 1]->xy[0] + end_seg[0];
 
+                edges[edge_id].shape[new_end]->xy[1] = edges[edge_id].shape[new_end - 1]->xy[1] + end_seg[1];
+
+                if (new_end != edges[edge_id].shape.size() - 1)
+                {
+                    edges[edge_id].shape.erase(edges[edge_id].shape.begin() + new_end + 1, edges[edge_id].shape.end());
+                }
             }
         }
 
 
 
+
         return true;
+    }
+
+    bool network::scale_and_translate()
+    {
+        bool first = true;
+        vec2d bias;
+
+        std::cout << nodes.size() << "nodes " << std::endl;
+        BOOST_FOREACH(osm::node_pair &np, nodes)
+        {
+            if (first)
+            {
+                vec2d pt = np.second.xy;
+                first = false;
+                bias = pt*scale;
+            }
+
+
+            np.second.xy[0] = np.second.xy[0]*scale - bias[0];
+            np.second.xy[1] = np.second.xy[1]*scale - bias[1];
+            std::cout << np.second.xy[0] << " " << np.second.xy[1] << std::endl;
+        }
+
     }
 
 
@@ -226,8 +265,8 @@ namespace osm
 
             edge* e = &ep.second;
             //assert(e->to != e->from);
-            assert(e->to == (--e->shape.end())->id);
-            assert(e->from == (e->shape.begin())->id);
+            assert(e->to == (*(--e->shape.end()))->id);
+            assert(e->from == (*(e->shape.begin()))->id);
 
             //If this edge has been merged into another, load that edge.
             edge e_foo;
@@ -304,19 +343,19 @@ namespace osm
         std::map<str, std::vector<str> > road_split_points;
         BOOST_FOREACH(edge_pair &ep, edges)
         {
-            BOOST_FOREACH(node &node, ep.second.shape)
+            BOOST_FOREACH(node *node, ep.second.shape)
              {
 
                 //Skip the first and last nodes.
-                if (ep.second.from == node.id)
+                if (ep.second.from == node->id)
                     continue;
 
-                if (ep.second.to == node.id)
+                if (ep.second.to == node->id)
                     continue;
 
-                if (node_degrees[node.id] > 1)
+                if (node_degrees[node->id] > 1)
                 {
-                    road_split_points[ep.first].push_back(node.id);
+                    road_split_points[ep.first].push_back(node->id);
                 }
             }
         }
@@ -325,7 +364,6 @@ namespace osm
         std::vector<edge> new_edges;
         BOOST_FOREACH(edge_pair &ep, edges)
         {
-            std::cout << "Next edge " << std::endl;
             edge& _edge = ep.second;
             int node_index = 0;
             int _edge_ending_node = 0;
@@ -334,33 +372,30 @@ namespace osm
             bool _first = true;
             BOOST_FOREACH(str id, road_split_points[ep.first])
             {
-                std::cout << "Next split point " << std::endl;
 
                 //Skip the first splitter if it's the first point of the road.
-                if (id == _edge.shape[0].id){
+                if (id == _edge.shape[0]->id){
                     continue;
                 }
 
                 if (not _first)
                  {
                     new_edges.push_back(copy_no_shape(_edge));
-                    (--new_edges.end())->from = _edge.shape[node_index].id;
-                    (--new_edges.end())->shape.push_back(nodes[_edge.shape[node_index].id]);
+                    (--new_edges.end())->from = _edge.shape[node_index]->id;
+                    (--new_edges.end())->shape.push_back(&nodes[_edge.shape[node_index]->id]);
                 }
 
                 //Add each node to new edge up to, and including, the next splitter
                 //Set the first node of the new edge
-                std::cout << id << " " << _edge.shape[node_index].id << std::endl;
 
-                while (_edge.shape[node_index].id != id)
+                while (_edge.shape[node_index]->id != id)
                 {
                     node_index++;
-                    std::cout << id << " " << _edge.shape[node_index].id << std::endl;
                     if (not _first)
                     {
                         //Add nodes to new road
-                        (--new_edges.end())->shape.push_back(nodes[_edge.shape[node_index].id]);
-                        (--new_edges.end())->to = _edge.shape[node_index].id;
+                        (--new_edges.end())->shape.push_back(&nodes[_edge.shape[node_index]->id]);
+                        (--new_edges.end())->to = _edge.shape[node_index]->id;
                     }
                 }
 
@@ -370,10 +405,8 @@ namespace osm
                 //Node index is at the index of the split point.
                 if (_first)
                 {
-                    std::cout << "setting edge_ending here " << node_index << std::endl;
-
                     //Update the node this road goes up to.
-                    _edge.to = _edge.shape[node_index].id;
+                    _edge.to = _edge.shape[node_index]->id;
 
                     _edge_ending_node = node_index;
 
@@ -387,10 +420,10 @@ namespace osm
                 //Now node_index is on the final splitter.
                 //Add that splitter and all remaining nodes to a new edge.
                 new_edges.push_back(copy_no_shape(_edge));
-                (--new_edges.end())->from = _edge.shape[node_index].id;
+                (--new_edges.end())->from = _edge.shape[node_index]->id;
                 for (;node_index < _edge.shape.size(); node_index++){
                     (--new_edges.end())->shape.push_back(_edge.shape[node_index]);
-                    (--new_edges.end())->to = _edge.shape[node_index].id;
+                    (--new_edges.end())->to = _edge.shape[node_index]->id;
                 }
                 assert((--new_edges.end())->shape.size() > 1);
                 //Remove the deleted nodes from the original edge
