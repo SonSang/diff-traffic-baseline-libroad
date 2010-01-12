@@ -478,7 +478,7 @@ public:
             glBegin(GL_POINTS);
             for(size_t i = 0; i < ar->points_.size(); ++i)
             {
-                if(i == pick_vert)
+                if(static_cast<int>(i) == pick_vert)
                     glColor3f(0.0, 1.0, 1.0);
                 else
                     glColor3f(0.0, 0.0, 1.0);
