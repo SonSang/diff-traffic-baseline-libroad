@@ -7,68 +7,13 @@
 #include "FL/glut.h"
 #include "arcball.hpp"
 #include "libroad/arc_road.hpp"
+#include "libroad/hwm_draw.hpp"
 
 static const float PT_SIZE = 2.0f;
-
-static inline tvmet::XprVector<tvmet::VectorConstReference<float, 3>, 3> cvec3f(const float *mem)
-{
-    return tvmet::cvector_ref<float,3>(mem);
-}
-
-static GLuint init_draw_car()
-{
-    static const float LANE_WIDTH = 2.5f;
-    static const float CAR_LENGTH = 4.5f;
+static const float LANE_WIDTH = 2.5f;
+static const float CAR_LENGTH = 4.5f;
 //* This is the position of the car's axle from the FRONT bumper of the car
-    static const float CAR_REAR_AXLE = 3.5f;
-
-    static const float verts[][3] = {{-(CAR_LENGTH-CAR_REAR_AXLE), -0.3f*LANE_WIDTH, 0.0f},  //0
-                                     {              CAR_REAR_AXLE,-0.15f*LANE_WIDTH, 0.0f},  //1
-                                     {              CAR_REAR_AXLE, 0.15f*LANE_WIDTH, 0.0f},  //2
-                                     {-(CAR_LENGTH-CAR_REAR_AXLE),  0.3f*LANE_WIDTH, 0.0f},  //3
-
-                                     {-(CAR_LENGTH-CAR_REAR_AXLE), -0.3f*LANE_WIDTH, 1.5f},  //4
-                                     {              CAR_REAR_AXLE,-0.15f*LANE_WIDTH, 1.3f},  //5
-                                     {              CAR_REAR_AXLE, 0.00f*LANE_WIDTH, 1.3f},  //6
-                                     {-(CAR_LENGTH-CAR_REAR_AXLE),  0.0f*LANE_WIDTH, 1.5f}}; //7
-
-    static const int faces[6][4] = {{ 7, 6, 5, 4}, // bottom
-                                    { 0, 1, 2, 3}, // top
-                                    { 1, 5, 4, 0}, // left side
-                                    { 0, 3, 7, 4}, // back
-                                    { 3, 7, 6, 2}, // right side
-                                    { 5, 6, 2, 1}};// front
-
-    GLuint car_list = glGenLists(1);
-    glPushMatrix();
-    glNewList(car_list, GL_COMPILE);
-    glBegin(GL_QUADS);
-    for(int i = 0; i < 6; ++i)
-    {
-        const vec3f d10 (cvec3f(verts[faces[i][1]]) - cvec3f(verts[faces[i][0]]));
-        const vec3f d20 (cvec3f(verts[faces[i][2]]) - cvec3f(verts[faces[i][0]]));
-        vec3f norm(tvmet::cross(d10, d20));
-        float norm_len = std::sqrt(tvmet::dot(norm, norm));
-        norm /= norm_len;
-        glNormal3f(norm[0], norm[1], norm[2]);
-        for(int j = 0; j < 4; ++j)
-            glVertex3fv(&(verts[faces[i][j]][0]));
-    }
-    glEnd();
-    glEndList();
-    glPopMatrix();
-
-    return car_list;
-}
-
-static void draw_car()
-{
-    static GLuint car_list = 0;
-
-    if(!car_list)
-        car_list = init_draw_car();
-    glCallList(car_list);
-}
+static const float CAR_REAR_AXLE = 3.5f;
 
 static const char vertexShader[] =
 {
@@ -372,6 +317,12 @@ public:
             if(!texture)
                 make_texture();
 
+            if(!car_drawer.initialized())
+                car_drawer.initialize(0.6*LANE_WIDTH,
+                                      CAR_LENGTH,
+                                      1.5f,
+                                      CAR_REAR_AXLE);
+
             setup_light();
         }
 
@@ -449,7 +400,7 @@ public:
                 glPushMatrix();
 
                 glMultMatrixf(ttrans.data());
-                draw_car();
+                car_drawer.draw();
                 glPopMatrix();
 
                 glEnable(GL_BLEND);
@@ -467,7 +418,7 @@ public:
                 glPushMatrix();
 
                 glMultMatrixf(ttrans.data());
-                draw_car();
+                car_drawer.draw();
                 glPopMatrix();
 
                 glEnable(GL_BLEND);
@@ -486,7 +437,7 @@ public:
                 glPushMatrix();
 
                 glMultMatrixf(ttrans.data());
-                draw_car();
+                car_drawer.draw();
                 glPopMatrix();
 
                 glEnable(GL_BLEND);
@@ -767,7 +718,8 @@ public:
 
     int pick_vert;
 
-    vec2f extract;
+    vec2f         extract;
+    hwm::car_draw car_drawer;
 };
 
 int main(int argc, char *argv[])
