@@ -586,7 +586,10 @@ int main(int argc, char *argv[])
     if(net.check())
         std::cerr << "HWM net checks out" << std::endl;
     else
+    {
         std::cerr << "HWM net doesn't check out" << std::endl;
+        exit(1);
+    }
 
     fltkview mv(0, 0, 500, 500, "fltk View");
 
