@@ -181,7 +181,7 @@ bool arc_road::initialize()
 {
     normals_.resize(points_.size()-1);
     for(size_t i = 1; i < points_.size(); ++i)
-        normals_[i-1]    = points_[i] - points_[i-1];
+        normals_[i-1] = tvmet::normalize(points_[i] - points_[i-1]);
 
     size_t fill = 1;
     for(size_t i = 1; i < normals_.size(); ++i)
