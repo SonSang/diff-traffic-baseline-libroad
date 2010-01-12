@@ -110,12 +110,12 @@ struct car_draw
 
 struct network_draw
 {
-    network_draw() : v_vbo(0), f_vbo(0), net(0)
+    network_draw() : v_vbo(0), f_vbo(0)
     {}
 
     bool initialized() const
     {
-        return net && v_vbo && f_vbo;
+        return v_vbo && f_vbo;
     }
 
     void initialize(const hwm::network *net, const float lane_width)
@@ -205,7 +205,6 @@ struct network_draw
     std::vector<GLsizei>  lane_vert_counts;
     std::vector<size_t>   lane_face_starts;
     std::vector<GLsizei>  lane_face_counts;
-    hwm::network         *net;
 };
 
 static bool rm_invert(double A[16], double Ainv[16])
@@ -393,7 +392,7 @@ public:
             glViewport(0, 0, w(), h());
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 10.0f, 500.0f);
+            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 10.0f, 5000.0f);
 
             glMatrixMode(GL_MODELVIEW);
             glClearColor(0.0, 0.0, 0.0, 0.0);
