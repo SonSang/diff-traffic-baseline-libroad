@@ -775,7 +775,7 @@ public:
         glEnable(GL_LIGHTING);
 
         typedef pair<str, const hwm::lane&> lane_hash;
-        BOOST_FOREACH(lane_hash l, hnet->lanes)
+        BOOST_FOREACH(const lane_hash &l, hnet->lanes)
         {
             BOOST_FOREACH(const car& c, sim.cars_in_lane[l.first])
             {
@@ -790,11 +790,13 @@ public:
             }
         }
 
-        for (strhash<hwm::isect_lane>::type::iterator l = hnet->i_lanes.begin(); l != hnet->i_lanes.end(); l++)
+
+        typedef pair<str, const hwm::isect_lane&> ilane_hash;
+        BOOST_FOREACH(const ilane_hash &l, hnet->i_lanes)
         {
-            BOOST_FOREACH(const car& c, sim.cars_in_lane[l->first])
+            BOOST_FOREACH(const car& c, sim.cars_in_lane[l.first])
             {
-                mat4x4f trans(l->second.point_frame(c.pos));
+                mat4x4f trans(l.second.point_frame(c.pos));
                 mat4x4f ttrans(tvmet::trans(trans));
                 glColor3f(1.0, 0.0, 0.0);
 
