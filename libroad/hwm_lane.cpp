@@ -4,12 +4,43 @@ namespace hwm
 {
     bool lane::terminus::check(bool start, const lane *parent) const
     {
-        if(!inters)
-            return intersect_in_ref == -1;
-        if(inters->id.empty() || intersect_in_ref == -1)
+        return true;
+    }
+
+    lane* lane::terminus::incident(bool start) const
+    {
+        return 0;
+    }
+
+    bool lane::intersection_terminus::check(bool start, const lane *parent) const
+    {
+        if(!adjacent_intersection || intersect_in_ref < 0)
             return false;
-        const std::vector<lane*> &cont = start ? inters->outgoing : inters->incoming;
-        return cont[intersect_in_ref] == parent;
+
+        const std::vector<lane*> &cont = start ? adjacent_intersection->outgoing : adjacent_intersection->incoming;
+        return intersect_in_ref < static_cast<int>(cont.size()) && cont[intersect_in_ref] == parent;
+    }
+
+    lane* lane::intersection_terminus::incident(bool start) const
+    {
+        if(start)
+            return adjacent_intersection->downstream_lane(intersect_in_ref);
+        else
+            return adjacent_intersection->upstream_lane(intersect_in_ref);
+    }
+
+    bool lane::lane_terminus::check(bool start, const lane *parent) const
+    {
+        if(!adjacent_lane)
+            return false;
+
+        const lane_terminus *other = dynamic_cast<const lane_terminus*>(start ? adjacent_lane->end : adjacent_lane->start);
+        return other && other->adjacent_lane == parent;
+    }
+
+    lane* lane::lane_terminus::incident(bool start) const
+    {
+        return adjacent_lane;
     }
 
     bool lane::road_membership::check() const
@@ -73,7 +104,7 @@ namespace hwm
     {
         if(id.empty() ||
            road_memberships.empty() ||
-           !start.check(true, this) || !end.check(false, this) ||
+           !start->check(true, this) || !end->check(false, this) ||
            speedlimit <= 0.0f)
             return false;
 
@@ -162,4 +193,15 @@ namespace hwm
         road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
         return rmici->second.point_frame(local, up);
     }
+
+    lane *lane::upstream_lane()   const
+    {
+        return start->incident(true);
+    }
+
+    lane *lane::downstream_lane() const
+    {
+        return end->incident(false);
+    }
+
 }

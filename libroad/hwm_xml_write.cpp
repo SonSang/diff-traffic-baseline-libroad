@@ -68,13 +68,21 @@ namespace hwm
     void lane::terminus::xml_write(xmlpp::Element *elt, const str &name) const
     {
         xmlpp::Element *term_elt = elt->add_child(name);
-        if(!inters)
-            term_elt->add_child("dead_end");
-        else
-        {
-            xmlpp::Element *iref = term_elt->add_child("intersection_ref");
-            iref->set_attribute("ref", inters->id);
-        }
+        term_elt->add_child("dead_end");
+    }
+
+    void lane::intersection_terminus::xml_write(xmlpp::Element *elt, const str &name) const
+    {
+        xmlpp::Element *term_elt = elt->add_child(name);
+        xmlpp::Element *iref = term_elt->add_child("intersection_ref");
+        iref->set_attribute("ref", adjacent_intersection->id);
+    }
+
+    void lane::lane_terminus::xml_write(xmlpp::Element *elt, const str &name) const
+    {
+        xmlpp::Element *term_elt = elt->add_child(name);
+        xmlpp::Element *iref = term_elt->add_child("lane_ref");
+        iref->set_attribute("ref", adjacent_lane->id);
     }
 
     void lane::road_membership::xml_write(xmlpp::Element *elt) const
@@ -105,8 +113,8 @@ namespace hwm
         xmlpp::Element *lane_elt = elt->add_child("lane");
         lane_elt->set_attribute("id", id);
         lane_elt->set_attribute("speedlimit", boost::lexical_cast<str>(speedlimit));
-        start.xml_write(lane_elt, "start");
-        end.xml_write(lane_elt, "end");
+        start->xml_write(lane_elt, "start");
+        end->xml_write(lane_elt, "end");
         road_memberships.xml_write(lane_elt, "road_intervals");
         xmlpp::Element *adj_elt = lane_elt->add_child("adjacency_intervals");
         left. xml_write(adj_elt, "left");

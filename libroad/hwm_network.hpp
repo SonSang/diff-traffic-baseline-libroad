@@ -30,16 +30,50 @@ namespace hwm
     struct lane
     {
         ~lane()
-        {}
+        {
+            delete start;
+            delete end;
+        }
 
         struct terminus
         {
-            bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
-            void xml_write(xmlpp::Element *elt, const str &name) const;
-            bool check(bool start, const lane *parent) const;
+            virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
+            virtual void xml_write(xmlpp::Element *elt, const str &name) const;
+            virtual bool check(bool start, const lane *parent) const;
+            virtual lane *incident(bool start) const;
+        };
 
-            intersection *inters;
+        struct intersection_terminus : public terminus
+        {
+            intersection_terminus() : adjacent_intersection(0), intersect_in_ref(-1)
+            {}
+
+            intersection_terminus(intersection *i, int ref) : adjacent_intersection(i), intersect_in_ref(ref)
+            {}
+
+            virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
+            virtual void xml_write(xmlpp::Element *elt, const str &name) const;
+            virtual bool check(bool start, const lane *parent) const;
+            virtual lane *incident(bool start) const;
+
+            intersection *adjacent_intersection;
             int           intersect_in_ref;
+        };
+
+        struct lane_terminus : public terminus
+        {
+            lane_terminus() : adjacent_lane(0)
+            {}
+
+            lane_terminus(lane* l) : adjacent_lane(l)
+            {}
+
+            virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
+            virtual void xml_write(xmlpp::Element *elt, const str &name) const;
+            virtual bool check(bool start, const lane *parent) const;
+            virtual lane *incident(bool start) const;
+
+            lane *adjacent_lane;
         };
 
         struct road_membership
@@ -86,21 +120,16 @@ namespace hwm
         mat3x3f frame      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
         mat4x4f point_frame(float t, const vec3f &up=vec3f(0, 0, 1)) const;
 
-        str                        id;
-        road_membership::intervals road_memberships;
-        adjacency::intervals       left;
-        adjacency::intervals       right;
-        terminus                   start;
-        terminus                   end;
-        float                      speedlimit;
-    };
+        lane *upstream_lane()   const;
+        lane *downstream_lane() const;
 
-    struct isect_lane : public lane
-    {
-        ~isect_lane(){}
-
-        lane* input;
-        lane* output;
+        str                         id;
+        road_membership::intervals  road_memberships;
+        adjacency::intervals        left;
+        adjacency::intervals        right;
+        terminus                   *start;
+        terminus                   *end;
+        float                       speedlimit;
     };
 
     struct intersection
@@ -116,8 +145,7 @@ namespace hwm
                 bool check() const;
 
                 int   in_ref;
-                isect_lane *fict_lane;
-
+                lane *fict_lane;
             };
 
             //Should an out_id have a lane?
@@ -126,8 +154,7 @@ namespace hwm
                 bool check() const;
 
                 int   out_ref;
-                isect_lane *fict_lane;
-
+                lane *fict_lane;
             };
 
             bool xml_read (xmlpp::TextReader &reader);
@@ -135,6 +162,9 @@ namespace hwm
             bool check() const;
 
             enum {STARVATION=-1, STOP=-1};
+
+            lane *downstream_lane(int incoming_ref) const;
+            lane *  upstream_lane(int outgoing_ref) const;
 
             float duration;
             std::vector<out_id> in_states;
@@ -144,6 +174,9 @@ namespace hwm
         bool xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
+
+        lane *downstream_lane(int incoming_ref) const;
+        lane *  upstream_lane(int outgoing_ref) const;
 
         str                id;
         std::vector<lane*> incoming;
@@ -182,7 +215,7 @@ namespace hwm
         strhash<lane>::type         lanes;
         strhash<intersection>::type intersections;
         strhash<road>::type         i_roads;
-        strhash<isect_lane>::type   i_lanes;
+        strhash<lane>::type         i_lanes;
     };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));

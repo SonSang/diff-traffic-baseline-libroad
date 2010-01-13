@@ -74,18 +74,18 @@ namespace hwm
                     }
                 }
             }
-            if(current_lane.start.inters)
-            {
-                const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.start.inters->id);
-                assert(my_inters != intersections.end());
-                current_lane.start.inters = &(my_inters->second);
-            }
-            if(current_lane.end.inters)
-            {
-                const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.end.inters->id);
-                assert(my_inters != intersections.end());
-                current_lane.end.inters = &(my_inters->second);
-            }
+            // if(current_lane.start.inters)
+            // {
+            //     const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.start.inters->id);
+            //     assert(my_inters != intersections.end());
+            //     current_lane.start.inters = &(my_inters->second);
+            // }
+            // if(current_lane.end.inters)
+            // {
+            //     const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.end.inters->id);
+            //     assert(my_inters != intersections.end());
+            //     current_lane.end.inters = &(my_inters->second);
+            // }
         }
         typedef strhash<intersection>::type::value_type ival;
         BOOST_FOREACH(ival &i, intersections)
@@ -290,7 +290,7 @@ namespace hwm
                         assert(s.in_states[s.out_states[i].in_ref].fict_lane == NULL);
                         i_lanes[road_name];
                         s.in_states[s.out_states[i].in_ref].fict_lane = &i_lanes[road_name];
-                        isect_lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
+                        lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
                         l->id = road_name;
                         hwm::lane::road_membership rm;
                         rm.parent_road = &(thisRoad->second);
@@ -299,10 +299,10 @@ namespace hwm
                         rm.interval[1] = 1.0f;
                         l->road_memberships.insert(0.0, rm);
                         std::cout << l->road_memberships.size() << " should not be 0" << std::endl;
-                        l->input = i_pair.second.incoming[s.out_states[i].in_ref];
-                        l->output = i_pair.second.outgoing[i];
+                        l->start = new hwm::lane::lane_terminus(i_pair.second.incoming[s.out_states[i].in_ref]);
+                        l->end   = new hwm::lane::lane_terminus(i_pair.second.outgoing[i]);
                         //TODO shrink speed limit
-                        l->speedlimit = l->input->speedlimit;
+                        l->speedlimit = l->upstream_lane()->speedlimit;
                         std::cout << l->length() << " is lane length " << std::endl;
                     }
                 }
@@ -384,23 +384,23 @@ namespace hwm
                 rm.lane_position = lanect;
                 new_lane.road_memberships.insert(0.0, rm);
 
-                new_lane.start.inters = start_inters;
-                if(start_inters)
-                {
-                    start_inters->outgoing.push_back(&new_lane);
-                    new_lane.start.intersect_in_ref = start_inters->outgoing.size()-1;
-                }
-                else
-                    new_lane.start.intersect_in_ref = -1;
+                // new_lane.start.inters = start_inters;
+                // if(start_inters)
+                // {
+                //     start_inters->outgoing.push_back(&new_lane);
+                //     new_lane.start.intersect_in_ref = start_inters->outgoing.size()-1;
+                // }
+                // else
+                //     new_lane.start.intersect_in_ref = -1;
 
-                new_lane.end.inters = end_inters;
-                if(end_inters)
-                {
-                    end_inters->incoming.push_back(&new_lane);
-                    new_lane.end.intersect_in_ref = end_inters->incoming.size()-1;
-                }
-                else
-                    new_lane.end.intersect_in_ref = -1;
+                // new_lane.end.inters = end_inters;
+                // if(end_inters)
+                // {
+                //     end_inters->incoming.push_back(&new_lane);
+                //     new_lane.end.intersect_in_ref = end_inters->incoming.size()-1;
+                // }
+                // else
+                //     new_lane.end.intersect_in_ref = -1;
             }
 
             for(int lanect = 0; lanect < et.nolanes; ++lanect)

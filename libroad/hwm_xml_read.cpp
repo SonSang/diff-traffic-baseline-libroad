@@ -219,59 +219,47 @@ namespace hwm
 
     bool lane::terminus::xml_read(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
     {
-        assert(is_opening_element(reader, tag));
+        assert(is_opening_element(reader, "dead_end"));
 
-        bool res = true;
-        while(res && !(is_opening_element(reader, "dead_end") ||
-                       is_opening_element(reader, "intersection_ref") ||
-                       is_opening_element(reader, "lane_ref")))
-            res = read_skip_comment(reader);
+        return read_to_close(reader, tag);
+    }
 
-        if(!res)
+    bool lane::intersection_terminus::xml_read(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
+    {
+        assert(is_opening_element(reader, "intersection_ref"));
+
+        str ref;
+        if(!(get_attribute(ref, reader, "ref")))
             return false;
 
-        if(is_opening_element(reader, "dead_end"))
+        adjacent_intersection = retrieve<intersection>(n.intersections, ref);
+        intersect_in_ref = -1;
+
+        if(!adjacent_intersection->id.empty())
         {
-            inters           = 0;
-            intersect_in_ref = -1;
-
-            if(!read_to_close(reader, "dead_end"))
-                return false;
-        }
-        else if(is_opening_element(reader, "intersection_ref"))
-        {
-            str ref;
-            if(!(get_attribute(ref, reader, "ref")))
-                return false;
-
-            inters = retrieve<intersection>(n.intersections, ref);
-            intersect_in_ref = -1;
-
-            if(!inters->id.empty())
+            const std::vector<lane*> &cont(tag == "start" ? adjacent_intersection->outgoing : adjacent_intersection->incoming);
+            size_t pos = 0;
+            while(cont[pos] != parent)
             {
-                const std::vector<lane*> &cont(tag == "start" ? inters->outgoing : inters->incoming);
-                size_t pos = 0;
-                while(cont[pos] != parent)
-                {
                     if(pos >= cont.size())
                         return false;
                     ++pos;
                 }
-                intersect_in_ref = pos;
-            }
+            intersect_in_ref = pos;
+        }
 
-            if(!read_to_close(reader, "intersection_ref"))
-                return false;
-        }
-        else if(is_opening_element(reader, "lane_ref"))
-        {
-            inters           = 0;
-            intersect_in_ref = -1;
-            if(!read_to_close(reader, "lane_ref"))
-                return false;
-        }
-        else
+        return read_to_close(reader, tag);
+    }
+
+    bool lane::lane_terminus::xml_read(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
+    {
+        assert(is_opening_element(reader, "lane_ref"));
+
+        str ref;
+        if(!(get_attribute(ref, reader, "ref")))
             return false;
+
+        adjacent_lane = retrieve<lane>(n.lanes, ref);
 
         return read_to_close(reader, tag);
     }
@@ -297,6 +285,25 @@ namespace hwm
         return read_to_close(reader, "road");
     }
 
+    inline static lane::terminus *terminus_helper(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
+    {
+        assert(is_opening_element(reader, tag));
+
+        lane::terminus *res = 0;
+        read_skip_comment(reader);
+
+        if(is_opening_element(reader, "dead_end"))
+            res = new lane::terminus();
+        else if(is_opening_element(reader, "intersection_ref"))
+            res = new lane::intersection_terminus();
+        else if(is_opening_element(reader, "lane_ref"))
+            res = new lane::lane_terminus();
+
+        res->xml_read(n, parent, reader, tag);
+
+        return res;
+    }
+
     bool lane::xml_read(network &n, xmlpp::TextReader &reader)
     {
         assert(is_opening_element(reader, "lane"));
@@ -319,9 +326,9 @@ namespace hwm
             res = read_skip_comment(reader);
 
             if(is_opening_element(reader, "start"))
-                res = have_start = start.xml_read(n, this, reader, "start");
+                res = have_start = (start = terminus_helper(n, this, reader, "start"));
             else if(is_opening_element(reader, "end"))
-                res = have_end = end.xml_read(n, this, reader, "end");
+                res = have_end = (end = terminus_helper(n, this, reader, "end"));
             else if(is_opening_element(reader, "road_intervals"))
             {
                 if(!road_memberships.xml_read(n, reader, "road_membership"))
@@ -373,11 +380,11 @@ namespace hwm
 
         if(!lv[loc]->id.empty())
         {
-            lane::terminus &term = incoming ? lv[loc]->end : lv[loc]->start;
+            lane::intersection_terminus *term = dynamic_cast<lane::intersection_terminus*>(incoming ? lv[loc]->end : lv[loc]->start);
 
-            if(!term.inters || term.inters->id != intersect_id)
+            if(!term->adjacent_intersection || term->adjacent_intersection->id != intersect_id)
                 return false;
-            term.intersect_in_ref = loc;
+            term->intersect_in_ref = loc;
         }
 
         return read_to_close(reader, "lane_ref");
