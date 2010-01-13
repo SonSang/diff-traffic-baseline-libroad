@@ -290,14 +290,19 @@ namespace hwm
         assert(is_opening_element(reader, tag));
 
         lane::terminus *res = 0;
-        read_skip_comment(reader);
 
-        if(is_opening_element(reader, "dead_end"))
-            res = new lane::terminus();
-        else if(is_opening_element(reader, "intersection_ref"))
-            res = new lane::intersection_terminus();
-        else if(is_opening_element(reader, "lane_ref"))
-            res = new lane::lane_terminus();
+        while(!res)
+        {
+            if(!read_skip_comment(reader))
+                return 0;
+
+            if(is_opening_element(reader, "dead_end"))
+                res = new lane::terminus();
+            else if(is_opening_element(reader, "intersection_ref"))
+                res = new lane::intersection_terminus();
+            else if(is_opening_element(reader, "lane_ref"))
+                res = new lane::lane_terminus();
+        }
 
         res->xml_read(n, parent, reader, tag);
 
