@@ -82,9 +82,14 @@ BOOST_FORMAT
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_INLINE
 AC_TYPE_SIZE_T
 
 # Checks for library functions.
+AC_FUNC_MALLOC
+AC_SEARCH_LIBS([clock_gettime], [rt])
+AC_CHECK_FUNCS([floor memset pow sqrt strdup])
 
 AC_CONFIG_FILES([Makefile \
                  libroad/Makefile \
