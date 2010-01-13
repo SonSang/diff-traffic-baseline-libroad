@@ -120,6 +120,6 @@ namespace hwm
     void    write_xml_network(const network &n, const char *filename);
 
     network from_sumo(const str &name, float gamma, const sumo::network &n);
-    network from_osm(const str &name, float gamma, const osm::network &n);
+    network from_osm(const str &name, float gamma, osm::network &n);
 };
 #endif

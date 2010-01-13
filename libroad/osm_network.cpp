@@ -37,10 +37,6 @@ namespace osm
 
     bool network::draw_network()
     {
-
-        if (first_for_display)
-            std::cout << "Drawing .. " << std::endl;
-
         glColor3f(0,0,0);
 
         int i = 0;
@@ -65,8 +61,7 @@ namespace osm
 
             for(int j = 0; j < e_nodes.size(); j++)
             {
-                if (first_for_display)
-                    std::cout << e_nodes[j]->xy[0] << " " << e_nodes[j]->xy[1] << std::endl;
+
                 glVertex3f((e_nodes[j]->xy[0]),
                            (e_nodes[j]->xy[1]),
                            0);
@@ -77,6 +72,49 @@ namespace osm
         }
         first_for_display = false;
 
+    }
+
+    bool network::create_grid(int w, int h, double dw, double dh)
+    {
+        std::vector<std::vector< node*> > node_grid (w, std::vector<node*>(h));
+        for(int i = 0; i < w; i++)
+        {
+            for(int j = 0; j < h; j++)
+            {
+                std::stringstream node_id;
+                node_id << "node " << i << "_" << j;
+                node* n = retrieve<node>(nodes, str(node_id.str()));
+                n->id = str(node_id.str());
+                n->xy[0] = i*dw;
+                n->xy[1] = j*dh;
+
+                node_grid[i][j] = n;
+
+                if (j != 0) //create vertical edge
+                {
+                    str e_id = n->id+"to"+node_grid[i][j-1]->id;
+                    edge* e = retrieve<edge>(edges, e_id);
+                    e->id = e_id;
+                    e->from = n->id;
+                    e->to = node_grid[i][j-1]->id;
+                    e->highway_class = "urban";
+                    e->shape.push_back(&nodes[e->from]);
+                    e->shape.push_back(&nodes[e->to]);
+                }
+
+                if (i != 0)
+                {
+                    str e_id = n->id+"to"+node_grid[i-1][j]->id;
+                    edge* e = retrieve<edge>(edges, e_id);
+                    e->id = e_id;
+                    e->from = n->id;
+                    e->to = node_grid[i-1][j]->id;
+                    e->highway_class = "urban";
+                    e->shape.push_back(&nodes[e->from]);
+                    e->shape.push_back(&nodes[e->to]);
+                }
+            }
+        }
     }
 
     bool network::compute_node_degrees()
@@ -130,18 +168,20 @@ namespace osm
                 intersection* curr;
                 curr = retrieve<intersection>(intersections, e.to);
                 curr->edges_ending_here.push_back(e.id);
+                curr->id_from_node = e.to;
             }
             if (node_degrees[e.from] > 1)
             {
                 intersection* curr;
                 curr = retrieve<intersection>(intersections, e.from);
                 curr->edges_starting_here.push_back(e.id);
+                curr->id_from_node = e.from;
             }
         }
 
         //Pull back roads to make room for intersections.
         //TODO use geometric method to create exact intersection geometry.
-        double tmp_offset = 20;
+        double tmp_offset = 5;
         BOOST_FOREACH(const osm::intr_pair &ip, intersections)
         {
             const intersection& i = ip.second;
@@ -229,7 +269,6 @@ namespace osm
         bool first = true;
         vec2d bias;
 
-        std::cout << nodes.size() << "nodes " << std::endl;
         BOOST_FOREACH(osm::node_pair &np, nodes)
         {
             if (first)
@@ -242,9 +281,7 @@ namespace osm
 
             np.second.xy[0] = np.second.xy[0]*scale - bias[0];
             np.second.xy[1] = np.second.xy[1]*scale - bias[1];
-            std::cout << np.second.xy[0] << " " << np.second.xy[1] << std::endl;
         }
-
     }
 
 
@@ -453,6 +490,12 @@ namespace osm
             e_type->speed = 25;
             e_type->nolanes = 1;
             e_type->oneway = 0;
+            if(e.highway_class == "motorway")
+            {
+                e_type->speed = 65;
+                e_type->nolanes = 2;
+                e_type->oneway = 1;
+            }
             if(e.highway_class == "residential")
             {
                 e_type->speed = 30;
@@ -488,6 +531,14 @@ namespace osm
                 e_type->speed = 30;
                 e_type->nolanes = 1;
                 e_type->oneway = 1;
+            }
+
+            //Classes added for grid
+            if(e.highway_class == "urban")
+            {
+                e_type->speed = 30;
+                e_type->nolanes = 2;
+                e_type->oneway = 0;
             }
         }
 

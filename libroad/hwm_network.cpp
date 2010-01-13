@@ -1,7 +1,5 @@
 #include "hwm_network.hpp"
 
-
-
 namespace hwm
 {
     bool network::check() const
@@ -184,7 +182,7 @@ namespace hwm
     vec2d bias;
     bool first_for_convert = true;
     const osm::node* last;
-    network from_osm(const str &name, const float gamma, const osm::network &snet)
+    network from_osm(const str &name, const float gamma, osm::network &snet)
     {
         typedef strhash<osm::node>::type::value_type      node_pair;
         typedef strhash<osm::edge_type>::type::value_type type_pair;
@@ -234,6 +232,9 @@ namespace hwm
                 retrieve<intersection>(hnet.intersections, ndeg.first);
         }
 
+        typedef std::pair<std::vector<lane*>, std::vector<lane*> > in_and_out;
+        std::map<str, in_and_out> roads_to_lanes;
+
         BOOST_FOREACH(const edge_pair &ep, snet.edges)
         {
             const osm::edge      &e           = ep.second;
@@ -241,6 +242,7 @@ namespace hwm
             road                  *parent_road = &retrieve<road>(hnet.roads, e.id);
 
             std::vector<lane*>     newlanes(et.nolanes);
+            std::vector<lane*>     new_reverse_lanes(et.nolanes);
 
             intersection *start_inters, *end_inters;
             {
@@ -254,6 +256,9 @@ namespace hwm
             {
                 lane &new_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % e.id % lanect));
                 newlanes[lanect] = &new_lane;
+
+                //Store road to lane pointers.
+                roads_to_lanes[ep.first].first.push_back(&new_lane);
 
                 new_lane.speedlimit = et.speed;
                 lane::road_membership rm;
@@ -280,6 +285,43 @@ namespace hwm
                 }
                 else
                     new_lane.end.intersect_in_ref = -1;
+
+                if (et.oneway == 0)
+                {
+                    //Add reverse lanes  (TODO one way roads)
+                    lane &new_reverse_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d_reverse") % e.id % lanect));
+                    new_reverse_lanes[lanect] = &new_reverse_lane;
+
+                    //Stare road to lane pointers
+                    roads_to_lanes[ep.first].second.push_back(&new_reverse_lane);
+
+                    new_reverse_lane.speedlimit = et.speed;
+                    lane::road_membership rm_rev;
+                    rm_rev.parent_road = parent_road;
+                    rm_rev.interval[0] = 1.0f;
+                    rm_rev.interval[1] = 0.0f;
+                    rm_rev.lane_position = lanect;
+                    new_reverse_lane.road_memberships.insert(0.0, rm_rev);
+
+                    new_reverse_lane.start.inters = end_inters;
+                    if(end_inters)
+                    {
+                        end_inters->outgoing.push_back(&new_reverse_lane);
+                        new_reverse_lane.start.intersect_in_ref = end_inters->outgoing.size()-1;
+                    }
+                    else
+                        new_reverse_lane.start.intersect_in_ref = -1;
+
+                    new_reverse_lane.end.inters = start_inters;
+                    if(start_inters)
+                    {
+                        start_inters->incoming.push_back(&new_reverse_lane);
+                        new_reverse_lane.end.intersect_in_ref = start_inters->incoming.size()-1;
+                    }
+                    else
+                        new_reverse_lane.end.intersect_in_ref = -1;
+                }
+
             }
 
             for(int lanect = 0; lanect < et.nolanes; ++lanect)
@@ -300,28 +342,272 @@ namespace hwm
                     la.neighbor_interval[1] = 1.0f;
                     newlanes[lanect]->right.insert(0.0f, la);
                 }
+
+                if (et.oneway == 0)
+                {
+                    //Repeat for reverse lanes
+                    if(lanect > 0)
+                    {
+                        lane::adjacency la;
+                        la.neighbor = new_reverse_lanes[lanect-1];
+                        la.neighbor_interval[0] = 0.0f;
+                        la.neighbor_interval[1] = 1.0f;
+                        new_reverse_lanes[lanect]->left.insert(0.0f, la);
+                    }
+                    if(lanect < et.nolanes - 1)
+                    {
+                        lane::adjacency la;
+                        la.neighbor = new_reverse_lanes[lanect+1];
+                        la.neighbor_interval[0] = 0.0f;
+                        la.neighbor_interval[1] = 1.0f;
+                        new_reverse_lanes[lanect]->right.insert(0.0f, la);
+                    }
+                }
+            }
+        }
+
+        float STATE_DURATION = 20;
+
+        //TODO Use geometric method to get minimal set of traffic states.
+        typedef std::pair<const str, osm::intersection> isect_pair;
+        BOOST_FOREACH(const isect_pair& i_pair, snet.intersections)
+        {
+            const osm::intersection& osm_isect = i_pair.second;
+            hwm::intersection& hwm_isect = hnet.intersections[osm_isect.id_from_node];
+
+            // std::cout << "Here" << std::endl;
+
+            // for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
+            // {
+            //     osm::edge e = snet.edges[osm_isect.edges_starting_here[i]];
+            //     for(int j = 0; j < roads_to_lanes[e.id].first.size(); j++)
+            //     {
+            //         std::cout << "start " << roads_to_lanes[e.id].first[j]->start.intersect_in_ref << std::endl;
+            //     }
+
+            //     for(int j = 0; j < roads_to_lanes[e.id].second.size(); j++)
+            //     {
+            //         std::cout << "end " << roads_to_lanes[e.id].second[j]->end.intersect_in_ref << std::endl;
+            //     }
+            // }
+
+            // std::cout << "Here" << std::endl;
+
+
+
+            // for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
+            // {
+            //     osm::edge e = snet.edges[osm_isect.edges_starting_here[i]];
+            //     std::cout << e.start.intersect_in_ref << std::endl;
+            // }
+
+
+
+
+            //Add states for every pairing of roads that are ending here.
+            for(int i = 0; i < osm_isect.edges_ending_here.size(); i++)
+            {
+                osm::edge& i_edge = snet.edges[osm_isect.edges_ending_here[i]];
+                for(int j = i+1; j < osm_isect.edges_ending_here.size(); j++)
+                {
+                    osm::edge& j_edge = snet.edges[osm_isect.edges_ending_here[j]];
+                    hwm::intersection::state state;
+                    state.duration = STATE_DURATION;
+
+                    //Create state for two roads.
+                    int max_lanes = std::max(hwm_isect.incoming.size(), hwm_isect.outgoing.size());
+
+                    for (int k = 0; k < max_lanes; k++)
+                    {
+                        //Create an in_id and and out_id
+                        hwm::intersection::state::in_id in;
+                        in.in_ref = -1;
+                        in.fict_lane = NULL;
+
+                        state.out_states.push_back(in);
+
+                        hwm::intersection::state::out_id out;
+                        out.out_ref = -1;
+                        out.fict_lane = NULL;
+
+                        state.in_states.push_back(out);
+                    }
+
+                    //make every incoming lane (in_id)th element of in_states an out_id with out_ref of matching outgoing lane
+
+                    //I need the incoming id for each lane
+
+                    //These are "incoming" roads, so forward lanes will be incoming lanes, and reverse lanes will be outgoing lanes.
+                    //And the lane "end" is this intersection
+
+                    //make every outgoing lane (out_id)th element of out_states an in_id with in_ref of matching incoming lane
+
+                    for (int k = 0; k < roads_to_lanes[i_edge.id].first.size(); k++)
+                    {
+                        lane* l = roads_to_lanes[i_edge.id].first[k];
+
+                        //Other incoming road, so we need its reverse lanes
+                        if (k < roads_to_lanes[j_edge.id].second.size())
+                        {
+                            lane* l_j = roads_to_lanes[j_edge.id].second[k];
+                            state.in_states[l->end.intersect_in_ref].out_ref = l_j->start.intersect_in_ref;
+                            state.out_states[l_j->start.intersect_in_ref].in_ref = l->end.intersect_in_ref;
+
+                        }
+                    }
+
+                    //Now match up the forward lanes of the j_edge with the reverse of the i_edge
+                    for (int k = 0; k < roads_to_lanes[j_edge.id].first.size(); k++)
+                    {
+                        lane* l = roads_to_lanes[j_edge.id].first[k];
+
+                        if (k < roads_to_lanes[i_edge.id].second.size())
+                        {
+                            lane* l_i = roads_to_lanes[i_edge.id].second[k];
+                            state.in_states[l->end.intersect_in_ref].out_ref = l_i->start.intersect_in_ref;
+                            state.out_states[l_i->start.intersect_in_ref].in_ref = l->end.intersect_in_ref;
+                        }
+                    }
+
+                    hwm_isect.states.push_back(state);
+                }
             }
 
 
+            //Add states for every pairing of roads that are starting here.
+            for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
+            {
+                osm::edge& i_edge = snet.edges[osm_isect.edges_starting_here[i]];
+                for(int j = i+1; j < osm_isect.edges_starting_here.size(); j++)
+                {
+                    osm::edge& j_edge = snet.edges[osm_isect.edges_starting_here[j]];
+                    hwm::intersection::state state;
+                    state.duration = STATE_DURATION;
 
-        }
+                    //Create state for two roads.
+                    int max_lanes = std::max(hwm_isect.incoming.size(), hwm_isect.outgoing.size());
 
-        typedef std::pair<const str, hwm::intersection> intersect_pair;
-        BOOST_FOREACH(intersect_pair& i_pair, hnet.intersections)
-        {
-            assert(i_pair.second.incoming.size() > 0);
-            assert(i_pair.second.outgoing.size() > 0);
-            i_pair.second.states.push_back(hwm::intersection::state());
-            hwm::intersection::state::in_id in;
-            in.in_ref = 0;
-            in.fict_lane = i_pair.second.incoming[0];
+                    for (int k = 0; k < max_lanes; k++)
+                    {
+                        //Create an in_id and and out_id
+                        hwm::intersection::state::in_id in;
+                        in.in_ref = -1;
+                        in.fict_lane = NULL;
 
-            hwm::intersection::state::out_id out;
-            out.out_ref = 0;
-            out.fict_lane = i_pair.second.outgoing[0];
-            i_pair.second.states[0].duration = 30;
-            i_pair.second.states[0].in_states.push_back(out);
-            i_pair.second.states[0].out_states.push_back(in);
+                        state.out_states.push_back(in);
+
+                        hwm::intersection::state::out_id out;
+                        out.out_ref = -1;
+                        out.fict_lane = NULL;
+
+                        state.in_states.push_back(out);
+                    }
+
+                    //make every incoming lane (in_id)th element of in_states an out_id with out_ref of matching outgoing lane
+
+                    //These are "outgoing" roads, so reverse lanes will be incoming lanes, and forward lanes will be outgoing lanes.
+                    //And the lane "start" is this intersection
+
+                    for (int k = 0; k < roads_to_lanes[i_edge.id].second.size(); k++)
+                    {
+                        lane* l = roads_to_lanes[i_edge.id].second[k];
+
+                        //Other outgoing road, so we need its forward lanes
+                        if (k < roads_to_lanes[j_edge.id].first.size())
+                        {
+                            lane* l_j = roads_to_lanes[j_edge.id].first[k];
+                            state.in_states[l->end.intersect_in_ref].out_ref = l_j->start.intersect_in_ref;
+                            state.out_states[l_j->start.intersect_in_ref].in_ref = l->end.intersect_in_ref;
+                        }
+                    }
+
+                    //make every outgoing lane (out_id)th element of out_states an in_id with in_ref of matching incoming lane
+                    for (int k = 0; k < roads_to_lanes[j_edge.id].second.size(); k++)
+                    {
+                        lane* l = roads_to_lanes[j_edge.id].second[k];
+
+                        if (k < roads_to_lanes[i_edge.id].first.size())
+                        {
+                            lane* l_i = roads_to_lanes[i_edge.id].first[k];
+                            state.in_states[l->end.intersect_in_ref].out_ref = l_i->start.intersect_in_ref;
+                            state.out_states[l_i->start.intersect_in_ref].in_ref = l->end.intersect_in_ref;
+                        }
+                    }
+                    hwm_isect.states.push_back(state);
+                }
+            }
+
+
+            //Every pair of outgoing to incoming roads
+            for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
+            {
+                osm::edge& i_edge = snet.edges[osm_isect.edges_starting_here[i]];
+                for(int j = 0; j < osm_isect.edges_ending_here.size(); j++)
+                {
+                    osm::edge& j_edge = snet.edges[osm_isect.edges_ending_here[j]];
+                    hwm::intersection::state state;
+                    state.duration = STATE_DURATION;
+
+                    //Create state for two roads.
+                    int max_lanes = std::max(hwm_isect.incoming.size(), hwm_isect.outgoing.size());
+
+                    for (int k = 0; k < max_lanes; k++)
+                    {
+                        //Create an in_id and and out_id
+                        hwm::intersection::state::in_id in;
+                        in.in_ref = -1;
+                        in.fict_lane = NULL;
+
+                        state.out_states.push_back(in);
+
+                        hwm::intersection::state::out_id out;
+                        out.out_ref = -1;
+                        out.fict_lane = NULL;
+
+                        state.in_states.push_back(out);
+                    }
+
+                    //Match the reverse lanes (incoming) of the road starting here
+                    // with the reverse lanes (outgoing) of the road ending here
+
+                    for (int k = 0; k < roads_to_lanes[i_edge.id].second.size(); k++)
+                    {
+                        lane* l = roads_to_lanes[i_edge.id].second[k];
+
+                        //Other incoming road, so we need its reverse lanes
+                        if (k < roads_to_lanes[j_edge.id].second.size())
+                        {
+                            lane* l_j = roads_to_lanes[j_edge.id].second[k];
+                            state.in_states[l->end.intersect_in_ref].out_ref = l_j->start.intersect_in_ref;
+                            // std::cout << "this one " << std::endl;
+                            // std::cout << l->end.intersect_in_ref << "->" << l_j->start.intersect_in_ref << std::endl;
+                            state.out_states[l_j->start.intersect_in_ref].in_ref = l->end.intersect_in_ref;
+                            // std::cout << l_j->start.intersect_in_ref << "->" << l->end.intersect_in_ref << std::endl;
+                        }
+                    }
+
+                    //Match the forward lanes (outgoing) of the road ending here
+                    // with the forward lanes (incoming) of the road starting here.
+
+                    for (int k = 0; k < roads_to_lanes[j_edge.id].first.size(); k++)
+                    {
+                        lane* l = roads_to_lanes[j_edge.id].first[k];
+
+                        if (k < roads_to_lanes[i_edge.id].first.size())
+                        {
+                            lane* l_i = roads_to_lanes[i_edge.id].second[k];
+                            state.in_states[l->end.intersect_in_ref].out_ref = l_i->end.intersect_in_ref;
+                            // std::cout << "b one " << std::endl;
+                            // std::cout << l->end.intersect_in_ref << "->" << l_i->start.intersect_in_ref << std::endl;
+                            state.out_states[l_i->end.intersect_in_ref].in_ref = l->end.intersect_in_ref;
+                            //                            std::cout << l_i->start.intersect_in_ref << "->" << l->end.intersect_in_ref << std::endl;
+                        }
+                    }
+
+                    hwm_isect.states.push_back(state);
+                }
+            }
+
         }
         return hnet;
     }

@@ -47,7 +47,7 @@ namespace osm
     {
         std::vector<str> edges_ending_here;
         std::vector<str> edges_starting_here;
-
+        str id_from_node;
     };
 
     struct network
@@ -65,6 +65,7 @@ namespace osm
         strhash<int>::type      node_degrees;
         strhash<std::vector<str> >::type  node_connections;
 
+        bool create_grid(int, int, double, double);
         bool scale_and_translate();
         bool check_edge(const edge &e) const;
         bool check_node(const node &n) const;

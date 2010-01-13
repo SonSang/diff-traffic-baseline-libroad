@@ -67,7 +67,7 @@ namespace osm
                     is_road = true;
                     get_attribute(v, reader, "v");
                     e.highway_class = v;
-
+                    std::cout << "class " << e.highway_class << std::endl;
                 }
             }
           }
@@ -140,7 +140,7 @@ namespace osm
             throw std::exception();
         }
 
-        n.compute_edge_types();
+
 
         return n;
     }
