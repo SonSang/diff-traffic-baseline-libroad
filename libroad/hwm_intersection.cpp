@@ -61,7 +61,8 @@ namespace hwm
 
         BOOST_FOREACH(const intersection::state &s, states)
         {
-            s.check(*this);
+            if(!s.check(*this))
+                return false;
         }
 
         return true;
