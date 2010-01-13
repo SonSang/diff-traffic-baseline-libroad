@@ -41,6 +41,8 @@ struct arc_road
     float  feature_size(size_t i, float offset) const;
     size_t locate(float t, float offset) const;
     size_t locate_scale(float t, float offset, float &local) const;
+
+    void   xml_write_as_poly(xmlpp::Element *elt) const;
     bool   check() const;
 
     std::vector<mat4x4f> frames_;

@@ -17,6 +17,8 @@ struct partition01 : public std::map<float, T>
     partition01() : base()
     {}
 
+    void xml_write(xmlpp::Element *elt, const str &name) const;
+
     iterator insert(float x, const T &val)
     {
         return base::insert(std::make_pair(x, val)).first;

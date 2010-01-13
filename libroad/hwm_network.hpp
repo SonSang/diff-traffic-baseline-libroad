@@ -11,10 +11,12 @@ namespace hwm
 {
     struct road
     {
+        void xml_write(xmlpp::Element *elt) const;
         bool check() const;
 
         void translate(const vec3f &o);
         void bounding_box(vec3f &low, vec3f &high) const;
+
 
         str      id;
         str      name;
@@ -25,10 +27,12 @@ namespace hwm
 
     struct lane
     {
-        ~lane(){}
+        ~lane()
+        {}
 
         struct terminus
         {
+            void xml_write(xmlpp::Element *elt, const str &name) const;
             bool check(bool start, const lane *parent) const;
 
             intersection *inters;
@@ -37,6 +41,7 @@ namespace hwm
 
         struct road_membership
         {
+            void xml_write(xmlpp::Element *elt) const;
             bool check() const;
             bool empty() const;
 
@@ -55,6 +60,7 @@ namespace hwm
 
         struct adjacency
         {
+            void xml_write(xmlpp::Element *elt) const;
             bool check() const;
             bool empty() const;
 
@@ -63,6 +69,7 @@ namespace hwm
             intervals::interval_t           neighbor_interval;
         };
 
+        void xml_write(xmlpp::Element *elt) const;
         bool check() const;
         void scale_offsets(float lane_width);
 
@@ -107,7 +114,6 @@ namespace hwm
 
             };
 
-
             //Should an out_id have a lane?
             struct out_id
             {
@@ -118,6 +124,7 @@ namespace hwm
 
             };
 
+            void xml_write(const size_t id, xmlpp::Element *elt) const;
             bool check() const;
 
             enum {STARVATION=-1, STOP=-1};
@@ -127,6 +134,7 @@ namespace hwm
             std::vector<in_id>  out_states;
         };
 
+        void xml_write(xmlpp::Element *elt) const;
         bool check() const;
 
         str                id;
@@ -145,6 +153,8 @@ namespace hwm
 
         network &operator=(const network &n);
 
+        void xml_write(const char *filename) const;
+        void xml_write(xmlpp::Element *elt) const;
         bool check() const;
         void scale_offsets(float lane_width);
 

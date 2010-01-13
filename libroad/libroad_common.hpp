@@ -18,6 +18,7 @@
 
 #include <tvmet/Vector.h>
 #include <tvmet/Matrix.h>
+#include <libxml++/libxml++.h>
 
 using std::tr1::hash;
 

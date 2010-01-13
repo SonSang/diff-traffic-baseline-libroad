@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         std::cout << " } " << std::endl;
     }
 
-    write_xml_network(hnet, argv[4]);
+    hnet.xml_write(argv[4]);
 
     return 0;
 }

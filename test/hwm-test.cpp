@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
     net.translate(vec3f(0.0, 1.0, 0.0));
 
-    write_xml_network(net, argv[2]);
+    net.xml_write(argv[2]);
 
     return 0;
 }

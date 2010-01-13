@@ -16,6 +16,7 @@ struct polyline_road
     bool   initialize();
     size_t locate(float t) const;
     size_t locate_scale(float t, float &local) const;
+    void   xml_write(xmlpp::Element *elt) const;
     bool   check() const;
 
     std::vector<vec3f> points_;

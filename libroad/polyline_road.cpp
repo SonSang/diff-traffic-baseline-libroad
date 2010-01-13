@@ -130,3 +130,4 @@ bool polyline_road::check() const
             points_.size() == clengths_.size() &&
             points_.size() == normals_.size() + 1);
 }
+
