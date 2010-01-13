@@ -2,30 +2,22 @@
 
 namespace hwm
 {
+    bool intersection::state::state_pair::check(const intersection &parent) const
+    {
+        return fict_lane && in_idx >= 0 && in_idx < static_cast<int>(parent.incoming.size())
+        && out_idx >= 0 && out_idx < static_cast<int>(parent.outgoing.size());
+    }
+
     bool intersection::state::check(const intersection &parent) const
     {
         if(duration <= 0.0f)
             return false;
-        if(in_states.size() != parent.incoming.size())
-            return false;
-        if(out_states.size() != parent.outgoing.size())
-            return false;
-        int c = 0;
-        BOOST_FOREACH(const intersection::state::out_id &oid, in_states)
-        {
-            if(oid.out_ref != -1)
-                if(out_states[oid.out_ref].in_ref != c)
-                    return false;
-            ++c;
-        }
-        c = 0;
-        BOOST_FOREACH(const intersection::state::in_id &iid, out_states)
-        {
-            if(iid.in_ref != -1)
-                if(in_states[iid.in_ref].out_ref != c)
-                    return false;
-            ++c;
-        }
+        typedef intersection::state::state_pair_set::index<intersection::state::in>::type state_pair_set_by_in;
+        const state_pair_set_by_in &in_pairs = state_pairs.get<intersection::state::in>();
+        state_pair_set_by_in::const_iterator current = in_pairs.begin();
+        for(; current != in_pairs.end(); ++current)
+            if(!current->check(parent))
+                return false;
 
         return true;
     }
@@ -71,14 +63,20 @@ namespace hwm
     lane *intersection::downstream_lane(const int incoming_ref) const
     {
         assert(current_state >= 0 && current_state < static_cast<int>(states.size()));
-        const intersection::state::out_id &out = states[current_state].in_states[incoming_ref];
-        return (out.out_ref == -1) ? 0 : out.fict_lane;
+
+        const state::state_pair_in &in_pairs = states[current_state].state_pairs.get<state::in>();
+        state::state_pair_in::const_iterator result = in_pairs.find(incoming_ref);
+
+        return (result == in_pairs.end()) ? 0 : result->fict_lane;
     }
 
     lane *intersection::upstream_lane(const int outgoing_ref) const
     {
         assert(current_state >= 0 && current_state < static_cast<int>(states.size()));
-        const intersection::state::in_id &in = states[current_state].out_states[outgoing_ref];
-        return (in.in_ref == -1) ? 0 : in.fict_lane;
+
+        const state::state_pair_out &out_pairs = states[current_state].state_pairs.get<state::out>();
+        state::state_pair_out::const_iterator result = out_pairs.find(outgoing_ref);
+
+        return (result == out_pairs.end()) ? 0 : result->fict_lane;
     }
 }

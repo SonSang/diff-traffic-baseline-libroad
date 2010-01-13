@@ -145,18 +145,36 @@ namespace hwm
 
         struct state
         {
-            struct in_id
+            struct in
+            {};
+            struct out
+            {};
+
+            struct state_pair
             {
-                int   in_ref;
+                state_pair()
+                    : fict_lane(0)
+                {}
+                state_pair(const int i, const int o)
+                    : in_idx(i), out_idx(o), fict_lane(0)
+                {}
+
+                bool check(const intersection &parent) const;
+                int   in_idx;
+                int   out_idx;
                 lane *fict_lane;
             };
 
-            //Should an out_id have a lane?
-            struct out_id
-            {
-                int   out_ref;
-                lane *fict_lane;
-            };
+            typedef boost::multi_index_container<
+                state_pair,
+                boost::multi_index::indexed_by<
+                    boost::multi_index::hashed_unique<boost::multi_index::tag<in>, boost::multi_index::member<state_pair,int,&state_pair::in_idx> >,
+                    boost::multi_index::hashed_unique<boost::multi_index::tag<out>,boost::multi_index::member<state_pair,int,&state_pair::out_idx> >
+                    >
+            > state_pair_set;
+
+            typedef intersection::state::state_pair_set::index<intersection::state::in >::type state_pair_in;
+            typedef intersection::state::state_pair_set::index<intersection::state::out>::type state_pair_out;
 
             bool xml_read (xmlpp::TextReader &reader);
             void xml_write(const size_t id, xmlpp::Element *elt) const;
@@ -164,9 +182,8 @@ namespace hwm
 
             enum {STARVATION=-1, STOP=-1};
 
-            float               duration;
-            std::vector<out_id> in_states;
-            std::vector<in_id>  out_states;
+            float          duration;
+            state_pair_set state_pairs;
         };
 
         bool xml_read (network &n, xmlpp::TextReader &reader);

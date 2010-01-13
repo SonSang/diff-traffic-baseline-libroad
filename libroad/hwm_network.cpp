@@ -87,71 +87,71 @@ namespace hwm
             //     current_lane.end.inters = &(my_inters->second);
             // }
         }
-        typedef strhash<intersection>::type::value_type ival;
-        BOOST_FOREACH(ival &i, intersections)
-        {
-            const str    &intersection_id      = i.first;
-            intersection &current_intersection = i.second;
+        // typedef strhash<intersection>::type::value_type ival;
+        // BOOST_FOREACH(ival &i, intersections)
+        // {
+        //     const str    &intersection_id      = i.first;
+        //     intersection &current_intersection = i.second;
 
-            const strhash<intersection>::type::const_iterator other = n.intersections.find(i.first);
-            assert(other != n.intersections.end());
-            assert(other->first == intersection_id);
+        //     const strhash<intersection>::type::const_iterator other = n.intersections.find(i.first);
+        //     assert(other != n.intersections.end());
+        //     assert(other->first == intersection_id);
 
-            const intersection &other_intersection = other->second;
+        //     const intersection &other_intersection = other->second;
 
-            {
-                std::vector<lane*>::iterator       my_inc     = current_intersection.incoming.begin();
-                std::vector<lane*>::const_iterator other_inc  =   other_intersection.incoming.begin();
-                for(; my_inc  != current_intersection.incoming.end() &&
-                    other_inc !=   other_intersection.incoming.end();
-                    ++my_inc, ++other_inc)
-                {
-                    assert(*my_inc);
-                    const strhash<lane>::type::iterator my_lane = lanes.find((*other_inc)->id);
-                    assert(my_lane != lanes.end());
-                    *my_inc = &(my_lane->second);
-                }
-            }
+        //     {
+        //         std::vector<lane*>::iterator       my_inc     = current_intersection.incoming.begin();
+        //         std::vector<lane*>::const_iterator other_inc  =   other_intersection.incoming.begin();
+        //         for(; my_inc  != current_intersection.incoming.end() &&
+        //             other_inc !=   other_intersection.incoming.end();
+        //             ++my_inc, ++other_inc)
+        //         {
+        //             assert(*my_inc);
+        //             const strhash<lane>::type::iterator my_lane = lanes.find((*other_inc)->id);
+        //             assert(my_lane != lanes.end());
+        //             *my_inc = &(my_lane->second);
+        //         }
+        //     }
 
-            {
-                std::vector<lane*>::iterator       my_out     = current_intersection.outgoing.begin();
-                std::vector<lane*>::const_iterator other_out  =   other_intersection.outgoing.begin();
-                for(; my_out  != current_intersection.outgoing.end() &&
-                    other_out !=   other_intersection.outgoing.end();
-                    ++my_out, ++other_out)
-                {
-                    assert(*my_out);
-                    const strhash<lane>::type::iterator my_lane = lanes.find((*other_out)->id);
-                    assert(my_lane != lanes.end());
-                    *my_out = &(my_lane->second);
-                }
+        //     {
+        //         std::vector<lane*>::iterator       my_out     = current_intersection.outgoing.begin();
+        //         std::vector<lane*>::const_iterator other_out  =   other_intersection.outgoing.begin();
+        //         for(; my_out  != current_intersection.outgoing.end() &&
+        //             other_out !=   other_intersection.outgoing.end();
+        //             ++my_out, ++other_out)
+        //         {
+        //             assert(*my_out);
+        //             const strhash<lane>::type::iterator my_lane = lanes.find((*other_out)->id);
+        //             assert(my_lane != lanes.end());
+        //             *my_out = &(my_lane->second);
+        //         }
 
-                std::vector<intersection::state>::iterator       my_state    = current_intersection.states.begin();
-                std::vector<intersection::state>::const_iterator other_state =   other_intersection.states.begin();
-                for(;  my_state != current_intersection.states.end() &&
-                    other_state !=   other_intersection.states.end();
-                    ++my_state, ++other_state)
-                {
-                    *my_state = *other_state;
-                    std::vector<intersection::state::out_id>::iterator       my_out    =    my_state->in_states.begin();
-                    std::vector<intersection::state::out_id>::const_iterator other_out = other_state->in_states.begin();
-                    for(;  my_out !=    my_state->in_states.end() &&
-                        other_out != other_state->in_states.end();
-                        ++my_out, ++other_out)
-                    {
-                        my_out->fict_lane = 0;
-                    }
-                    std::vector<intersection::state::in_id>::iterator       my_in    =    my_state->out_states.begin();
-                    std::vector<intersection::state::in_id>::const_iterator other_in = other_state->out_states.begin();
-                    for(;  my_in !=    my_state->out_states.end() &&
-                        other_in != other_state->out_states.end();
-                        ++my_in, ++other_in)
-                    {
-                        my_in->fict_lane = 0;
-                    }
-                }
-            }
-        }
+        //         std::vector<intersection::state>::iterator       my_state    = current_intersection.states.begin();
+        //         std::vector<intersection::state>::const_iterator other_state =   other_intersection.states.begin();
+        //         for(;  my_state != current_intersection.states.end() &&
+        //             other_state !=   other_intersection.states.end();
+        //             ++my_state, ++other_state)
+        //         {
+        //             *my_state = *other_state;
+        //             std::vector<intersection::state::out_id>::iterator       my_out    =    my_state->in_states.begin();
+        //             std::vector<intersection::state::out_id>::const_iterator other_out = other_state->in_states.begin();
+        //             for(;  my_out !=    my_state->in_states.end() &&
+        //                 other_out != other_state->in_states.end();
+        //                 ++my_out, ++other_out)
+        //             {
+        //                 my_out->fict_lane = 0;
+        //             }
+        //             std::vector<intersection::state::in_id>::iterator       my_in    =    my_state->out_states.begin();
+        //             std::vector<intersection::state::in_id>::const_iterator other_in = other_state->out_states.begin();
+        //             for(;  my_in !=    my_state->out_states.end() &&
+        //                 other_in != other_state->out_states.end();
+        //                 ++my_in, ++other_in)
+        //             {
+        //                 my_in->fict_lane = 0;
+        //             }
+        //         }
+        //}
+        //}
     }
 
     network &network::operator=(const network &n)
@@ -255,60 +255,60 @@ namespace hwm
         return entry->second;
     }
 
-    void network::build_intersection_roads(){
-        typedef std::pair<const str, hwm::intersection> intersect_pair;
-        BOOST_FOREACH(intersect_pair& i_pair, intersections)
-        {
-            BOOST_FOREACH(intersection::state& s, i_pair.second.states)
-            {
-                for(uint i = 0; i < s.out_states.size(); ++i)
-                {
-                    if (s.out_states[i].in_ref != -1){
+    // void network::build_intersection_roads(){
+    //     typedef std::pair<const str, hwm::intersection> intersect_pair;
+    //     BOOST_FOREACH(intersect_pair& i_pair, intersections)
+    //     {
+    //         BOOST_FOREACH(intersection::state& s, i_pair.second.states)
+    //         {
+    //             for(uint i = 0; i < s.out_states.size(); ++i)
+    //             {
+    //                 if (s.out_states[i].in_ref != -1){
 
-                        //Create a road from in_state[i] to out_state[i]
-                        std::stringstream tmp1, tmp2;
-                        tmp1 << s.out_states[i].in_ref;
-                        tmp2 << i;
-                        str road_name = i_pair.first + str("lane") + str(tmp1.str()) + str("to") + str(tmp2.str());
-                        std::cout << "road " << road_name << std::endl;
+    //                     //Create a road from in_state[i] to out_state[i]
+    //                     std::stringstream tmp1, tmp2;
+    //                     tmp1 << s.out_states[i].in_ref;
+    //                     tmp2 << i;
+    //                     str road_name = i_pair.first + str("lane") + str(tmp1.str()) + str("to") + str(tmp2.str());
+    //                     std::cout << "road " << road_name << std::endl;
 
-                        strhash<road>::type::iterator thisRoad(i_roads.find(road_name));
-                        if (thisRoad == i_roads.end())
-                        {
-                            thisRoad = i_roads.insert(thisRoad, std::make_pair(road_name, road()));
-                            thisRoad->second.name = "Intersection"; //Not id.
+    //                     strhash<road>::type::iterator thisRoad(i_roads.find(road_name));
+    //                     if (thisRoad == i_roads.end())
+    //                     {
+    //                         thisRoad = i_roads.insert(thisRoad, std::make_pair(road_name, road()));
+    //                         thisRoad->second.name = "Intersection"; //Not id.
 
-                            //Build the road geometry
-                            //TODO --currently just connecting ending point of the incoming lane with the starting point of the outgoing lane.
-                            thisRoad->second.rep.points_.push_back(i_pair.second.incoming[s.out_states[i].in_ref]->point(1));
-                            thisRoad->second.rep.points_.push_back(i_pair.second.outgoing[i]->point(0));
-                            thisRoad->second.rep.initialize();
-                        }
+    //                         //Build the road geometry
+    //                         //TODO --currently just connecting ending point of the incoming lane with the starting point of the outgoing lane.
+    //                         thisRoad->second.rep.points_.push_back(i_pair.second.incoming[s.out_states[i].in_ref]->point(1));
+    //                         thisRoad->second.rep.points_.push_back(i_pair.second.outgoing[i]->point(0));
+    //                         thisRoad->second.rep.initialize();
+    //                     }
 
 
-                        //Build a lane for this state;
-                        assert(s.in_states[s.out_states[i].in_ref].fict_lane == NULL);
-                        i_lanes[road_name];
-                        s.in_states[s.out_states[i].in_ref].fict_lane = &i_lanes[road_name];
-                        lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
-                        l->id = road_name;
-                        hwm::lane::road_membership rm;
-                        rm.parent_road = &(thisRoad->second);
-                        rm.lane_position = 0;
-                        rm.interval[0] = 0.0f;
-                        rm.interval[1] = 1.0f;
-                        l->road_memberships.insert(0.0, rm);
-                        std::cout << l->road_memberships.size() << " should not be 0" << std::endl;
-                        l->start = new hwm::lane::lane_terminus(i_pair.second.incoming[s.out_states[i].in_ref]);
-                        l->end   = new hwm::lane::lane_terminus(i_pair.second.outgoing[i]);
-                        //TODO shrink speed limit
-                        l->speedlimit = l->upstream_lane()->speedlimit;
-                        std::cout << l->length() << " is lane length " << std::endl;
-                    }
-                }
-            }
-        }
-    }
+    //                     //Build a lane for this state;
+    //                     assert(s.in_states[s.out_states[i].in_ref].fict_lane == NULL);
+    //                     i_lanes[road_name];
+    //                     s.in_states[s.out_states[i].in_ref].fict_lane = &i_lanes[road_name];
+    //                     lane* l = s.in_states[s.out_states[i].in_ref].fict_lane;
+    //                     l->id = road_name;
+    //                     hwm::lane::road_membership rm;
+    //                     rm.parent_road = &(thisRoad->second);
+    //                     rm.lane_position = 0;
+    //                     rm.interval[0] = 0.0f;
+    //                     rm.interval[1] = 1.0f;
+    //                     l->road_memberships.insert(0.0, rm);
+    //                     std::cout << l->road_memberships.size() << " should not be 0" << std::endl;
+    //                     l->start = new hwm::lane::lane_terminus(i_pair.second.incoming[s.out_states[i].in_ref]);
+    //                     l->end   = new hwm::lane::lane_terminus(i_pair.second.outgoing[i]);
+    //                     //TODO shrink speed limit
+    //                     l->speedlimit = l->upstream_lane()->speedlimit;
+    //                     std::cout << l->length() << " is lane length " << std::endl;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     network from_sumo(const str &name, const float gamma, const sumo::network &snet)
     {

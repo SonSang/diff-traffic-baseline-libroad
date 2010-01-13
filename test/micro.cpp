@@ -921,7 +921,7 @@ int main(int argc, char** argv)
     }
     hnet->scale_offsets(LANE_WIDTH);
     hnet->center();
-    hnet->build_intersection_roads();
+    //    hnet->build_intersection_roads();
 
     //Build hash for lane lengths.
     typedef pair<str, const hwm::lane&> lane_hash;

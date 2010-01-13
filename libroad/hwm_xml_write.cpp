@@ -146,16 +146,13 @@ namespace hwm
         is_elt->set_attribute("id", boost::lexical_cast<str>(count));
         is_elt->set_attribute("duration", boost::lexical_cast<str>(is.duration));
 
-        size_t oref = 0;
-        BOOST_FOREACH(const intersection::state::in_id &ii, is.out_states)
+        const intersection::state::state_pair_in &in_pairs = is.state_pairs.get<intersection::state::in>();
+        intersection::state::state_pair_in::const_iterator current = in_pairs.begin();
+        for(; current != in_pairs.end(); ++current)
         {
-            if(ii.in_ref != -1)
-            {
-                xmlpp::Element *ii_elt = is_elt->add_child("lane_pair");
-                ii_elt->set_attribute("in_id", boost::lexical_cast<str>(ii.in_ref));
-                ii_elt->set_attribute("out_id", boost::lexical_cast<str>(oref));
-            }
-            ++oref;
+            xmlpp::Element *ii_elt = is_elt->add_child("lane_pair");
+            ii_elt->set_attribute("in_id", boost::lexical_cast<str>(current->in_idx));
+            ii_elt->set_attribute("out_id", boost::lexical_cast<str>(current->in_idx));
         }
     }
 

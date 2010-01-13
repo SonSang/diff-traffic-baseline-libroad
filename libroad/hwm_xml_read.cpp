@@ -173,8 +173,7 @@ namespace hwm
                      get_attribute(out_id, reader, "out_id")))
                     return false;
 
-                out_states[out_id].in_ref = in_id;
-                in_states[in_id].out_ref  = out_id;
+                state_pairs.insert(state_pair(in_id, out_id));
 
                 res = read_to_close(reader, "lane_pair");
             }
@@ -446,19 +445,6 @@ namespace hwm
 
                 if(states.size() <= read_id)
                     states.resize(read_id+1);
-
-                states[read_id].in_states.resize(incoming.size());
-                BOOST_FOREACH(intersection::state::out_id &oid, states[read_id].in_states)
-                {
-                    oid.out_ref = -1;
-                    oid.fict_lane = 0;
-                }
-                states[read_id].out_states.resize(outgoing.size());
-                BOOST_FOREACH(intersection::state::in_id &iid, states[read_id].out_states)
-                {
-                    iid.in_ref = -1;
-                    iid.fict_lane = 0;
-                }
 
                 res = states[read_id].xml_read(reader);
             }
