@@ -88,6 +88,39 @@ inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str
                     vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
                 vp->second.id = vp->first;
 
+                if(!themap[id].xml_read(c, reader))
+                    return false;
+            }
+            else
+                return false;
+        }
+    }
+    while(ret && !is_closing_element(reader, container_name));
+
+    return ret;
+}
+
+template <class closure, typename T>
+inline bool sumo_read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
+{
+    bool ret;
+    do
+    {
+        ret = read_skip_comment(reader);
+        if(!ret)
+            return false;
+
+        if(reader.get_node_type() == xmlpp::TextReader::Element)
+        {
+            if(reader.get_name() == item_name)
+            {
+                str id(reader.get_attribute("id"));
+
+                typename T::iterator vp(themap.find(id));
+                if(vp == themap.end())
+                    vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
+                vp->second.id = vp->first;
+
                 if(!xml_read(c, themap[id], reader))
                     return false;
             }

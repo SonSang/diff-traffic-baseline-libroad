@@ -16,6 +16,8 @@ struct polyline_road
     bool   initialize();
     size_t locate(float t) const;
     size_t locate_scale(float t, float &local) const;
+
+    bool   xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void   xml_write(xmlpp::Element *elt) const;
     bool   check() const;
 

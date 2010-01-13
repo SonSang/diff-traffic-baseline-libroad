@@ -9,14 +9,16 @@
 
 namespace hwm
 {
+    struct network;
+
     struct road
     {
+        bool xml_read (network &n, xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
 
         void translate(const vec3f &o);
         void bounding_box(vec3f &low, vec3f &high) const;
-
 
         str      id;
         str      name;
@@ -32,6 +34,7 @@ namespace hwm
 
         struct terminus
         {
+            bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             void xml_write(xmlpp::Element *elt, const str &name) const;
             bool check(bool start, const lane *parent) const;
 
@@ -41,6 +44,7 @@ namespace hwm
 
         struct road_membership
         {
+            bool xml_read (network &n, xmlpp::TextReader &reader);
             void xml_write(xmlpp::Element *elt) const;
             bool check() const;
             bool empty() const;
@@ -60,6 +64,7 @@ namespace hwm
 
         struct adjacency
         {
+            bool xml_read (network &n, xmlpp::TextReader &reader);
             void xml_write(xmlpp::Element *elt) const;
             bool check() const;
             bool empty() const;
@@ -69,6 +74,7 @@ namespace hwm
             intervals::interval_t           neighbor_interval;
         };
 
+        bool xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
         void scale_offsets(float lane_width);
@@ -124,6 +130,7 @@ namespace hwm
 
             };
 
+            bool xml_read (xmlpp::TextReader &reader);
             void xml_write(const size_t id, xmlpp::Element *elt) const;
             bool check() const;
 
@@ -134,6 +141,7 @@ namespace hwm
             std::vector<in_id>  out_states;
         };
 
+        bool xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
 
@@ -153,8 +161,9 @@ namespace hwm
 
         network &operator=(const network &n);
 
+        bool xml_read (xmlpp::TextReader &reader);
         void xml_write(const char *filename) const;
-        void xml_write(xmlpp::Element *elt) const;
+        void xml_write(xmlpp::Element *elt)  const;
         bool check() const;
         void scale_offsets(float lane_width);
 

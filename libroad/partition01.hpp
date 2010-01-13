@@ -11,12 +11,14 @@ struct partition01 : public std::map<float, T>
     typedef typename std::map<float, T>::reverse_iterator       reverse_iterator;
     typedef typename std::map<float, T>::const_reverse_iterator const_reverse_iterator;
     typedef typename std::map<float, T>::const_iterator         const_iterator;
-    typedef std::pair<const                                     float, T>                   entry;
+    typedef std::pair<const float, T>                           entry;
     typedef intervalf                                           interval_t;
 
     partition01() : base()
     {}
 
+    template <class C>
+    bool xml_read (C &n, xmlpp::TextReader &reader, const str &name);
     void xml_write(xmlpp::Element *elt, const str &name) const;
 
     iterator insert(float x, const T &val)
