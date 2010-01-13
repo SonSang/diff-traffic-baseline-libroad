@@ -185,8 +185,6 @@ namespace hwm
             state_pair_out       &out_pair();
             const state_pair_out &out_pair() const;
 
-            enum {STARVATION=-1, STOP=-1};
-
             float          duration;
             state_pair_set state_pairs;
         };
