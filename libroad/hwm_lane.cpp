@@ -48,9 +48,9 @@ namespace hwm
     {
         assert(adjacent_intersection);
         if(start)
-            return adjacent_intersection->downstream_lane(intersect_in_ref);
-        else
             return adjacent_intersection->upstream_lane(intersect_in_ref);
+        else
+            return adjacent_intersection->downstream_lane(intersect_in_ref);
     }
 
     lane::lane_terminus* lane::lane_terminus::clone() const
