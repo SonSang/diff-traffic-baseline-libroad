@@ -73,7 +73,11 @@ AS_IF([test x"$enable_visual" != xno -a x"$have_fltk" = xyes -a x"$have_glew" = 
 AM_CONDITIONAL(DO_VISUAL, test x"$visual_ok" = xyes)
 
 # Checks for libraries.
-AX_BOOST_BASE([1.39])
+BOOST_REQUIRE([1.39])
+BOOST_FOREACH
+BOOST_UTILITY
+BOOST_TOKENIZER
+BOOST_FORMAT
 
 # Checks for header files.
 
@@ -98,7 +102,6 @@ echo "
   LIBXMLPP_CFLAGS..........: $LIBXMLPP_CFLAGS
   LIBXMLPP_LIBS............: $LIBXMLPP_LIBS
   BOOST_CPPFLAGS...........: $BOOST_CPPFLAGS
-  BOOST_LDFLAGS............: $BOOST_LDFLAGS
   C++ Compiler.............: $CXX $CXXFLAGS $CPPFLAGS
   Linker...................: $LD $LDFLAGS $LIBS"
 if test -z $DO_VISUAL; then

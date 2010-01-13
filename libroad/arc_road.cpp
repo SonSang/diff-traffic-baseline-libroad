@@ -1,5 +1,4 @@
 #include "arc_road.hpp"
-#include <boost/bimap.hpp>
 
 static mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
 {
