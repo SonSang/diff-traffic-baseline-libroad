@@ -62,12 +62,14 @@ namespace hwm
 
     lane *intersection::downstream_lane(const int incoming_ref) const
     {
+        assert(current_state >= 0 && current_state < static_cast<int>(states.size()));
         const intersection::state::out_id &out = states[current_state].in_states[incoming_ref];
         return (out.out_ref == -1) ? 0 : out.fict_lane;
     }
 
     lane *intersection::upstream_lane(const int outgoing_ref) const
     {
+        assert(current_state >= 0 && current_state < static_cast<int>(states.size()));
         const intersection::state::in_id &in = states[current_state].out_states[outgoing_ref];
         return (in.in_ref == -1) ? 0 : in.fict_lane;
     }

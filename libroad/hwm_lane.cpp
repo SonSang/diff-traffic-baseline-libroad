@@ -23,6 +23,7 @@ namespace hwm
 
     lane* lane::intersection_terminus::incident(bool start) const
     {
+        assert(adjacent_intersection);
         if(start)
             return adjacent_intersection->downstream_lane(intersect_in_ref);
         else
@@ -40,6 +41,7 @@ namespace hwm
 
     lane* lane::lane_terminus::incident(bool start) const
     {
+        assert(adjacent_lane);
         return adjacent_lane;
     }
 
@@ -196,11 +198,13 @@ namespace hwm
 
     lane *lane::upstream_lane()   const
     {
+        assert(start);
         return start->incident(true);
     }
 
     lane *lane::downstream_lane() const
     {
+        assert(end);
         return end->incident(false);
     }
 
