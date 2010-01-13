@@ -2,6 +2,24 @@
 
 namespace hwm
 {
+    lane::lane() : start(0), end(0)
+    {}
+
+    lane::lane(const lane &l) : id(l.id),
+                                road_memberships(l.road_memberships),
+                                left(l.left),
+                                right(l.right),
+                                speedlimit(l.speedlimit)
+    {
+        start = l.start ? l.start->clone() : 0;
+        end   = l.end   ? l.end->clone()   : 0;
+    }
+
+    lane::terminus* lane::terminus::clone() const
+    {
+        return new lane::terminus();
+    }
+
     bool lane::terminus::check(bool start, const lane *parent) const
     {
         return true;
@@ -10,6 +28,11 @@ namespace hwm
     lane* lane::terminus::incident(bool start) const
     {
         return 0;
+    }
+
+    lane::intersection_terminus* lane::intersection_terminus::clone() const
+    {
+        return new lane::intersection_terminus(adjacent_intersection, intersect_in_ref);
     }
 
     bool lane::intersection_terminus::check(bool start, const lane *parent) const
@@ -28,6 +51,11 @@ namespace hwm
             return adjacent_intersection->downstream_lane(intersect_in_ref);
         else
             return adjacent_intersection->upstream_lane(intersect_in_ref);
+    }
+
+    lane::lane_terminus* lane::lane_terminus::clone() const
+    {
+        return new lane::lane_terminus(adjacent_lane);
     }
 
     bool lane::lane_terminus::check(bool start, const lane *parent) const

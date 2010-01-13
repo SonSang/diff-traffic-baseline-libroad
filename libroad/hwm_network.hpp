@@ -29,6 +29,9 @@ namespace hwm
 
     struct lane
     {
+        lane();
+        lane(const lane &l);
+
         ~lane()
         {
             delete start;
@@ -37,6 +40,7 @@ namespace hwm
 
         struct terminus
         {
+            virtual terminus* clone() const;
             virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual bool check(bool start, const lane *parent) const;
@@ -51,6 +55,7 @@ namespace hwm
             intersection_terminus(intersection *i, int ref) : adjacent_intersection(i), intersect_in_ref(ref)
             {}
 
+            virtual intersection_terminus* clone() const;
             virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual bool check(bool start, const lane *parent) const;
@@ -68,6 +73,7 @@ namespace hwm
             lane_terminus(lane* l) : adjacent_lane(l)
             {}
 
+            virtual lane_terminus* clone() const;
             virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual bool check(bool start, const lane *parent) const;
@@ -134,9 +140,8 @@ namespace hwm
 
     struct intersection
     {
-        ~intersection()
-        {
-        }
+        intersection() : current_state(0)
+        {}
 
         struct state
         {
