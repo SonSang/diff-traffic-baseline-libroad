@@ -75,11 +75,9 @@ int main(int argc, char *argv[])
         BOOST_FOREACH(const hwm::intersection::state &s, i.second.states)
         {
             std::cout << " " << id++ << " " << s.duration << " in";
-            const hwm::intersection::state::state_pair_in &in_pairs = s.state_pairs.get<hwm::intersection::state::in>();
-            hwm::intersection::state::state_pair_in::const_iterator current = in_pairs.begin();
-            for(; current != in_pairs.end(); ++current)
+            BOOST_FOREACH(const hwm::intersection::state::state_pair &sp, s.in_pair())
             {
-                std::cout << "in: " << current->in_idx << " out: " << current->out_idx << " fict_lane: " << current->fict_lane->id << std::endl;
+                std::cout << "in: " << sp.in_idx << " out: " << sp.out_idx << " fict_lane: " << sp.fict_lane->id << std::endl;
             }
         }
         std::cout << " } " << std::endl;

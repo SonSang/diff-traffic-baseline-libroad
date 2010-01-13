@@ -180,6 +180,11 @@ namespace hwm
             void xml_write(const size_t id, xmlpp::Element *elt) const;
             bool check(const intersection &parent) const;
 
+            state_pair_in        &in_pair();
+            const state_pair_in  &in_pair() const;
+            state_pair_out       &out_pair();
+            const state_pair_out &out_pair() const;
+
             enum {STARVATION=-1, STOP=-1};
 
             float          duration;

@@ -12,14 +12,34 @@ namespace hwm
     {
         if(duration <= 0.0f)
             return false;
-        typedef intersection::state::state_pair_set::index<intersection::state::in>::type state_pair_set_by_in;
-        const state_pair_set_by_in &in_pairs = state_pairs.get<intersection::state::in>();
-        state_pair_set_by_in::const_iterator current = in_pairs.begin();
-        for(; current != in_pairs.end(); ++current)
-            if(!current->check(parent))
+
+        BOOST_FOREACH(const intersection::state::state_pair &sp, in_pair())
+        {
+            if(!sp.check(parent))
                 return false;
+        }
 
         return true;
+    }
+
+    intersection::state::state_pair_in &intersection::state::in_pair()
+    {
+        return state_pairs.get<intersection::state::in>();
+    }
+
+    const intersection::state::state_pair_in &intersection::state::in_pair() const
+    {
+        return state_pairs.get<intersection::state::in>();
+    }
+
+    intersection::state::state_pair_out &intersection::state::out_pair()
+    {
+        return state_pairs.get<intersection::state::out>();
+    }
+
+    const intersection::state::state_pair_out &intersection::state::out_pair() const
+    {
+        return state_pairs.get<intersection::state::out>();
     }
 
     bool intersection::check() const
