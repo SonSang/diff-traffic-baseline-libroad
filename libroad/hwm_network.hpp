@@ -147,8 +147,6 @@ namespace hwm
         {
             struct in_id
             {
-                bool check() const;
-
                 int   in_ref;
                 lane *fict_lane;
             };
@@ -156,22 +154,17 @@ namespace hwm
             //Should an out_id have a lane?
             struct out_id
             {
-                bool check() const;
-
                 int   out_ref;
                 lane *fict_lane;
             };
 
             bool xml_read (xmlpp::TextReader &reader);
             void xml_write(const size_t id, xmlpp::Element *elt) const;
-            bool check() const;
+            bool check(const intersection &parent) const;
 
             enum {STARVATION=-1, STOP=-1};
 
-            lane *downstream_lane(int incoming_ref) const;
-            lane *  upstream_lane(int outgoing_ref) const;
-
-            float duration;
+            float               duration;
             std::vector<out_id> in_states;
             std::vector<in_id>  out_states;
         };
