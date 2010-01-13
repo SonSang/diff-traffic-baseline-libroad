@@ -912,6 +912,13 @@ int cars_per_lane = 20;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
+    if(hnet->check())
+        std::cerr << "HWM net checks out" << std::endl;
+    else
+    {
+        std::cerr << "HWM net doesn't check out" << std::endl;
+        exit(1);
+    }
     hnet->scale_offsets(LANE_WIDTH);
     hnet->center();
     hnet->build_intersection_roads();
