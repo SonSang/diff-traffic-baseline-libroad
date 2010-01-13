@@ -36,7 +36,7 @@ void glWindow::draw(){
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     gluPerspective(60.0, (GLdouble) w()/(GLdouble) h(), 0.0, -1.0);
-    gluLookAt(0,0,1000,0,0,0,0,1,0);
+    gluLookAt(0,0,100,0,0,0,0,1,0);
     glMatrixMode (GL_MODELVIEW);
      glLoadIdentity();
      glEnable (GL_BLEND);
@@ -67,10 +67,10 @@ void glWindow::draw(){
 
      osm::network s_net;
      net = &s_net;
-     net->create_grid(10, 10, 30, 30);
+     net->create_grid(2, 2, 30, 30);
 
      net->compute_edge_types();
-     net->scale_and_translate();
+     //     net->scale_and_translate();
      net->compute_node_degrees();
      net->join_logical_roads();
      net->split_into_road_segments();
