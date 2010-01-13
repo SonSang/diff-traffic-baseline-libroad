@@ -1,5 +1,5 @@
-AC_PREREQ([2.59])
-AC_INIT([libroad], [0.01], [jasonsewall@gmail.com])
+AC_PREREQ(2.59)
+AC_INIT([libroad],[0.01],[jasonsewall@gmail.com])
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_MACRO_DIR([m4])
@@ -35,7 +35,7 @@ AC_ARG_ENABLE([visual],
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_LIBTOOL
+LT_INIT
 PKG_CHECK_MODULES(LIBXMLPP, libxml++-2.6 >= 2.10.0)
 PKG_CHECK_MODULES(GLIBMM, glibmm-2.4 >= 2.12.0)
 
