@@ -14,6 +14,7 @@
 #include <boost/fusion/include/list_fwd.hpp>
 #include <vector>
 #include <sstream>
+#include <limits>
 
 
 vec2d bias, prev;
@@ -240,6 +241,77 @@ namespace osm
 
             BOOST_FOREACH(const str& edge_id, i.edges_starting_here)
             {
+                edge& e = edges[edge_id];
+
+                //TODO Put the min angle calculations in a seperate function
+                double m1;
+                if ((e.shape[1]->xy[0] - e.shape[0]->xy[0]) != 0)
+                {
+                    m1 = ((e.shape[1]->xy[1] - e.shape[0]->xy[1]) /
+                                  (e.shape[1]->xy[0] - e.shape[0]->xy[0]));
+                }
+                else
+                    m1 = std::numeric_limits<double>::max();
+
+                double min_angle = std::numeric_limits<double>::infinity();
+                BOOST_FOREACH(const str& other_edge_id, i.edges_starting_here)
+                {
+                    if (edge_id == other_edge_id)
+                        continue;
+
+                    edge& f = edges[other_edge_id];
+
+                    double m2;
+                    if ((f.shape[1]->xy[0] - f.shape[0]->xy[0]) != 0)
+                    {
+                        m2 = ((f.shape[1]->xy[1] - f.shape[0]->xy[1]) /
+                                      (f.shape[1]->xy[0] - f.shape[0]->xy[0]));
+                    }
+                    else
+                        m2 = std::numeric_limits<double>::max();
+
+                    float acute = M_PI/2.0;
+                    float obtuse = M_PI/2.0;
+                    if ((1 + m1*m2) != 0)
+                    {
+                        acute = atan((m2 - m1)/(1 + m1*m2));
+                        obtuse = M_PI - acute;
+                    }
+                    if (abs(acute) < min_angle)
+                    {
+                        min_angle = acute;
+                    }
+
+                }
+                // BOOST_FOREACH(const str& other_edge_id, i.edges_ending_here)
+                // {
+                //     edge& f = edges[other_edge_id];
+
+                //     double m2;
+                //     if ((f.shape[1]->xy[0] - f.shape[0]->xy[0]) != 0)
+                //     {
+                //         m2 = std::abs((f.shape[1]->xy[1] - f.shape[0]->xy[1]) /
+                //                       (f.shape[1]->xy[0] - f.shape[0]->xy[0]));
+                //     }
+                //     else
+                //         m2 = std::numeric_limits<double>::max();
+
+                //     float acute = M_PI/2.0;
+                //     float obtuse = M_PI/2.0;
+                //     if ((1 + m1*m2) != 0)
+                //     {
+                //         acute = atan((m2 - m1)/(1 + m1*m2));
+                //         obtuse = M_PI - acute;
+                //     }
+                //     if (std::abs(acute) < min_angle)
+                //     {
+                //         min_angle = std::abs(acute);
+                //     }
+                // }
+
+                std::cout << min_angle << std::endl;
+
+
                 double len_thus_far = 0;
                 double _len = 0;
                 //Remove elements until the next segment's length is greater than offset - previous segments.
