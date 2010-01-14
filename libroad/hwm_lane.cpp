@@ -159,14 +159,6 @@ namespace hwm
         return true;
     }
 
-    void lane::scale_offsets(const float lane_width)
-    {
-        BOOST_FOREACH(road_membership::intervals::entry &rmie, road_memberships)
-        {
-            rmie.second.scale_offsets(lane_width);
-        }
-    }
-
     void lane::make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, const float lane_width, const float resolution) const
     {
         int start_high = static_cast<int>(verts.size());

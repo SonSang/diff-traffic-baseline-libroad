@@ -919,7 +919,6 @@ int main(int argc, char** argv)
         std::cerr << "HWM net doesn't check out" << std::endl;
         exit(1);
     }
-    hnet->scale_offsets();
     hnet->build_intersections();
     hnet->center();
 

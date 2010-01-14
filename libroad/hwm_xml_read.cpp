@@ -195,6 +195,8 @@ namespace hwm
 
         parent_road = retrieve<road>(n.roads, ref);
 
+        scale_offsets(n.lane_width);
+
         return read_to_close(reader, "road_membership");
     }
 
@@ -337,6 +339,7 @@ namespace hwm
             {
                 if(!road_memberships.xml_read(n, reader, "road_membership"))
                     return false;
+
                 res = have_road_int = read_to_close(reader, "road_intervals");
             }
             else if(is_opening_element(reader, "adjacency_intervals"))

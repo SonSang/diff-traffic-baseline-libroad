@@ -117,7 +117,6 @@ namespace hwm
         bool xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
-        void scale_offsets(float lane_width);
 
         void make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, float lane_width, float resolution) const;
 
@@ -230,7 +229,6 @@ namespace hwm
         void xml_write(const char *filename) const;
         void xml_write(xmlpp::Element *elt)  const;
         bool check() const;
-        void scale_offsets();
         void build_intersections();
         void build_fictitious_lanes();
 
