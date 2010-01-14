@@ -707,7 +707,7 @@ public:
                                       CAR_REAR_AXLE);
 
             if(!network_drawer.initialized())
-                network_drawer.initialize(hnet, LANE_WIDTH);
+                network_drawer.initialize(hnet, LANE_WIDTH, 0.4f);
 
             setup_light();
 

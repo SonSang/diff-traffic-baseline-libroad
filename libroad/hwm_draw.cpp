@@ -97,7 +97,7 @@ namespace hwm
         return net && v_vbo && f_vbo;
     }
 
-    void network_draw::initialize(const network *in_net, const float lane_width)
+    void network_draw::initialize(const network *in_net, const float lane_width, const float resolution)
     {
         net = in_net;
         std::vector<vertex> points;
@@ -109,7 +109,7 @@ namespace hwm
             lane_vert_starts.push_back(points.size());
             lane_face_starts.push_back(lane_faces.size());
 
-            l.second.make_mesh(points, lane_faces, lane_width, 2.0f);
+            l.second.make_mesh(points, lane_faces, lane_width, resolution);
 
             lane_vert_counts.push_back(points.size()-lane_vert_starts.back());
             lane_face_counts.push_back(lane_faces.size() -lane_face_starts.back());
@@ -153,7 +153,7 @@ namespace hwm
                     fict_lane_data fld;
                     fld.vert_start = points.size();
                     fld.face_start = lane_faces.size();
-                    fict_lane.make_mesh(points, lane_faces, lane_width, 2.0f);
+                    fict_lane.make_mesh(points, lane_faces, lane_width, resolution);
                     fld.vert_count = points.size()     - fld.vert_start;
                     fld.face_count = (lane_faces.size() - fld.face_start) * 3;
                     fld.face_start *= sizeof(vec3u);

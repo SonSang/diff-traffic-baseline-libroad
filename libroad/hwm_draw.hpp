@@ -29,7 +29,7 @@ namespace hwm
         network_draw();
 
         bool initialized() const;
-        void initialize(const hwm::network *net, const float lane_width);
+        void initialize(const hwm::network *net, const float lane_width, const float resolution);
 
         void draw_lanes_wire();
         void draw_lanes_solid();
