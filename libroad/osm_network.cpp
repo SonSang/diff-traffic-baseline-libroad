@@ -35,6 +35,58 @@ namespace osm
     typedef std::pair<const str, node> node_pair;
     typedef std::pair<const str, intersection> intr_pair;
 
+
+    float edge::length() const
+    {
+        float len_thus_far = 0;
+        float _len = 0;
+        for(int i = 0; i < shape.size() - 1; i++)
+        {
+            vec2d start = shape[i + 1]->xy;
+            start -= shape[i]->xy;
+            _len = sqrt(start[0]*start[0] + start[1]*start[1]);
+            len_thus_far += _len;
+        }
+
+        return len_thus_far;
+    }
+
+    bool network::remove_small_roads(double min_len)
+    {
+        for(strhash<edge>::type::iterator ep = edges.begin(); ep != edges.end(); )
+        {
+            edge& e = ep->second;
+            if (e.length() < min_len)
+            {
+                strhash<edge>::type::iterator to_erase = ep;
+                ++ep;
+
+                //Update intersections
+
+                if (intersections.find(e.to) != intersections.end())
+                {
+                    intersection& i_to = intersections[e.to];
+                    i_to.edges_ending_here.erase(find(i_to.edges_ending_here.begin(), i_to.edges_ending_here.end(), e.id));
+                }
+
+                if (intersections.find(e.from) != intersections.end())
+                {
+                    intersection& i_from = intersections[e.from];
+                    i_from.edges_starting_here.erase(find(i_from.edges_starting_here.begin(), i_from.edges_starting_here.end(), e.id));
+                }
+
+                //Update degree count
+                node_degrees[e.to]--;
+                node_degrees[e.from]--;
+
+                //TODO join roads that this edge connected..
+                edges.erase(to_erase);
+            }
+            else
+                ++ep;
+        }
+    }
+
     bool network::draw_network()
     {
         glColor3f(0,0,0);
@@ -218,8 +270,6 @@ namespace osm
                     edges[edge_id].shape.erase(edges[edge_id].shape.begin(), edges[edge_id].shape.begin() + new_start);
                 }
             }
-
-
 
             BOOST_FOREACH(const str& edge_id, i.edges_ending_here)
             {

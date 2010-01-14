@@ -37,13 +37,13 @@ namespace osm
           if (reader.get_node_type() == xmlpp::TextReader::Element){
             if (reader.get_name() == "nd")
               {
-
                 str n_id;
                 node* current_node;
                 get_attribute(n_id, reader, "ref");
                 current_node = retrieve<node>(n.nodes, n_id);
 
                 e.shape.push_back(current_node);
+                current_node->edges_including.push_back(&e);
 
                 //Set the "to node" -- which is expected to be the last node --
                 //every time.  On the final iteration, the last node will be kept.
@@ -67,7 +67,6 @@ namespace osm
                     is_road = true;
                     get_attribute(v, reader, "v");
                     e.highway_class = v;
-                    std::cout << "class " << e.highway_class << std::endl;
                 }
             }
           }

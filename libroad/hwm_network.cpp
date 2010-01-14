@@ -551,10 +551,9 @@ namespace hwm
                         {
                             lane* l_j = roads_to_lanes[j_edge.id].second[k];
                             state.in_states[l->end.intersect_in_ref].out_ref = l_j->start.intersect_in_ref;
-                            // std::cout << "this one " << std::endl;
-                            // std::cout << l->end.intersect_in_ref << "->" << l_j->start.intersect_in_ref << std::endl;
+
                             state.out_states[l_j->start.intersect_in_ref].in_ref = l->end.intersect_in_ref;
-                            // std::cout << l_j->start.intersect_in_ref << "->" << l->end.intersect_in_ref << std::endl;
+
                         }
                     }
 
@@ -569,10 +568,8 @@ namespace hwm
                         {
                             lane* l_i = roads_to_lanes[i_edge.id].second[k];
                             state.in_states[l->end.intersect_in_ref].out_ref = l_i->end.intersect_in_ref;
-                            // std::cout << "b one " << std::endl;
-                            // std::cout << l->end.intersect_in_ref << "->" << l_i->start.intersect_in_ref << std::endl;
+
                             state.out_states[l_i->end.intersect_in_ref].in_ref = l->end.intersect_in_ref;
-                            //                            std::cout << l_i->start.intersect_in_ref << "->" << l->end.intersect_in_ref << std::endl;
                         }
                     }
 

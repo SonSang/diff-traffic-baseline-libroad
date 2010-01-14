@@ -6,6 +6,9 @@
 
 namespace osm
 {
+
+    struct edge;
+
     struct node
     {
         typedef enum {priority, traffic_light, unknown} TYPES;
@@ -13,6 +16,7 @@ namespace osm
         str   id;
         vec2d xy;
         TYPES type;
+        std::vector<edge*> edges_including;
     };
 
     struct edge_type
@@ -41,6 +45,7 @@ namespace osm
         shape_t    shape;
         SPREAD     spread;
         str        highway_class;
+        float length() const;
     };
 
     struct intersection
@@ -65,6 +70,7 @@ namespace osm
         strhash<int>::type      node_degrees;
         strhash<std::vector<str> >::type  node_connections;
 
+        bool remove_small_roads(double min_len);
         bool create_grid(int, int, double, double);
         bool scale_and_translate();
         bool check_edge(const edge &e) const;

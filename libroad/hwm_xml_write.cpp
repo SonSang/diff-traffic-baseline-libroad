@@ -143,7 +143,6 @@ namespace hwm
         is_elt->set_attribute("duration", boost::lexical_cast<str>(is.duration));
 
         size_t oref = 0;
-        std::cout << is.out_states.size() << " now size" << std::endl;
 
         BOOST_FOREACH(const intersection::state::in_id &ii, is.out_states)
         {
