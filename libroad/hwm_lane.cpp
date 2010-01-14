@@ -15,6 +15,10 @@ namespace hwm
         end   = l.end   ? l.end->clone()   : 0;
     }
 
+    void lane::terminus::update_pointers(network &n)
+    {
+    }
+
     lane::terminus* lane::terminus::clone() const
     {
         return new lane::terminus();
@@ -28,6 +32,14 @@ namespace hwm
     lane* lane::terminus::incident(bool start) const
     {
         return 0;
+    }
+
+    void lane::intersection_terminus::update_pointers(network &n)
+    {
+        const strhash<intersection>::type::iterator mine = n.intersections.find(adjacent_intersection->id);
+        assert(mine != n.intersections.end());
+        assert(mine->first == adjacent_intersection->id);
+        adjacent_intersection                                  = &(mine->second);
     }
 
     lane::intersection_terminus* lane::intersection_terminus::clone() const
@@ -51,6 +63,14 @@ namespace hwm
             return adjacent_intersection->upstream_lane(intersect_in_ref);
         else
             return adjacent_intersection->downstream_lane(intersect_in_ref);
+    }
+
+    void lane::lane_terminus::update_pointers(network &n)
+    {
+        const strhash<lane>::type::iterator mine = n.lanes.find(adjacent_lane->id);
+        assert(mine != n.lanes.end());
+        assert(mine->first == adjacent_lane->id);
+        adjacent_lane = &(mine->second);
     }
 
     lane::lane_terminus* lane::lane_terminus::clone() const

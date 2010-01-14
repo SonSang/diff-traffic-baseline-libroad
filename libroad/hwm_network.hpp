@@ -40,6 +40,7 @@ namespace hwm
 
         struct terminus
         {
+            virtual void update_pointers(network &n);
             virtual terminus* clone() const;
             virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
@@ -55,6 +56,7 @@ namespace hwm
             intersection_terminus(intersection *i, int ref) : adjacent_intersection(i), intersect_in_ref(ref)
             {}
 
+            virtual void update_pointers(network &n);
             virtual intersection_terminus* clone() const;
             virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
@@ -73,6 +75,7 @@ namespace hwm
             lane_terminus(lane* l) : adjacent_lane(l)
             {}
 
+            virtual void update_pointers(network &n);
             virtual lane_terminus* clone() const;
             virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;

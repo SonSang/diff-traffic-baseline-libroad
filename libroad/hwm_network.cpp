@@ -9,8 +9,9 @@ namespace hwm
 
     void network::copy(const network &n)
     {
-        name  = n.name;
-        gamma = n.gamma;
+        name       = n.name;
+        gamma      = n.gamma;
+        lane_width = n.lane_width;
 
         roads         = n.roads;
         lanes         = n.lanes;
@@ -73,18 +74,9 @@ namespace hwm
                     }
                 }
             }
-            // if(current_lane.start.inters)
-            // {
-            //     const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.start.inters->id);
-            //     assert(my_inters != intersections.end());
-            //     current_lane.start.inters = &(my_inters->second);
-            // }
-            // if(current_lane.end.inters)
-            // {
-            //     const strhash<intersection>::type::iterator my_inters = intersections.find(other_lane.end.inters->id);
-            //     assert(my_inters != intersections.end());
-            //     current_lane.end.inters = &(my_inters->second);
-            // }
+
+            current_lane.start->update_pointers(*this);
+            current_lane.end->update_pointers(*this);
         }
         // typedef strhash<intersection>::type::value_type ival;
         // BOOST_FOREACH(ival &i, intersections)
