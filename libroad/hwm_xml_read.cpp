@@ -263,7 +263,7 @@ namespace hwm
         return read_to_close(reader, tag);
     }
 
-    bool road::xml_read(network &n, xmlpp::TextReader &reader, const vec3f &scale)
+    bool road::xml_read(const vec3f &scale, xmlpp::TextReader &reader)
     {
         assert(is_opening_element(reader, "road"));
 
@@ -456,7 +456,6 @@ namespace hwm
     network load_xml_network(const char *filename, const vec3f &scale)
     {
         network n;
-        n.scale = scale;
         xmlpp::TextReader reader(filename);
 
         if(!read_skip_comment(reader))
@@ -487,7 +486,7 @@ namespace hwm
             res = read_skip_comment(reader);
 
             if(is_opening_element(reader, "roads"))
-                res = have_roads = read_map(n, n.roads, reader, "road", "roads");
+                res = have_roads = read_map(scale, n.roads, reader, "road", "roads");
             else if(is_opening_element(reader, "lanes"))
                 res = have_lanes = read_map(n, n.lanes, reader, "lane", "lanes");
             else if(is_opening_element(reader, "intersections"))

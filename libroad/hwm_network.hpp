@@ -13,7 +13,7 @@ namespace hwm
 
     struct road
     {
-        bool xml_read (network &n, xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
+        bool xml_read (const vec3f &scale, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
 
@@ -217,7 +217,7 @@ namespace hwm
 
         network &operator=(const network &n);
 
-        bool xml_read (xmlpp::TextReader &reader);
+        bool xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f,1.0f,1.0f));
         void xml_write(const char *filename) const;
         void xml_write(xmlpp::Element *elt)  const;
         bool check() const;
@@ -232,7 +232,6 @@ namespace hwm
 
         void build_intersection_roads();
 
-        vec3f                       scale;
         str                         name;
         float                       gamma;
         strhash<road>::type         roads;
