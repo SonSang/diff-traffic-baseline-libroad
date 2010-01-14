@@ -701,13 +701,13 @@ public:
                 init_glew();
 
             if(!car_drawer.initialized())
-                car_drawer.initialize(0.6*LANE_WIDTH,
+                car_drawer.initialize(0.6*hnet->lane_width,
                                       CAR_LENGTH,
                                       1.5f,
                                       CAR_REAR_AXLE);
 
             if(!network_drawer.initialized())
-                network_drawer.initialize(hnet, LANE_WIDTH, 0.4f);
+                network_drawer.initialize(hnet, 0.4f);
 
             setup_light();
 
@@ -919,10 +919,9 @@ int main(int argc, char** argv)
         std::cerr << "HWM net doesn't check out" << std::endl;
         exit(1);
     }
-    hnet->scale_offsets(LANE_WIDTH);
-    hnet->build_intersections(LANE_WIDTH);
+    hnet->scale_offsets();
+    hnet->build_intersections();
     hnet->center();
-    //    hnet->build_intersection_roads();
 
     //Build hash for lane lengths.
     typedef pair<str, const hwm::lane&> lane_hash;

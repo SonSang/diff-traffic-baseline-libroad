@@ -230,8 +230,8 @@ namespace hwm
         void xml_write(const char *filename) const;
         void xml_write(xmlpp::Element *elt)  const;
         bool check() const;
-        void scale_offsets(float lane_width);
-        void build_intersections(float lane_width);
+        void scale_offsets();
+        void build_intersections();
         void build_fictitious_lanes();
 
         void center(bool z=false);
@@ -242,6 +242,7 @@ namespace hwm
 
         str                         name;
         float                       gamma;
+        float                       lane_width;
         strhash<road>::type         roads;
         strhash<lane>::type         lanes;
         strhash<intersection>::type intersections;
@@ -250,6 +251,6 @@ namespace hwm
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void    write_xml_network(const network &n, const char *filename);
 
-    network from_sumo(const str &name, float gamma, const sumo::network &n);
+    network from_sumo(const str &name, float gamma, float lane_width, const sumo::network &n);
 };
 #endif

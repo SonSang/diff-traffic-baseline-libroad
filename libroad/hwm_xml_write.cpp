@@ -178,8 +178,9 @@ namespace hwm
     void network::xml_write(xmlpp::Element *elt) const
     {
         elt->set_attribute("name",    name);
-        elt->set_attribute("version", "1.2");
+        elt->set_attribute("version", "1.3");
         elt->set_attribute("gamma", boost::lexical_cast<str>(gamma));
+        elt->set_attribute("lane_width", boost::lexical_cast<str>(lane_width));
         xml_write_map(roads,         elt, "roads");
         xml_write_map(lanes,         elt, "lanes");
         xml_write_map(intersections, elt, "intersections");

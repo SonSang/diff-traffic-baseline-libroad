@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
                                               argv[3]));
     std::cerr << "SUMO input net loaded successfully" << std::endl;
 
-    hwm::network hnet(hwm::from_sumo("test", 0.5f, snet));
+    hwm::network hnet(hwm::from_sumo("test", 0.5f, 2.5f, snet));
 
     if(hnet.check())
         std::cerr << "Derived HWM net checks out" << std::endl;

@@ -466,7 +466,11 @@ namespace hwm
 
         str version;
         if(!get_attribute(version, reader, "version") ||
-           version != "1.2")
+           version != "1.3")
+            throw std::exception();
+
+        if(!get_attribute(n.lane_width, reader, "lane_width") ||
+           n.lane_width <= 0.0f)
             throw std::exception();
 
         if(!get_attribute(n.name, reader, "name"))

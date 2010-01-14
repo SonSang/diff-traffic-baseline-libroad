@@ -165,6 +165,9 @@ namespace hwm
         if(gamma <= 0.0f || gamma >= 1.0f)
             return false;
 
+        if(lane_width <= 0.0f)
+            return false;
+
         typedef strhash<road>::type::value_type rval;
         BOOST_FOREACH(const rval &r, roads)
         {
@@ -203,7 +206,7 @@ namespace hwm
         }
     }
 
-    void network::scale_offsets(const float lane_width)
+    void network::scale_offsets()
     {
         typedef strhash<lane>::type::value_type lane_pair;
         BOOST_FOREACH(lane_pair &lp, lanes)
@@ -212,7 +215,7 @@ namespace hwm
         }
     }
 
-    void network::build_intersections(const float lane_width)
+    void network::build_intersections()
     {
         typedef strhash<intersection>::type::value_type intersection_pair;
         BOOST_FOREACH(intersection_pair &ip, intersections)
@@ -271,11 +274,12 @@ namespace hwm
         return entry->second;
     }
 
-    network from_sumo(const str &name, const float gamma, const sumo::network &snet)
+    network from_sumo(const str &name, const float gamma, const float lane_width, const sumo::network &snet)
     {
         network hnet;
-        hnet.name  = name;
-        hnet.gamma = gamma;
+        hnet.name       = name;
+        hnet.gamma      = gamma;
+        hnet.lane_width = lane_width;
 
         strhash<size_t>::type node_degree;
         BOOST_FOREACH(const node_pair &np, snet.nodes)

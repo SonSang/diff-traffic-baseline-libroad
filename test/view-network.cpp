@@ -9,7 +9,6 @@
 #include "libroad/hwm_network.hpp"
 #include "libroad/hwm_draw.hpp"
 
-static const float LANE_WIDTH = 2.5f;
 static const float CAR_LENGTH = 4.5f;
 //* This is the position of the car's axle from the FRONT bumper of the car
 static const float CAR_REAR_AXLE = 3.5f;
@@ -89,13 +88,13 @@ public:
                 init_glew();
 
             if(!car_drawer.initialized())
-                car_drawer.initialize(0.6*LANE_WIDTH,
+                car_drawer.initialize(0.6*net->lane_width,
                                       CAR_LENGTH,
                                       1.5f,
                                       CAR_REAR_AXLE);
 
             if(!network_drawer.initialized())
-                network_drawer.initialize(net, LANE_WIDTH, 0.4f);
+                network_drawer.initialize(net, 0.4f);
 
             setup_light();
 
@@ -306,8 +305,8 @@ public:
 int main(int argc, char *argv[])
 {
     hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 15.0f)));
-    net.scale_offsets(LANE_WIDTH);
-    net.build_intersections(LANE_WIDTH);
+    net.scale_offsets();
+    net.build_intersections();
     net.build_fictitious_lanes();
     net.center();
     std::cerr << "HWM net loaded successfully" << std::endl;
