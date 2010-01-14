@@ -131,49 +131,84 @@ void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
     }
 }
 
-struct idx_sort
+static void alpha_assign(std::vector<float> &alphas, const std::vector<float> &seg_lengths, const std::vector<float> &factors, const size_t start, const size_t end)
 {
-    idx_sort(const std::vector<float> &v) : vec(v)
+    // We have N_pts points
+    // We have N_segs segments (N_pts - 1)
+    // We have N_frames interior points (N_pts - 2)
+    // start/end are segment indices (so initially 0/N_segs)
+    // The i-th segment is bounded by the i-1-th factor/alpha on the low and the i-th factor/alpha on the high
+
+    if(!end || start >= end-1)
+        return;
+
+    // assert(start != 0);
+    // assert(end != seg_lengths.size());
+
+    float  min_radius = FLT_MAX;
+    vec2f  alphas_pick;
+    size_t min_seg     = end;
+
     {
+        const size_t c           = start;
+        const float  a           = start > 0 ? alphas[c-1] : 0.0f;
+        const float  b           = std::min(seg_lengths[c] - a, seg_lengths[c+1]);
+        const float  this_radius = factors[c]*b;
+        assert(this_radius != 0);
+        if(this_radius < min_radius)
+        {
+            min_radius  = this_radius;
+            min_seg     = c;
+            alphas_pick = vec2f(a, b);
+        }
     }
 
-    bool operator()(size_t x, size_t y) const
+    for(size_t c = start+1; c < end-1; ++c)
     {
-        return vec[x] < vec[y];
+        const float a           = std::min(factors[c] * seg_lengths[c] / (factors[c-1] + factors[c]),
+                                           seg_lengths[c-1]);
+        const float b           = std::min(seg_lengths[c] - a,
+                                           seg_lengths[c+1]);
+        const float radius_a    = factors[c-1]*a;
+        const float radius_b    = factors[c]*b;
+        const float this_radius = std::min(radius_a, radius_b);
+        assert(this_radius != 0);
+        if(this_radius < min_radius)
+        {
+            min_radius  = this_radius;
+            min_seg     = c;
+            alphas_pick = vec2f(a, b);
+        }
     }
 
-    const std::vector<float> &vec;
-};
-
-struct slack_idx_cmp
-{
-    slack_idx_cmp(const std::vector<float> &v) : vec(v)
     {
+        const size_t c           = end-1;
+        const float  b           = c < seg_lengths.size()-1 ? alphas[c] : 0.0f;
+        const float  a           = std::min(seg_lengths[c] - b, seg_lengths[c-1]);
+        const float  this_radius = factors[c-1]*a;
+        assert(this_radius != 0);
+        if(this_radius < min_radius)
+        {
+            min_radius  = this_radius;
+            min_seg     = c;
+            alphas_pick = vec2f(a, b);
+        }
     }
 
-    bool operator()(size_t x, size_t y) const
-    {
-        return vec[x] < vec[y];
-    }
+    assert(min_seg < end);
 
-    const std::vector<float> &vec;
-};
+    if(min_seg > start)
+        alphas[min_seg-1] = alphas_pick[0];
+    if(min_seg < end-1)
+        alphas[min_seg]   = alphas_pick[1];
 
-static float slack(const size_t idx, const std::vector<float> &lengths, const std::vector<float> &alphas)
-{
-    float low_slack;
-    if(idx > 0)
-        low_slack = lengths[idx] - alphas[idx-1] - alphas[idx];
-    else
-        low_slack = lengths[idx]                 - alphas[idx];
+#ifndef NDEBUG
+    for(size_t i = 1; i < seg_lengths.size()-1; ++i)
+        assert( seg_lengths[i] - alphas[i-1] - alphas[i] >= -1e5);
+#endif
 
-    float high_slack;
-    if(idx < alphas.size()-1)
-        high_slack = lengths[idx+1] - alphas[idx+1] - alphas[idx];
-    else
-        high_slack = lengths[idx+1]                 - alphas[idx];
-
-    return std::min(low_slack, high_slack);
+    alpha_assign(alphas, seg_lengths, factors, start, min_seg);
+    alpha_assign(alphas, seg_lengths, factors, min_seg+1, end);
 }
 
 bool arc_road::initialize()
@@ -215,70 +250,12 @@ bool arc_road::initialize()
         normals_[i-1]   /= len;
     }
 
-    // Compute first pass for alphas
-    std::vector<float> poly_lengths(N_segs);
-    poly_lengths[0]      = lengths[0];
-    for(size_t i = 0; i < N_segs; ++i)
-        poly_lengths[i]  = lengths[i]/2;
-    poly_lengths[N_arcs] = lengths[N_arcs];
-
-    std::vector<size_t> indexes(N_segs);
-    for(size_t i = 0; i < N_segs; ++i)
-        indexes[i] = i;
-
-    idx_sort isort(poly_lengths);
-    std::sort(indexes.begin(), indexes.end(), isort);
-
     std::vector<float> alphas(N_arcs, 0);
-    std::vector<bool>  set(N_arcs, false);
-
-    BOOST_FOREACH(size_t idx, indexes)
-    {
-        if(idx != 0 && !set[idx-1])
-        {
-            alphas[idx-1] = poly_lengths[idx];
-            set[idx-1]    = true;
-        }
-        if(idx != N_arcs && !set[idx])
-        {
-            alphas[idx] = poly_lengths[idx];
-            set[idx]    = true;
-        }
-    }
-
-    // Now do 2nd pass to remove excess slack
-    for(size_t i = 0; i < N_segs; ++i)
-        poly_lengths[i] = lengths[i];
-
-    std::vector<float> slacks(N_arcs, 0);
+    std::vector<float> factors(N_arcs);
     for(size_t i = 0; i < N_arcs; ++i)
-        slacks[i] = slack(i, poly_lengths, alphas);
-    idx_sort           ssort(slacks);
+        factors[i] = cot_theta(normals_[i], normals_[i+1]);
 
-    indexes.resize(N_arcs);
-    for(size_t i = 0; i < N_arcs; ++i)
-        indexes[i] = i;
-    for(std::vector<size_t>::iterator current = indexes.begin(); current != indexes.end(); ++current)
-    {
-        std::sort(current, indexes.end(), ssort);
-        if(slacks[*current] > 0.0)
-        {
-
-            alphas[*current] += slacks[*current];
-            slacks[*current]  = 0.0f;
-
-            if(*current > 0)
-            {
-                const size_t prev_idx = *current - 1;
-                slacks[prev_idx] = slack(prev_idx, poly_lengths, alphas);
-            }
-            if(*current < N_arcs-1)
-            {
-                const size_t next_idx = *current + 1;
-                slacks[next_idx] = slack(next_idx, poly_lengths, alphas);
-            }
-        }
-    }
+    alpha_assign(alphas, lengths, factors, 0, lengths.size());
 
     // Now compute actual helper data
     frames_.resize(N_arcs);
@@ -288,7 +265,7 @@ bool arc_road::initialize()
     for(size_t i = 0; i < N_arcs; ++i)
     {
         const float alpha = alphas[i];
-        radii_[i] = alpha * cot_theta(normals_[i], normals_[i+1]);
+        radii_[i] = alpha * factors[i];
         assert(std::isfinite(radii_[i]));
 
         const vec3f   laxis(tvmet::normalize(tvmet::cross(normals_[i+1], normals_[i])));
@@ -313,14 +290,14 @@ bool arc_road::initialize()
 
     for(size_t i = 0; i < N_arcs; ++i)
     {
-        poly_lengths[i]   -= alphas[i];
-        poly_lengths[i+1] -= alphas[i];
+        lengths[i]   -= alphas[i];
+        lengths[i+1] -= alphas[i];
     }
 
     seg_clengths_.resize(N_pts);
     seg_clengths_[0] = 0.0f;
     for(size_t i = 1; i < N_pts; ++i)
-        seg_clengths_[i] = seg_clengths_[i-1] + poly_lengths[i-1];
+        seg_clengths_[i] = seg_clengths_[i-1] + lengths[i-1];
 
     return true;
 }
