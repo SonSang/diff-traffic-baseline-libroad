@@ -490,7 +490,11 @@ void arc_road::bounding_box(vec3f &low, vec3f &high) const
 
 float arc_road::parameter_map(const float t, const float offset) const
 {
-    return length(t, offset)/length(offset);
+    const float blen = length(offset);
+    if(blen > 0.0f)
+        return length(t, offset)/length(offset);
+    else
+        return 0.0f;
 }
 
 float arc_road::length_at_feature(const size_t i, const float p, const float offset) const
@@ -767,7 +771,7 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     float lookup = feature_base(low, offset);
     float base   = feature_size(low, offset);
 
-    local = (scaled_t - lookup) / base;
+    local = (base > 0.0f) ? (scaled_t - lookup) / base : 0.0f;
 
     assert(local >= 0.0f);
 
