@@ -67,7 +67,7 @@ void glWindow::draw(){
 
      osm::network s_net;
      net = &s_net;
-     net->create_grid(2, 2, 30, 30);
+     net->create_grid(3, 3, 30, 30);
 
      net->compute_edge_types();
      //     net->scale_and_translate();

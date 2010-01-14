@@ -300,7 +300,7 @@ namespace hwm
                     rm_rev.parent_road = parent_road;
                     rm_rev.interval[0] = 1.0f;
                     rm_rev.interval[1] = 0.0f;
-                    rm_rev.lane_position = lanect;
+                    rm_rev.lane_position = -1*lanect;
                     new_reverse_lane.road_memberships.insert(0.0, rm_rev);
 
                     new_reverse_lane.start.inters = end_inters;
@@ -374,34 +374,6 @@ namespace hwm
         {
             const osm::intersection& osm_isect = i_pair.second;
             hwm::intersection& hwm_isect = hnet.intersections[osm_isect.id_from_node];
-
-            // std::cout << "Here" << std::endl;
-
-            // for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
-            // {
-            //     osm::edge e = snet.edges[osm_isect.edges_starting_here[i]];
-            //     for(int j = 0; j < roads_to_lanes[e.id].first.size(); j++)
-            //     {
-            //         std::cout << "start " << roads_to_lanes[e.id].first[j]->start.intersect_in_ref << std::endl;
-            //     }
-
-            //     for(int j = 0; j < roads_to_lanes[e.id].second.size(); j++)
-            //     {
-            //         std::cout << "end " << roads_to_lanes[e.id].second[j]->end.intersect_in_ref << std::endl;
-            //     }
-            // }
-
-            // std::cout << "Here" << std::endl;
-
-
-
-            // for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
-            // {
-            //     osm::edge e = snet.edges[osm_isect.edges_starting_here[i]];
-            //     std::cout << e.start.intersect_in_ref << std::endl;
-            // }
-
-
 
 
             //Add states for every pairing of roads that are ending here.

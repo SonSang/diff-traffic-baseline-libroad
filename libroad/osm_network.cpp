@@ -290,7 +290,7 @@ namespace osm
         std::vector<str> edges_to_delete;
         std::map<const str, edge*> replaced_nodes;
 
-
+        //Initialize so that each edge "replaces" itself.
         BOOST_FOREACH(osm::edge_pair &ep, edges)
         {
             replaced_nodes.insert(std::make_pair(ep.first, &ep.second));
@@ -339,6 +339,9 @@ namespace osm
                     replaced_nodes.insert(std::make_pair(o->id, e));
                     edges_to_delete.push_back(o->id);
                 }
+
+                //TODO Should also check for when ->to and ->to or ->from and ->from are the same,
+                // but the logic for that merge is more complicated.
 
             }
         }
