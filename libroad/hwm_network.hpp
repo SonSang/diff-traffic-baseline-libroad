@@ -158,6 +158,9 @@ namespace hwm
                 state_pair(const int i, const int o)
                     : in_idx(i), out_idx(o), fict_lane(0)
                 {}
+                state_pair(const int i, const int o, lane *l)
+                    : in_idx(i), out_idx(o), fict_lane(l)
+                {}
 
                 bool check(const intersection &parent) const;
                 int   in_idx;
@@ -180,6 +183,9 @@ namespace hwm
             void xml_write(const size_t id, xmlpp::Element *elt) const;
             bool check(const intersection &parent) const;
 
+            void translate(const vec3f &o);
+            void build_fictitious_lanes(const intersection &parent);
+
             state_pair_in        &in_pair();
             const state_pair_in  &in_pair() const;
             state_pair_out       &out_pair();
@@ -187,6 +193,8 @@ namespace hwm
 
             float               duration;
             state_pair_set      state_pairs;
+            strhash<road>::type fict_roads;
+            strhash<lane>::type fict_lanes;
         };
 
         bool xml_read (network &n, xmlpp::TextReader &reader);
@@ -195,6 +203,7 @@ namespace hwm
 
         void translate(const vec3f &o);
         void build_shape(float lane_width);
+        void build_fictitious_lanes();
 
         lane *downstream_lane(int incoming_ref) const;
         lane *  upstream_lane(int outgoing_ref) const;
@@ -223,6 +232,7 @@ namespace hwm
         bool check() const;
         void scale_offsets(float lane_width);
         void build_intersections(float lane_width);
+        void build_fictitious_lanes();
 
         void center(bool z=false);
 
@@ -230,15 +240,11 @@ namespace hwm
 
         void bounding_box(vec3f &low, vec3f &high) const;
 
-        void build_intersection_roads();
-
         str                         name;
         float                       gamma;
         strhash<road>::type         roads;
         strhash<lane>::type         lanes;
         strhash<intersection>::type intersections;
-        strhash<road>::type         i_roads;
-        strhash<lane>::type         i_lanes;
     };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));

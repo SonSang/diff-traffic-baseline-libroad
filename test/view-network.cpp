@@ -146,6 +146,11 @@ public:
             glDisable(GL_LIGHTING);
             network_drawer.draw_intersections_wire();
 
+            glColor3f(1.0, 0.5, 0.5);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_LIGHTING);
+            network_drawer.draw_fictitious_lanes_solid();
+
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);
 
@@ -278,9 +283,9 @@ public:
 
     vec3f bb[2];
 
-    int pick_vert;
+    int    pick_vert;
     GLuint glew_state;
-    vec4f light_position;
+    vec4f  light_position;
 };
 
 int main(int argc, char *argv[])
@@ -288,8 +293,8 @@ int main(int argc, char *argv[])
     hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 15.0f)));
     net.scale_offsets(LANE_WIDTH);
     net.build_intersections(LANE_WIDTH);
+    net.build_fictitious_lanes();
     net.center();
-
     std::cerr << "HWM net loaded successfully" << std::endl;
 
     if(net.check())

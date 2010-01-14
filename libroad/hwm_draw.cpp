@@ -89,20 +89,21 @@ namespace hwm
             glDeleteBuffersARB(1, &n_vbo);
     }
 
-    network_draw::network_draw() : v_vbo(0), f_vbo(0)
+    network_draw::network_draw() : v_vbo(0), f_vbo(0), net(0)
     {}
 
     bool network_draw::initialized() const
     {
-        return v_vbo && f_vbo;
+        return net && v_vbo && f_vbo;
     }
 
-    void network_draw::initialize(const network *net, const float lane_width)
+    void network_draw::initialize(const network *in_net, const float lane_width)
     {
+        net = in_net;
         std::vector<vertex> points;
         std::vector<vec3u>  lane_faces;
 
-        typedef std::pair<const str, hwm::lane> lmap_itr;
+        typedef std::pair<const str, lane> lmap_itr;
         BOOST_FOREACH(const lmap_itr &l, net->lanes)
         {
             lane_vert_starts.push_back(points.size());
@@ -122,7 +123,7 @@ namespace hwm
             i *= sizeof(vec3u);
         }
 
-        typedef std::pair<const str, hwm::intersection> imap_itr;
+        typedef std::pair<const str, intersection> imap_itr;
         BOOST_FOREACH(const imap_itr &i, net->intersections)
         {
             intersection_vert_fan_starts.push_back(points.size());
@@ -138,6 +139,28 @@ namespace hwm
 
             intersection_vert_loop_starts.push_back(intersection_vert_fan_starts.back() + 1);
             intersection_vert_loop_counts.push_back(intersection_vert_fan_counts.back() - 2);
+
+            BOOST_FOREACH(const intersection::state &st, i.second.states)
+            {
+                BOOST_FOREACH(const intersection::state::state_pair &sp, st.in_pair())
+                {
+                    assert(sp.fict_lane);
+                    const lane &fict_lane = *(sp.fict_lane);
+
+                    strhash<fict_lane_data>::type::iterator it = fictitious_lanes.find(fict_lane.id);
+                    assert(it == fictitious_lanes.end());
+
+                    fict_lane_data fld;
+                    fld.vert_start = points.size();
+                    fld.face_start = lane_faces.size();
+                    fict_lane.make_mesh(points, lane_faces, lane_width, 2.0f);
+                    fld.vert_count = points.size()     - fld.vert_start;
+                    fld.face_count = (lane_faces.size() - fld.face_start) * 3;
+                    fld.face_start *= sizeof(vec3u);
+
+                    fictitious_lanes.insert(it, std::make_pair(fict_lane.id, fld));
+                }
+            }
         }
 
         glGenBuffersARB(1, &v_vbo);
@@ -216,6 +239,72 @@ namespace hwm
         assert(glGetError() == GL_NO_ERROR);
 
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    }
+
+    void network_draw::draw_fictitious_lanes_wire()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+
+        assert(glGetError() == GL_NO_ERROR);
+        typedef std::pair<const str, intersection> imap_itr;
+        BOOST_FOREACH(const imap_itr &i, net->intersections)
+        {
+            const intersection::state &st = i.second.states[i.second.current_state];
+            BOOST_FOREACH(const intersection::state::state_pair &sp, st.in_pair())
+            {
+                assert(sp.fict_lane);
+                const lane &fict_lane = *(sp.fict_lane);
+
+                strhash<fict_lane_data>::type::iterator it = fictitious_lanes.find(fict_lane.id);
+                assert(it != fictitious_lanes.end());
+
+                const fict_lane_data &fld = it->second;
+                glDrawArrays(GL_LINE_LOOP, fld.vert_start, fld.vert_count);
+            }
+        }
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    void network_draw::draw_fictitious_lanes_solid()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(sizeof(vec3f)));
+
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+
+        assert(glGetError() == GL_NO_ERROR);
+        typedef std::pair<const str, intersection> imap_itr;
+        BOOST_FOREACH(const imap_itr &i, net->intersections)
+        {
+            const intersection::state &st = i.second.states[i.second.current_state];
+            BOOST_FOREACH(const intersection::state::state_pair &sp, st.in_pair())
+            {
+                assert(sp.fict_lane);
+                const lane &fict_lane = *(sp.fict_lane);
+
+                strhash<fict_lane_data>::type::iterator it = fictitious_lanes.find(fict_lane.id);
+                assert(it != fictitious_lanes.end());
+
+                const fict_lane_data &fld = it->second;
+                assert(glGetError() == GL_NO_ERROR);
+                glDrawElements(GL_TRIANGLES, fld.face_count, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid*>(fld.face_start));
+            }
+        }
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
     }
 
     network_draw::~network_draw()

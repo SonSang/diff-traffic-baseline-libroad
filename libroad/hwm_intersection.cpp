@@ -22,6 +22,133 @@ namespace hwm
         return true;
     }
 
+    void intersection::state::translate(const vec3f &o)
+    {
+        typedef strhash<road>::type::value_type road_pair;
+        BOOST_FOREACH(road_pair &frp, fict_roads)
+        {
+            frp.second.translate(o);
+        }
+    }
+
+    static inline vec3f projection_intersect(const vec3f &o0, const vec3f &n0,
+                                             const vec3f &o1, const vec3f &n1)
+    {
+        vec3f a(n0[1],   n1[1], 0.0f);
+        vec3f b(-n0[0], -n1[0], 0.0f);
+        vec3f c(o0[0]*n0[1] - o0[1]*n0[0],
+                o1[0]*n1[1] - o1[1]*n1[0],
+                0.0f);
+
+        vec3f result;
+        if(std::abs(n0[1]) < 1e-6)
+        {
+            if(std::abs(n1[1]) < 1e-6)
+            {
+                result = (o0 + o1)/2;
+                return result;
+            }
+            std::swap(a[0], a[1]);
+            std::swap(b[0], b[1]);
+            std::swap(c[0], c[1]);
+        }
+
+        const float inva0 = 1.0f/a[0];
+        const float denom = b[1] - a[1]*inva0*b[0];
+        if(std::abs(denom) < 1e-6)
+        {
+                result = (o0 + o1)/2;
+                return result;
+        }
+
+        result[2] = (o0[2] + o1[2])/2;
+        result[1] = (c[1] - a[1]*inva0 * c[0])/denom;
+        result[0] = (c[0] - b[0]*result[1])*inva0;
+
+        return result;
+    }
+
+    void intersection::state::build_fictitious_lanes(const intersection &parent)
+    {
+        intersection::state::state_pair_in::iterator current = in_pair().begin();
+        for(; current != in_pair().end(); ++current)
+        {
+            const intersection::state::state_pair &sp = *current;
+            lane *in  = parent.incoming[sp.in_idx];
+            lane *out = parent.outgoing[sp.out_idx];
+
+            const str road_id(boost::str(boost::format("%s_to_%s_fict_road") % in->id % out->id));
+
+            strhash<road>::type::iterator new_road_itr(fict_roads.find(road_id));
+            assert(new_road_itr == fict_roads.end());
+
+            new_road_itr = fict_roads.insert(new_road_itr, std::make_pair(road_id, road()));
+
+            road &new_road = new_road_itr->second;
+            new_road.name        = road_id;
+            new_road.id          = road_id;
+
+            vec3f start_point;
+            vec3f start_tan;
+            vec3f end_point;
+            vec3f end_tan;
+            {
+                const mat4x4f start(in ->point_frame(1.0));
+                const mat4x4f end  (out->point_frame(0.0));
+                for(int i = 0; i < 3; ++i)
+                {
+                    start_point[i] = start(i, 3);
+                    start_tan[i]   = start(i, 0);
+                    end_point[i]   = end(i, 3);
+                    end_tan[i]     = end(i, 0);
+                }
+            }
+
+            vec3f middle;
+            if(tvmet::dot(start_tan, end_tan) > 0.9f)
+                middle = (start_point + end_point)/2;
+            else
+            {
+                middle = projection_intersect(start_point, start_tan,
+                                              end_point,   end_tan);
+            }
+
+            new_road.rep.points_.push_back(start_point);
+            new_road.rep.points_.push_back(middle);
+            new_road.rep.points_.push_back(end_point);
+
+            new_road.rep.initialize();
+
+            assert(new_road.check());
+
+            assert(!sp.fict_lane);
+            const str lane_id(boost::str(boost::format("%s_to_%s_fict_lane") % in->id % out->id));
+
+            strhash<lane>::type::iterator new_lane_itr(fict_lanes.find(lane_id));
+            assert(new_lane_itr == fict_lanes.end());
+
+            new_lane_itr = fict_lanes.insert(new_lane_itr, std::make_pair(lane_id, lane()));
+            lane &new_lane = new_lane_itr->second;
+            new_lane.id = lane_id;
+
+            {
+                lane::road_membership rm;
+                rm.parent_road = &new_road;
+                rm.lane_position = 0.0f;
+                rm.interval[0] = 0.0f;
+                rm.interval[1] = 1.0f;
+                new_lane.road_memberships.insert(0.0, rm);
+            }
+
+            new_lane.start = new hwm::lane::lane_terminus(in);
+            new_lane.end   = new hwm::lane::lane_terminus(out);
+
+            new_lane.speedlimit = out->speedlimit;
+
+            in_pair().replace(current, intersection::state::state_pair(sp.in_idx, sp.out_idx, &new_lane));
+        }
+    }
+
     intersection::state::state_pair_in &intersection::state::in_pair()
     {
         return state_pairs.get<intersection::state::in>();
@@ -82,6 +209,11 @@ namespace hwm
 
     void intersection::translate(const vec3f &o)
     {
+        BOOST_FOREACH(state &st, states)
+        {
+            st.translate(o);
+        }
+
         BOOST_FOREACH(vec3f &pt, shape)
         {
             pt += o;
@@ -186,6 +318,14 @@ namespace hwm
             center += pt;
         }
         center /= shape.size();
+    }
+
+    void intersection::build_fictitious_lanes()
+    {
+        BOOST_FOREACH(state &s, states)
+        {
+            s.build_fictitious_lanes(*this);
+        }
     }
 
     lane *intersection::downstream_lane(const int incoming_ref) const
