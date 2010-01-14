@@ -31,8 +31,11 @@ namespace hwm
         bool initialized() const;
         void initialize(const hwm::network *net, const float lane_width);
 
-        void draw_wire();
-        void draw_solid();
+        void draw_lanes_wire();
+        void draw_lanes_solid();
+
+        void draw_intersections_wire();
+        void draw_intersections_solid();
 
         ~network_draw();
 
@@ -43,5 +46,11 @@ namespace hwm
         std::vector<GLsizei>  lane_vert_counts;
         std::vector<size_t>   lane_face_starts;
         std::vector<GLsizei>  lane_face_counts;
+
+        std::vector<GLint>    intersection_vert_fan_starts;
+        std::vector<GLsizei>  intersection_vert_fan_counts;
+        std::vector<GLint>    intersection_vert_loop_starts;
+        std::vector<GLsizei>  intersection_vert_loop_counts;
+
     };
 }

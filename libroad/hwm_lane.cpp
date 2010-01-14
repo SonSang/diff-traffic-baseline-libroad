@@ -99,10 +99,10 @@ namespace hwm
                         parent_road->rep.length(interval[1], lane_position));
     }
 
-    vec3f   lane::road_membership::point      (float t, const vec3f &up) const
+    vec3f   lane::road_membership::point      (float t, const float offset, const vec3f &up) const
     {
         t = t*(interval[1]-interval[0])+interval[0];
-        return parent_road->rep.point(t, lane_position, up);
+        return parent_road->rep.point(t, lane_position+offset, up);
     }
 
     mat3x3f lane::road_membership::frame      (float t, const vec3f &up) const
@@ -112,11 +112,11 @@ namespace hwm
         return parent_road->rep.frame(t, lane_position, reversed, up);
     }
 
-    mat4x4f lane::road_membership::point_frame(float t, const vec3f &up) const
+    mat4x4f lane::road_membership::point_frame(float t, const float offset, const vec3f &up) const
     {
         const bool reversed = (interval[0] > interval[1]);
         t = t*(interval[1]-interval[0])+interval[0];
-        return parent_road->rep.point_frame(t, lane_position, reversed, up);
+        return parent_road->rep.point_frame(t, lane_position+offset, reversed, up);
     }
 
     bool lane::adjacency::check() const
@@ -203,11 +203,11 @@ namespace hwm
         return total;
     }
 
-    vec3f   lane::point      (float t, const vec3f &up) const
+    vec3f   lane::point      (float t, const float offset, const vec3f &up) const
     {
         float local;
         road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
-        return rmici->second.point(local, up);
+        return rmici->second.point(local, offset, up);
     }
 
     mat3x3f lane::frame      (float t, const vec3f &up) const
@@ -217,11 +217,11 @@ namespace hwm
         return rmici->second.frame(local, up);
     }
 
-    mat4x4f lane::point_frame(float t, const vec3f &up) const
+    mat4x4f lane::point_frame(float t, const float offset, const vec3f &up) const
     {
         float local;
         road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
-        return rmici->second.point_frame(local, up);
+        return rmici->second.point_frame(local, offset, up);
     }
 
     lane *lane::upstream_lane()   const

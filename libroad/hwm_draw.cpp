@@ -99,18 +99,18 @@ namespace hwm
 
     void network_draw::initialize(const network *net, const float lane_width)
     {
-        std::vector<vertex> lane_points;
+        std::vector<vertex> points;
         std::vector<vec3u>  lane_faces;
 
         typedef std::pair<const str, hwm::lane> lmap_itr;
         BOOST_FOREACH(const lmap_itr &l, net->lanes)
         {
-            lane_vert_starts.push_back(lane_points.size());
+            lane_vert_starts.push_back(points.size());
             lane_face_starts.push_back(lane_faces.size());
 
-            l.second.make_mesh(lane_points, lane_faces, lane_width, 2.0f);
+            l.second.make_mesh(points, lane_faces, lane_width, 2.0f);
 
-            lane_vert_counts.push_back(lane_points.size()-lane_vert_starts.back());
+            lane_vert_counts.push_back(points.size()-lane_vert_starts.back());
             lane_face_counts.push_back(lane_faces.size() -lane_face_starts.back());
         }
         BOOST_FOREACH(GLsizei &i, lane_face_counts)
@@ -122,9 +122,27 @@ namespace hwm
             i *= sizeof(vec3u);
         }
 
+        typedef std::pair<const str, hwm::intersection> imap_itr;
+        BOOST_FOREACH(const imap_itr &i, net->intersections)
+        {
+            intersection_vert_fan_starts.push_back(points.size());
+
+            points.push_back(std::make_pair(i.second.center, vec3f(0.0, 0.0, 1.0)));
+            BOOST_FOREACH(const vec3f &p, i.second.shape)
+            {
+                points.push_back(std::make_pair(p, vec3f(0.0, 0.0, 1.0)));
+            }
+            points.push_back(std::make_pair(i.second.shape.front(), vec3f(0.0, 0.0, 1.0)));
+
+            intersection_vert_fan_counts.push_back(points.size()-intersection_vert_fan_starts.back());
+
+            intersection_vert_loop_starts.push_back(intersection_vert_fan_starts.back() + 1);
+            intersection_vert_loop_counts.push_back(intersection_vert_fan_counts.back() - 2);
+        }
+
         glGenBuffersARB(1, &v_vbo);
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, lane_points.size()*sizeof(vertex), &(lane_points[0]), GL_STATIC_DRAW_ARB);
+        glBufferDataARB(GL_ARRAY_BUFFER_ARB, points.size()*sizeof(vertex), &(points[0]), GL_STATIC_DRAW_ARB);
 
         glGenBuffersARB(1, &f_vbo);
         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
@@ -133,7 +151,7 @@ namespace hwm
         assert(glGetError() == GL_NO_ERROR);
     }
 
-    void network_draw::draw_wire()
+    void network_draw::draw_lanes_wire()
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -146,7 +164,7 @@ namespace hwm
         assert(glGetError() == GL_NO_ERROR);
     }
 
-    void network_draw::draw_solid()
+    void network_draw::draw_lanes_solid()
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -168,6 +186,37 @@ namespace hwm
         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
     }
 
+    void network_draw::draw_intersections_wire()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawArrays(GL_LINE_LOOP, &(intersection_vert_loop_starts[0]), &(intersection_vert_loop_counts[0]), intersection_vert_loop_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    void network_draw::draw_intersections_solid()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(sizeof(vec3f)));
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawArrays(GL_TRIANGLE_FAN, &(intersection_vert_fan_starts[0]), &(intersection_vert_fan_counts[0]), intersection_vert_fan_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    }
 
     network_draw::~network_draw()
     {

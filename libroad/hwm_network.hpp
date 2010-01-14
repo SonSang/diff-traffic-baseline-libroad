@@ -91,10 +91,10 @@ namespace hwm
 
             void scale_offsets(float lane_width);
 
-            float   length     () const;
-            vec3f   point      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
-            mat3x3f frame      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
-            mat4x4f point_frame(float t, const vec3f &up=vec3f(0, 0, 1)) const;
+            float   length      () const;
+            vec3f   point       (float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
+            mat3x3f frame       (float t,                    const vec3f &up=vec3f(0, 0, 1)) const;
+            mat4x4f point_frame (float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
 
             typedef partition01<road_membership>  intervals;
             road                                 *parent_road;
@@ -122,9 +122,9 @@ namespace hwm
         void make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, float lane_width, float resolution) const;
 
         float   length     () const;
-        vec3f   point      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
-        mat3x3f frame      (float t, const vec3f &up=vec3f(0, 0, 1)) const;
-        mat4x4f point_frame(float t, const vec3f &up=vec3f(0, 0, 1)) const;
+        vec3f   point      (float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
+        mat3x3f frame      (float t,                    const vec3f &up=vec3f(0, 0, 1)) const;
+        mat4x4f point_frame(float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
 
         lane *upstream_lane()   const;
         lane *downstream_lane() const;
@@ -185,13 +185,16 @@ namespace hwm
             state_pair_out       &out_pair();
             const state_pair_out &out_pair() const;
 
-            float          duration;
-            state_pair_set state_pairs;
+            float               duration;
+            state_pair_set      state_pairs;
         };
 
         bool xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
+
+        void translate(const vec3f &o);
+        void build_shape(float lane_width);
 
         lane *downstream_lane(int incoming_ref) const;
         lane *  upstream_lane(int outgoing_ref) const;
@@ -201,6 +204,8 @@ namespace hwm
         std::vector<lane*> outgoing;
         std::vector<state> states;
         int                current_state;
+        std::vector<vec3f> shape;
+        vec3f              center;
     };
 
     struct network
@@ -217,6 +222,7 @@ namespace hwm
         void xml_write(xmlpp::Element *elt)  const;
         bool check() const;
         void scale_offsets(float lane_width);
+        void build_intersections(float lane_width);
 
         void center(bool z=false);
 

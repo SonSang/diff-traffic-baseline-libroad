@@ -203,6 +203,11 @@ namespace hwm
         {
             rp.second.translate(o);
         }
+        typedef strhash<intersection>::type::value_type intersection_pair;
+        BOOST_FOREACH(intersection_pair &ip, intersections)
+        {
+            ip.second.translate(o);
+        }
     }
 
     void network::scale_offsets(const float lane_width)
@@ -211,6 +216,15 @@ namespace hwm
         BOOST_FOREACH(lane_pair &lp, lanes)
         {
             lp.second.scale_offsets(lane_width);
+        }
+    }
+
+    void network::build_intersections(const float lane_width)
+    {
+        typedef strhash<intersection>::type::value_type intersection_pair;
+        BOOST_FOREACH(intersection_pair &ip, intersections)
+        {
+            ip.second.build_shape(lane_width);
         }
     }
 

@@ -139,7 +139,12 @@ public:
             glColor3f(0.5, 0.5, 0.5);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);
-            network_drawer.draw_solid();
+            network_drawer.draw_lanes_solid();
+
+            glColor3f(0.5, 0.5, 1.0);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDisable(GL_LIGHTING);
+            network_drawer.draw_intersections_wire();
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);
@@ -282,6 +287,7 @@ int main(int argc, char *argv[])
 {
     hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 15.0f)));
     net.scale_offsets(LANE_WIDTH);
+    net.build_intersections(LANE_WIDTH);
     net.center();
 
     std::cerr << "HWM net loaded successfully" << std::endl;

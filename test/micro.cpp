@@ -748,7 +748,7 @@ public:
         glColor3f(0.5, 0.5, 0.5);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_LIGHTING);
-        network_drawer.draw_solid();
+        network_drawer.draw_lanes_solid();
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_LIGHTING);
@@ -920,6 +920,7 @@ int main(int argc, char** argv)
         exit(1);
     }
     hnet->scale_offsets(LANE_WIDTH);
+    hnet->build_intersections(LANE_WIDTH);
     hnet->center();
     //    hnet->build_intersection_roads();
 
