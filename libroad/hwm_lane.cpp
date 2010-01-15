@@ -9,7 +9,8 @@ namespace hwm
                                 road_memberships(l.road_memberships),
                                 left(l.left),
                                 right(l.right),
-                                speedlimit(l.speedlimit)
+                                speedlimit(l.speedlimit),
+                                user_datum(l.user_datum)
     {
         start = l.start ? l.start->clone() : 0;
         end   = l.end   ? l.end->clone()   : 0;

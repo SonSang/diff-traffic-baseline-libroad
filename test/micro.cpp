@@ -11,6 +11,9 @@
 
 using namespace std;
 
+typedef strhash<hwm::lane>::type::value_type         lane_pair;
+typedef strhash<hwm::intersection>::type::value_type intersection_pair;
+
 static const float LANE_WIDTH = 2.5f;
 static const float CAR_LENGTH = 4.5f;
 //* This is the position of the car's axle from the FRONT bumper of the car
@@ -33,14 +36,6 @@ public:
 
     double _last_accel;
 
-    //Maybe remove: redundant data, but faster access(?)
-    double lane_length;
-
-    //Traj
-    int id;
-
-    str lane_id;
-
     bool operator==(const car& other) const
     {
         //Assumes we only check against cars in our lane.
@@ -57,7 +52,6 @@ public:
         delta = 4;
         length = 5;
         accel = 0;
-        lane_length = 0;
         dist = 0;
     }
 
@@ -71,24 +65,23 @@ public:
         delta = 4;
         length = 5;
         accel = 0;
-        lane_length = _lane_length;
         dist = p * _lane_length;
     }
 };
 
 
-//TODO Temporary (or not so temporary)
-strhash<double>::type lane_lengths;
+struct micro_lane
+{
+    float       length;
+    deque<car>  cars;
+    hwm::lane  *parent_lane;
+};
 
 class micro : boost::noncopyable
 {
 public:
-    //This might be better as a deque
-    strhash<deque<car> >::type cars_in_lane;
 
-    typedef pair<str, hwm::lane> lane_hash;
-
-    double accel_calc(car l, car f){
+    double accel_calc(const car &l, const car &f){
         double s1 = 2;
         double s2 = 0;
         double T = 1.6;
@@ -107,396 +100,233 @@ public:
         return t;
     }
 
-    void calc_accel_at_isect(const lane_hash& l, car *thisCar, float _free)
+    void calc_accel_at_isect(const micro_lane &l, car *thisCar, float _free)
     {
-        hwm::lane *fict_lane = l.second.downstream_lane();
+        hwm::lane *fict_lane = l.parent_lane->downstream_lane();
 
         //TODO Have the intersections update their current state
         //Test if this lane is allowed through the intersection.
-        if (fict_lane)
-        {
-            //Find the next car ahead or the amount of free space (up to the min_for_free_mvmnt limit.
-            hwm::lane* next_lane = NULL;
-            double min_for_free_mvmnt = 1000;
-            double free_dist = (1 - thisCar->pos) * thisCar->lane_length + _free; //Distance left in lane
-            bool active = true;
-            do{
-                //There are no cars in the intersection lane.
-                if (cars_in_lane[fict_lane->id].size() == 0)
-                {
-                    free_dist += fict_lane->length();
-                    if (free_dist > min_for_free_mvmnt)
-                    {
-                        car ghost_car;
-                        ghost_car.vel = 0;
-                        ghost_car.dist = thisCar->dist + free_dist;
+        if (!fict_lane)
+            return;
 
-                        thisCar->accel = accel_calc(ghost_car, *thisCar);
-                        active = false;
-                    }
-                }
-                else
-                {
-                    //TODO move to function
-                    car foo_car(cars_in_lane[fict_lane->id].front());
-                    foo_car.dist += free_dist + thisCar->dist;
+        const micro_lane *fict_micro = fict_lane->user_data<micro_lane>();
 
-                    //There is a car in the lane
-                    thisCar->accel = accel_calc(foo_car, *thisCar);
-                    active = false;
-                }
-                if (active) //Check the next lane if we haven't reached a minimal free length or found a car.
-                {
-                    next_lane = fict_lane->downstream_lane();
-                    if (cars_in_lane[next_lane->id].size() == 0)
-                    {
-                        free_dist += next_lane->length();
-                        if (free_dist > min_for_free_mvmnt)
-                        {
-                            car ghost_car;
-                            ghost_car.vel = 0;
-                            ghost_car.dist = thisCar->dist + free_dist;
-
-                            thisCar->accel = accel_calc(ghost_car, *thisCar);
-
-                            active = false;
-                        }
-                    }
-                    else
-                    {
-                        car foo_car(cars_in_lane[next_lane->id].front());
-                        foo_car.dist += free_dist + thisCar->dist;
-                        thisCar->accel = accel_calc(foo_car, *thisCar);
-                        active = false;
-                    }
-                }
-                if (active) //Set up the next intersection lane if it is available, otherwise create a ghost.
-                {
-
-                    //A lane is available in the intersection.
-                    if(next_lane->downstream_lane())
-                    {
-                        fict_lane = next_lane->downstream_lane();
-                    }
-                    else
-                    {
-                        car ghost_car;
-                        ghost_car.vel = 0;
-                        ghost_car.dist = thisCar->dist + free_dist;
-
-                        thisCar->accel = accel_calc(ghost_car, *thisCar);
-
-                        active = false;
-                    }
-                }
-            }while(active);
-        }
-    }
-
-
-    void calc_accel_in_isect(const lane_hash& l, car *thisCar)
-    {
-        hwm::lane* fict_lane = NULL;
-        hwm::lane* next_lane = l.second.downstream_lane();
-        assert(next_lane != NULL); //Every isect lane must end somewhere.
+        //Find the next car ahead or the amount of free space (up to the min_for_free_mvmnt limit.
         double min_for_free_mvmnt = 1000;
-        double free_dist = (1 - thisCar->pos) * thisCar->lane_length;
-        bool active = true;
-
-        //Check to see if next lane is empty.
-        if (cars_in_lane[next_lane->id].size() == 0)
-        {
-            //Add next lane's length to free length.
-            free_dist += next_lane->length();
-            //Do not recurse if we've reached an amount of free space such that additional quantities would yield diminishing returns.
-            if (free_dist > min_for_free_mvmnt)
+        double free_dist = (1 - thisCar->pos) * l.length + _free; //Distance left in lane
+        do{
+            //There are no cars in the intersection lane.
+            if (fict_micro->cars.empty())
             {
-                //TODO move these calculations to a function
-                car ghost_car;
-                ghost_car.vel = 0;
-                //Locate ghost car such that there is "free_dist" between it and the current car.
-                ghost_car.dist = thisCar->dist + free_dist;
+                free_dist += fict_micro->length;
+                if (free_dist > min_for_free_mvmnt)
+                {
+                    car ghost_car;
+                    ghost_car.vel = 0;
+                    ghost_car.dist = thisCar->dist + free_dist;
 
-                thisCar->accel = accel_calc(ghost_car, *thisCar);
-
-                active = false;
+                    thisCar->accel = accel_calc(ghost_car, *thisCar);
+                    break;
+                }
             }
-        }
-        else //There are cars in the lane, so use car in the front of the lane (confusingly, the last car.) last car
-        {
-            //TODO should be in a function
-            car foo_car(cars_in_lane[next_lane->id].front());
-            foo_car.dist += free_dist + thisCar->dist;
+            else
+            {
+                //TODO move to function
+                car foo_car(fict_micro->cars.front());
+                foo_car.dist += free_dist + thisCar->dist;
 
-            thisCar->accel = accel_calc(foo_car, *thisCar);
-            active = false;
-        }
-        if(active) //Only called if we need to check further lanes.
-        {
+                //There is a car in the lane
+                thisCar->accel = accel_calc(foo_car, *thisCar);
+                break;
+            }
+
+            //Set up the next intersection lane if it is available, otherwise create a ghost.
             //A lane is available in the intersection.
-            if (next_lane->downstream_lane())
+            if(fict_lane->downstream_lane())
             {
-                //Call to calc_accel_at_isect
-                calc_accel_at_isect(make_pair(next_lane->id, *next_lane), thisCar, free_dist);
+                fict_lane  = fict_lane->downstream_lane();
+                fict_micro = fict_lane->user_data<micro_lane>();
             }
-            else //The next lane does not lead anywhere or has a red light.
+            else
             {
                 car ghost_car;
                 ghost_car.vel = 0;
                 ghost_car.dist = thisCar->dist + free_dist;
 
                 thisCar->accel = accel_calc(ghost_car, *thisCar);
-
-                active = false;
+                break;
             }
-        }
+        }while(true);
     }
 
-
-    void calc_lane_accel(double timestep, const pair<const str, hwm::lane> l)
+    void calc_lane_accel(double timestep, hwm::lane &l)
     {
+        micro_lane *micro = l.user_data<micro_lane>();
+
         //Calculate accel for all cars in lanes
-        for (int i = 0; i < cars_in_lane[l.first].size(); i++)
+        for (int i = 0; i < static_cast<int>(micro->cars.size())-1; i++)
         {
-            car* thisCar = &cars_in_lane[l.first][i];
-            //If car is the last in the lane,
-            if (i == cars_in_lane[l.first].size() - 1)
-            {
-                //Behavior will be determined by the state of the intersection at the end of the lane
-                if (l.second.downstream_lane())
-                {
-                    calc_accel_at_isect(l, thisCar, 0);
-                    thisCar->stopping = false;
-                }
-                else //If the lane ends, there is a red light, or the car wants to go a different direction.
-                {
-                    car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
+            car &thisCar = micro->cars[i];
 
-                    thisCar->stopping = true;
-                    cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
-                }
-            }
-            else //Otherwise, use the car ahead.
+            thisCar.stopping = false;
+            micro->cars[i].accel = accel_calc(micro->cars[i+1], micro->cars[i]);
+        }
+
+        if(!micro->cars.empty())
+        {
+            //Behavior will be determined by the state of the intersection at the end of the lane
+            if (l.downstream_lane())
             {
-                thisCar->stopping = false;
-                cars_in_lane[l.first][i].accel = accel_calc(cars_in_lane[l.first][i + 1], cars_in_lane[l.first][i]);
+                car &thisCar = micro->cars.back();
+                calc_accel_at_isect(*micro, &thisCar, 0);
+                thisCar.stopping = false;
+            }
+            else //If the lane ends, there is a red light, or the car wants to go a different direction.
+            {
+                car &thisCar = micro->cars.back();
+                car ghost_car(1, 0, micro->length);
+
+                thisCar.stopping = true;
+                thisCar.accel = accel_calc(ghost_car, thisCar);
             }
         }
     }
 
-    void calc_all_accel(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::lane>::type& i_lanes)
+    void calc_all_accel(double timestep, strhash<hwm::lane>::type &lanes, strhash<hwm::intersection>::type &intersections)
     {
-        BOOST_FOREACH(const lane_hash& l, lanes)
+        typedef strhash<hwm::lane>::type::value_type lane_pair;
+        BOOST_FOREACH(lane_pair& l, lanes)
         {
-            calc_lane_accel(timestep, l);
+            calc_lane_accel(timestep, l.second);
         }
 
         //Repeat for i_lanes
-        for(strhash<hwm::lane>::type::const_iterator l = i_lanes.begin(); l != i_lanes.end(); ++l)
+        typedef strhash<hwm::lane>::type::value_type         lane_pair;
+        typedef strhash<hwm::intersection>::type::value_type intersection_pair;
+        BOOST_FOREACH(intersection_pair &ip, intersections)
         {
-            //Calculate accel for all cars in lanes
-            for (int i = 0; i < cars_in_lane[l->first].size(); i++)
+            BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
             {
-                car* thisCar = &cars_in_lane[l->first][i];
-                //If the car is the last in the lane,
-                if (i == cars_in_lane[l->first].size() - 1)
+                BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
                 {
-                    calc_accel_in_isect(make_pair(l->first, l->second), thisCar);
-                    thisCar->stopping = false;
-                }
-                else //Otherwise use the car ahead.
-                {
-                    thisCar->stopping = false;
-                    cars_in_lane[l->first][i].accel = accel_calc(cars_in_lane[l->first][i + 1], cars_in_lane[l->first][i]);
+                    calc_lane_accel(timestep, l.second);
                 }
             }
         }
     }
 
+    void update(double timestep, strhash<hwm::lane>::type &lanes, strhash<hwm::intersection>::type &intersections)
+    {
+        typedef strhash<hwm::lane>::type::value_type         lane_pair;
+        typedef strhash<hwm::intersection>::type::value_type intersection_pair;
 
-    void update(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::lane>::type& isect_lanes){
-        typedef pair<str, hwm::lane> lane_hash;
-        typedef pair<str, hwm::intersection> isect_hash;
+        calc_all_accel(timestep, lanes, intersections);
 
-        calc_all_accel(timestep, lanes, isect_lanes);
-
-        map<str, deque<car> > new_cars_in_lane;
         //Update all cars in lanes
-        BOOST_FOREACH(const lane_hash& l, lanes)
+        BOOST_FOREACH(lane_pair &l, lanes)
         {
-            BOOST_FOREACH(car& c, cars_in_lane[l.first])
+            BOOST_FOREACH(car& c, l.second.user_data<micro_lane>()->cars)
             {
-
                 c.dist += c.vel * timestep;
                 c.vel += c.accel * timestep;
-                c.pos = c.dist / c.lane_length; //TODO this does not need to be calculated here, if it is inefficient
+                c.pos = c.dist / l.second.user_data<micro_lane>()->length;
             }
-
         }
-
         //Update all cars in isect_lanes
 
-        //        BOOST_FOREACH(const isect_lane_hash& l, isect_lanes) TODO Copy constructor causes segfault when lane adjacency is copied
-        for (strhash<hwm::lane>::type::const_iterator l = isect_lanes.begin();
-             l != isect_lanes.end();
-             l++)
+        BOOST_FOREACH(intersection_pair &ip, intersections)
         {
-            BOOST_FOREACH(car& c, cars_in_lane[l->first])
+            BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
             {
-                c.dist += c.vel * timestep;
-                c.vel += c.accel * timestep;
-                c.pos = c.dist / c.lane_length; //TODO this does not need to be calculated here, if it is inefficient
+                BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
+                {
+                    BOOST_FOREACH(car& c, l.second.user_data<micro_lane>()->cars)
+                    {
+                        c.dist += c.vel * timestep;
+                        c.vel += c.accel * timestep;
+                        c.pos = c.dist / l.second.user_data<micro_lane>()->length;
+                    }
+                }
             }
         }
 
         //Remove cars from lanes if they depart and place them in isect_lanes.
-        BOOST_FOREACH(const lane_hash& l, lanes)
+        BOOST_FOREACH(lane_pair& l, lanes)
         {
-            deque<car> new_list_of_cars;
-            BOOST_FOREACH(car& c, cars_in_lane[l.first])
+            micro_lane *micro = l.second.user_data<micro_lane>();
+            while(!micro->cars.empty() && micro->cars.back().dist < micro->length)
             {
-                if (c.dist < c.lane_length)
+                car &c = micro->cars.back();
+                assert(not isnan(c.dist) and  not isinf(c.dist));
+
+                hwm::lane *new_lane = l.second.downstream_lane();
+                if (new_lane)
                 {
-                    new_list_of_cars.push_back(c);
+                    micro_lane *new_micro = new_lane->user_data<micro_lane>();
+                    //Update position and distance.
+                    c.dist -= micro->length;
+                    c.pos = (float) c.dist / new_micro->length;
+                    //                        cout << "Car changed lanes: " << c.id << endl;
+                    new_micro->cars.push_front(micro->cars.back());
                 }
                 else
                 {
-                    //ASSUMES car will not clear next lane in a timestep
-                    //Remove car from lane
-                    //->This is handled implicitly
-                    if (not isnan(c.dist) and  not isinf(c.dist))
+                    c.dist = micro->length;
+                    c.pos = 1;
+                    assert(0);
+                }
+                micro->cars.pop_back();
+            }
+        }
+
+        BOOST_FOREACH(intersection_pair &ip, intersections)
+        {
+            BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
+            {
+                BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
+                {
+                    micro_lane *micro = l.second.user_data<micro_lane>();
+                    while(!micro->cars.empty() && micro->cars.back().dist < micro->length)
                     {
-                        hwm::lane* new_lane = l.second.downstream_lane();
+                        car &c = micro->cars.back();
+                        assert(not isnan(c.dist) and  not isinf(c.dist));
+
+                        hwm::lane *new_lane = l.second.downstream_lane();
                         if (new_lane)
                         {
+                            micro_lane *new_micro = new_lane->user_data<micro_lane>();
                             //Update position and distance.
-                            c.dist -= c.lane_length;
-                            c.lane_length = new_lane->length();
-                            c.pos = (float) c.dist / c.lane_length;
-
+                            c.dist -= micro->length;
+                            c.pos = (float) c.dist / new_micro->length;
                             //                        cout << "Car changed lanes: " << c.id << endl;
-                            c.lane_id = new_lane->id;
-                            cars_in_lane[new_lane->id].insert(cars_in_lane[new_lane->id].begin(),c);
+                            new_micro->cars.push_front(micro->cars.back());
                         }
-                        else{
-                            c.dist = c.lane_length;
+                        else
+                        {
+                            c.dist = micro->length;
                             c.pos = 1;
+                            assert(0);
                         }
+                        micro->cars.pop_back();
                     }
                 }
             }
-            cars_in_lane[l.first] = new_list_of_cars;
         }
-
-        //Remove cars from isect_lanes if they depart and place them in lanes.
-        //BOOST_FOREACH(const isect_lane
-        for (strhash<hwm::lane>::type::const_iterator l = isect_lanes.begin(); l != isect_lanes.end(); l++)
-        {
-            deque<car> new_list_of_cars;
-            BOOST_FOREACH(car& c, cars_in_lane[l->first])
-            {
-                if (c.dist < c.lane_length)
-                {
-                    new_list_of_cars.push_back(c);
-                }
-                else
-                {
-
-                    if (not isnan(c.dist) and  not isinf(c.dist))
-                    {
-                        //ASSUMES car will not clear next lane in a timestep
-                        //Remove car from lane
-                        //->This is handled implicitly
-
-                        hwm::lane* new_lane = l->second.downstream_lane();
-
-                        //Update position and distance.
-                        c.dist -= c.lane_length;
-                        c.lane_length = new_lane->length();
-                        c.pos = (float) c.dist / c.lane_length;
-
-                        //                        cout << "Car changed lanes: " << c.id << endl;
-                        c.lane_id = new_lane->id;
-                        cars_in_lane[new_lane->id].insert(cars_in_lane[new_lane->id].begin(),c);
-                    }
-                }
-            }
-            cars_in_lane[l->first] = new_list_of_cars;
-        }
-
     }
 
+    void newer_settle(double timestep, strhash<hwm::lane>::type& lanes, strhash<hwm::intersection>::type& intersections){
+        typedef strhash<hwm::lane>::type::value_type         lane_pair;
+        typedef strhash<hwm::intersection>::type::value_type intersection_pair;
 
-    void new_settle(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::lane>::type& i_lanes){
-        double EPSILON = 1;
-        double INF = numeric_limits<double>::max();
-        double max_accel = EPSILON;
-        double last_max_accel = INF;
-        typedef pair<str, hwm::lane> lane_hash;
-        do {
-
-            max_accel = EPSILON;
-
-            calc_all_accel(timestep, lanes, i_lanes);
-
-            BOOST_FOREACH(const lane_hash& l, lanes)
-            {
-                BOOST_FOREACH(car& c, cars_in_lane[l.first])
-                {
-                    c._last_accel = INF;
-                }
-            }
-
-            BOOST_FOREACH(const lane_hash& l, lanes)
-            {
-                vector<car> to_erase;
-                BOOST_FOREACH(car& c, cars_in_lane[l.first])
-                {
-                    c.vel += c.accel * timestep;
-
-                    if (std::abs(c.accel) > max_accel)
-                    {
-                        max_accel = std::abs(c.accel);
-                    }
-
-                    if (std::abs(c.accel) > std::abs(c._last_accel))
-                    {
-                        to_erase.push_back(c);
-                    }
-
-                    c._last_accel = c.accel;
-                }
-
-                BOOST_FOREACH(car& c, to_erase)
-                {
-                    cars_in_lane[l.first].erase(find(cars_in_lane[l.first].begin(), cars_in_lane[l.first].end(), c));
-                    cout << "Car removed " << c.id << endl;
-                }
-            }
-
-            // if (max_accel >= last_max_accel)
-            // {
-            //     cout << "The cars did not settle." << endl;
-            //     exit(0);
-            // }
-            last_max_accel = max_accel;
-            cout << "max: " << max_accel << endl;
-        } while (max_accel > EPSILON);
-
-    }
-
-
-    void newer_settle(double timestep, const strhash<hwm::lane>::type& lanes, const strhash<hwm::lane>::type& i_lanes){
         double EPSILON = 1;
         double EPSILON_2 = 0.01;
         double INF = numeric_limits<double>::max();
         double max_accel = EPSILON;
         double last_max_accel = INF;
-        typedef pair<str, hwm::lane> lane_hash;
 
-        BOOST_FOREACH(const lane_hash& l, lanes)
+        BOOST_FOREACH(lane_pair& l, lanes)
         {
-            BOOST_FOREACH(car& c, cars_in_lane[l.first])
+            BOOST_FOREACH(car& c, l.second.user_data<micro_lane>()->cars)
             {
                 c._last_accel = INF;
             }
@@ -504,21 +334,21 @@ public:
 
         do {
             max_accel = EPSILON;
-            BOOST_FOREACH(const lane_hash& l, lanes)
+            BOOST_FOREACH(lane_pair& l, lanes)
             {
+                micro_lane *micro = l.second.user_data<micro_lane>();
                 vector<car> to_erase;
-                for (deque<car>::reverse_iterator c = cars_in_lane[l.first].rbegin();
-                     c != cars_in_lane[l.first].rend();
+                for (deque<car>::reverse_iterator c = micro->cars.rbegin();
+                     c != micro->cars.rend();
                      )
                 {
                     //Try to settle a single car.  Throw it out if it cannot be settled.
                     do{
 
-                        calc_lane_accel(timestep, l);
+                        calc_lane_accel(timestep, l.second);
 
                         c->vel += c->accel * timestep;
                         c->vel = std::max(c->vel, 0.0);
-
 
                         if (std::abs(c->accel) > max_accel)
                         {
@@ -530,8 +360,7 @@ public:
                         {
                             deque<car>::reverse_iterator to_erase = c;
                             c++;
-                            cars_in_lane[l.first].erase(to_erase.base());
-                            cout << "Erasing " << to_erase->id << endl;
+                            micro->cars.erase(to_erase.base());
                             break;
                         }
                         else if (std::abs(c->accel) < EPSILON)
@@ -546,7 +375,7 @@ public:
 
                     } while (true);
 
-                    if (c == cars_in_lane[l.first].rend())
+                    if (c == micro->cars.rend())
                         break;
                 }
             }
@@ -560,60 +389,6 @@ public:
             last_max_accel = max_accel;
             cout << "max: " << max_accel << endl;
 
-        } while (max_accel > EPSILON);
-    }
-
-
-
-
-    void settle(double timestep, const strhash<hwm::lane>::type& lanes){
-        double EPSILON = 0.1;
-        double max_accel = EPSILON;
-        double last_max_accel = 9999999;
-        typedef pair<str, hwm::lane> lane_hash;
-        do {
-            max_accel = EPSILON;
-            BOOST_FOREACH(const lane_hash& l, lanes)
-            {
-
-                for (int i = 0; i < cars_in_lane[l.first].size(); i++)
-                {
-                    if (i == cars_in_lane[l.first].size() - 1)
-                    {
-                        //Behavior will be determined by the state of the intersection at the end of the lane
-                        //ASSUMES car is moving positively
-                        car ghost_car(1, 0, cars_in_lane[l.first][i].lane_length);
-
-                        cars_in_lane[l.first][i].accel = accel_calc(ghost_car, cars_in_lane[l.first][i]);
-                        cars_in_lane[l.first][i].vel += cars_in_lane[l.first][i].accel * timestep;
-                        cars_in_lane[l.first][i].vel = max(cars_in_lane[l.first][i].vel, 0.0);
-                        if (abs(cars_in_lane[l.first][i].accel) > max_accel)
-                            max_accel = abs(cars_in_lane[l.first][i].accel);
-
-
-
-                    }
-                    else
-                    {
-
-                        cars_in_lane[l.first][i].accel = accel_calc(cars_in_lane[l.first][i + 1], cars_in_lane[l.first][i]);
-
-                        cars_in_lane[l.first][i].vel += cars_in_lane[l.first][i].accel * timestep;
-                        cars_in_lane[l.first][i].vel = max(cars_in_lane[l.first][i].vel, 0.0);
-                        if (abs(cars_in_lane[l.first][i].accel) > max_accel)
-                            max_accel = abs(cars_in_lane[l.first][i].accel);
-
-
-                    }
-                }
-            }
-
-            if (max_accel >= last_max_accel)
-            {
-                cout << "The cars did not settle." << endl;
-                exit(0);
-            }
-            last_max_accel = max_accel;
         } while (max_accel > EPSILON);
     }
 };
@@ -727,7 +502,7 @@ public:
 
         glLightfv(GL_LIGHT0, GL_POSITION, light_position.data());
 
-        sim.update(timestep, hnet->lanes, hnet->i_lanes);
+        sim.update(timestep, hnet->lanes, hnet->intersections);
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDisable(GL_LIGHTING);
@@ -750,28 +525,20 @@ public:
         glEnable(GL_LIGHTING);
         network_drawer.draw_lanes_solid();
 
+        glColor3f(0.5, 0.5, 1.0);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_LIGHTING);
+        network_drawer.draw_intersections_wire();
 
-        typedef pair<str, hwm::road> road_hash;
-        BOOST_FOREACH(road_hash r, hnet->i_roads)
-        {
-            glColor3f(0,0,0);
-            glBegin(GL_LINE_STRIP);
-            BOOST_FOREACH(vec3f point, r.second.rep.points_)
-            {
-                glVertex3f(point[0], point[1], point[2]);
-            }
-            glEnd();
-        }
-
+        glColor3f(1.0, 0.5, 0.5);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_LIGHTING);
+        network_drawer.draw_fictitious_lanes_solid();
 
-        typedef pair<str, const hwm::lane&> lane_hash;
-        BOOST_FOREACH(const lane_hash &l, hnet->lanes)
+        typedef pair<str, const hwm::lane&> lane_pair;
+        BOOST_FOREACH(const lane_pair &l, hnet->lanes)
         {
-            BOOST_FOREACH(const car& c, sim.cars_in_lane[l.first])
+            BOOST_FOREACH(const car& c, l.second.user_data<micro_lane>()->cars)
             {
                 mat4x4f trans(l.second.point_frame(c.pos));
                 mat4x4f ttrans(tvmet::trans(trans));
@@ -784,19 +551,24 @@ public:
             }
         }
 
-
-        BOOST_FOREACH(const lane_hash &l, hnet->i_lanes)
+        BOOST_FOREACH(const intersection_pair &ip, hnet->intersections)
         {
-            BOOST_FOREACH(const car& c, sim.cars_in_lane[l.first])
+            BOOST_FOREACH(const hwm::intersection::state &current_state, ip.second.states)
             {
-                mat4x4f trans(l.second.point_frame(c.pos));
-                mat4x4f ttrans(tvmet::trans(trans));
-                glColor3f(1.0, 0.0, 0.0);
+                BOOST_FOREACH(const lane_pair &l, current_state.fict_lanes)
+                {
+                    BOOST_FOREACH(const car& c, l.second.user_data<micro_lane>()->cars)
+                    {
+                        mat4x4f trans(l.second.point_frame(c.pos));
+                        mat4x4f ttrans(tvmet::trans(trans));
+                        glColor3f(1.0, 0.0, 0.0);
 
-                glPushMatrix();
-                glMultMatrixf(ttrans.data());
-                car_drawer.draw();
-                glPopMatrix();
+                        glPushMatrix();
+                        glMultMatrixf(ttrans.data());
+                        car_drawer.draw();
+                        glPopMatrix();
+                    }
+                }
             }
         }
 
@@ -912,6 +684,9 @@ int cars_per_lane = 20;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
+    hnet->build_intersections();
+    hnet->build_fictitious_lanes();
+    hnet->center();
     if(hnet->check())
         std::cerr << "HWM net checks out" << std::endl;
     else
@@ -919,45 +694,50 @@ int main(int argc, char** argv)
         std::cerr << "HWM net doesn't check out" << std::endl;
         exit(1);
     }
-    hnet->build_intersections();
-    hnet->center();
 
-    //Build hash for lane lengths.
-    typedef pair<str, const hwm::lane&> lane_hash;
-    BOOST_FOREACH(lane_hash _lane, hnet->lanes)
+    BOOST_FOREACH(lane_pair &l, hnet->lanes)
     {
-        lane_lengths[_lane.first] = _lane.second.length();
+        micro_lane *ml = new micro_lane;
+        l.second.user_datum = ml;
+        ml->parent_lane = &(l.second);
+        ml->length = l.second.length();
     }
 
-    //TODO copy constructor for isect_lane causes segfault.
-    for(strhash<hwm::lane>::type::iterator l = hnet->i_lanes.begin();
-        l != hnet->i_lanes.end();
-        l++)
+    BOOST_FOREACH(intersection_pair &ip, hnet->intersections)
     {
-        lane_lengths[l->first] = l->second.length();
+        BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
+        {
+            BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
+            {
+                micro_lane *ml = new micro_lane;
+                l.second.user_datum = ml;
+                ml->parent_lane = &(l.second);
+                ml->length = l.second.length();
+            }
+        }
     }
 
     //Create some sample cars
-    BOOST_FOREACH(lane_hash _lane, hnet->lanes)
+    BOOST_FOREACH(lane_pair _lane, hnet->lanes)
     {
-        if (_lane.first == str("lane0c") or true)
+        micro_lane *micro = _lane.second.user_data<micro_lane>();
+        if (_lane.first == str("lane0c") )
         {
             double p = 0.1;
             for (int i = 0; i < cars_per_lane; i++)
             {
                 //TODO Just creating some cars here...
-                car tmp(p, 33, lane_lengths[_lane.first]);
-                tmp.lane_id = _lane.first;
-                tmp.id = rand();
-                sim.cars_in_lane[_lane.second.id].push_back(tmp);
+                car tmp(p, 33, micro->length);
+                micro->cars.push_back(tmp);
                 //Cars need a minimal distance spacing
-                p += (15.0 / _lane.second.length());
+                p += (15.0 / micro->length);
+                std::cout << micro->cars.back().pos << std::endl;
             }
         }
     }
 
     //Make sure car configuration is numerically stable
-    sim.newer_settle(timestep, hnet->lanes, hnet->i_lanes);
+    sim.newer_settle(timestep, hnet->lanes, hnet->intersections);
 
     fltkview mv(0, 0, 500, 500, "fltk View");
 

@@ -131,6 +131,18 @@ namespace hwm
         lane *upstream_lane()   const;
         lane *downstream_lane() const;
 
+        template<typename T>
+        T *user_data()
+        {
+            return reinterpret_cast<T*>(user_datum);
+        }
+
+        template<typename T>
+        const T *user_data() const
+        {
+            return reinterpret_cast<const T*>(user_datum);
+        }
+
         str                         id;
         road_membership::intervals  road_memberships;
         adjacency::intervals        left;
@@ -138,6 +150,7 @@ namespace hwm
         terminus                   *start;
         terminus                   *end;
         float                       speedlimit;
+        void                       *user_datum;
     };
 
     struct intersection
