@@ -253,12 +253,7 @@ public:
                     typedef strhash<hwm::intersection>::type::value_type imap_itr;
                     BOOST_FOREACH(imap_itr &i, net->intersections)
                     {
-                        if(i.second.current_state == -1)
-                            continue;
-
-                        i.second.current_state++;
-                        if(i.second.current_state >= static_cast<int>(i.second.states.size()))
-                            i.second.current_state = 0;
+                        i.second.advance_state();
                     }
                 }
                 break;

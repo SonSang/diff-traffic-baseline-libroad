@@ -330,21 +330,33 @@ namespace hwm
 
     lane *intersection::downstream_lane(const int incoming_ref) const
     {
-        assert(current_state >= 0 && current_state < static_cast<int>(states.size()));
+        assert(current_state < states.size());
 
         const state::state_pair_in &in_pairs = states[current_state].state_pairs.get<state::in>();
         state::state_pair_in::const_iterator result = in_pairs.find(incoming_ref);
 
-        return (result == in_pairs.end()) ? 0 : result->fict_lane;
+        return (locked || result == in_pairs.end()) ? 0 : result->fict_lane;
     }
 
     lane *intersection::upstream_lane(const int outgoing_ref) const
     {
-        assert(current_state >= 0 && current_state < static_cast<int>(states.size()));
+        assert(current_state < states.size());
 
         const state::state_pair_out &out_pairs = states[current_state].state_pairs.get<state::out>();
         state::state_pair_out::const_iterator result = out_pairs.find(outgoing_ref);
 
-        return (result == out_pairs.end()) ? 0 : result->fict_lane;
+        return (locked || result == out_pairs.end()) ? 0 : result->fict_lane;
+    }
+
+    void intersection::advance_state()
+    {
+        ++current_state;
+        if(current_state >= states.size())
+            current_state = 0;
+    }
+
+    void intersection::lock()
+    {
+        locked = true;
     }
 }

@@ -155,7 +155,7 @@ namespace hwm
 
     struct intersection
     {
-        intersection() : current_state(0)
+        intersection() : locked(false), current_state(0)
         {}
 
         struct state
@@ -223,11 +223,15 @@ namespace hwm
         lane *downstream_lane(int incoming_ref) const;
         lane *  upstream_lane(int outgoing_ref) const;
 
+        void advance_state();
+        void lock();
+
         str                id;
         std::vector<lane*> incoming;
         std::vector<lane*> outgoing;
         std::vector<state> states;
-        int                current_state;
+        bool               locked;
+        size_t             current_state;
         std::vector<vec3f> shape;
         vec3f              center;
     };
