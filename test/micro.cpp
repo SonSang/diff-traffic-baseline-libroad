@@ -81,19 +81,15 @@ class micro : boost::noncopyable
 {
 public:
 
-    double accel_calc(const car &l, const car &f){
-        double s1 = 2;
-        double s2 = 0;
-        double T = 1.6;
+    double accel_calc(const car &l, const car &f)
+    {
+        const double s1 = 2;
+        const double T = 1.6;
 
         //if (f.vel < 0) f.vel = 0; //TODO Should this be taken into account?
 
-        double s_opt = s1 + T*f.vel + (f.vel*(f.vel - l.vel))/2*(sqrt(f.a_max*f.a_pref));
-
-        double t =  f.a_max*(1 - pow((f.vel / f.v_pref),f.delta) - pow((s_opt/(l.dist - f.dist - f.length)),2));
-
-        //cout << f.id << " accel: " << t << " vel: " << f.vel << " l:pos-diff " << l.dist - f.dist << " l vel:" << l.vel << " l id " << l.id << endl;
-        // cout << f.id << " in lane " << f.lane_id  << " " << f.dist << " " << l.dist << " (" << l.id << ") "  << l.dist - f.dist << endl;
+        const double s_opt = s1 + T*f.vel + (f.vel*(f.vel - l.vel))/2*(sqrt(f.a_max*f.a_pref));
+        const double t =  f.a_max*(1 - pow((f.vel / f.v_pref),f.delta) - pow((s_opt/(l.dist - f.dist - f.length)),2));
 
         //assert(l.dist - f.dist > 0); //A leader needs to lead.
 
@@ -112,7 +108,7 @@ public:
         const micro_lane *fict_micro = fict_lane->user_data<micro_lane>();
 
         //Find the next car ahead or the amount of free space (up to the min_for_free_mvmnt limit.
-        double min_for_free_mvmnt = 1000;
+        const double min_for_free_mvmnt = 1000;
         double free_dist = (1 - thisCar->pos) * l.length + _free; //Distance left in lane
         do{
             //There are no cars in the intersection lane.
@@ -194,15 +190,12 @@ public:
 
     void calc_all_accel(double timestep, strhash<hwm::lane>::type &lanes, strhash<hwm::intersection>::type &intersections)
     {
-        typedef strhash<hwm::lane>::type::value_type lane_pair;
         BOOST_FOREACH(lane_pair& l, lanes)
         {
             calc_lane_accel(timestep, l.second);
         }
 
         //Repeat for i_lanes
-        typedef strhash<hwm::lane>::type::value_type         lane_pair;
-        typedef strhash<hwm::intersection>::type::value_type intersection_pair;
         BOOST_FOREACH(intersection_pair &ip, intersections)
         {
             BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
@@ -217,9 +210,6 @@ public:
 
     void update(double timestep, strhash<hwm::lane>::type &lanes, strhash<hwm::intersection>::type &intersections)
     {
-        typedef strhash<hwm::lane>::type::value_type         lane_pair;
-        typedef strhash<hwm::intersection>::type::value_type intersection_pair;
-
         calc_all_accel(timestep, lanes, intersections);
 
         //Update all cars in lanes
@@ -232,8 +222,6 @@ public:
                 c.pos = c.dist / l.second.user_data<micro_lane>()->length;
             }
         }
-        //Update all cars in isect_lanes
-
         BOOST_FOREACH(intersection_pair &ip, intersections)
         {
             BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
@@ -254,11 +242,10 @@ public:
         BOOST_FOREACH(lane_pair& l, lanes)
         {
             micro_lane *micro = l.second.user_data<micro_lane>();
-            while(!micro->cars.empty() && micro->cars.back().dist < micro->length)
+            while(!micro->cars.empty() && micro->cars.back().dist > micro->length)
             {
                 car &c = micro->cars.back();
                 assert(not isnan(c.dist) and  not isinf(c.dist));
-
                 hwm::lane *new_lane = l.second.downstream_lane();
                 if (new_lane)
                 {
@@ -266,8 +253,8 @@ public:
                     //Update position and distance.
                     c.dist -= micro->length;
                     c.pos = (float) c.dist / new_micro->length;
-                    //                        cout << "Car changed lanes: " << c.id << endl;
                     new_micro->cars.push_front(micro->cars.back());
+                    micro->cars.pop_back();
                 }
                 else
                 {
@@ -275,7 +262,6 @@ public:
                     c.pos = 1;
                     assert(0);
                 }
-                micro->cars.pop_back();
             }
         }
 
@@ -286,7 +272,7 @@ public:
                 BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
                 {
                     micro_lane *micro = l.second.user_data<micro_lane>();
-                    while(!micro->cars.empty() && micro->cars.back().dist < micro->length)
+                    while(!micro->cars.empty() && micro->cars.back().dist > micro->length)
                     {
                         car &c = micro->cars.back();
                         assert(not isnan(c.dist) and  not isinf(c.dist));
@@ -298,7 +284,6 @@ public:
                             //Update position and distance.
                             c.dist -= micro->length;
                             c.pos = (float) c.dist / new_micro->length;
-                            //                        cout << "Car changed lanes: " << c.id << endl;
                             new_micro->cars.push_front(micro->cars.back());
                         }
                         else
@@ -315,9 +300,6 @@ public:
     }
 
     void newer_settle(double timestep, strhash<hwm::lane>::type& lanes, strhash<hwm::intersection>::type& intersections){
-        typedef strhash<hwm::lane>::type::value_type         lane_pair;
-        typedef strhash<hwm::intersection>::type::value_type intersection_pair;
-
         double EPSILON = 1;
         double EPSILON_2 = 0.01;
         double INF = numeric_limits<double>::max();
@@ -332,28 +314,26 @@ public:
             }
         }
 
-        do {
+        do
+        {
             max_accel = EPSILON;
             BOOST_FOREACH(lane_pair& l, lanes)
             {
                 micro_lane *micro = l.second.user_data<micro_lane>();
-                vector<car> to_erase;
                 for (deque<car>::reverse_iterator c = micro->cars.rbegin();
                      c != micro->cars.rend();
                      )
                 {
                     //Try to settle a single car.  Throw it out if it cannot be settled.
-                    do{
-
+                    do
+                    {
                         calc_lane_accel(timestep, l.second);
 
                         c->vel += c->accel * timestep;
                         c->vel = std::max(c->vel, 0.0);
 
                         if (std::abs(c->accel) > max_accel)
-                        {
                             max_accel = std::abs(c->accel);
-                        }
 
                         if ((std::abs(c->accel) > std::abs(c->_last_accel))
                             or (c->pos > 1) or ((std::abs(c->accel - c->_last_accel) < EPSILON_2) and (std::abs(c->accel) > EPSILON)))
@@ -369,11 +349,9 @@ public:
                             break;
                         }
                         else
-                        {
                             c->_last_accel = c->accel;
-                        }
-
-                    } while (true);
+                    }
+                    while (true);
 
                     if (c == micro->cars.rend())
                         break;
@@ -389,7 +367,8 @@ public:
             last_max_accel = max_accel;
             cout << "max: " << max_accel << endl;
 
-        } while (max_accel > EPSILON);
+        }
+        while (max_accel > EPSILON);
     }
 };
 
@@ -535,10 +514,10 @@ public:
         glEnable(GL_LIGHTING);
         network_drawer.draw_fictitious_lanes_solid();
 
-        typedef pair<str, const hwm::lane&> lane_pair;
         BOOST_FOREACH(const lane_pair &l, hnet->lanes)
         {
-            BOOST_FOREACH(const car& c, l.second.user_data<micro_lane>()->cars)
+            const micro_lane *micro = l.second.user_data<micro_lane>();
+            BOOST_FOREACH(const car& c, micro->cars)
             {
                 mat4x4f trans(l.second.point_frame(c.pos));
                 mat4x4f ttrans(tvmet::trans(trans));
@@ -680,7 +659,7 @@ void timerCallback(void*)
     Fl::repeat_timeout(timestep, timerCallback);
 }
 
-int cars_per_lane = 20;
+int cars_per_lane = 1;
 int main(int argc, char** argv)
 {
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
@@ -721,7 +700,7 @@ int main(int argc, char** argv)
     BOOST_FOREACH(lane_pair _lane, hnet->lanes)
     {
         micro_lane *micro = _lane.second.user_data<micro_lane>();
-        if (_lane.first == str("lane0c") )
+        if (_lane.first == str("lane4") or true)
         {
             double p = 0.1;
             for (int i = 0; i < cars_per_lane; i++)
@@ -731,7 +710,6 @@ int main(int argc, char** argv)
                 micro->cars.push_back(tmp);
                 //Cars need a minimal distance spacing
                 p += (15.0 / micro->length);
-                std::cout << micro->cars.back().pos << std::endl;
             }
         }
     }
