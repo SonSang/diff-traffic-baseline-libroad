@@ -53,6 +53,7 @@ typedef tvmet::Vector<double,      2>    vec2d;
 typedef tvmet::Vector<float,       2>    vec2f;
 typedef vec2f                            intervalf;
 typedef tvmet::Vector<float,       3>    vec3f;
+typedef tvmet::Vector<double,      3>    vec3d;
 typedef tvmet::Vector<int,         3>    vec3i;
 typedef tvmet::Vector<unsigned int,3>    vec3u;
 typedef tvmet::Vector<int,         2>    vec2i;

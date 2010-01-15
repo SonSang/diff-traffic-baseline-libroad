@@ -9,9 +9,9 @@
 #include "libroad/arc_road.hpp"
 #include "libroad/hwm_draw.hpp"
 
-static const float PT_SIZE = 2.0f;
-static const float LANE_WIDTH = 2.5f;
-static const float CAR_LENGTH = 4.5f;
+static const float PT_SIZE       = 4.0f;
+static const float LANE_WIDTH    = 2.5f;
+static const float CAR_LENGTH    = 4.5f;
 //* This is the position of the car's axle from the FRONT bumper of the car
 static const float CAR_REAR_AXLE = 3.5f;
 
@@ -46,7 +46,7 @@ static unsigned char* mytex(int N)
 {
     unsigned char *B = new unsigned char[4*N*N];
 
-    float inc = 2.0f/(N-1);
+    const float inc = 2.0f/(N-1);
 
     float y = -1.0f;
     for (int j=0; j < N; j++)
@@ -87,7 +87,7 @@ static bool rm_invert(double A[16], double Ainv[16])
             memcpy(&(Ainv[4*i    + 0]), swap_space,          sizeof(double)*4);
         }
 
-        double iinv = 1.0f/A[4*i + i];
+        const double iinv = 1.0f/A[4*i + i];
         A[4*i + i] = 1.0f;
         for(int j = i+1; j < 4; ++j)
             A[4*i + j] *= iinv;
@@ -118,8 +118,8 @@ static void pick_ray(vec3f &origin, vec3f &dir, const float x, const float y, co
     GLdouble model[16];
     glGetDoublev(GL_MODELVIEW_MATRIX, model);
 
-    double pt[3];
-    double o[3];
+    vec3d pt;
+    vec3d o;
 
     GLdouble model2[16];
     GLdouble modelinv[16];
@@ -136,10 +136,10 @@ static void pick_ray(vec3f &origin, vec3f &dir, const float x, const float y, co
 
     rm_invert(model2, modelinv);
 
-    gluUnProject(x, height-y, 1.0, model, project, view, pt, pt+1, pt+2);
+    gluUnProject(x, height-y, 1.0, model, project, view, pt.data(), pt.data()+1, pt.data()+2);
 
     if(ortho)
-        gluUnProject(x, height-y, -1.0, model, project, view, o, o+1, o+2);
+        gluUnProject(x, height-y, -1.0, model, project, view, o.data(), o.data()+1, o.data()+2);
     else
     {
         o[0] = modelinv[4*0 + 3];
@@ -147,16 +147,11 @@ static void pick_ray(vec3f &origin, vec3f &dir, const float x, const float y, co
         o[2] = modelinv[4*2 + 3];
     }
 
-    double v[3] = {pt[0]-o[0], pt[1]-o[1], pt[2]-o[2]};
-    double len = 1.0/std::sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-    v[0] *= len;
-    v[1] *= len;
-    v[2] *= len;
-
+    const vec3d v(tvmet::normalize(pt - o));
     for(int i = 0; i < 3; ++i)
     {
         origin[i] = o[i];
-        dir[i] = v[i];
+        dir[i]    = v[i];
     }
 }
 
