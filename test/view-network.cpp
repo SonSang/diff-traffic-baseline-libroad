@@ -153,8 +153,7 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);
 
-            typedef std::pair<const str, hwm::lane> lmap_itr;
-            BOOST_FOREACH(const lmap_itr &l, net->lanes)
+            BOOST_FOREACH(const hwm::lane_pair &l, net->lanes)
             {
                 const hwm::lane &la = l.second;
 
@@ -250,8 +249,7 @@ public:
             case 'n':
                 if(net)
                 {
-                    typedef strhash<hwm::intersection>::type::value_type imap_itr;
-                    BOOST_FOREACH(imap_itr &i, net->intersections)
+                    BOOST_FOREACH(hwm::intersection_pair &i, net->intersections)
                     {
                         i.second.advance_state();
                     }

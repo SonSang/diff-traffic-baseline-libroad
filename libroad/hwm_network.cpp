@@ -18,14 +18,13 @@ namespace hwm
         intersections = n.intersections;
 
         // Fill in pointers in lanes with other lanes
-        typedef strhash<lane>::type::value_type lval;
-        BOOST_FOREACH(lval &l, lanes)
+        BOOST_FOREACH(lane_pair &l, lanes)
         {
             const str &lane_id      = l.first;
             lane      &current_lane = l.second;
 
             // Find lane in 'n' that corresponds to this lane
-            const strhash<lane>::type::const_iterator other = n.lanes.find(lane_id);
+            const lane_map::const_iterator other = n.lanes.find(lane_id);
             assert(other != n.lanes.end());
             assert(other->first == lane_id);
 
@@ -39,7 +38,7 @@ namespace hwm
                     ++my_memb, ++other_memb)
                 {
                     assert(my_memb->second.parent_road);
-                    const strhash<road>::type::iterator my_road = roads.find(other_memb->second.parent_road->id);
+                    const road_map::iterator my_road = roads.find(other_memb->second.parent_road->id);
                     assert(my_road != roads.end());
                     my_memb->second.parent_road = &(my_road->second);
                 }
@@ -53,7 +52,7 @@ namespace hwm
                 {
                     if(my_adj->second.neighbor)
                     {
-                        const strhash<lane>::type::iterator my_lane = lanes.find(other_adj->second.neighbor->id);
+                        const lane_map::iterator my_lane = lanes.find(other_adj->second.neighbor->id);
                         assert(my_lane != lanes.end());
                         my_adj->second.neighbor = &(my_lane->second);
                     }
@@ -68,7 +67,7 @@ namespace hwm
                 {
                     if(my_adj->second.neighbor)
                     {
-                        const strhash<lane>::type::iterator my_lane = lanes.find(other_adj->second.neighbor->id);
+                        const lane_map::iterator my_lane = lanes.find(other_adj->second.neighbor->id);
                         assert(my_lane != lanes.end());
                         my_adj->second.neighbor = &(my_lane->second);
                     }
@@ -160,22 +159,19 @@ namespace hwm
         if(lane_width <= 0.0f)
             return false;
 
-        typedef strhash<road>::type::value_type rval;
-        BOOST_FOREACH(const rval &r, roads)
+        BOOST_FOREACH(const road_pair &r, roads)
         {
             if(r.first != r.second.id || !r.second.check())
                 return false;
         }
 
-        typedef strhash<lane>::type::value_type lval;
-        BOOST_FOREACH(const lval &l, lanes)
+        BOOST_FOREACH(const lane_pair &l, lanes)
         {
             if(l.first != l.second.id || !l.second.check())
                 return false;
         }
 
-        typedef strhash<intersection>::type::value_type ival;
-        BOOST_FOREACH(const ival &i, intersections)
+        BOOST_FOREACH(const intersection_pair &i, intersections)
         {
             if(i.first != i.second.id || !i.second.check())
                 return false;
@@ -186,12 +182,11 @@ namespace hwm
 
     void network::translate(const vec3f &o)
     {
-        typedef strhash<road>::type::value_type road_pair;
         BOOST_FOREACH(road_pair &rp, roads)
         {
             rp.second.translate(o);
         }
-        typedef strhash<intersection>::type::value_type intersection_pair;
+
         BOOST_FOREACH(intersection_pair &ip, intersections)
         {
             ip.second.translate(o);
@@ -200,7 +195,6 @@ namespace hwm
 
     void network::build_intersections()
     {
-        typedef strhash<intersection>::type::value_type intersection_pair;
         BOOST_FOREACH(intersection_pair &ip, intersections)
         {
             ip.second.build_shape(lane_width);
@@ -209,7 +203,6 @@ namespace hwm
 
     void network::build_fictitious_lanes()
     {
-        typedef strhash<intersection>::type::value_type intersection_pair;
         BOOST_FOREACH(intersection_pair &ip, intersections)
         {
             ip.second.build_fictitious_lanes();
@@ -229,20 +222,11 @@ namespace hwm
 
     void network::bounding_box(vec3f &low, vec3f &high) const
     {
-        typedef strhash<road>::type::value_type rval;
-        BOOST_FOREACH(const rval &rv, roads)
+        BOOST_FOREACH(const road_pair &rv, roads)
         {
             rv.second.bounding_box(low, high);
         }
     }
-
-    typedef strhash<road>::type::iterator         road_itr;
-    typedef strhash<lane>::type::iterator         lane_itr;
-    typedef strhash<intersection>::type::iterator intersection_itr;
-
-    typedef strhash<sumo::node>::type::value_type      node_pair;
-    typedef strhash<sumo::edge_type>::type::value_type type_pair;
-    typedef strhash<sumo::edge>::type::value_type      edge_pair;
 
     template <class T>
     static inline T &retrieve(typename strhash<T>::type &m, const str &id)
@@ -259,18 +243,22 @@ namespace hwm
 
     network from_sumo(const str &name, const float gamma, const float lane_width, const sumo::network &snet)
     {
+        typedef strhash<sumo::node>::type::value_type      sumo_node_pair;
+        typedef strhash<sumo::edge_type>::type::value_type sumo_type_pair;
+        typedef strhash<sumo::edge>::type::value_type      sumo_edge_pair;
+
         network hnet;
         hnet.name       = name;
         hnet.gamma      = gamma;
         hnet.lane_width = lane_width;
 
         strhash<size_t>::type node_degree;
-        BOOST_FOREACH(const node_pair &np, snet.nodes)
+        BOOST_FOREACH(const sumo_node_pair &np, snet.nodes)
         {
             node_degree.insert(std::make_pair(np.first, 0));
         }
 
-        BOOST_FOREACH(const edge_pair &ep, snet.edges)
+        BOOST_FOREACH(const sumo_edge_pair &ep, snet.edges)
         {
             const sumo::edge &e = ep.second;
 
@@ -303,7 +291,7 @@ namespace hwm
                 retrieve<intersection>(hnet.intersections, ndeg.first);
         }
 
-        BOOST_FOREACH(const edge_pair &ep, snet.edges)
+        BOOST_FOREACH(const sumo_edge_pair &ep, snet.edges)
         {
             const sumo::edge      &e           = ep.second;
             const sumo::edge_type &et          = *(e.type);
@@ -312,10 +300,10 @@ namespace hwm
 
             intersection *start_inters, *end_inters;
             {
-                intersection_itr the_inters = hnet.intersections.find(e.from->id);
-                start_inters                = (the_inters == hnet.intersections.end()) ? 0 : &(the_inters->second);
-                the_inters                  = hnet.intersections.find(e.to->id);
-                end_inters                  = (the_inters == hnet.intersections.end()) ? 0 : &(the_inters->second);
+                intersection_map::iterator the_inters = hnet.intersections.find(e.from->id);
+                start_inters                          = (the_inters == hnet.intersections.end()) ? 0 : &(the_inters->second);
+                the_inters                            = hnet.intersections.find(e.to->id);
+                end_inters                            = (the_inters == hnet.intersections.end()) ? 0 : &(the_inters->second);
             }
 
             for(int lanect = 0; lanect < et.nolanes; ++lanect)

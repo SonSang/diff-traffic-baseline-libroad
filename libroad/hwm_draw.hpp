@@ -63,7 +63,8 @@ namespace hwm
             GLsizei face_count;
         };
 
-        strhash<fict_lane_data>::type fictitious_lanes;
+        typedef strhash<fict_lane_data>::type fict_data_map;
+        fict_data_map                         fictitious_lanes;
 
         const hwm::network *net;
     };

@@ -24,7 +24,6 @@ namespace hwm
 
     void intersection::state::translate(const vec3f &o)
     {
-        typedef strhash<road>::type::value_type road_pair;
         BOOST_FOREACH(road_pair &frp, fict_roads)
         {
             frp.second.translate(o);
@@ -79,7 +78,7 @@ namespace hwm
 
             const str road_id(boost::str(boost::format("%s_to_%s_fict_road") % in->id % out->id));
 
-            strhash<road>::type::iterator new_road_itr(fict_roads.find(road_id));
+            road_map::iterator new_road_itr(fict_roads.find(road_id));
             assert(new_road_itr == fict_roads.end());
 
             new_road_itr = fict_roads.insert(new_road_itr, std::make_pair(road_id, road()));
@@ -124,7 +123,7 @@ namespace hwm
             assert(!sp.fict_lane);
             const str lane_id(boost::str(boost::format("%s_to_%s_fict_lane") % in->id % out->id));
 
-            strhash<lane>::type::iterator new_lane_itr(fict_lanes.find(lane_id));
+            lane_map::iterator new_lane_itr(fict_lanes.find(lane_id));
             assert(new_lane_itr == fict_lanes.end());
 
             new_lane_itr = fict_lanes.insert(new_lane_itr, std::make_pair(lane_id, lane()));

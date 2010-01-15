@@ -37,7 +37,7 @@ namespace hwm
 
     void lane::intersection_terminus::update_pointers(network &n)
     {
-        const strhash<intersection>::type::iterator mine = n.intersections.find(adjacent_intersection->id);
+        const intersection_map::iterator mine = n.intersections.find(adjacent_intersection->id);
         assert(mine != n.intersections.end());
         assert(mine->first == adjacent_intersection->id);
         adjacent_intersection                                  = &(mine->second);
@@ -68,7 +68,7 @@ namespace hwm
 
     void lane::lane_terminus::update_pointers(network &n)
     {
-        const strhash<lane>::type::iterator mine = n.lanes.find(adjacent_lane->id);
+        const lane_map::iterator mine = n.lanes.find(adjacent_lane->id);
         assert(mine != n.lanes.end());
         assert(mine->first == adjacent_lane->id);
         adjacent_lane = &(mine->second);

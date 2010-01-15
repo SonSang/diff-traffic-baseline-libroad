@@ -11,9 +11,6 @@
 
 using namespace std;
 
-typedef strhash<hwm::lane>::type::value_type         lane_pair;
-typedef strhash<hwm::intersection>::type::value_type intersection_pair;
-
 static const float LANE_WIDTH = 2.5f;
 static const float CAR_LENGTH = 4.5f;
 //* This is the position of the car's axle from the FRONT bumper of the car
@@ -188,19 +185,19 @@ public:
         }
     }
 
-    void calc_all_accel(double timestep, strhash<hwm::lane>::type &lanes, strhash<hwm::intersection>::type &intersections)
+    void calc_all_accel(double timestep, hwm::lane_map &lanes, hwm::intersection_map &intersections)
     {
-        BOOST_FOREACH(lane_pair& l, lanes)
+        BOOST_FOREACH(hwm::lane_pair& l, lanes)
         {
             calc_lane_accel(timestep, l.second);
         }
 
         //Repeat for i_lanes
-        BOOST_FOREACH(intersection_pair &ip, intersections)
+        BOOST_FOREACH(hwm::intersection_pair &ip, intersections)
         {
             BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
             {
-                BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
+                BOOST_FOREACH(hwm::lane_pair &l, current_state.fict_lanes)
                 {
                     calc_lane_accel(timestep, l.second);
                 }
@@ -208,12 +205,12 @@ public:
         }
     }
 
-    void update(double timestep, strhash<hwm::lane>::type &lanes, strhash<hwm::intersection>::type &intersections)
+    void update(double timestep, hwm::lane_map &lanes, hwm::intersection_map &intersections)
     {
         calc_all_accel(timestep, lanes, intersections);
 
         //Update all cars in lanes
-        BOOST_FOREACH(lane_pair &l, lanes)
+        BOOST_FOREACH(hwm::lane_pair &l, lanes)
         {
             BOOST_FOREACH(car& c, l.second.user_data<micro_lane>()->cars)
             {
@@ -222,11 +219,11 @@ public:
                 c.pos = c.dist / l.second.user_data<micro_lane>()->length;
             }
         }
-        BOOST_FOREACH(intersection_pair &ip, intersections)
+        BOOST_FOREACH(hwm::intersection_pair &ip, intersections)
         {
             BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
             {
-                BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
+                BOOST_FOREACH(hwm::lane_pair &l, current_state.fict_lanes)
                 {
                     BOOST_FOREACH(car& c, l.second.user_data<micro_lane>()->cars)
                     {
@@ -239,7 +236,7 @@ public:
         }
 
         //Remove cars from lanes if they depart and place them in isect_lanes.
-        BOOST_FOREACH(lane_pair& l, lanes)
+        BOOST_FOREACH(hwm::lane_pair& l, lanes)
         {
             micro_lane *micro = l.second.user_data<micro_lane>();
             while(!micro->cars.empty() && micro->cars.back().dist > micro->length)
@@ -265,11 +262,11 @@ public:
             }
         }
 
-        BOOST_FOREACH(intersection_pair &ip, intersections)
+        BOOST_FOREACH(hwm::intersection_pair &ip, intersections)
         {
             BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
             {
-                BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
+                BOOST_FOREACH(hwm::lane_pair &l, current_state.fict_lanes)
                 {
                     micro_lane *micro = l.second.user_data<micro_lane>();
                     while(!micro->cars.empty() && micro->cars.back().dist > micro->length)
@@ -299,14 +296,15 @@ public:
         }
     }
 
-    void newer_settle(double timestep, strhash<hwm::lane>::type& lanes, strhash<hwm::intersection>::type& intersections){
+    void newer_settle(double timestep, hwm::lane_map &lanes, hwm::intersection_map &intersections)
+    {
         double EPSILON = 1;
         double EPSILON_2 = 0.01;
         double INF = numeric_limits<double>::max();
         double max_accel = EPSILON;
         double last_max_accel = INF;
 
-        BOOST_FOREACH(lane_pair& l, lanes)
+        BOOST_FOREACH(hwm::lane_pair& l, lanes)
         {
             BOOST_FOREACH(car& c, l.second.user_data<micro_lane>()->cars)
             {
@@ -317,7 +315,7 @@ public:
         do
         {
             max_accel = EPSILON;
-            BOOST_FOREACH(lane_pair& l, lanes)
+            BOOST_FOREACH(hwm::lane_pair& l, lanes)
             {
                 micro_lane *micro = l.second.user_data<micro_lane>();
                 for (deque<car>::reverse_iterator c = micro->cars.rbegin();
@@ -514,7 +512,7 @@ public:
         glEnable(GL_LIGHTING);
         network_drawer.draw_fictitious_lanes_solid();
 
-        BOOST_FOREACH(const lane_pair &l, hnet->lanes)
+        BOOST_FOREACH(const hwm::lane_pair &l, hnet->lanes)
         {
             const micro_lane *micro = l.second.user_data<micro_lane>();
             BOOST_FOREACH(const car& c, micro->cars)
@@ -530,11 +528,11 @@ public:
             }
         }
 
-        BOOST_FOREACH(const intersection_pair &ip, hnet->intersections)
+        BOOST_FOREACH(const hwm::intersection_pair &ip, hnet->intersections)
         {
             BOOST_FOREACH(const hwm::intersection::state &current_state, ip.second.states)
             {
-                BOOST_FOREACH(const lane_pair &l, current_state.fict_lanes)
+                BOOST_FOREACH(const hwm::lane_pair &l, current_state.fict_lanes)
                 {
                     BOOST_FOREACH(const car& c, l.second.user_data<micro_lane>()->cars)
                     {
@@ -674,7 +672,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    BOOST_FOREACH(lane_pair &l, hnet->lanes)
+    BOOST_FOREACH(hwm::lane_pair &l, hnet->lanes)
     {
         micro_lane *ml = new micro_lane;
         l.second.user_datum = ml;
@@ -682,11 +680,11 @@ int main(int argc, char** argv)
         ml->length = l.second.length();
     }
 
-    BOOST_FOREACH(intersection_pair &ip, hnet->intersections)
+    BOOST_FOREACH(hwm::intersection_pair &ip, hnet->intersections)
     {
         BOOST_FOREACH(hwm::intersection::state &current_state, ip.second.states)
         {
-            BOOST_FOREACH(lane_pair &l, current_state.fict_lanes)
+            BOOST_FOREACH(hwm::lane_pair &l, current_state.fict_lanes)
             {
                 micro_lane *ml = new micro_lane;
                 l.second.user_datum = ml;
@@ -697,7 +695,7 @@ int main(int argc, char** argv)
     }
 
     //Create some sample cars
-    BOOST_FOREACH(lane_pair _lane, hnet->lanes)
+    BOOST_FOREACH(hwm::lane_pair _lane, hnet->lanes)
     {
         micro_lane *micro = _lane.second.user_data<micro_lane>();
         if (_lane.first == str("lane4") or true)

@@ -236,6 +236,14 @@ namespace hwm
         vec3f              center;
     };
 
+    typedef strhash<road>::type         road_map;
+    typedef strhash<lane>::type         lane_map;
+    typedef strhash<intersection>::type intersection_map;
+
+    typedef road_map::value_type         road_pair;
+    typedef lane_map::value_type         lane_pair;
+    typedef intersection_map::value_type intersection_pair;
+
     struct network
     {
         network() {};
@@ -258,12 +266,12 @@ namespace hwm
 
         void bounding_box(vec3f &low, vec3f &high) const;
 
-        str                         name;
-        float                       gamma;
-        float                       lane_width;
-        strhash<road>::type         roads;
-        strhash<lane>::type         lanes;
-        strhash<intersection>::type intersections;
+        str              name;
+        float            gamma;
+        float            lane_width;
+        road_map         roads;
+        lane_map         lanes;
+        intersection_map intersections;
     };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));

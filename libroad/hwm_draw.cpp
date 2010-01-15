@@ -103,8 +103,7 @@ namespace hwm
         std::vector<vertex> points;
         std::vector<vec3u>  lane_faces;
 
-        typedef std::pair<const str, lane> lmap_itr;
-        BOOST_FOREACH(const lmap_itr &l, net->lanes)
+        BOOST_FOREACH(const lane_pair &l, net->lanes)
         {
             lane_vert_starts.push_back(points.size());
             lane_face_starts.push_back(lane_faces.size());
@@ -123,8 +122,7 @@ namespace hwm
             i *= sizeof(vec3u);
         }
 
-        typedef std::pair<const str, intersection> imap_itr;
-        BOOST_FOREACH(const imap_itr &i, net->intersections)
+        BOOST_FOREACH(const intersection_pair &i, net->intersections)
         {
             intersection_vert_fan_starts.push_back(points.size());
 
@@ -147,7 +145,7 @@ namespace hwm
                     assert(sp.fict_lane);
                     const lane &fict_lane = *(sp.fict_lane);
 
-                    strhash<fict_lane_data>::type::iterator it = fictitious_lanes.find(fict_lane.id);
+                    fict_data_map::iterator it = fictitious_lanes.find(fict_lane.id);
                     assert(it == fictitious_lanes.end());
 
                     fict_lane_data fld;
@@ -248,8 +246,7 @@ namespace hwm
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
 
         assert(glGetError() == GL_NO_ERROR);
-        typedef std::pair<const str, intersection> imap_itr;
-        BOOST_FOREACH(const imap_itr &i, net->intersections)
+        BOOST_FOREACH(const intersection_pair &i, net->intersections)
         {
             const intersection::state &st = i.second.states[i.second.current_state];
             BOOST_FOREACH(const intersection::state::state_pair &sp, st.in_pair())
@@ -257,7 +254,7 @@ namespace hwm
                 assert(sp.fict_lane);
                 const lane &fict_lane = *(sp.fict_lane);
 
-                strhash<fict_lane_data>::type::iterator it = fictitious_lanes.find(fict_lane.id);
+                fict_data_map::iterator it = fictitious_lanes.find(fict_lane.id);
                 assert(it != fictitious_lanes.end());
 
                 const fict_lane_data &fld = it->second;
@@ -281,8 +278,7 @@ namespace hwm
         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
 
         assert(glGetError() == GL_NO_ERROR);
-        typedef std::pair<const str, intersection> imap_itr;
-        BOOST_FOREACH(const imap_itr &i, net->intersections)
+        BOOST_FOREACH(const intersection_pair &i, net->intersections)
         {
             const intersection::state &st = i.second.states[i.second.current_state];
             BOOST_FOREACH(const intersection::state::state_pair &sp, st.in_pair())
@@ -290,7 +286,7 @@ namespace hwm
                 assert(sp.fict_lane);
                 const lane &fict_lane = *(sp.fict_lane);
 
-                strhash<fict_lane_data>::type::iterator it = fictitious_lanes.find(fict_lane.id);
+                fict_data_map::iterator it = fictitious_lanes.find(fict_lane.id);
                 assert(it != fictitious_lanes.end());
 
                 const fict_lane_data &fld = it->second;

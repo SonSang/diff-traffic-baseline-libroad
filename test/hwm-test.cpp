@@ -14,8 +14,7 @@ int main(int argc, char *argv[])
     else
         std::cerr << "HWM net doesn't check out" << std::endl;
 
-    typedef std::pair<const str, hwm::road> rmap_itr;
-    BOOST_FOREACH(const rmap_itr &r, net.roads)
+    BOOST_FOREACH(const hwm::road_pair &r, net.roads)
     {
         std::cout << r.second.id << " " << r.second.name << " ";
         BOOST_FOREACH(const vec3f &f, r.second.rep.points_)
@@ -25,8 +24,7 @@ int main(int argc, char *argv[])
         std::cout << std::endl;
     }
 
-    typedef std::pair<const str, hwm::lane> lmap_itr;
-    BOOST_FOREACH(const lmap_itr &l, net.lanes)
+    BOOST_FOREACH(const hwm::lane_pair &l, net.lanes)
     {
         std::cout << l.second.id << " " << l.second.speedlimit << " {";
         typedef hwm::lane::road_membership::intervals::entry rme;
@@ -52,8 +50,7 @@ int main(int argc, char *argv[])
         std::cout << " } " << std::endl;
     }
 
-    typedef std::pair<const str, hwm::intersection> imap_itr;
-    BOOST_FOREACH(const imap_itr &i, net.intersections)
+    BOOST_FOREACH(const hwm::intersection_pair &i, net.intersections)
     {
         std::cout << i.second.id << " incoming {";
         BOOST_FOREACH(const hwm::lane* la, i.second.incoming)
