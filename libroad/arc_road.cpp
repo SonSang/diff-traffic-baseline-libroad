@@ -782,25 +782,11 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
 
 float arc_road::feature_base(const size_t i, const float offset) const
 {
-    if(i & 1)
-    {
-        int seg_idx = i/2+1;
-        int arc_idx = i/2;
+    const int seg_idx = i/2 + (i&1);
+    const int arc_idx = i/2;
 
-        const float res = seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
-        return std::max(res, 0.0f);
-    }
-    else
-    {
-        if(i == 0)
-            return seg_clengths_[0];
-
-        int seg_idx = i/2;
-        int arc_idx = i/2;
-
-        const float res = seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
-        return std::max(res, 0.0f);
-    }
+    const float res = seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
+    return std::max(res, 0.0f);
 }
 
 float arc_road::feature_size(const size_t i, const float offset) const
