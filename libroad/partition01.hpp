@@ -34,6 +34,14 @@ struct partition01 : public std::map<float, T>
                           (c_next_itr == this->end()) ? 1.0f : c_next_itr->first);
     }
 
+    interval_t containing_interval(const_reverse_iterator c_this_itr) const
+    {
+        const_reverse_iterator c_next_itr(boost::prior(c_this_itr));
+
+        return interval_t(c_this_itr->first,
+                          (c_this_itr == this->rbegin()) ? 1.0f : c_next_itr->first);
+    }
+
     float interval_length(const_iterator c_this_itr) const
     {
         interval_t in(containing_interval(c_this_itr));
