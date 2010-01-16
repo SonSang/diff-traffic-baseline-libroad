@@ -161,13 +161,17 @@ namespace hwm
             }
         }
 
+        std::cout << "Sending " << points.size()*sizeof(vertex) << " bytes of vertex info to GPU...";
         glGenBuffersARB(1, &v_vbo);
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glBufferDataARB(GL_ARRAY_BUFFER_ARB, points.size()*sizeof(vertex), &(points[0]), GL_STATIC_DRAW_ARB);
+        std::cout << "Done" << std::endl;
 
+        std::cout << "Sending " << lane_faces.size()*sizeof(vec3i) << " bytes of index info to GPU...";
         glGenBuffersARB(1, &f_vbo);
         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
         glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, lane_faces.size()*sizeof(vec3i), &(lane_faces[0]), GL_STATIC_DRAW_ARB);
+        std::cout << "Done" << std::endl;
 
         assert(glGetError() == GL_NO_ERROR);
     }
