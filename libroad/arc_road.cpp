@@ -479,8 +479,12 @@ float arc_road::length_at_feature(const size_t i, const float p, const float off
     return feature_base(i, offset) + p*feature_size(i, offset);
 }
 
-void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
+void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const vec2f &i_range, const float offset, const float resolution, const vec3f &up) const
 {
+    vec2f in_range(i_range);
+    in_range[0] = std::max(0.0f, in_range[0]);
+    in_range[1] = std::min(1.0f, in_range[1]);
+
     assert(in_range[0] < in_range[1]);
     assert(in_range[0] >= 0.0f);
     assert(in_range[1] <= 1.0f);
@@ -545,6 +549,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
 
             const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
             const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+            assert(new_theta/arcs_[i] >= 0.0f);
             new_points.push_back(std::make_pair(new_theta, vertex(vec3f(pos + left*offset),
                                                                   real_up,
                                                                   vec2f(new_theta/arcs_[i], 0.0f))));
@@ -589,6 +594,7 @@ static void rescale_tex_coords(const std::vector<vertex>::iterator &start, const
     {
         v.tex_coord[0] = lerp(unlerp(v.tex_coord[0], src_range[0], src_range[1]),
                               dest_range[0], dest_range[1]);
+        assert(v.tex_coord[0] >= 0.0f);
     }
 }
 
@@ -642,6 +648,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         const vertex start_vertex(vertex(vec3f(pos + left*offset + tan*start_local*feature_size(start_feature, offset)),
                                          real_up,
                                          vec2f(lerp(start_local, frange[0]/len, frange[1]/len), 0.0f)));
+        assert(lerp(start_local, frange[0]/len, frange[1]/len) >= 0.0f);
 
         bool add_this = true;
         if(!result.empty())
@@ -700,6 +707,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         const vertex end_vertex(vertex(vec3f(pos + left*offset + tan*end_local*feature_size(end_feature, offset)),
                                        real_up,
                                        vec2f(lerp(end_local, frange[0]/len, frange[1]/len), 0.0f)));
+        assert(lerp(end_local, frange[0]/len, frange[1]/len) >= 0.0f);
 
         bool add_this = true;
         if(!result.empty())
@@ -749,6 +757,7 @@ float arc_road::feature_base(const size_t i, const float offset) const
         int seg_idx = i/2+1;
         int arc_idx = i/2;
 
+        assert(seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1] >= 0.0f);
         return seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
     }
     else
@@ -759,6 +768,7 @@ float arc_road::feature_base(const size_t i, const float offset) const
         int seg_idx = i/2;
         int arc_idx = i/2;
 
+        assert(seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1] >= 0.0f);
         return seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
     }
 }
