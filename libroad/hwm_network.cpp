@@ -209,6 +209,14 @@ namespace hwm
         }
     }
 
+    void network::auto_scale_memberships()
+    {
+        BOOST_FOREACH(lane_pair &lp, lanes)
+        {
+            lp.second.auto_scale_memberships();
+        }
+    }
+
     void network::center(const bool z)
     {
         vec3f low(FLT_MAX);

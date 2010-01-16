@@ -120,6 +120,7 @@ namespace hwm
         bool xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
+        void auto_scale_memberships();
 
         void make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, float lane_width, float resolution) const;
 
@@ -259,6 +260,7 @@ namespace hwm
         bool check() const;
         void build_intersections();
         void build_fictitious_lanes();
+        void auto_scale_memberships();
 
         void center(bool z=false);
 

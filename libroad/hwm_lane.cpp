@@ -180,6 +180,29 @@ namespace hwm
         return true;
     }
 
+    void lane::auto_scale_memberships()
+    {
+        std::vector<float>  mlengths;
+        mlengths.push_back(0);
+        BOOST_FOREACH(const road_membership::intervals::entry &rmie, road_memberships)
+        {
+            mlengths.push_back(rmie.second.length() + mlengths.back());
+        }
+
+        const float inv_len = 1.0f/mlengths.back();
+        road_membership::intervals new_rm;
+
+        std::vector<float>::iterator current_len = mlengths.begin();
+        road_membership::intervals::const_iterator it = road_memberships.begin();
+        for(; current_len != mlengths.end() && it != road_memberships.end();
+            ++current_len, ++it)
+        {
+            new_rm.insert(inv_len*(*current_len), it->second);
+        }
+
+        road_memberships = new_rm;
+    }
+
     template <typename T>
     static inline T lerp(const T x, const T a, const T b)
     {
@@ -278,5 +301,4 @@ namespace hwm
         assert(end);
         return end->incident(false);
     }
-
 }
