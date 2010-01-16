@@ -180,24 +180,54 @@ namespace hwm
         return true;
     }
 
+    template <typename T>
+    static inline T lerp(const T x, const T a, const T b)
+    {
+        return x*(b-a)+a;
+    }
+
+    template <typename T>
+    static inline T unlerp(const T x, const T a, const T b)
+    {
+        return (x-a)/(b-a);
+    }
+
+    static void rescale_tex_coords(const std::vector<vertex>::iterator &start, const std::vector<vertex>::iterator &end, const vec2f &dest_range, const vec2f &src_range)
+    {
+        BOOST_FOREACH(vertex &v, std::make_pair(start, end))
+        {
+            v.tex_coord[0] = lerp(unlerp(v.tex_coord[0], src_range[0], src_range[1]),
+                                  dest_range[0], dest_range[1]);
+        }
+    }
+
     void lane::make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, const float lane_width, const float resolution) const
     {
-        int start_high = static_cast<int>(verts.size());
+        const int start_high = static_cast<int>(verts.size());
 
         std::vector<vertex> new_verts;
-        typedef hwm::lane::road_membership::intervals::entry rme;
-        BOOST_FOREACH(const rme &rm_entry, road_memberships)
+        typedef road_membership::intervals::const_iterator rm_it;
+        for(rm_it current = road_memberships.begin(); current != road_memberships.end(); ++current)
         {
-            const hwm::lane::road_membership &rm = rm_entry.second;
+            const road_membership &rm = current->second;
+            const size_t last = new_verts.size();
             rm.parent_road->rep.extract_center(new_verts, rm.interval, rm.lane_position-lane_width*0.5, resolution);
+            rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), road_memberships.containing_interval(current), rm.interval);
         }
-        int end_high = static_cast<int>(verts.size() + new_verts.size());
-        typedef hwm::lane::road_membership::intervals::const_reverse_iterator rme_it;
-        for(rme_it current = road_memberships.rbegin(); current != road_memberships.rend(); ++current)
+        BOOST_FOREACH(vertex &v, new_verts)
         {
-            const hwm::lane::road_membership &rm = current->second;
+            v.tex_coord[1] = 0.0f;
+        }
+
+        const int end_high = static_cast<int>(verts.size() + new_verts.size());
+        typedef road_membership::intervals::const_reverse_iterator rm_it_r;
+        for(rm_it_r current = road_memberships.rbegin(); current != road_memberships.rend(); ++current)
+        {
+            const road_membership &rm = current->second;
+            const size_t last = new_verts.size();
             const vec2f rev_interval(rm.interval[1], rm.interval[0]);
             rm.parent_road->rep.extract_center(new_verts, rev_interval, rm.lane_position+lane_width*0.5, resolution);
+            rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), road_memberships.containing_interval(current), rm.interval);
         }
 
         verts.insert(verts.end(), new_verts.begin(), new_verts.end());

@@ -21,7 +21,8 @@ public:
                                                           car_pos(0.0f),
                                                           pick_vert(-1),
                                                           glew_state(GLEW_OK+1),
-                                                          light_position(50.0, 100.0, 50.0, 1.0)
+                                                          light_position(50.0, 100.0, 50.0, 1.0),
+                                                          tex_(0)
     {
         lastmouse[0] = 0.0f;
         lastmouse[1] = 0.0f;
@@ -65,6 +66,22 @@ public:
         std::cerr << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
     }
 
+    void init_textures()
+    {
+        if(!glIsTexture(tex_))
+        {
+            glGenTextures(1, &tex_);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture (GL_TEXTURE_2D, tex_);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            glDisable(GL_TEXTURE_2D);
+        }
+    }
+
     void draw()
     {
         if (!valid())
@@ -95,6 +112,8 @@ public:
 
             if(!network_drawer.initialized())
                 network_drawer.initialize(net, 0.4f);
+
+            init_textures();
 
             setup_light();
 
@@ -135,20 +154,41 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDisable(GL_LIGHTING);
 
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture (GL_TEXTURE_2D, tex_);
+            std::vector<vec4f> colors(100);
+            for(size_t i = 0; i < colors.size(); ++i)
+            {
+                colors[i][0] = colors[i][1] = colors[i][2] = static_cast<float>(i)/(colors.size()-1);
+                colors[i][3] = 1.0f;
+            }
+
+            glTexImage2D (GL_TEXTURE_2D,
+                          0,
+                          GL_RGBA,
+                          100,
+                          1,
+                          0,
+                          GL_RGBA,
+                          GL_FLOAT,
+                          colors[0].data());
+
             glColor3f(0.5, 0.5, 0.5);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);
             network_drawer.draw_lanes_solid();
 
-            glColor3f(0.5, 0.5, 1.0);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glDisable(GL_LIGHTING);
-            network_drawer.draw_intersections_wire();
-
             glColor3f(1.0, 0.5, 0.5);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);
             network_drawer.draw_fictitious_lanes_solid();
+
+            glDisable(GL_TEXTURE_2D);
+
+            glColor3f(0.5, 0.5, 1.0);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDisable(GL_LIGHTING);
+            network_drawer.draw_intersections_wire();
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_LIGHTING);
@@ -293,6 +333,7 @@ public:
     int    pick_vert;
     GLuint glew_state;
     vec4f  light_position;
+    GLuint tex_;
 };
 
 int main(int argc, char *argv[])

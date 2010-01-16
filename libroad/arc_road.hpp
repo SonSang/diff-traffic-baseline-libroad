@@ -4,7 +4,16 @@
 #include "libroad_common.hpp"
 #include "polyline_road.hpp"
 
-typedef std::pair<vec3f, vec3f> vertex;
+struct vertex
+{
+    vertex(const vec3f &p, const vec3f &n, const vec2f &t)
+        : position(p), normal(n), tex_coord(t)
+    {}
+
+    vec3f position;
+    vec3f normal;
+    vec2f tex_coord;
+};
 
 void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
                const vec2i &low_range, const vec2i &high_range);

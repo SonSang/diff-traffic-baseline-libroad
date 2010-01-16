@@ -193,7 +193,7 @@ public:
                                                           low_bnd(0.0f), high_bnd(0.0f), low_res(0.3f), high_res(0.3f),
                                                           car_pos(0.0f),
                                                           glew_state(GLEW_OK+1),
-                                                          vertex_shader(0), pixel_shader(0), program(0), texture(0), num_tex(0), pick_vert(-1)
+                                                          vertex_shader(0), pixel_shader(0), program(0), texture(0), num_tex(0), pick_vert(-1), tex_(0)
     {
         lastmouse[0] = 0.0f;
         lastmouse[1] = 0.0f;
@@ -350,7 +350,7 @@ public:
                 ar->extract_center(pts, extract, low_bnd, low_res);
                 BOOST_FOREACH(const vertex &p, pts)
                 {
-                    glVertex3fv(p.first.data());
+                    glVertex3fv(p.position.data());
                 }
             }
             glEnd();
@@ -361,13 +361,10 @@ public:
                 ar->extract_center(pts, extract, high_bnd, high_res);
                 BOOST_FOREACH(const vertex &p, pts)
                 {
-                    glVertex3fv(p.first.data());
+                    glVertex3fv(p.position.data());
                 }
             }
             glEnd();
-
-            glEnable(GL_LIGHTING);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             std::vector<vertex> v;
             std::vector<vec3u> f;
@@ -377,8 +374,9 @@ public:
             {
                 BOOST_FOREACH(const unsigned int &idx, fa)
                 {
-                    glNormal3fv(v[idx].second.data());
-                    glVertex3fv(v[idx].first.data());
+                    glTexCoord2fv(v[idx].tex_coord.data());
+                    glNormal3fv(v[idx].normal.data());
+                    glVertex3fv(v[idx].position.data());
                 }
             }
             glEnd();
@@ -715,6 +713,7 @@ public:
 
     vec2f         extract;
     hwm::car_draw car_drawer;
+    GLuint        tex_;
 };
 
 int main(int argc, char *argv[])

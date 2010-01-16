@@ -96,8 +96,8 @@ void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
             pick_vrt = false;
         else
         {
-            const vec3f angles_low (triangle_angles(vrts[base_low_idx].first, vrts[base_high_idx].first, low_cand_vrt->first));
-            const vec3f angles_high(triangle_angles(vrts[base_low_idx].first, vrts[base_high_idx].first, high_cand_vrt->first));
+            const vec3f angles_low (triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, low_cand_vrt->position));
+            const vec3f angles_high(triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, high_cand_vrt->position));
             if(*std::max_element(angles_low.begin(), angles_low.end()) > *std::max_element(angles_high.begin(), angles_high.end()))
                 pick_vrt = false;
             else
@@ -495,7 +495,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         circle_frame(pos, tan, in_range[1]*arcs_[i], frames_[i], radii_[i]);
         const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
         const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
-        const vertex vertex_end(std::make_pair(pos + left*offset, real_up));
+        const vertex vertex_end(vertex(vec3f(pos + left*offset), real_up, vec2f(in_range[1], 0.0f)));
 
         new_points.push_back(std::make_pair(in_range[1]*arcs_[i], vertex_end));
     }
@@ -509,12 +509,12 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
 
         const vec3f left   (tvmet::normalize(tvmet::cross(up, tan)));
         const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
-        const vertex vertex_start(std::make_pair(pos + left*offset, real_up));
+        const vertex vertex_start(vertex(vec3f(pos + left*offset), real_up, vec2f(in_range[0], 0.0f)));
 
         bool add_this = true;
         if(!result.empty())
         {
-            const vec3f diff(vertex_start.first - result.back().first);
+            const vec3f diff(vertex_start.position - result.back().position);
             const float distance(std::sqrt(tvmet::dot(diff, diff)));
             add_this = (distance >= 1e-3);
         }
@@ -533,7 +533,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         const std::pair<float, vertex> &front = new_points[new_points.size()-1];
         const std::pair<float, vertex> &next  = new_points[new_points.size()-2];
 
-        const vec3f diff(front.second.first - next.second.first);
+        const vec3f diff(front.second.position - next.second.position);
         const float distance(std::sqrt(tvmet::dot(diff, diff)));
         if (distance > resolution)
         {
@@ -545,7 +545,9 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
 
             const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
             const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
-            new_points.push_back(std::make_pair(new_theta, std::make_pair(pos + left*offset, real_up)));
+            new_points.push_back(std::make_pair(new_theta, vertex(vec3f(pos + left*offset),
+                                                                  real_up,
+                                                                  vec2f(new_theta/arcs_[i], 0.0f))));
             std::swap(new_points[new_points.size()-1], new_points[new_points.size()-2]);
         }
         else
@@ -559,12 +561,41 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
 void arc_road::extract_center(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
 {
     const vec2f new_range(parameter_map(in_range[0], offset), parameter_map(in_range[1], offset));
+    const size_t last = result.size();
     extract_line(result, new_range, offset, resolution, up);
+
+    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(result.begin(), last), result.end()))
+    {
+        v.tex_coord[0] = parameter_map(v.tex_coord[0], offset);
+    }
+}
+
+template <typename T>
+static inline T lerp(const T x, const T a, const T b)
+{
+    return x*(b-a)+a;
+}
+
+template <typename T>
+static inline T unlerp(const T x, const T a, const T b)
+{
+    return (x-a)/(b-a);
+}
+
+static void rescale_tex_coords(const std::vector<vertex>::iterator &start, const std::vector<vertex>::iterator &end, const vec2f &dest_range, const vec2f &src_range)
+{
+
+    BOOST_FOREACH(vertex &v, std::make_pair(start, end))
+    {
+        v.tex_coord[0] = lerp(unlerp(v.tex_coord[0], src_range[0], src_range[1]),
+                              dest_range[0], dest_range[1]);
+    }
 }
 
 void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
 {
     size_t input_start = result.size();
+    const float len   = length(offset);
 
     vec2f range(in_range);
     bool reversed = range[0] > range[1];
@@ -580,11 +611,16 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 
     if(start_feature & 1)
     {
+        const size_t last = result.size();
         if(start_feature == end_feature)
             extract_arc(result, start_feature/2, vec2f(start_local, end_local), offset, resolution, up);
         else
             extract_arc(result, start_feature/2, vec2f(start_local, 1.0f),      offset, resolution, up);
         start_arc = start_feature/2 + 1;
+
+        const float fst = feature_base(start_feature, offset);
+        const vec2f frange(fst, fst+feature_size(start_feature, offset));
+        rescale_tex_coords(boost::next(result.begin(), last), result.end(), vec2f(frange/len), vec2f(0.0f, 1.0f));
     }
     else
     {
@@ -598,15 +634,19 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         else
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
 
+        const float fst = feature_base(start_feature, offset);
+        const vec2f frange(fst, fst+feature_size(start_feature, offset));
+
         const vec3f  left(tvmet::normalize(tvmet::cross(up, tan)));
         const vec3f  real_up(tvmet::normalize(tvmet::cross(tan, left)));
-        const vertex start_vertex(std::make_pair(pos + left*offset + tan*start_local*feature_size(start_feature, offset),
-                                                 real_up));
+        const vertex start_vertex(vertex(vec3f(pos + left*offset + tan*start_local*feature_size(start_feature, offset)),
+                                         real_up,
+                                         vec2f(lerp(start_local, frange[0]/len, frange[1]/len), 0.0f)));
 
         bool add_this = true;
         if(!result.empty())
         {
-            const vec3f diff(start_vertex.first - result.back().first);
+            const vec3f diff(start_vertex.position - result.back().position);
             const float distance(std::sqrt(tvmet::dot(diff, diff)));
             add_this = (distance >= 1e-3);
         }
@@ -619,12 +659,26 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 
     const size_t end_arc = end_feature/2;
     for(size_t i = start_arc; i < end_arc; ++i)
+    {
+        const float fst = feature_base(2*i+1, offset);
+        const vec2f frange(fst, fst+feature_size(2*i+1, offset));
+
+        const size_t last = result.size();
         extract_arc(result, i, vec2f(0.0, 1.0), offset, resolution, up);
+        rescale_tex_coords(boost::next(result.begin(), last), result.end(), vec2f(frange/len), vec2f(0.0f, 1.0f));
+    }
 
     if(end_feature & 1)
     {
         if(start_feature != end_feature)
+        {
+            const float fst = feature_base(end_feature, offset);
+            const vec2f frange(fst, fst+feature_size(end_feature, offset));
+
+            const size_t last = result.size();
             extract_arc(result, end_feature/2, vec2f(0.0, end_local), offset, resolution, up);
+            rescale_tex_coords(boost::next(result.begin(), last), result.end(), vec2f(frange/len), vec2f(0.0f, 1.0f));
+        }
     }
     else
     {
@@ -638,15 +692,19 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         else
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
 
+        const float fst = feature_base(end_feature, offset);
+        const vec2f frange(fst, fst+feature_size(end_feature, offset));
+
         const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
         const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
-        const vertex end_vertex(std::make_pair(pos + left*offset + tan*end_local*feature_size(end_feature, offset),
-                                               real_up));
+        const vertex end_vertex(vertex(vec3f(pos + left*offset + tan*end_local*feature_size(end_feature, offset)),
+                                       real_up,
+                                       vec2f(lerp(end_local, frange[0]/len, frange[1]/len), 0.0f)));
 
         bool add_this = true;
         if(!result.empty())
         {
-            const vec3f diff(end_vertex.first - result.back().first);
+            const vec3f diff(end_vertex.position - result.back().position);
             const float distance(std::sqrt(tvmet::dot(diff, diff)));
             add_this = (distance >= 1e-3);
         }
@@ -667,9 +725,20 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                          const vec2f &range,
                          const vec2f &offsets, const float resolution) const
 {
-    extract_center(vrts, range, offsets[0], resolution);
     size_t r1 = vrts.size();
+    extract_center(vrts, range, offsets[0], resolution);
+    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
+    {
+        v.tex_coord[1] = 0.0f;
+    }
+
+    r1 = vrts.size();
     extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
+    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
+    {
+        v.tex_coord[1] = 1.0f;
+    }
+
     ::make_mesh(faces, vrts, vec2i(0, r1), vec2i(vrts.size(), r1));
 }
 

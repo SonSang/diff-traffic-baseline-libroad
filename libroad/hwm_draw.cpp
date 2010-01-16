@@ -126,12 +126,13 @@ namespace hwm
         {
             intersection_vert_fan_starts.push_back(points.size());
 
-            points.push_back(std::make_pair(i.second.center, vec3f(0.0, 0.0, 1.0)));
+            points.push_back(vertex(i.second.center, vec3f(0.0, 0.0, 1.0),
+                                    vec2f(0.0f, 0.0f)));
             BOOST_FOREACH(const vec3f &p, i.second.shape)
             {
-                points.push_back(std::make_pair(p, vec3f(0.0, 0.0, 1.0)));
+                points.push_back(vertex(p, vec3f(0.0, 0.0, 1.0), vec2f(0.0f, 0.0f)));
             }
-            points.push_back(std::make_pair(i.second.shape.front(), vec3f(0.0, 0.0, 1.0)));
+            points.push_back(vertex(i.second.shape.front(), vec3f(0.0, 0.0, 1.0), vec2f(0.0f, 0.0f)));
 
             intersection_vert_fan_counts.push_back(points.size()-intersection_vert_fan_starts.back());
 
@@ -180,7 +181,7 @@ namespace hwm
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         assert(glGetError() == GL_NO_ERROR);
         glMultiDrawArrays(GL_LINE_LOOP, &(lane_vert_starts[0]), &(lane_vert_counts[0]), lane_vert_starts.size());
@@ -193,10 +194,13 @@ namespace hwm
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(sizeof(vec3f)));
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, normal)));
+
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
 
         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
 
@@ -205,6 +209,7 @@ namespace hwm
 
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
@@ -215,7 +220,7 @@ namespace hwm
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         assert(glGetError() == GL_NO_ERROR);
         glMultiDrawArrays(GL_LINE_LOOP, &(intersection_vert_loop_starts[0]), &(intersection_vert_loop_counts[0]), intersection_vert_loop_starts.size());
@@ -228,10 +233,10 @@ namespace hwm
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(sizeof(vec3f)));
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, normal)));
 
         assert(glGetError() == GL_NO_ERROR);
         glMultiDrawArrays(GL_TRIANGLE_FAN, &(intersection_vert_fan_starts[0]), &(intersection_vert_fan_counts[0]), intersection_vert_fan_starts.size());
@@ -247,7 +252,7 @@ namespace hwm
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         assert(glGetError() == GL_NO_ERROR);
         BOOST_FOREACH(const intersection_pair &i, net->intersections)
@@ -274,10 +279,13 @@ namespace hwm
     {
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(vertex), 0);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(sizeof(vec3f)));
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, normal)));
+
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
 
         glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
 
@@ -301,6 +309,7 @@ namespace hwm
 
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
