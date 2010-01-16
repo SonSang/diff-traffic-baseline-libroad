@@ -36,7 +36,7 @@ void glWindow::draw(){
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     gluPerspective(60.0, (GLdouble) w()/(GLdouble) h(), 0.0, -1.0);
-    gluLookAt(0,0,100,0,0,0,0,1,0);
+    gluLookAt(0,0,4000,0,0,0,0,1,0);
     glMatrixMode (GL_MODELVIEW);
      glLoadIdentity();
      glEnable (GL_BLEND);
@@ -62,21 +62,34 @@ void glWindow::draw(){
 
  int main(int argc, char *argv[])
  {
-     osm::network s_net(osm::load_xml_network(argv[1]));
-     net = &s_net;
 
+     //Create from grid
      // osm::network s_net;
      // net = &s_net;
-     // net->create_grid(3, 3, 30, 30);
+     // net->create_grid(3, 3, 40, 40);
+     // net->compute_edge_types();
+     // net->compute_node_degrees();
+     // net->join_logical_roads();
+     // net->split_into_road_segments();
+     // net->remove_small_roads(15);
+     // net->create_intersections();
+     // net->populate_edge_hash_from_edges();
+     // hwm::network hnet(hwm::from_osm("test", 0.5f, *net));
+     // write_xml_network(hnet, "test_net.xml");
 
+     //Load from file
+     osm::network s_net(osm::load_xml_network(argv[1]));
+     net = &s_net;
+     net->populate_edges_from_hash();
      net->compute_edge_types();
+     net->remove_highway_intersections();
      net->scale_and_translate();
      net->compute_node_degrees();
-     net->join_logical_roads();
      net->split_into_road_segments();
-     net->remove_small_roads(15);
+     net->join_logical_roads();
+     net->remove_small_roads(60);
      net->create_intersections();
-
+     net->populate_edge_hash_from_edges();
      hwm::network hnet(hwm::from_osm("test", 0.5f, *net));
      write_xml_network(hnet, "test_net.xml");
 

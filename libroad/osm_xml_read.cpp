@@ -74,7 +74,7 @@ namespace osm
 
 
         if (!is_road){
-          n.edges.erase(id);
+            n.edge_hash.erase(e.id);
         }
 
 
@@ -94,7 +94,7 @@ namespace osm
     static inline bool xml_read_edges(network &n, xmlpp::TextReader &reader)
     {
         return (read_skip_comment(reader) &&
-                read_map_no_container_and_children(n, n.edges, reader, "way", "nd"));
+                read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd"));
     }
 
     static inline bool xml_read_nodes(network &n, const char *filename)

@@ -35,6 +35,9 @@ namespace osm
 
     struct edge
     {
+        ~edge(){}
+
+        bool operator==(const edge& e) {return id == e.id;}
 
         typedef enum {center, right} SPREAD;
 
@@ -45,13 +48,14 @@ namespace osm
         shape_t    shape;
         SPREAD     spread;
         str        highway_class;
+        bool reverse();
         float length() const;
     };
 
     struct intersection
     {
-        std::vector<str> edges_ending_here;
-        std::vector<str> edges_starting_here;
+        std::vector<edge*> edges_ending_here;
+        std::vector<edge*> edges_starting_here;
         str id_from_node;
     };
 
@@ -62,7 +66,7 @@ namespace osm
 
         strhash<node>::type      nodes;
         strhash<edge_type>::type types;
-        strhash<edge>::type      edges;
+        strhash<edge>::type      edge_hash;
         strhash<intersection>::type intersections;
 
         strhash<edge>::type      road_segs;
@@ -70,6 +74,11 @@ namespace osm
         strhash<int>::type      node_degrees;
         strhash<std::vector<str> >::type  node_connections;
 
+        std::vector<edge>             edges;
+
+
+        bool populate_edges_from_hash();
+        bool populate_edge_hash_from_edges();
         bool remove_small_roads(double min_len);
         bool create_grid(int, int, double, double);
         bool scale_and_translate();
@@ -80,6 +89,7 @@ namespace osm
         bool draw_network();
         bool create_intersections();
         bool compute_node_degrees();
+        //bool join_logical_roads();
         bool join_logical_roads();
         bool split_into_road_segments();
         bool join(edge* , edge*);
