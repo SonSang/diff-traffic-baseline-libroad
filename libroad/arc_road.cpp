@@ -236,9 +236,28 @@ static std::vector<vec3f> remove_colinear(const std::vector<vec3f> &v, const flo
     return res;
 }
 
+static std::vector<vec3f> remove_proximity(const std::vector<vec3f> &v, const float eps2)
+{
+    if(v.size() < 3)
+        return v;
+
+    std::vector<vec3f> res;
+    res.push_back(v.front());
+
+    for(size_t i = 1; i < v.size(); ++i)
+    {
+        const vec3f diff(v[i] - res.back());
+        const float dist = tvmet::dot(diff, diff);
+        if(dist > eps2)
+            res.push_back(v[i]);
+    }
+    return res;
+}
+
 bool arc_road::initialize()
 {
     points_ = remove_colinear(points_);
+    points_ = remove_proximity(points_, 0.5*0.5);
 
     normals_.resize(points_.size()-1);
     for(size_t i = 1; i < points_.size(); ++i)
