@@ -254,10 +254,10 @@ static std::vector<vec3f> remove_proximity(const std::vector<vec3f> &v, const fl
     return res;
 }
 
-bool arc_road::initialize()
+bool arc_road::initialize(const float cull_prox)
 {
     points_ = remove_colinear(points_);
-    points_ = remove_proximity(points_, 0.5*0.5);
+    points_ = remove_proximity(points_, cull_prox*cull_prox);
 
     normals_.resize(points_.size()-1);
     for(size_t i = 1; i < points_.size(); ++i)

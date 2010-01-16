@@ -87,7 +87,7 @@ bool arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
     }
     while(!is_closing_element(reader, "points"));
 
-    if(!initialize())
+    if(!initialize(0.7f))
         throw std::exception();
 
     return read_to_close(reader, "line_rep");

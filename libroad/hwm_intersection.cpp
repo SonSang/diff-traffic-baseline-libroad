@@ -30,41 +30,25 @@ namespace hwm
         }
     }
 
-    static inline vec3f projection_intersect(const vec3f &o0, const vec3f &n0,
-                                             const vec3f &o1, const vec3f &n1)
+    static inline bool projection_intersect(vec3f &result,
+                                            const vec3f &o0, const vec3f &n0,
+                                            const vec3f &o1, const vec3f &n1)
     {
-        vec3f a(n0[1],   n1[1], 0.0f);
-        vec3f b(-n0[0], -n1[0], 0.0f);
-        vec3f c(o0[0]*n0[1] - o0[1]*n0[0],
-                o1[0]*n1[1] - o1[1]*n1[0],
-                0.0f);
-
-        vec3f result;
-        if(std::abs(n0[1]) < 1e-6)
+        vec3f od(o1 - o0);
+        od[2] = 0.0f;
+        const float denom = -n0[0] * n1[1] + n0[1]*n1[0];
+        if(tvmet::dot(od, od) < 1e-6 || std::abs(denom) < 1e-6)
+            return false;
+        const float t0 = (-n1[1]*od[0] + n1[0]*od[1])/denom;
+        const float t1 = (-n0[1]*od[0] + n0[0]*od[1])/denom;
+        if(t0 >= 2.0f && t1 >= 2.0f)
         {
-            if(std::abs(n1[1]) < 1e-6)
-            {
-                result = (o0 + o1)/2;
-                return result;
-            }
-            std::swap(a[0], a[1]);
-            std::swap(b[0], b[1]);
-            std::swap(c[0], c[1]);
+            result = vec3f(o0 + n0*t0);
+            result[2] = (o0[2] + o1[2])/2;
+            return true;
         }
 
-        const float inva0 = 1.0f/a[0];
-        const float denom = b[1] - a[1]*inva0*b[0];
-        if(std::abs(denom) < 1e-6)
-        {
-                result = (o0 + o1)/2;
-                return result;
-        }
-
-        result[2] = (o0[2] + o1[2])/2;
-        result[1] = (c[1] - a[1]*inva0 * c[0])/denom;
-        result[0] = (c[0] - b[0]*result[1])*inva0;
-
-        return result;
+        return false;
     }
 
     void intersection::state::build_fictitious_lanes(const intersection &parent)
@@ -99,24 +83,28 @@ namespace hwm
                     start_point[i] = start(i, 3);
                     start_tan[i]   = start(i, 0);
                     end_point[i]   = end(i, 3);
-                    end_tan[i]     = end(i, 0);
+                    end_tan[i]     = -end(i, 0);
                 }
             }
 
-            vec3f middle;
-            if(tvmet::dot(start_tan, end_tan) > 0.9f)
-                middle = (start_point + end_point)/2;
-            else
-            {
-                middle = projection_intersect(start_point, start_tan,
-                                              end_point,   end_tan);
-            }
-
             new_road.rep.points_.push_back(start_point);
-            new_road.rep.points_.push_back(middle);
+
+            vec3f middle;
+            bool okay(projection_intersect(middle,
+                                           start_point, start_tan,
+                                           end_point,   end_tan));
+
+            if(!okay)
+            {
+                new_road.rep.points_.push_back(vec3f(start_point + start_tan*4));
+                new_road.rep.points_.push_back(vec3f(end_point   + end_tan*4));
+            }
+            else
+                new_road.rep.points_.push_back(middle);
+
             new_road.rep.points_.push_back(end_point);
 
-            new_road.rep.initialize();
+            new_road.rep.initialize(0.0f);
 
             assert(new_road.check());
 

@@ -39,7 +39,7 @@ struct arc_road
                    const vec2f &range,
                    const vec2f &offsets, const float resolution) const;
 
-    bool   initialize();
+    bool   initialize(const float cull_prox);
 
     // arc roads are made up of 'features', i.e. alternating straight segments and arcs
     // so even features are segments (freqeuently degenerate) and odd features are arcs

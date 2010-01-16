@@ -289,7 +289,7 @@ namespace hwm
             new_road.rep.points_.push_back(vec3f(e.to->xy[0],
                                                  e.to->xy[1],
                                                  0.0f));
-            if(!new_road.rep.initialize())
+            if(!new_road.rep.initialize(lane_width))
                 throw std::exception();
         }
 
