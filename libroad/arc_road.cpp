@@ -211,27 +211,38 @@ static void alpha_assign(std::vector<float> &alphas, const std::vector<float> &s
     alpha_assign(alphas, seg_lengths, factors, min_seg+1, end);
 }
 
+static std::vector<vec3f> remove_colinear(const std::vector<vec3f> &v, const float eps=1e-6)
+{
+    if(v.size() < 2)
+        return v;
+
+    std::vector<vec3f> res;
+    res.push_back(v.front());
+
+    vec3f last_normal(tvmet::normalize(v[1] - v[0]));
+    for(size_t i = 1; i < v.size()-1; ++i)
+    {
+        vec3f normal(tvmet::normalize(v[i+1] - v[i]));
+        const vec3f cp(tvmet::cross(last_normal, normal));
+        if(tvmet::dot(cp, cp) > eps)
+        {
+            res.push_back(v[i]);
+            last_normal = normal;
+        }
+        else
+            last_normal = vec3f(tvmet::normalize(v[i+1] - res.back()));
+    }
+    res.push_back(v.back());
+    return res;
+}
+
 bool arc_road::initialize()
 {
+    points_ = remove_colinear(points_);
+
     normals_.resize(points_.size()-1);
     for(size_t i = 1; i < points_.size(); ++i)
         normals_[i-1] = tvmet::normalize(points_[i] - points_[i-1]);
-
-    size_t fill = 1;
-    for(size_t i = 1; i < normals_.size(); ++i)
-    {
-        const vec3f cp(tvmet::cross(normals_[i-1], normals_[i]));
-        if(tvmet::dot(cp, cp) > 1e-6)
-        {
-            if(fill != i)
-                points_[fill] = points_[i];
-            ++fill;
-        }
-    }
-    if(fill != normals_.size())
-        points_[fill] = points_[normals_.size()];
-    ++fill;
-    points_.resize(fill);
 
     const size_t N_pts  = points_.size();
     const size_t N_segs = N_pts - 1;
