@@ -768,8 +768,8 @@ float arc_road::feature_base(const size_t i, const float offset) const
         int seg_idx = i/2+1;
         int arc_idx = i/2;
 
-        assert(seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1] >= 0.0f);
-        return seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
+        const float res = seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
+        return std::max(res, 0.0f);
     }
     else
     {
@@ -779,8 +779,8 @@ float arc_road::feature_base(const size_t i, const float offset) const
         int seg_idx = i/2;
         int arc_idx = i/2;
 
-        assert(seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1] >= 0.0f);
-        return seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
+        const float res = seg_clengths_[seg_idx] + arc_clengths_[arc_idx][0] + offset*arc_clengths_[arc_idx][1];
+        return std::max(res, 0.0f);
     }
 }
 
