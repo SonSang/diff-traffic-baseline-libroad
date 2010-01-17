@@ -663,6 +663,7 @@ int main(int argc, char** argv)
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
     hnet->build_intersections();
     hnet->build_fictitious_lanes();
+    hnet->auto_scale_memberships();
     hnet->center();
     if(hnet->check())
         std::cerr << "HWM net checks out" << std::endl;
