@@ -108,7 +108,19 @@ namespace hwm
             lane_vert_starts.push_back(points.size());
             lane_face_starts.push_back(lane_faces.size());
 
+            lane_data_map::iterator it = lanes.find(l.second.id);
+            assert(it == lanes.end());
+
+            lane_data ld;
+            ld.vert_start = points.size();
+            ld.face_start = lane_faces.size();
+
             l.second.make_mesh(points, lane_faces, net->lane_width, resolution);
+
+            ld.vert_count = points.size()     -  ld.vert_start;
+            ld.face_count = (lane_faces.size() - ld.face_start) * 3;
+            ld.face_start *= sizeof(vec3u);
+            lanes.insert(it, std::make_pair(l.second.id, ld));
 
             lane_vert_counts.push_back(points.size()-lane_vert_starts.back());
             lane_face_counts.push_back(lane_faces.size() -lane_face_starts.back());
@@ -146,10 +158,10 @@ namespace hwm
                     assert(sp.fict_lane);
                     const lane &fict_lane = *(sp.fict_lane);
 
-                    fict_data_map::iterator it = fictitious_lanes.find(fict_lane.id);
-                    assert(it == fictitious_lanes.end());
+                    lane_data_map::iterator it = lanes.find(fict_lane.id);
+                    assert(it == lanes.end());
 
-                    fict_lane_data fld;
+                    lane_data fld;
                     fld.vert_start = points.size();
                     fld.face_start = lane_faces.size();
                     fict_lane.make_mesh(points, lane_faces, net->lane_width, resolution);
@@ -157,7 +169,7 @@ namespace hwm
                     fld.face_count = (lane_faces.size() - fld.face_start) * 3;
                     fld.face_start *= sizeof(vec3u);
 
-                    fictitious_lanes.insert(it, std::make_pair(fict_lane.id, fld));
+                    lanes.insert(it, std::make_pair(fict_lane.id, fld));
                 }
             }
         }
@@ -263,10 +275,10 @@ namespace hwm
                 assert(sp.fict_lane);
                 const lane &fict_lane = *(sp.fict_lane);
 
-                fict_data_map::iterator it = fictitious_lanes.find(fict_lane.id);
-                assert(it != fictitious_lanes.end());
+                lane_data_map::iterator it = lanes.find(fict_lane.id);
+                assert(it != lanes.end());
 
-                const fict_lane_data &fld = it->second;
+                const lane_data &fld = it->second;
                 glDrawArrays(GL_LINE_LOOP, fld.vert_start, fld.vert_count);
             }
         }
@@ -298,14 +310,65 @@ namespace hwm
                 assert(sp.fict_lane);
                 const lane &fict_lane = *(sp.fict_lane);
 
-                fict_data_map::iterator it = fictitious_lanes.find(fict_lane.id);
-                assert(it != fictitious_lanes.end());
+                lane_data_map::iterator it = lanes.find(fict_lane.id);
+                assert(it != lanes.end());
 
-                const fict_lane_data &fld = it->second;
+                const lane_data &fld = it->second;
                 assert(glGetError() == GL_NO_ERROR);
                 glDrawElements(GL_TRIANGLES, fld.face_count, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid*>(fld.face_start));
             }
         }
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+    }
+
+    void network_draw::draw_lane_wire(const str &id)
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
+
+        assert(glGetError() == GL_NO_ERROR);
+        lane_data_map::iterator it = lanes.find(id);
+        assert(it != lanes.end());
+
+        const lane_data &fld = it->second;
+        assert(glGetError() == GL_NO_ERROR);
+        glDrawArrays(GL_LINE_LOOP, fld.vert_start, fld.vert_count);
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    }
+
+    void network_draw::draw_lane_solid(const str &id)
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, normal)));
+
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
+
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+
+        assert(glGetError() == GL_NO_ERROR);
+        lane_data_map::iterator it = lanes.find(id);
+        assert(it != lanes.end());
+
+        const lane_data &fld = it->second;
+        assert(glGetError() == GL_NO_ERROR);
+        glDrawElements(GL_TRIANGLES, fld.face_count, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid*>(fld.face_start));
 
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);

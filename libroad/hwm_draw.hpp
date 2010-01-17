@@ -40,6 +40,9 @@ namespace hwm
         void draw_fictitious_lanes_wire();
         void draw_fictitious_lanes_solid();
 
+        void draw_lane_wire(const str &id);
+        void draw_lane_solid(const str &id);
+
         ~network_draw();
 
         GLuint v_vbo;
@@ -55,7 +58,7 @@ namespace hwm
         std::vector<GLint>    intersection_vert_loop_starts;
         std::vector<GLsizei>  intersection_vert_loop_counts;
 
-        struct fict_lane_data
+        struct lane_data
         {
             GLint   vert_start;
             GLsizei vert_count;
@@ -63,8 +66,8 @@ namespace hwm
             GLsizei face_count;
         };
 
-        typedef strhash<fict_lane_data>::type fict_data_map;
-        fict_data_map                         fictitious_lanes;
+        typedef strhash<lane_data>::type lane_data_map;
+        lane_data_map                    lanes;
 
         const hwm::network *net;
     };
