@@ -2,7 +2,7 @@
 
 namespace hwm
 {
-    lane::lane() : start(0), end(0)
+    lane::lane() : start(0), end(0), active(false)
     {}
 
     lane::lane(const lane &l) : id(l.id),
@@ -10,6 +10,7 @@ namespace hwm
                                 left(l.left),
                                 right(l.right),
                                 speedlimit(l.speedlimit),
+                                active(l.active),
                                 user_datum(l.user_datum)
     {
         start = l.start ? l.start->clone() : 0;

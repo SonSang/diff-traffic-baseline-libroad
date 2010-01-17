@@ -322,6 +322,8 @@ namespace hwm
         if(!get_attribute(speedlimit, reader, "speedlimit"))
             return false;
 
+        active = true;
+
         bool have_start     = false;
         bool have_end       = false;
         bool have_road_int  = false;

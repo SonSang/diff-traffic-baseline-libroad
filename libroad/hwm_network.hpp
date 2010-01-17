@@ -151,6 +151,7 @@ namespace hwm
         terminus                   *start;
         terminus                   *end;
         float                       speedlimit;
+        bool                        active;
         void                       *user_datum;
     };
 
@@ -206,6 +207,9 @@ namespace hwm
             const state_pair_in  &in_pair() const;
             state_pair_out       &out_pair();
             const state_pair_out &out_pair() const;
+
+            void activate();
+            void deactivate();
 
             float               duration;
             state_pair_set      state_pairs;

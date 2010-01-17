@@ -19,6 +19,13 @@ namespace hwm
                 return false;
         }
 
+        bool first = fict_lanes.begin()->second.active;
+        BOOST_FOREACH(const lane_pair &lp, fict_lanes)
+        {
+            if(lp.second.active != first)
+                return false;
+        }
+
         return true;
     }
 
@@ -131,6 +138,7 @@ namespace hwm
             new_lane.end   = new hwm::lane::lane_terminus(out);
 
             new_lane.speedlimit = out->speedlimit;
+            new_lane.active     = false;
 
             in_pair().replace(current, intersection::state::state_pair(sp.in_idx, sp.out_idx, &new_lane));
         }
@@ -154,6 +162,22 @@ namespace hwm
     const intersection::state::state_pair_out &intersection::state::out_pair() const
     {
         return state_pairs.get<intersection::state::out>();
+    }
+
+    void intersection::state::activate()
+    {
+        BOOST_FOREACH(lane_pair &l, fict_lanes)
+        {
+            l.second.active = true;
+        }
+    }
+
+    void intersection::state::deactivate()
+    {
+        BOOST_FOREACH(lane_pair &l, fict_lanes)
+        {
+            l.second.active = false;
+        }
     }
 
     bool intersection::check() const
@@ -313,6 +337,7 @@ namespace hwm
         {
             s.build_fictitious_lanes(*this);
         }
+        states[current_state].activate();
     }
 
     lane *intersection::downstream_lane(const int incoming_ref) const
@@ -337,9 +362,11 @@ namespace hwm
 
     void intersection::advance_state()
     {
+        states[current_state].deactivate();
         ++current_state;
         if(current_state >= states.size())
             current_state = 0;
+        states[current_state].activate();
     }
 
     void intersection::lock()
