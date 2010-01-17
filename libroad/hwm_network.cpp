@@ -210,12 +210,18 @@ namespace hwm
 
             BOOST_FOREACH(const osm::node *n, e.shape)
             {
-                new_road.rep.points_.push_back(vec3f(n->xy[0],
-                                                     n->xy[1],
-                                                     0.0f));
+
                 if (n->id != e.shape[0]->id)
                 {
-                    assert(sqrt(pow(n->xy[0] - last->xy[0],2) + pow(n->xy[1] - last->xy[1],2)) > 1e-7);
+                    if(sqrt(pow(n->xy[0] - last->xy[0],2)
+                            + pow(n->xy[1] - last->xy[1],2)) > 1e-7){
+                        new_road.rep.points_.push_back(vec3f(n->xy[0],
+                                                             n->xy[1],
+                                                             0.0f));
+                    }
+                }
+                else{
+                    new_road.rep.points_.push_back(vec3f(n->xy[0],n->xy[1],0.0f));
                 }
                 last = n;
             }
