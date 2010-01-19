@@ -89,7 +89,7 @@ public:
             glViewport(0, 0, w(), h());
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 10.0f, 5000.0f);
+            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 100.0f, 50000.0f);
 
             glMatrixMode(GL_MODELVIEW);
             glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -111,7 +111,7 @@ public:
                                       CAR_REAR_AXLE);
 
             if(!network_drawer.initialized())
-                network_drawer.initialize(net, 0.4f);
+                network_drawer.initialize(net, 1.0f);
 
             init_textures();
 
