@@ -171,7 +171,7 @@ static void alpha_assign(std::vector<float> &alphas, const std::vector<float> &s
                                            seg_lengths[c+1]);
         const float radius_a    = factors[c-1]*a;
         const float radius_b    = factors[c]*b;
-        const float this_radius = std::min(radius_a, radius_b);
+        const float this_radius = std::max(radius_a, radius_b);
         assert(this_radius != 0);
         if(this_radius < min_radius)
         {
