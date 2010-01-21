@@ -42,7 +42,7 @@ static vec3f triangle_angles(const vec3f &pt0, const vec3f &pt1, const vec3f &pt
 
     const float a0 = std::acos(d0);
     const float a1 = std::acos(d1);
-    const float a2 = 2*M_PI - (a0 + a1);
+    const float a2 = M_PI - (a0 + a1);
 
     assert(std::isfinite(a0));
     assert(std::isfinite(a1));
