@@ -238,10 +238,6 @@ namespace hwm
             rm.parent_road->rep.extract_center(new_verts, rm.interval, rm.lane_position-lane_width*0.5, resolution);
             rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), road_memberships.containing_interval(current), rm.interval);
         }
-        BOOST_FOREACH(vertex &v, new_verts)
-        {
-            v.tex_coord[1] = 0.0f;
-        }
 
         const int end_high = static_cast<int>(verts.size() + new_verts.size());
         typedef road_membership::intervals::const_reverse_iterator rm_it_r;
@@ -255,6 +251,15 @@ namespace hwm
         }
 
         verts.insert(verts.end(), new_verts.begin(), new_verts.end());
+
+        BOOST_FOREACH(vertex &v, std::make_pair(boost::next(verts.begin(), start_high), boost::next(verts.begin(), start_high)))
+        {
+            v.tex_coord[1] = 0.0f;
+        }
+        BOOST_FOREACH(vertex &v, std::make_pair(boost::next(verts.begin(), end_high), verts.end()))
+        {
+            v.tex_coord[1] = 1.0f;
+        }
 
         ::make_mesh(faces, verts, vec2i(start_high, end_high), vec2i(verts.size(), end_high));
     }
