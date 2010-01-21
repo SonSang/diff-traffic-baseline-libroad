@@ -51,6 +51,22 @@ static vec3f triangle_angles(const vec3f &pt0, const vec3f &pt1, const vec3f &pt
     return vec3f(a0, a1, a2);
 }
 
+static int triangle_cmp(const vec3f &low, const vec3f&high)
+{
+    // designed for smallest largest angle
+    for(int i = 2; i > -1; --i)
+    {
+        float diff = low[i] - high[i];
+        if(std::abs(diff) < 1e-6)
+            continue;
+        else if(diff < 0.0)
+            return 1;
+        else
+            return -1;
+    }
+    return 0;
+}
+
 void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
                const vec2i &low_range, const vec2i &high_range)
 {
@@ -89,7 +105,8 @@ void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
         high_itr += high_dir;
     }
 
-    bool pick_vrt;
+    bool last_pick = false;
+    bool pick_vrt = false;
     while(1)
     {
         if(!low_cand_vrt)
@@ -97,18 +114,32 @@ void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
             if(!high_cand_vrt)
                 break;
             else
+            {
+                last_pick = pick_vrt;
                 pick_vrt = true;
+            }
         }
         else if(!high_cand_vrt)
+        {
+            last_pick = pick_vrt;
             pick_vrt = false;
+        }
         else
         {
-            const vec3f angles_low (triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, low_cand_vrt->position));
-            const vec3f angles_high(triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, high_cand_vrt->position));
-            if(*std::max_element(angles_low.begin(), angles_low.end()) > *std::max_element(angles_high.begin(), angles_high.end()))
+            vec3f angles_low (triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, low_cand_vrt->position));
+            vec3f angles_high(triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, high_cand_vrt->position));
+
+            std::sort(angles_low.begin(), angles_low.end());
+            std::sort(angles_high.begin(), angles_high.end());
+
+            int res = triangle_cmp(angles_low, angles_high);
+            last_pick = pick_vrt;
+            if(res > 0)
                 pick_vrt = false;
-            else
+            else if(res < 0)
                 pick_vrt = true;
+            else
+                pick_vrt = !last_pick;
         }
 
         if(pick_vrt)
