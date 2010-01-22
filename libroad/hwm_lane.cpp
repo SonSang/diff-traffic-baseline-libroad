@@ -239,7 +239,10 @@ namespace hwm
             rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), road_memberships.containing_interval(current), rm.interval);
         }
 
-        const int end_high = static_cast<int>(verts.size() + new_verts.size());
+        verts.insert(verts.end(), new_verts.begin(), new_verts.end());
+        new_verts.clear();
+
+        const int end_high = static_cast<int>(verts.size());
         typedef road_membership::intervals::const_reverse_iterator rm_it_r;
         for(rm_it_r current = road_memberships.rbegin(); current != road_memberships.rend(); ++current)
         {
