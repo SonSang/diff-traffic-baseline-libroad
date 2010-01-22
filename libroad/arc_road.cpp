@@ -508,6 +508,8 @@ float arc_road::length_at_feature(const size_t i, const float p, const float off
 
 void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const vec2f &i_range, const float offset, const float resolution, const vec3f &up) const
 {
+    const float resolution2 = resolution*resolution;
+
     vec2f in_range(i_range);
     in_range[0] = std::max(0.0f, in_range[0]);
     in_range[1] = std::min(1.0f, in_range[1]);
@@ -542,7 +544,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
         const vertex vertex_start(vertex(vec3f(pos + left*offset), real_up, vec2f(in_range[0], 0.0f)));
 
-        if(result.empty() || distance(vertex_start.position, result.back().position) >= resolution)
+        if(result.empty() || distance2(vertex_start.position, result.back().position) >= resolution2)
         {
             new_points.push_back(std::make_pair(in_range[0]*arcs_[i], vertex_start));
             result.push_back(vertex_start);
@@ -556,7 +558,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         const std::pair<float, vertex> &front = new_points[new_points.size()-1];
         const std::pair<float, vertex> &next  = new_points[new_points.size()-2];
 
-        if (distance(front.second.position, next.second.position) > resolution)
+        if (distance2(front.second.position, next.second.position) > resolution2)
         {
             //            assert(next.first - front.first > 1e-3);
             const float new_theta = (next.first + front.first)/2;
@@ -617,6 +619,8 @@ static void rescale_tex_coords(const std::vector<vertex>::iterator &start, const
 
 void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
 {
+    const float resolution2 = resolution*resolution;
+
     size_t input_start = result.size();
     const float len   = length(offset);
 
@@ -667,7 +671,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
                                          vec2f(lerp(start_local, frange[0]/len, frange[1]/len), 0.0f)));
         assert(lerp(start_local, frange[0]/len, frange[1]/len) >= 0.0f);
 
-        if(result.empty() || distance(start_vertex.position, result.back().position) >= resolution)
+        if(result.empty() || distance2(start_vertex.position, result.back().position) >= resolution2)
             result.push_back(start_vertex);
 
         start_arc = start_feature/2;
@@ -718,7 +722,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
                                        vec2f(lerp(end_local, frange[0]/len, frange[1]/len), 0.0f)));
         assert(lerp(end_local, frange[0]/len, frange[1]/len) >= 0.0f);
 
-        if(result.empty() || distance(end_vertex.position, result.back().position) >= resolution)
+        if(result.empty() || distance2(end_vertex.position, result.back().position) >= resolution2)
             result.push_back(end_vertex);
     }
 
