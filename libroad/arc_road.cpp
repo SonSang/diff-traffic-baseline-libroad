@@ -615,7 +615,8 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         else
         {
             new_points.pop_back();
-            result.push_back(new_points.back().second);
+            if(distance2(new_points.back().second.position, result.back().position) >= 1e-2)
+                result.push_back(new_points.back().second);
         }
     }
 }
