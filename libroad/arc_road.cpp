@@ -37,9 +37,16 @@ static vec3f triangle_angles(const vec3f &pt0, const vec3f &pt1, const vec3f &pt
     const vec3f v02(tvmet::normalize(pt2 - pt0));
     const vec3f v12(tvmet::normalize(pt2 - pt1));
 
-    const float a0 = std::acos(tvmet::dot(v01, v02));
-    const float a1 = std::acos(tvmet::dot(-v01, v12));
+    const float d0 = std::max(-1.0f, std::min(1.0f, tvmet::dot(v01, v02)));
+    const float d1 = std::max(-1.0f, std::min(1.0f, tvmet::dot(-v01, v12)));
+
+    const float a0 = std::acos(d0);
+    const float a1 = std::acos(d1);
     const float a2 = 2*M_PI - (a0 + a1);
+
+    assert(std::isfinite(a0));
+    assert(std::isfinite(a1));
+    assert(std::isfinite(a2));
 
     return vec3f(a0, a1, a2);
 }
