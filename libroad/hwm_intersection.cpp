@@ -44,7 +44,7 @@ namespace hwm
         vec3f od(o1 - o0);
         od[2] = 0.0f;
         const float denom = -n0[0] * n1[1] + n0[1]*n1[0];
-        if(tvmet::dot(od, od) < 1e-6 || std::abs(denom) < 1e-6)
+        if(length2(od) < 1e-6 || std::abs(denom) < 1e-6)
             return false;
         const float t0 = (-n1[1]*od[0] + n1[0]*od[1])/denom;
         const float t1 = (-n0[1]*od[0] + n0[0]*od[1])/denom;

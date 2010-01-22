@@ -245,12 +245,9 @@ static std::vector<vec3f> remove_proximity(const std::vector<vec3f> &v, const fl
     res.push_back(v.front());
 
     for(size_t i = 1; i < v.size(); ++i)
-    {
-        const vec3f diff(v[i] - res.back());
-        const float dist = tvmet::dot(diff, diff);
-        if(dist > eps2)
+        if(distance2(v[i], res.back()) > eps2)
             res.push_back(v[i]);
-    }
+
     return res;
 }
 
@@ -547,11 +544,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
 
         bool add_this = true;
         if(!result.empty())
-        {
-            const vec3f diff(vertex_start.position - result.back().position);
-            const float distance(std::sqrt(tvmet::dot(diff, diff)));
-            add_this = (distance >= 1e-3);
-        }
+            add_this = (distance(vertex_start.position, result.back().position) >= 1e-3);
 
         if(add_this)
         {
@@ -567,9 +560,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         const std::pair<float, vertex> &front = new_points[new_points.size()-1];
         const std::pair<float, vertex> &next  = new_points[new_points.size()-2];
 
-        const vec3f diff(front.second.position - next.second.position);
-        const float distance(std::sqrt(tvmet::dot(diff, diff)));
-        if (distance > resolution)
+        if (distance(front.second.position, next.second.position) > resolution)
         {
             //            assert(next.first - front.first > 1e-3);
             const float new_theta = (next.first + front.first)/2;
@@ -682,11 +673,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 
         bool add_this = true;
         if(!result.empty())
-        {
-            const vec3f diff(start_vertex.position - result.back().position);
-            const float distance(std::sqrt(tvmet::dot(diff, diff)));
-            add_this = (distance >= 1e-3);
-        }
+            add_this = (distance(start_vertex.position, result.back().position) >= 1e-3);
 
         if(add_this)
             result.push_back(start_vertex);
@@ -741,11 +728,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 
         bool add_this = true;
         if(!result.empty())
-        {
-            const vec3f diff(end_vertex.position - result.back().position);
-            const float distance(std::sqrt(tvmet::dot(diff, diff)));
-            add_this = (distance >= 1e-3);
-        }
+            add_this = (distance(end_vertex.position, result.back().position) >= 1e-3);
 
         if(add_this)
             result.push_back(end_vertex);
