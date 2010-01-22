@@ -185,6 +185,9 @@ namespace hwm
         if(id.empty())
             return false;
 
+        if(incoming.empty() && outgoing.empty())
+            return false;
+
         int count = 0;
         BOOST_FOREACH(const lane* lp, incoming)
         {
@@ -258,6 +261,7 @@ namespace hwm
 
     static inline void convex_hull(std::vector<vec3f> &pts)
     {
+        assert(!pts.empty());
         lexicographic lx;
         std::sort(pts.begin(), pts.end(), lx);
 

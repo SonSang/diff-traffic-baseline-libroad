@@ -239,6 +239,7 @@ namespace hwm
     template <class T>
     static inline T &retrieve(typename strhash<T>::type &m, const str &id)
     {
+        assert(id != str());
         typename strhash<T>::type::iterator entry(m.find(id));
         if(entry == m.end())
         {

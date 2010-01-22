@@ -402,7 +402,7 @@ namespace hwm
     bool intersection::xml_read(network &n, xmlpp::TextReader &reader)
     {
         assert(is_opening_element(reader, "intersection"));
-
+        assert(id != str());
         str in_id;
         get_attribute(in_id, reader, "id");
         if(id != in_id)
