@@ -70,8 +70,8 @@ inline bool read_to_close(xmlpp::TextReader &reader, const str &endtag)
 template <class closure, typename T>
 inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
-    bool ret;
-    do
+    bool ret = true;
+    while(ret && !is_closing_element(reader, container_name))
     {
         ret = read_skip_comment(reader);
         if(!ret)
@@ -95,7 +95,6 @@ inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str
                 return false;
         }
     }
-    while(ret && !is_closing_element(reader, container_name));
 
     return ret;
 }
