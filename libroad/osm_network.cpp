@@ -44,6 +44,43 @@ namespace osm
         }
     }
 
+    bool network::node_degrees_and_edges_agree()
+    {
+        strhash<int>::type node_degree_check;
+        BOOST_FOREACH(const osm::node_pair &np, nodes)
+        {
+            node_degree_check.insert(std::pair<str,int>(np.first, 0));
+
+        }
+
+        BOOST_FOREACH(osm::edge &e, edges)
+        {
+            BOOST_FOREACH(osm::node *n, e.shape)
+            {
+                node_degree_check[n->id]++;
+            }
+        }
+
+        typedef std::pair<const str, int> n_d;
+        BOOST_FOREACH(n_d& nodepair, node_degree_check)
+        {
+            assert(node_degrees[nodepair.first] == nodepair.second);
+        }
+
+        //Check intersections
+        BOOST_FOREACH(intr_pair& ip, intersections)
+        {
+            assert(node_degrees[ip.first] > 1);
+        }
+
+        BOOST_FOREACH(const edge& ep, edges)
+        {
+            assert(ep.to == ep.shape.back()->id);
+            assert(ep.from == ep.shape[0]->id);
+        }
+    }
+
+
     bool network::populate_edge_hash_from_edges()
     {
         edge_hash.erase(edge_hash.begin(), edge_hash.end());
@@ -288,19 +325,31 @@ namespace osm
                         if (i == e.shape.size() - 1)
                         {
                             e.to = n->id;
-                            std::cout << e.id << " now goes to " << e.to << " degree "<<  node_degrees[e.to] << std::endl;
-                            std::cout << "      from " << e.from << std::endl;
-                            std::cout << "Old now degree " << node_degrees[old->id] << std::endl;
                         }
                         if (i == 0)
                         {
                             e.from = n->id;
-                            std::cout << e.id << " now goes from " << e.from << " degree " << node_degrees[e.from] << std::endl;
-                            std::cout << "      to " << e.to << std::endl;
-                            std::cout << "Old now degree " << node_degrees[old->id] << std::endl;
                         }
                     }
                 }
+            }
+        }
+    }
+
+    bool network::intersection_check()
+    {
+        BOOST_FOREACH(const osm::intr_pair &ip, intersections)
+        {
+            assert(ip.first == ip.second.id_from_node);
+            assert(node_degrees[ip.first] > 1);
+        }
+
+        //Check that intersections don't occur in the middle of roads.
+        BOOST_FOREACH(const osm::edge &e, edges)
+        {
+            for (int i = 1; i < e.shape.size() - 1; i++)
+            {
+                assert(node_degrees[e.shape[i]->id] == 1);
             }
         }
     }
@@ -309,6 +358,8 @@ namespace osm
     {
         BOOST_FOREACH(osm::edge &e, edges)
         {
+            assert(e.to == e.shape.back()->id);
+            assert(e.from == e.shape[0]->id);
             if (node_degrees[e.to] > 1)
             {
                 if (e.highway_class == "motorway")
@@ -402,6 +453,11 @@ namespace osm
                     _len = sqrt(start[0]*start[0] + start[1]*start[1]);
                 }while (len_thus_far + _len<= tmp_offset); //TODO degenerate case when equal.
 
+                //Update node degree count.
+                for (int i = 1; i <= new_start; i++)
+                {
+                    node_degrees[e.shape[i]->id]--;
+                }
                 //Modify geometry to make room for intersection.
                 vec2d start_seg = e.shape[new_start + 1]->xy;
                 start_seg -= e.shape[new_start]->xy;
@@ -411,6 +467,7 @@ namespace osm
                 start_seg *= factor;
 
                 e.shape[new_start] = new node(*e.shape[new_start]);
+                e.shape[new_start]->id = e.shape[0]->id;
                 e.shape[new_start]->xy[0] = e.shape[new_start + 1]->xy[0] - start_seg[0];
                 e.shape[new_start]->xy[1] = e.shape[new_start + 1]->xy[1] - start_seg[1];
 
@@ -436,6 +493,13 @@ namespace osm
                     _len = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
                 }while(len_thus_far + _len <= tmp_offset);
 
+                //Update node degree count
+                //Don't change count for the last node, as we use its id.
+                for (int i = new_end; i < e.shape.size() - 1; i++)
+                {
+                    node_degrees[e.shape[i]->id]--;
+                }
+
                 int size = e.shape.size();
                 vec2d end_seg = e.shape[new_end]->xy;
 
@@ -447,6 +511,8 @@ namespace osm
                 end_seg *= factor;
 
                 e.shape[new_end] = new node(*e.shape[new_end]);
+
+                e.shape[new_end]->id = e.shape[e.shape.size() - 1]->id;
 
                 e.shape[new_end]->xy[0] = e.shape[new_end - 1]->xy[0] + end_seg[0];
 
@@ -609,21 +675,20 @@ namespace osm
         std::map<str, std::vector<str> > road_split_points;
         BOOST_FOREACH(edge &ep, edges)
         {
+            int i = -1;
             BOOST_FOREACH(node *node, ep.shape)
              {
+                 i++;
 
-                //Skip the first and last nodes.
-                if (ep.from == node->id)
-                    continue;
+                 //Skip the first and last nodes.
+                 if (i == 0 or i == ep.shape.size() - 1)
+                     continue;
 
-                if (ep.to == node->id)
-                    continue;
-
-                if (node_degrees[node->id] > 1)
-                {
-                    road_split_points[ep.id].push_back(node->id);
-                }
-            }
+                 if (node_degrees[node->id] > 1)
+                 {
+                     road_split_points[ep.id].push_back(node->id);
+                 }
+             }
         }
 
         //Split each edge at its split points.
@@ -640,18 +705,21 @@ namespace osm
 
                 //Skip the first splitter if it's the first point of the road.
                 if (id == _edge.shape[0]->id){
+                    assert(0);  //This should never occur.
                     continue;
                 }
 
-                //Increase the node degree as the road is being split.
-                node_degrees[id]++;
 
                 if (not _first)
                  {
                     new_edges.push_back(copy_no_shape(_edge));
-                    (--new_edges.end())->from = _edge.shape[node_index]->id;
-                    (--new_edges.end())->shape.push_back(&nodes[_edge.shape[node_index]->id]);
+                    new_edges.back().from = _edge.shape[node_index]->id;
+                    new_edges.back().shape.push_back(&nodes[_edge.shape[node_index]->id]);
+
                 }
+
+                //Increase the node degree as the road is being split.
+                node_degrees[id]++;
 
                 //Add each node to new edge up to, and including, the next splitter
                 //Set the first node of the new edge
@@ -664,6 +732,9 @@ namespace osm
                         //Add nodes to new road
                         (--new_edges.end())->shape.push_back(&nodes[_edge.shape[node_index]->id]);
                         (--new_edges.end())->to = _edge.shape[node_index]->id;
+
+                        assert( (node_degrees[_edge.shape[node_index]->id] < 2) or _edge.shape[node_index]->id == id);
+
                     }
                 }
 
@@ -688,11 +759,14 @@ namespace osm
                 //Now node_index is on the final splitter.
                 //Add that splitter and all remaining nodes to a new edge.
                 new_edges.push_back(copy_no_shape(_edge));
-                (--new_edges.end())->from = _edge.shape[node_index]->id;
+                new_edges.back().from = _edge.shape[node_index]->id;
+
                 for (;node_index < _edge.shape.size(); node_index++){
-                    (--new_edges.end())->shape.push_back(_edge.shape[node_index]);
-                    (--new_edges.end())->to = _edge.shape[node_index]->id;
+                    new_edges.back().shape.push_back(_edge.shape[node_index]);
+
+                    new_edges.back().to = _edge.shape[node_index]->id;
                 }
+
                 assert((--new_edges.end())->shape.size() > 1);
                 //Remove the deleted nodes from the original edge
                 _edge.shape.erase(_edge.shape.begin()+ _edge_ending_node + 1, _edge.shape.end());

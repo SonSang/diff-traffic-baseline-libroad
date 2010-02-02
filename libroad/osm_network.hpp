@@ -79,6 +79,8 @@ namespace osm
 
         vec2d center;
 
+        bool node_degrees_and_edges_agree();
+        bool intersection_check();
         bool populate_edges_from_hash();
         bool populate_edge_hash_from_edges();
         bool remove_small_roads(double min_len);

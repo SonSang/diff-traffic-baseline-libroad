@@ -83,8 +83,8 @@ void glWindow::draw(){
      net->populate_edges_from_hash();
      net->compute_edge_types();
      net->compute_node_degrees();
-     net->split_into_road_segments();
      net->scale_and_translate();
+     net->split_into_road_segments();
      net->remove_highway_intersections();
      net->join_logical_roads();
      net->join_logical_roads();
