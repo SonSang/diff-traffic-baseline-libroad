@@ -77,9 +77,12 @@ namespace osm
         std::vector<edge>             edges;
 
 
+        vec2d center;
+
         bool populate_edges_from_hash();
         bool populate_edge_hash_from_edges();
         bool remove_small_roads(double min_len);
+        void remove_highway_intersections();
         bool create_grid(int, int, double, double);
         bool scale_and_translate();
         bool check_edge(const edge &e) const;
@@ -89,7 +92,6 @@ namespace osm
         bool draw_network();
         bool create_intersections();
         bool compute_node_degrees();
-        //bool join_logical_roads();
         bool join_logical_roads();
         bool split_into_road_segments();
         bool join(edge* , edge*);

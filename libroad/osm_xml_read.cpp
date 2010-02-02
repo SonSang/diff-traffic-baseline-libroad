@@ -11,8 +11,8 @@ namespace osm
     static inline bool xml_read(network &n, node &no, xmlpp::TextReader &reader)
     {
         bool res = get_attribute(no.id,    reader, "id") &&
-                   get_attribute(no.xy[0], reader, "lat")  &&
-                   get_attribute(no.xy[1], reader, "lon");
+                   get_attribute(no.xy[0], reader, "lon")  &&
+                   get_attribute(no.xy[1], reader, "lat");
         if(!res)
             return false;
 
@@ -97,6 +97,33 @@ namespace osm
                 read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd"));
     }
 
+    static inline void xml_read_center(network &n, const char* filename)
+    {
+        bool ret;
+        xmlpp::TextReader reader(filename);
+        do
+        {
+            ret = read_skip_comment(reader);
+            if (reader.get_node_type() == xmlpp::TextReader::Element)
+            {
+                if (reader.get_name() == "bounds")
+                {
+                    float minlat, minlon, maxlat, maxlon;
+                    get_attribute(minlat, reader, "minlat");
+                    get_attribute(minlon, reader, "minlon");
+                    get_attribute(maxlat, reader, "maxlat");
+                    get_attribute(maxlon, reader, "maxlon");
+
+                    n.center[0] = (maxlon - minlon)/2.0 + minlon;
+                    n.center[1] = (maxlat - minlat)/2.0 + minlat;
+                    std::cout << "Got " << minlat << " " << minlon << " " << maxlat
+                              << " " << maxlon << std::endl;
+                    std::cout << n.center[0] << " " << n.center[1] << std::endl;
+                }
+            }
+        }while(ret);
+    }
+
     static inline bool xml_read_nodes(network &n, const char *filename)
     {
         std::cout << "xml_read_nodes1\n";
@@ -133,6 +160,8 @@ namespace osm
     {
         network n;
         std::cout << "load_xml_network\n";
+
+        xml_read_center(n, osm_file);
 
         if(!((xml_read_nodes(n, osm_file)) && (xml_read_edges(n, osm_file)))){
             std::cout << "exception thrown here\n";

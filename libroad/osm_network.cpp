@@ -135,6 +135,14 @@ namespace osm
             }
             glEnd();
 
+            // glPointSize(5);
+            // glBegin(GL_POINTS);
+            // BOOST_FOREACH(osm::node* n, e_nodes)
+            // {
+            //     glVertex3f(n->xy[0], n->xy[1], 0);
+            // }
+            // glEnd();
+
             i++;
         }
 
@@ -239,9 +247,62 @@ namespace osm
         }
     }
 
+    void network::remove_highway_intersections()
     {
+        BOOST_FOREACH(osm::edge &e, edges)
         {
+            if (e.highway_class == "motorway")
+            {
+                for(int i = 0; i < e.shape.size(); i++)
+                {
+                    node*& n = e.shape[i];
 
+                    if (node_degrees[n->id] > 1)
+                    {
+                        std::cout << node_degrees[n->id] << " degree " << std::endl;
+                        node_degrees[n->id]--;
+
+
+                        node* old = n;
+                        str new_id = old->id + "_HWY";
+                        n = retrieve<node>(nodes, new_id);
+
+                        n->xy = old->xy;
+                        //TODO edges_including..
+                        n->id = new_id;
+                        n->edges_including.push_back(&e);
+                        if (find(old->edges_including.begin(),
+                                 old->edges_including.end(),
+                                 &e) != old->edges_including.end())
+                            old->edges_including.erase(find(old->edges_including.begin(),
+                                                            old->edges_including.end(),
+                                                            &e));
+
+                        if (node_degrees.find(n->id) == node_degrees.end())
+                        {
+                            node_degrees[n->id] = 0;
+                        }
+                        node_degrees[n->id]++;
+
+                        //If node is at the end of the road
+                        if (i == e.shape.size() - 1)
+                        {
+                            e.to = n->id;
+                            std::cout << e.id << " now goes to " << e.to << " degree "<<  node_degrees[e.to] << std::endl;
+                            std::cout << "      from " << e.from << std::endl;
+                            std::cout << "Old now degree " << node_degrees[old->id] << std::endl;
+                        }
+                        if (i == 0)
+                        {
+                            e.from = n->id;
+                            std::cout << e.id << " now goes from " << e.from << " degree " << node_degrees[e.from] << std::endl;
+                            std::cout << "      to " << e.to << std::endl;
+                            std::cout << "Old now degree " << node_degrees[old->id] << std::endl;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     bool network::create_intersections()
@@ -250,6 +311,11 @@ namespace osm
         {
             if (node_degrees[e.to] > 1)
             {
+                if (e.highway_class == "motorway")
+                {
+                    std::cout << e.id << " is an intersection to " << e.to << std::endl;
+                    std::cout << node_degrees[e.to] << std::endl;
+                }
                 intersection* curr;
                 curr = retrieve<intersection>(intersections, e.to);
                 curr->edges_ending_here.push_back(&e);
@@ -257,6 +323,11 @@ namespace osm
             }
             if (node_degrees[e.from] > 1)
             {
+                if (e.highway_class == "motorway")
+                {
+                    std::cout << e.id << " is an intersection from " << e.from << std::endl;
+                    std::cout << node_degrees[e.from] << std::endl;
+                }
                 intersection* curr;
                 curr = retrieve<intersection>(intersections, e.from);
                 curr->edges_starting_here.push_back(&e);
@@ -399,12 +470,8 @@ namespace osm
         {
             if (first)
             {
-                vec2d pt = np.second.xy;
-                first = false;
-                bias = pt*scale;
+                bias = center*scale;
             }
-
-
             np.second.xy[0] = np.second.xy[0]*scale - bias[0];
             np.second.xy[1] = np.second.xy[1]*scale - bias[1];
         }
@@ -455,6 +522,7 @@ namespace osm
 
                 edge& o = edges[j];
 
+                //Combine roads at degenerate intersections.
                 if ((nodes[e.to].id == nodes[o.from].id) and (node_degrees[e.to] == 2)){
                     node_degrees[e.to]--;
 

@@ -66,7 +66,7 @@ void glWindow::draw(){
      //Create from grid
      // osm::network s_net;
      // net = &s_net;
-     // net->create_grid(3, 3, 40, 40);
+     // net->create_grid(4, 4, 40, 40);
      // net->compute_edge_types();
      // net->compute_node_degrees();
      // net->join_logical_roads();
@@ -82,12 +82,13 @@ void glWindow::draw(){
      net = &s_net;
      net->populate_edges_from_hash();
      net->compute_edge_types();
-     net->remove_highway_intersections();
-     net->scale_and_translate();
      net->compute_node_degrees();
      net->split_into_road_segments();
+     net->scale_and_translate();
+     net->remove_highway_intersections();
      net->join_logical_roads();
-     net->remove_small_roads(60);
+     net->join_logical_roads();
+     net->remove_small_roads(40);
      net->create_intersections();
      net->populate_edge_hash_from_edges();
      hwm::network hnet(hwm::from_osm("test", 0.5f, *net));
