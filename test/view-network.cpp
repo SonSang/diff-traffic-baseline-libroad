@@ -198,6 +198,7 @@ public:
                 const hwm::lane &la = l.second;
 
                 mat4x4f trans(la.point_frame(car_pos));
+                vec3f   this_point(trans(0,3), trans(1,3), trans(2,3));
                 mat4x4f ttrans(tvmet::trans(trans));
                 glColor3f(1.0, 1.0, 0.0);
 
@@ -209,6 +210,46 @@ public:
                 glMultMatrixf(ttrans.data());
                 car_drawer.draw();
                 glPopMatrix();
+
+                {
+                    float p = car_pos;
+                    const hwm::lane *left = la.left_adjacency(p);
+                    if(left)
+                    {
+                        glColor3f(0.0, 1.0, 0.0);
+                        const vec3f other_point(left->point(p));
+                        glEnable(GL_BLEND);
+                        glDisable(GL_LIGHTING);
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                        glBegin(GL_LINES);
+                        glVertex3fv(this_point.data());
+                        glVertex3fv(other_point.data());
+                        glEnd();
+                        glDisable(GL_BLEND);
+                        glEnable(GL_LIGHTING);
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                    }
+                }
+                {
+                    float p = car_pos;
+                    const hwm::lane *right = la.right_adjacency(p);
+                    if(right)
+                    {
+                        glColor3f(1.0, 0.0, 0.0);
+                        const vec3f other_point(right->point(p));
+                        glEnable(GL_BLEND);
+                        glDisable(GL_LIGHTING);
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                        glBegin(GL_LINES);
+                        glVertex3fv(this_point.data());
+                        glVertex3fv(other_point.data());
+                        glEnd();
+                        glDisable(GL_BLEND);
+                        glEnable(GL_LIGHTING);
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                    }
+                }
+
             }
 
             glEnable(GL_BLEND);

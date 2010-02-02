@@ -50,12 +50,18 @@ struct partition01 : public std::map<float, T>
 
     iterator find(float x)
     {
+        if(empty())
+            return end();
+
         iterator itr(this->upper_bound(x));
         return (itr == this->begin()) ? itr : --itr;
     }
 
     const_iterator find(float x) const
     {
+        if(empty())
+            return end();
+
         const_iterator itr(this->upper_bound(x));
         return (itr == this->begin()) ? itr : --itr;
     }
@@ -97,6 +103,9 @@ struct partition01 : public std::map<float, T>
 
     iterator find_rescale(float x, float &scale)
     {
+        if(empty())
+            return end();
+
         iterator itr = find(x);
         scale = (x-itr->first)/interval_length(itr);
         return itr;
@@ -104,6 +113,9 @@ struct partition01 : public std::map<float, T>
 
     const_iterator find_rescale(float x, float &scale) const
     {
+        if(empty())
+            return end();
+
         const_iterator itr = find(x);
         scale = (x-itr->first)/interval_length(itr);
         return itr;

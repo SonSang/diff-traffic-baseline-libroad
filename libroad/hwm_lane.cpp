@@ -299,6 +299,32 @@ namespace hwm
         return rmici->second.point_frame(local, offset, up);
     }
 
+    lane *lane::left_adjacency(float &param) const
+    {
+        float local;
+        adjacency::intervals::const_iterator adii = left.find_rescale(param, local);
+        if(adii == left.end())
+            return 0;
+
+        const adjacency &adj = adii->second;
+        if(adj.neighbor)
+            param = local * (adj.neighbor_interval[1] - adj.neighbor_interval[0]) + adj.neighbor_interval[0];
+        return adj.neighbor;
+    }
+
+    lane *lane::right_adjacency(float &param) const
+    {
+        float local;
+        adjacency::intervals::const_iterator adii = right.find_rescale(param, local);
+        if(adii == right.end())
+            return 0;
+
+        const adjacency &adj = adii->second;
+        if(adj.neighbor)
+            param = local * (adj.neighbor_interval[1] - adj.neighbor_interval[0]) + adj.neighbor_interval[0];
+        return adj.neighbor;
+    }
+
     lane *lane::upstream_lane()   const
     {
         assert(start);

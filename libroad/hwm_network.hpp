@@ -129,6 +129,9 @@ namespace hwm
         mat3x3f frame      (float t,                    const vec3f &up=vec3f(0, 0, 1)) const;
         mat4x4f point_frame(float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
 
+        lane *left_adjacency(float &param)  const;
+        lane *right_adjacency(float &param) const;
+
         lane *upstream_lane()   const;
         lane *downstream_lane() const;
 
