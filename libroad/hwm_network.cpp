@@ -2,6 +2,11 @@
 
 namespace hwm
 {
+    float maximum_cornering_speed(const float radius, const float g, const float static_friction)
+    {
+        return std::sqrt(radius*g*static_friction);
+    }
+
     network::network(const network &n)
     {
         copy(n);

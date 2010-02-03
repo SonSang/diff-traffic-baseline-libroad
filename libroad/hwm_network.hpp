@@ -9,6 +9,10 @@
 
 namespace hwm
 {
+    static const float tire_static_friction = 0.7f;
+
+    float maximum_cornering_speed(float radius, float g, float static_friction);
+
     struct network;
 
     struct road

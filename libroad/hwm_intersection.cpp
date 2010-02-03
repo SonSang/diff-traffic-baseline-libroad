@@ -137,7 +137,15 @@ namespace hwm
             new_lane.start = new hwm::lane::lane_terminus(in);
             new_lane.end   = new hwm::lane::lane_terminus(out);
 
-            new_lane.speedlimit = out->speedlimit;
+            if(new_road.rep.points_.size() > 2)
+            {
+                const float min_rad = *std::min_element(new_road.rep.radii_.begin(), new_road.rep.radii_.end());
+                const float curve_speedlimit = maximum_cornering_speed(min_rad, 9.81, tire_static_friction);
+                new_lane.speedlimit = std::min(curve_speedlimit, out->speedlimit);
+            }
+            else
+                new_lane.speedlimit = out->speedlimit;
+
             new_lane.active     = false;
 
             in_pair().replace(current, intersection::state::state_pair(sp.in_idx, sp.out_idx, &new_lane));
