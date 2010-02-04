@@ -378,6 +378,7 @@ namespace hwm
         ++current_state;
         if(current_state >= states.size())
             current_state = 0;
+        state_time = 0;
         states[current_state].activate();
     }
 
@@ -385,4 +386,10 @@ namespace hwm
     {
         locked = true;
     }
+
+    void intersection::unlock()
+    {
+        locked = false;
+    }
+
 }

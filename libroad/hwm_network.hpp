@@ -164,7 +164,7 @@ namespace hwm
 
     struct intersection
     {
-        intersection() : locked(false), current_state(0)
+        intersection() : locked(false), current_state(0), state_time(0)
         {}
 
         struct state
@@ -237,6 +237,7 @@ namespace hwm
 
         void advance_state();
         void lock();
+        void unlock();
 
         str                id;
         std::vector<lane*> incoming;
@@ -244,6 +245,7 @@ namespace hwm
         std::vector<state> states;
         bool               locked;
         size_t             current_state;
+        float              state_time;
         std::vector<vec3f> shape;
         vec3f              center;
     };
