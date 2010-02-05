@@ -537,47 +537,49 @@ namespace osm
                 edge& e = (*edge_p);
 
                 //TODO Put the min angle calculations in a seperate function
-                tvmet::Vector<float, 2> alpha(e.shape[1]->xy[0] - e.shape[0]->xy[0],
-                                              e.shape[1]->xy[1] - e.shape[0]->xy[1]);
-                alpha *= 1.0/tvmet::norm2(alpha);
+                // tvmet::Vector<float, 3> alpha(e.shape[1]->xy[0] - e.shape[0]->xy[0],
+                //                               e.shape[1]->xy[1] - e.shape[0]->xy[1],
+                //                               0.0f);
+                // alpha *= 1.0/tvmet::norm2(alpha);
 
-                double min_angle = std::numeric_limits<double>::infinity();
-                BOOST_FOREACH(edge* other_edge_p, i.edges_starting_here)
-                {
-                    edge& f = (*other_edge_p);
+                // double min_angle = std::numeric_limits<double>::infinity();
+                // BOOST_FOREACH(edge* other_edge_p, i.edges_starting_here)
+                // {
+                //     edge& f = (*other_edge_p);
 
-                    if (e.id == f.id)
-                        continue;
+                //     if (e.id == f.id)
+                //         continue;
 
-                    tvmet::Vector<float, 2> beta(f.shape[1]->xy[0] - f.shape[0]->xy[0],
-                                                 f.shape[1]->xy[1] - f.shape[0]->xy[1]);
-                    beta *= 1.0/tvmet::norm2(beta);
+                //     tvmet::Vector<float, 3> beta(f.shape[1]->xy[0] - f.shape[0]->xy[0],
+                //                                  f.shape[1]->xy[1] - f.shape[0]->xy[1],
+                //                                  0.0f);
+                //     beta *= 1.0/tvmet::norm2(beta);
 
-                    float angle = acos(dot(alpha, beta));
+                //     float angle = acos(dot(alpha, beta));
 
-                    if (angle < min_angle)
-                    {
-                        min_angle = angle;
-                    }
-                }
+                //     if (angle < min_angle)
+                //     {
+                //         min_angle = angle;
+                //     }
+                // }
 
-                BOOST_FOREACH(edge* other_edge_p, i.edges_ending_here)
-                {
-                    edge& f = (*other_edge_p);
+                // BOOST_FOREACH(edge* other_edge_p, i.edges_ending_here)
+                // {
+                //     edge& f = (*other_edge_p);
 
-                    tvmet::Vector<float, 2> beta;
-                    beta = f.shape[f.shape.size() - 2]->xy;
-                    beta -= f.shape[f.shape.size() - 1]->xy;
+                //     tvmet::Vector<float, 3> beta;
+                //     beta = f.shape[f.shape.size() - 2]->xy;
+                //     beta -= f.shape[f.shape.size() - 1]->xy;
 
-                    beta *= 1.0/tvmet::norm2(beta);
+                //     beta *= 1.0/tvmet::norm2(beta);
 
-                    float angle = acos(dot(alpha, beta));
+                //     float angle = acos(dot(alpha, beta));
 
-                    if (angle < min_angle)
-                    {
-                        min_angle = angle;
-                    }
-                }
+                //     if (angle < min_angle)
+                //     {
+                //         min_angle = angle;
+                //     }
+                 // }
 
                 double len_thus_far = 0;
                 double _len = 0;
