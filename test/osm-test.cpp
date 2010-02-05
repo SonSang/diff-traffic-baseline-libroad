@@ -86,6 +86,7 @@ void glWindow::draw(){
      net->scale_and_translate();
      net->split_into_road_segments();
      net->remove_highway_intersections();
+     net->compute_node_heights();
      net->join_logical_roads();
      net->join_logical_roads();
      net->remove_small_roads(40);

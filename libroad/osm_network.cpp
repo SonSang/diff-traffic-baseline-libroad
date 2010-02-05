@@ -98,7 +98,7 @@ namespace osm
         float _len = 0;
         for(int i = 0; i < shape.size() - 1; i++)
         {
-            vec2d start = shape[i + 1]->xy;
+            tvmet::Vector<float, 3> start = shape[i + 1]->xy;
             start -= shape[i]->xy;
             _len = sqrt(start[0]*start[0] + start[1]*start[1]);
             len_thus_far += _len;
@@ -114,6 +114,7 @@ namespace osm
             edge& e = edges[i];
             if (e.length() < min_len)
             {
+
                 //Update intersections
                 if (intersections.find(e.to) != intersections.end())
                 {
@@ -127,9 +128,11 @@ namespace osm
                     i_from.edges_starting_here.erase(find(i_from.edges_starting_here.begin(), i_from.edges_starting_here.end(), &e));
                 }
 
-                //Update degree count
-                node_degrees[e.to]--;
-                node_degrees[e.from]--;
+                //Update degree count for all nodes
+                BOOST_FOREACH(node* n, e.shape)
+                {
+                    node_degrees[n->id]--;
+                }
 
                 //TODO join roads that this edge connected..
                 std::swap(edges[i], edges.back());
@@ -273,13 +276,15 @@ namespace osm
         BOOST_FOREACH(const osm::node_pair &np, nodes)
         {
             node_degrees.insert(std::pair<str,int>(np.first, 0));
+
         }
 
-        BOOST_FOREACH(const osm::edge &e, edges)
+        BOOST_FOREACH(osm::edge &e, edges)
         {
-            BOOST_FOREACH(const osm::node *n, e.shape)
+            BOOST_FOREACH(osm::node *n, e.shape)
             {
                 node_degrees[n->id]++;
+                n->edges_including.push_back(&e);
             }
         }
     }
@@ -296,9 +301,11 @@ namespace osm
 
                     if (node_degrees[n->id] > 1)
                     {
-                        std::cout << node_degrees[n->id] << " degree " << std::endl;
+                        //Removing node from highway
                         node_degrees[n->id]--;
 
+                        //Make old node an overpass.
+                        n->is_overpass = true;
 
                         node* old = n;
                         str new_id = old->id + "_HWY";
@@ -335,6 +342,134 @@ namespace osm
             }
         }
     }
+
+    typedef std::pair<tvmet::Vector<float, 2>, tvmet::Vector<float,2> > pair_of_isects;
+    pair_of_isects circle_line_intersection(tvmet::Vector<float, 2> pt1,
+                                            tvmet::Vector<float, 2> pt2,
+                                            tvmet::Vector<float, 2> center,
+                                            float r)
+    {
+        struct sign
+        {
+            float operator()(float x)
+            {
+                if (x < 0)
+                    return -1;
+                else
+                    return 1;
+            }
+        } sign_func;
+
+
+        float x1 = pt1[0] - center[0];
+        float y1 = pt1[1] - center[1];
+        float x2 = pt2[0] - center[0];
+        float y2 = pt2[1] - center[1];
+
+        float dx = (x2 - x1);
+        float dy = (y2 - y1);
+        float dr = sqrt(pow(dx,2) + pow(dy,2));
+        float D = x1*y2 - x2*y1;
+
+        tvmet::Vector<float, 2> isect1((D*dy + sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                                       -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+
+        tvmet::Vector<float, 2> isect2((D*dy - sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                                       -D*dx - std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+
+        return std::make_pair(isect1 + center, isect2 + center);
+    }
+
+
+    void network::compute_node_heights()
+    {
+        float overpass_height = 1;
+        float overpass_radius = 50;
+
+        BOOST_FOREACH(osm::edge& e, edges)
+        {
+            for(int i = 0; i < e.shape.size(); i++)
+            {
+                osm::node* n = e.shape[i];
+                //Find node that's part of overpass.
+                if (n->is_overpass)
+                {
+                    std::cout << "Here " << std::endl;
+                    //TODO What if road ends before ramp radius is reached? Could continue to traverse connecting roads, but that could produce odd effects.
+
+                    n->xy[2] = overpass_height;
+
+                    tvmet::Vector<float, 2> n_2d(n->xy[0], n->xy[1]);
+
+                    //Walk back until
+                    //  1) another overpass is found, or
+                    //  2) until a line segment intersects with a circle centered at point i
+                    // for(int j = i - 1; j >= 0; j--)
+                    // {
+                    //     osm::node* j_node = e.shape[j];
+
+                    //     tvmet::Vector<float, 2> j_2d(j_node->xy[0], j_node->xy[1]);
+
+                    //     if (j_node->is_overpass)
+                    //         break;
+
+                    //     float dist = norm2(j_2d - n_2d);
+                    //     if (dist > overpass_radius)
+                    //     {
+                    //         //Intersect line segment (j and j + 1) with circle and add point.
+                    //         tvmet::Vector<float, 2> jp1_2d(e.shape[j + 1]->xy[0], e.shape[j + 1]->xy[1]);
+
+                    //         std::pair<tvmet::Vector<float, 2>, tvmet::Vector<float, 2> > isects =
+                    //             circle_line_intersection(j_2d, jp1_2d, n_2d, overpass_radius);
+
+                    //         bool first_is_on_seg = ((std::min(j_2d[0], jp1_2d[0]) < isects.first[0])
+                    //                                 and
+                    //                                 (std::max(j_2d[0], jp1_2d[0]) > isects.first[0])
+                    //                                 and
+                    //                                 (std::min(j_2d[1], jp1_2d[1]) < isects.first[1])
+                    //                                 and
+                    //                                 (std::max(j_2d[1], jp1_2d[1]) > isects.first[1]));
+
+                    //         bool second_is_on_seg = ((std::min(j_2d[0], jp1_2d[0]) < isects.second[0])
+                    //                                 and
+                    //                                 (std::max(j_2d[0], jp1_2d[0]) > isects.second[0])
+                    //                                 and
+                    //                                 (std::min(j_2d[1], jp1_2d[1]) < isects.second[1])
+                    //                                 and
+                    //                                 (std::max(j_2d[1], jp1_2d[1]) > isects.second[1]));
+
+                    //         if (first_is_on_seg)
+                    //         {
+                    //             //Add first intersection as new node on the line.
+                    //             osm::node ramp_start;
+                    //             ramp_start.id = n->id + "_opassramp";
+                    //             ramp_start.xy = tvmet::Vector<float, 3>(isects.first[0], isects.first[1], 0.0f);
+                    //             ramp_start.edges_including.push_back(&e);
+                    //             node_degrees[ramp_start.id] = 1;
+                    //             nodes.insert(std::make_pair(ramp_start.id, ramp_start));
+                    //         }
+                    //         else if (second_is_on_seg)
+                    //         {
+                    //             //Add second intersection as new node on the line.
+                    //         }
+                    //         else if (first_is_on_seg and second_is_on_seg)
+                    //         {
+                    //             assert(0);
+                    //         }
+                    //         else
+                    //         {
+                    //             assert(0);
+                    //         }
+
+
+                    //    break;
+                    // }
+                    //}
+                }
+            }
+        }
+    }
+
 
     bool network::intersection_check()
     {
@@ -448,7 +583,7 @@ namespace osm
                     //TODO could go infinite for tiny roads.
                     len_thus_far += _len;
                     new_start++;
-                    vec2d start = e.shape[new_start + 1]->xy;
+                    tvmet::Vector<float,3> start = e.shape[new_start + 1]->xy;
                     start -= e.shape[new_start]->xy;
                     _len = sqrt(start[0]*start[0] + start[1]*start[1]);
                 }while (len_thus_far + _len<= tmp_offset); //TODO degenerate case when equal.
@@ -459,7 +594,7 @@ namespace osm
                     node_degrees[e.shape[i]->id]--;
                 }
                 //Modify geometry to make room for intersection.
-                vec2d start_seg = e.shape[new_start + 1]->xy;
+                tvmet::Vector<float, 3> start_seg = e.shape[new_start + 1]->xy;
                 start_seg -= e.shape[new_start]->xy;
 
                 double len = sqrt(start_seg[0]*start_seg[0] + start_seg[1]*start_seg[1]);
@@ -488,10 +623,11 @@ namespace osm
                     //TODO could go infinite for tiny roads.
                     len_thus_far += _len;
                     new_end--;
-                    vec2d seg = e.shape[new_end]->xy;
+                    tvmet::Vector<float, 3> seg = e.shape[new_end]->xy;
                     seg -= e.shape[new_end - 1]->xy;
                     _len = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
                 }while(len_thus_far + _len <= tmp_offset);
+
 
                 //Update node degree count
                 //Don't change count for the last node, as we use its id.
@@ -501,7 +637,7 @@ namespace osm
                 }
 
                 int size = e.shape.size();
-                vec2d end_seg = e.shape[new_end]->xy;
+                tvmet::Vector<float, 3> end_seg = e.shape[new_end]->xy;
 
                 end_seg -=  e.shape[new_end - 1]->xy;
 

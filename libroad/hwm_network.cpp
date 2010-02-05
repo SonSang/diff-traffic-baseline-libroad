@@ -199,8 +199,10 @@ namespace hwm
 
         BOOST_FOREACH(const osm::edge& e, snet.edges)
         {
-            ++node_degree[e.from];
-            ++node_degree[e.to];
+            ++node_degree[e.shape[0]->id];
+            ++node_degree[e.shape.back()->id];
+
+
 
             road &new_road = retrieve<road>(hnet.roads, e.id);
             new_road.name = new_road.id;
@@ -217,11 +219,11 @@ namespace hwm
                             + pow(n->xy[1] - last->xy[1],2)) > 1e-7){
                         new_road.rep.points_.push_back(vec3f(n->xy[0],
                                                              n->xy[1],
-                                                             0.0f));
+                                                             n->xy[2]));
                     }
                 }
                 else{
-                    new_road.rep.points_.push_back(vec3f(n->xy[0],n->xy[1],0.0f));
+                    new_road.rep.points_.push_back(vec3f(n->xy[0],n->xy[1],n->xy[2]));
                 }
                 last = n;
             }
@@ -232,8 +234,10 @@ namespace hwm
 
         BOOST_FOREACH(const strhash<size_t>::type::value_type &ndeg, node_degree)
         {
-            if(ndeg.second > 1)
+            if(ndeg.second > 1){
+                assert(ndeg.first != "");
                 retrieve<intersection>(hnet.intersections, ndeg.first);
+            }
         }
 
         typedef std::pair<std::vector<lane*>, std::vector<lane*> > in_and_out;

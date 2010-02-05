@@ -13,10 +13,14 @@ namespace osm
     {
         typedef enum {priority, traffic_light, unknown} TYPES;
 
+        node(){ is_overpass = false; }
+
         str   id;
-        vec2d xy;
+        tvmet::Vector<float, 3> xy;
         TYPES type;
-        std::vector<edge*> edges_including;
+        std::vector<edge*> edges_including; //Currently not maintained
+
+        bool is_overpass;
     };
 
     struct edge_type
@@ -48,6 +52,10 @@ namespace osm
         shape_t    shape;
         SPREAD     spread;
         str        highway_class;
+
+        std::vector<node*> overpass_nodes;
+
+
         bool reverse();
         float length() const;
     };
@@ -81,12 +89,14 @@ namespace osm
 
         bool node_degrees_and_edges_agree();
         bool intersection_check();
+
         bool populate_edges_from_hash();
         bool populate_edge_hash_from_edges();
         bool remove_small_roads(double min_len);
         void remove_highway_intersections();
         bool create_grid(int, int, double, double);
         bool scale_and_translate();
+        void compute_node_heights();
         bool check_edge(const edge &e) const;
         bool check_node(const node &n) const;
         bool check() const;
