@@ -379,9 +379,10 @@ namespace hwm
         typedef std::pair<const str, osm::intersection> isect_pair;
         BOOST_FOREACH(const isect_pair& i_pair, snet.intersections)
         {
-
-
             const osm::intersection& osm_isect = i_pair.second;
+
+            assert(osm_isect.id_from_node != "");
+
             hwm::intersection& hwm_isect = hnet.intersections[osm_isect.id_from_node];
 
             //Add states for every pairing of roads that are ending here.
@@ -456,7 +457,11 @@ namespace hwm
                 }
             }
 
-
+            typedef strhash<hwm::intersection>::type::value_type hwm_i_pair;
+            BOOST_FOREACH(const hwm_i_pair& i, hnet.intersections)
+            {
+                assert(i.second.id != "");
+            }
 
             //Add states for every pairing of roads that are starting here.
             for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
@@ -590,6 +595,12 @@ namespace hwm
                 }
             }
 
+        }
+
+        typedef strhash<hwm::intersection>::type::value_type hwm_i_pair;
+        BOOST_FOREACH(const hwm_i_pair& i, hnet.intersections)
+        {
+            assert(i.second.id != "");
         }
 
         return hnet;
