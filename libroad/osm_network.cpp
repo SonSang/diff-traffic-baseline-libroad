@@ -36,11 +36,15 @@ namespace osm
     typedef std::pair<const str, node> node_pair;
     typedef std::pair<const str, intersection> intr_pair;
 
+
+
+
     bool network::populate_edges_from_hash()
     {
         BOOST_FOREACH(strhash<edge>::type::value_type& hash, edge_hash)
         {
-            edges.push_back(hash.second);
+            if (hash.second.highway_class != "motorway_link")
+                edges.push_back(hash.second);
         }
     }
 
@@ -838,7 +842,6 @@ namespace osm
             bool _first = true;
             BOOST_FOREACH(str id, road_split_points[_edge.id])
             {
-
                 //Skip the first splitter if it's the first point of the road.
                 if (id == _edge.shape[0]->id){
                     assert(0);  //This should never occur.
