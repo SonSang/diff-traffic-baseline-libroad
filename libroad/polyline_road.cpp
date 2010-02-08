@@ -15,7 +15,8 @@ vec3f polyline_road::point(const float t) const
 {
     float        local_t;
     const size_t idx = locate_scale(t, local_t);
-    return vec3f(points_[idx] + local_t*normals_[idx]);
+
+    return vec3f(points_[idx] + local_t*(clengths_[idx+1] - clengths_[idx])*normals_[idx]);
 }
 
 mat3x3f polyline_road::frame(const float t) const
@@ -72,7 +73,7 @@ bool polyline_road::initialize()
     for(size_t i = 1; i < N; ++i)
     {
         normals_[i-1] = points_[i] - points_[i-1];
-        const float len = std::sqrt(tvmet::dot(normals_[i-1], normals_[i-1]));
+        const float len = ::length(normals_[i-1]);
         if(len < FLT_EPSILON)
             return false;
 
@@ -135,3 +136,4 @@ bool polyline_road::check() const
             points_.size() == clengths_.size() &&
             points_.size() == normals_.size() + 1);
 }
+

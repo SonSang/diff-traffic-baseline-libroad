@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 LF='
 '
@@ -12,7 +12,7 @@ if test -d .git -o -f .git
 	then
 	VN=$(git log --pretty=format:"%h" -n 1)
 	fi
-	git update-index -q --refresh
+	git update-index -q --refresh >/dev/null 2>/dev/null
 	test -z "$(git diff-index --name-only HEAD --)" ||
 	VN="$VN.dirty"
 	echo "$VN">version

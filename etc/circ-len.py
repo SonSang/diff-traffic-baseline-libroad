@@ -3,6 +3,7 @@ import math
 import scipy
 import scipy.linalg
 import scipy.integrate as integ
+import time
 
 import pylab
 
@@ -78,6 +79,22 @@ def circ_arc(theta, phi, l, r):
 
     return numerator/denom
 
+class circ_arc_o(object):
+    def __init__(self, phi, l, r):
+        self.s2_phi   = math.sin(phi)**2
+        self.r2 = r**2
+        self.rt_coeff = 2*l*r*math.cos(phi)
+        self.numer_expr = self.r2 + l**2*(1.0 - self.s2_phi)
+    def __call__(self, theta):
+        subexpr = self.s2_phi*math.cos(theta)**2
+        subexpr1m = (1 - subexpr)
+
+        numerator = math.sqrt(self.r2*subexpr*(subexpr-2)
+                              + self.rt_coeff*math.sqrt(subexpr1m)*subexpr1m
+                              + self.numer_expr)
+
+        return numerator/subexpr1m
+
 def circ_point(theta, phi, r):
     c_theta = math.cos(theta)
     s_theta = math.sin(theta)
@@ -124,16 +141,89 @@ def plot_phi_len(radius, offset, phi, arc, num=100):
     # px = numpy.poly1d(xcoeff)
     pylab.show()
 
-if __name__ == '__main__':
-    #    plot_phi_len(1.0, 1.0, math.pi/2, math.pi)
-    dat = numpy.zeros((10, 100, 2))
+def plot_dist():
+    dat = numpy.zeros((10, 10, 100, 2))
     for (pct,phi) in enumerate(numpy.linspace(0, 7*math.pi/16, dat.shape[0])):
-        for (dct,i) in enumerate(numpy.linspace(math.pi/8, math.pi/2, dat.shape[1])):
-            dat[pct,dct,0] = i
-            dat[pct,dct,1] = integ.quad(lambda x: circ_arc(x, phi, 1.0, 1.0),
-                                        math.pi/8, i)[0]
+        for (oct,offs) in enumerate(numpy.linspace(0, 10.0, dat.shape[1])):
+            for (dct,i) in enumerate(numpy.linspace(0, math.pi, dat.shape[2])):
+                dat[pct,oct,dct,0] = i
+                dat[pct,oct,dct,1] = (integ.quad(lambda x: circ_arc(x, phi, 10.0, offs),
+                                                 0, i)[0] - i)/offs
 
     pylab.clf()
-    for i in xrange(dat.shape[0]):
-        pylab.plot(dat[i,:,0], dat[i,:,1])
+    for i in xrange(dat.shape[1]):
+        pylab.plot(dat[4,i,:,0], dat[3,i,:,1])
     pylab.show()
+
+if __name__ == '__main__':
+    # plot_phi_len(1.0, 1.0, math.pi/2, math.pi)
+
+    # phi = 4*math.pi/9
+    # rad = 1.0
+    # rad_fact = 0.5
+    # dat = numpy.zeros((10,20))
+    # fact = numpy.linspace(0.1, 10.0, dat.shape[0])
+    # for (rct,rad_fact) in enumerate(fact):
+    #     for (oct,offs) in enumerate(numpy.linspace(-rad_fact, rad_fact, dat.shape[1])):
+    #         dat[rct,oct] = integ.quad(lambda x: circ_arc(x, phi, rad, offs),
+    #                                   0, math.pi)[0] - rad*math.pi
+
+    # c = numpy.polyfit(offs_x, dat[0,:], 5)
+    # p = numpy.poly1d(c)
+
+    # pylab.clf()
+    # for i in xrange(len(fact)):
+    #     pylab.plot(offs_x, dat[i,:], '+-')
+    #     pylab.plot(offs_x, p(numpy.divide(offs_x,fact[i])))
+    # pylab.show()
+
+    phi = math.pi/4
+    rad = 1.0
+    offs = 1.0
+
+    pylab.clf()
+    cv = numpy.vectorize(lambda x: circ_arc(x, phi, rad, offs))
+
+    t1 = time.time()
+    res = integ.quad(cv, 0, math.pi, limit=1, epsabs=1e-10, epsrel=1e-10, full_output=True)
+    t2 = time.time()
+    print '%s took %0.3f ms' % ("quad", (t2-t1)*1000.0)
+
+    t1 = time.time()
+    q_res = integ.quadrature(cv, 0, math.pi)
+    t2 = time.time()
+    print '%s took %0.3f ms' % ("quadrature", (t2-t1)*1000.0)
+
+    x = numpy.linspace(0.0, math.pi, 21)
+
+    t1 = time.time()
+    t_res = integ.trapz(cv(x), x)
+    t2 = time.time()
+    print '%s took %0.3f ms' % ("trapz", (t2-t1)*1000.0)
+
+    t1 = time.time()
+    s_res = integ.simps(cv(x), x)
+    t2 = time.time()
+    print '%s took %0.3f ms' % ("simps", (t2-t1)*1000.0)
+
+    # t1 = time.time()
+    # r_res = integ.romb(cv(x), x[1]-x[0])
+    # t2 = time.time()
+    # print '%s took %0.3f ms' % ("romb", (t2-t1)*1000.0)
+
+    t1 = time.time()
+    z = cv(math.pi/2)
+    t2 = time.time()
+    print '%s took %0.3f ms' % ("one eval", (t2-t1)*1000.0)
+
+    print res[0], res[1], res[2]['neval']
+    print q_res
+    print t_res
+    print s_res
+    # print r_res
+
+    # fact = numpy.linspace(0.0, math.pi, 50)
+    # pylab.plot(fact, cv(fact))
+    # pylab.show()
+
+

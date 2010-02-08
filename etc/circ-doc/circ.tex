@@ -244,6 +244,7 @@ Finally, we can substitute Eq.~\eqref{eq:dotnorm} into Eq.~\eqref{eq:radiustan},
 \end{equation}
 %
 \subsection{Length of a smoothed polyline}
+\label{sec:length-smooth-polyl}
 %
 It is useful to consider the length of a smoothed polyline $P_S$.  This will be the sum of the circumference of each arc $a_i$ plus the length of the straight line segments connected consecutive arcs and the segments connecting $p_0$ to $a_1$ and $a_{n-2}$ to $p_{n-2}$.
 
@@ -289,7 +290,7 @@ For nondegenerate $P_S$ (i.e. with $n>2$), we have:
 %
 So far, given a planar polyline $P$ and either an $\alpha_i$ or $r_i$ for each interior point $P_i$, we can compute the smoothed polyline $P_S = p_0, a_1, a_2,\ldots\,a_{n-2}, p_{n-1}$ by computing the associated circle $a_i=\left(c_i, r_i, \phi^0_i, \phi^1_i\right)$ for each interior point of $P$ using Eq.~\eqref{eq:radius-alpha} to find $r_i$ or $\alpha_i$, one of Eqs.~\eqref{eq:center-vector-b},~\eqref{eq:center-vector-f}, or~\eqref{eq:center-bisector} to find $c_i$, and Eqs.~\eqref{eq:angle-range-b}, and ~\eqref{eq:angle-range-f} for $\phi^0_i$ and $\phi^1_i$.  We retain the original polyline $P$ external points $p_0$ and $p_{n-1}$ as the endpoints of $P_S$.
 
-Suppose we wish to compute a new smoothed polyline $P_S'$ that has the property that at every point, the nearest point on $P_S$ is exactly distance $d$ away and furthermore.  That is, $P_S'$ is `offset' from $P_S$ to one side by a signed distance $d$; see Fig.~\ref{fig:fattened-polyline}.  We used the convention that $d>0$ refers to a `right' offset (the lower blue line in Fig.~\ref{fig:fattened-polyline}) and $d<0$ to a `left' offset (the upper blue line in the same figure).
+Suppose we wish to compute a new smoothed polyline $P_S'$ that has the property that at every point, the nearest point on $P_S$ is exactly distance $d$ away.  That is, $P_S'$ is `offset' from $P_S$ to one side by a signed distance $d$; see Fig.~\ref{fig:fattened-polyline}.  We used the convention that $d>0$ refers to a `right' offset (the lower blue line in Fig.~\ref{fig:fattened-polyline}) and $d<0$ to a `left' offset (the upper blue line in the same figure).
 %
 \begin{figure}[h]
   \centering
@@ -312,6 +313,23 @@ We must also choose new endpoints $p'_0$ and $p'_{n-1}$ for this line;  are the 
   p'_0 &= p_0 + d \left(\mathbf{n}_0^y, -\mathbf{n}_0^x\right)\\
   p'_{n-1} &= p_{n-1} + d \left(-\mathbf{n}_{n-2}^y, \mathbf{n}_{n-2}^x\right)
 \end{align}
+%
+\subsubsection{Length of offset polylines}
+\label{sec:length-offs-polyl}
+%
+Given a smoothed polyline $P_S$ and an offset $d$, we can express the length of $P'_S$ in terms of Eq.~\eqref{eq:smoothpoly-len}:
+%
+\begin{align}
+  \notag
+  L\left(P'_S\right) &= L\left(P\right) + \sum^{n-2}_{i = 1} \left(r_i + o_id\right)\left|\phi^0_i - \phi^1_i\right| - 2\alpha_i\\
+  \notag
+  &= L\left(P\right) + \sum^{n-2}_{i = 1} r_i\left|\phi^0_i - \phi^1_i\right| - 2\alpha_i + d\sum^{n-2}_{i = 1}  o_i\left|\phi^0_i - \phi^1_i\right|\\
+  &= L\left(P_S\right) + d\sum^{n-2}_{i = 1}  o_i\left|\phi^0_i - \phi^1_i\right|
+\end{align}
+%
+\subsubsection{Parametrization and offset smooth polylines}
+%
+The discussion in Secs.~\ref{sec:length-smooth-polyl} and~\ref{sec:length-offs-polyl} are useful in determining overall lengths, but we may wish to have a method to quickly compute the incremental length along an (offset) smooth polyline; i.e. given $x \in \left[0, 1\right]$, what is $L\left(P_S\right)\left(x\right)$?
 %
 \subsection{Discrete approximations of smooth polylines}
 %

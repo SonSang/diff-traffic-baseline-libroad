@@ -10,15 +10,14 @@ int main(int argc, char *argv[])
                                               argv[3]));
     std::cerr << "SUMO input net loaded successfully" << std::endl;
 
-    hwm::network hnet(hwm::from_sumo("test", 0.5f, snet));
+    hwm::network hnet(hwm::from_sumo("test", 0.5f, 2.5f, snet));
 
     if(hnet.check())
         std::cerr << "Derived HWM net checks out" << std::endl;
     else
         std::cerr << "Derived HWM net doesn't check out" << std::endl;
 
-    typedef std::pair<const str, hwm::road> rmap_itr;
-    BOOST_FOREACH(const rmap_itr &r, hnet.roads)
+    BOOST_FOREACH(const hwm::road_pair &r, hnet.roads)
     {
         std::cout << r.second.id << " " << r.second.name << " ";
         BOOST_FOREACH(const vec3f &f, r.second.rep.points_)
@@ -28,8 +27,7 @@ int main(int argc, char *argv[])
         std::cout << std::endl;
     }
 
-    typedef std::pair<const str, hwm::lane> lmap_itr;
-    BOOST_FOREACH(const lmap_itr &l, hnet.lanes)
+    BOOST_FOREACH(const hwm::lane_pair &l, hnet.lanes)
     {
         std::cout << l.second.id << " " << l.second.speedlimit << " {";
         typedef hwm::lane::road_membership::intervals::entry rme;
@@ -55,8 +53,7 @@ int main(int argc, char *argv[])
         std::cout << " } " << std::endl;
     }
 
-    typedef std::pair<const str, hwm::intersection> imap_itr;
-    BOOST_FOREACH(const imap_itr &i, hnet.intersections)
+    BOOST_FOREACH(const hwm::intersection_pair &i, hnet.intersections)
     {
         std::cout << i.second.id << " incoming {";
         BOOST_FOREACH(const hwm::lane* la, i.second.incoming)
@@ -75,23 +72,15 @@ int main(int argc, char *argv[])
         BOOST_FOREACH(const hwm::intersection::state &s, i.second.states)
         {
             std::cout << " " << id++ << " " << s.duration << " in";
-            int c = 0;
-            BOOST_FOREACH(const hwm::intersection::state::out_id &oi, s.in_states)
+            BOOST_FOREACH(const hwm::intersection::state::state_pair &sp, s.in_pair())
             {
-                std::cout << " " << c++ << " : " << oi.out_ref << " ";
-            }
-            std::cout << " out";
-
-            c = 0;
-            BOOST_FOREACH(const hwm::intersection::state::in_id &ii, s.out_states)
-            {
-                std::cout << " " << c++ << " : " << ii.in_ref << " ";
+                std::cout << "in: " << sp.in_idx << " out: " << sp.out_idx << " fict_lane: " << sp.fict_lane->id << std::endl;
             }
         }
         std::cout << " } " << std::endl;
     }
 
-    write_xml_network(hnet, argv[4]);
+    hnet.xml_write(argv[4]);
 
     return 0;
 }

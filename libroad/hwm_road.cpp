@@ -11,4 +11,9 @@ namespace hwm
     {
         rep.translate(o);
     }
+
+    void road::bounding_box(vec3f &low, vec3f &high) const
+    {
+        return rep.bounding_box(low, high);
+    }
 }

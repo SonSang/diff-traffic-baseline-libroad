@@ -92,8 +92,8 @@ void glWindow::draw(){
      net->remove_small_roads(40);
      net->create_intersections();
      net->populate_edge_hash_from_edges();
-     hwm::network hnet(hwm::from_osm("test", 0.5f, *net));
-     write_xml_network(hnet, "test_net.xml");
+     hwm::network hnet(hwm::from_osm("test", 0.5f, 2.5, *net));
+     hnet.xml_write("test_net.xml");
 
     //if (hnet.check())
     //    std::cerr << "Conversion seems to have worked\n";

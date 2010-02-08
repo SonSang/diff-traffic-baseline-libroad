@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<network version="1.2" name="intersection-test" xmlns:xi="http://www.w3.org/2001/XInclude" gamma="0.5">
+<network version="1.3" name="intersection-test" lane_width="2.5" xmlns:xi="http://www.w3.org/2001/XInclude" gamma="0.5">
   <roads>
     <road id="road0" name="S Columbia Street">
       <line_rep>

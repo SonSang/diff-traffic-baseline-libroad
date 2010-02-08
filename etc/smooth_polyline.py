@@ -58,7 +58,7 @@ class smooth_polyline(object):
         for i in xrange(self.N):
             tan_thetas[i] = cot_theta(pline.vectors[i], pline.vectors[i+1])
         if radii == None:
-            self.radii = self.calc_radii(pline, tan_thetas).T[:,0]
+            self.radii = self.calc_radii_simple(pline, tan_thetas)
         else:
             self.radii = radii
 
@@ -88,6 +88,11 @@ class smooth_polyline(object):
 
             self.arc[i] = math.pi - math.acos(numpy.dot(-pline.vectors[i], pline.vectors[i+1]))
 
+    def calc_radii_simple(self, pline, tan_thetas):
+        self.radii = numpy.zeros((self.N,))
+        for i in xrange(0, self.N):
+            self.radii[i] = min(pline.lengths[i], pline.lengths[i+1])/2*tan_thetas[i]
+        return self.radii
     def calc_radii(self, pline, tan_thetas):
         b = cvxopt.matrix(0.0, ( 2*(self.N-1) + 3, 1 ))
         b[0:self.N+1] = pline.lengths
@@ -281,17 +286,23 @@ if __name__ == '__main__':
     import matplotlib
 
     cvxopt.solvers.options['show_progress'] = False
-    p = polyline([[-4.0, 0.0, 0.0], [-4.0, 4.0, 0.5], [4.0, 4.0, 1.5], [4.0, -4.0, 2.5], [-4.0, -4.0, 3.5], [-4.0, 0.0, 4.0]])
+##    p = polyline([[-4.0, 0.0, 0.0], [-4.0, 4.0, 0.5], [4.0, 4.0, 1.5], [4.0, -4.0, 2.5], [-4.0, -4.0, 3.5], [-4.0, 0.0, 4.0]])
+    p = polyline([[0.0, 4.0, 0.0], [4.0, 3.0, 0.0], [4.0, 0.0, 0.0], [6.0, 0.0, 0.0], [3.0, -2.0, 0.0], [2.0, -1.0, 0.0], [2.0, -4.0, 0.0], [0.5, -2.0, 0.0], [0.5, -5.0, 0.0], [1.0, -7.0, 0.0], [0.0, -9, 0.0], [5.0, -8, 0.0], [7.5, -5, 0.0], [10, -3, 0.0]])
 
     ps = smooth_polyline(p)
+    for i in xrange(ps.N):
+        print "point  ", i
+        print "radius ", ps.radii[i]
+        print "arc    ", ps.arc[i]
+        print ps.frames[i]
 
     pylab.clf()
 
     li = p.points
     pylab.plot(li[:,0], li[:, 1])
 
-    high = ps.extract_line(0.4, 0.5)
-    low = ps.extract_line(0.5, 0.5)
+    high = ps.extract_line(0.1, 2)
+    low = ps.extract_line(0.2, 2)
 
     ax = pylab.gca()
 

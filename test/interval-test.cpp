@@ -28,6 +28,20 @@ int main(int argc, char *argv[])
         std::cout << et.first << ": " << et.second << std::endl;
     }
 
+    for(partition01<std::string>::iterator v = test_int.begin();
+        v != test_int.end();
+        ++v)
+    {
+        std::cout << test_int.containing_interval(v) << std::endl;
+    }
+
+    for(partition01<std::string>::reverse_iterator v = test_int.rbegin();
+        v != test_int.rend();
+        ++v)
+    {
+        std::cout << test_int.containing_interval(v) << std::endl;
+    }
+
     std::cout << test_int.interval_length(test_int.find(0.8)) << std::endl;
 
     return 0;

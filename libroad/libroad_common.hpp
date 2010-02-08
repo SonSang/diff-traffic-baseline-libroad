@@ -13,11 +13,15 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
 
 #include <glibmm/ustring.h>
 
 #include <tvmet/Vector.h>
 #include <tvmet/Matrix.h>
+#include <libxml++/libxml++.h>
 
 using std::tr1::hash;
 
@@ -45,10 +49,41 @@ struct strhash
     typedef std::map<const str, T> type;
 };
 
-typedef tvmet::Vector<double, 2>   vec2d;
-typedef tvmet::Vector<float, 2>    vec2f;
-typedef vec2f                      intervalf;
-typedef tvmet::Vector<float, 3>    vec3f;
-typedef tvmet::Matrix<float, 3, 3> mat3x3f;
-typedef tvmet::Matrix<float, 4, 4> mat4x4f;
+typedef tvmet::Vector<double,      2>    vec2d;
+typedef tvmet::Vector<float,       2>    vec2f;
+typedef vec2f                            intervalf;
+typedef tvmet::Vector<float,       3>    vec3f;
+typedef tvmet::Vector<double,      3>    vec3d;
+typedef tvmet::Vector<int,         3>    vec3i;
+typedef tvmet::Vector<unsigned int,3>    vec3u;
+typedef tvmet::Vector<int,         2>    vec2i;
+typedef tvmet::Vector<size_t,      2>    vec2u;
+typedef tvmet::Vector<float,       4>    vec4f;
+typedef tvmet::Matrix<float,       3, 3> mat3x3f;
+typedef tvmet::Matrix<float,       4, 4> mat4x4f;
+
+template <typename T>
+inline float length2(const T& t1)
+{
+    return tvmet::dot(t1, t1);
+}
+
+template <typename T>
+inline float length(const T& t1)
+{
+    return std::sqrt(length2(t1));
+}
+
+template <typename T>
+inline float distance2(const T& t1, const T& t2)
+{
+    const T diff(t2-t1);
+    return length2(diff);
+}
+
+template <typename T>
+inline float distance(const T& t1, const T& t2)
+{
+    return std::sqrt(distance2(t1, t2));
+}
 #endif

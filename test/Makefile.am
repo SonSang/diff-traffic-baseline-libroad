@@ -1,4 +1,6 @@
-noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm osm_test
+noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm
+
+EXTRA_DIST = arcball.hpp
 
 road_test_SOURCES  = road-test.cpp
 road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
@@ -15,11 +17,6 @@ sumo_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVM
 sumo_test_LDFLAGS  = $(LDFLAGS)
 sumo_test_LDADD    = $(top_builddir)/libroad/libroad.la
 
-osm_test_SOURCES = osm-test.cpp
-osm_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-osm_test_LDFLAGS  = $(LDFLAGS) -lGLU -lGL -lfltk -ldl -lm -lXext -lX11 -lfltk_gl
-osm_test_LDADD    = $(top_builddir)/libroad/libroad.la
-
 hwm_test_SOURCES  = hwm-test.cpp
 hwm_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 hwm_test_LDFLAGS  = $(LDFLAGS)
@@ -29,3 +26,27 @@ sumo_xml_to_hwm_SOURCES  = sumo-xml-to-hwm.cpp
 sumo_xml_to_hwm_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 sumo_xml_to_hwm_LDFLAGS  = $(LDFLAGS)
 sumo_xml_to_hwm_LDADD    = $(top_builddir)/libroad/libroad.la
+
+if DO_VISUAL
+noinst_PROGRAMS += arc-road-test view-network micro osm-test
+
+arc_road_test_SOURCES = arc-road-test.cpp
+arc_road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+arc_road_test_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
+arc_road_test_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
+
+view_network_SOURCES = view-network.cpp
+view_network_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+view_network_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
+view_network_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
+
+micro_SOURCES  = micro.cpp
+micro_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+micro_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
+micro_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
+
+osm_test_SOURCES = osm-test.cpp
+osm_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+osm_test_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
+osm_test_LDADD    = $(top_builddir)/libroad/libroad.la
+endif

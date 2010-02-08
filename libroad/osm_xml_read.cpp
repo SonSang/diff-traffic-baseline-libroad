@@ -13,6 +13,7 @@ namespace osm
         bool res = get_attribute(no.id,    reader, "id") &&
                    get_attribute(no.xy[0], reader, "lon")  &&
                    get_attribute(no.xy[1], reader, "lat");
+        no.xy[2] = 0.0f;
         if(!res)
             return false;
 
