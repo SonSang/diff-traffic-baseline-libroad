@@ -572,7 +572,7 @@ public:
                                 ar->points_[pick_vert] = inters;
                             }
 
-                            ar->initialize(0.7f);
+                            ar->initialize_from_polyline(0.7f, ar->points_);
                         }
                     }
                     else
@@ -733,7 +733,7 @@ int main(int argc, char *argv[])
     ar.points_.push_back(vec3f(50.0, -80, 3.0));
     ar.points_.push_back(vec3f(70.5, -50, 3.0));
     ar.points_.push_back(vec3f(100, - 30, 3.0));
-    ar.initialize(0.7f);
+    ar.initialize_from_polyline(0.7f, ar.points_);
 
     fltkview mv(0, 0, 500, 500, "fltk View");
 

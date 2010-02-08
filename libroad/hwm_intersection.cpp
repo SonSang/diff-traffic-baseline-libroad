@@ -111,7 +111,7 @@ namespace hwm
 
             new_road.rep.points_.push_back(end_point);
 
-            new_road.rep.initialize(0.0f);
+            new_road.rep.initialize_from_polyline(0.0f, new_road.rep.points_);
 
             assert(new_road.check());
 

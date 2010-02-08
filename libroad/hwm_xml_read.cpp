@@ -83,7 +83,7 @@ void arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
     }
     while(!is_closing_element(reader, "points"));
 
-    if(!initialize(0.7f))
+    if(!initialize_from_polyline(0.7f, points_))
         throw xml_error(reader, "Failed to initialize arc_road");
 
     read_to_close(reader, "line_rep");

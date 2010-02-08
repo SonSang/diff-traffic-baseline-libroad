@@ -289,22 +289,33 @@ static std::vector<vec3f> remove_proximity(const std::vector<vec3f> &v, const fl
     return res;
 }
 
-bool arc_road::initialize(const float cull_prox)
+bool arc_road::initialize_from_polyline(const float cull_prox, const std::vector<vec3f> &points)
 {
-    points_ = remove_colinear(points_);
+    points_ = remove_colinear(points);
     points_ = remove_proximity(points_, cull_prox*cull_prox);
 
-    normals_.resize(points_.size()-1);
-    for(size_t i = 1; i < points_.size(); ++i)
-        normals_[i-1] = tvmet::normalize(points_[i] - points_[i-1]);
+    std::vector<float> lengths, factors;
+    if(!compute_geometric(lengths, factors))
+        return false;
 
+    std::vector<float> alphas(points_.size()-2, 0);
+    alpha_assign(alphas, lengths, factors, 0, lengths.size());
+
+    radii_.resize(alphas.size());
+    for(size_t i = 0; i < alphas.size(); ++i)
+        radii_[i] = factors[i]*alphas[i];
+
+    return initialize(alphas, lengths);
+}
+
+bool arc_road::compute_geometric(std::vector<float> &lengths, std::vector<float> &factors)
+{
     const size_t N_pts  = points_.size();
     const size_t N_segs = N_pts - 1;
     const size_t N_arcs = N_pts - 2;
 
     normals_.resize(N_segs);
-
-    std::vector<float> lengths(N_segs);
+    lengths.resize(N_segs);
     for(size_t i = 1; i < N_pts; ++i)
     {
         normals_[i-1]    = points_[i] - points_[i-1];
@@ -315,30 +326,35 @@ bool arc_road::initialize(const float cull_prox)
         normals_[i-1]   /= len;
     }
 
-    std::vector<float> alphas(N_arcs, 0);
-    std::vector<float> factors(N_arcs);
+    factors.resize(N_arcs);
     for(size_t i = 0; i < N_arcs; ++i)
         factors[i] = cot_theta(normals_[i], normals_[i+1]);
 
-    alpha_assign(alphas, lengths, factors, 0, lengths.size());
+    return true;
+}
+
+bool arc_road::initialize(const std::vector<float> &alphas, std::vector<float> &lengths)
+{
+    const size_t N_pts  = points_.size();
+    const size_t N_segs = N_pts - 1;
+    const size_t N_arcs = N_pts - 2;
 
     // Now compute actual helper data
     frames_.resize(N_arcs);
-    radii_ .resize(N_arcs);
     arcs_  .resize(N_arcs);
 
     for(size_t i = 0; i < N_arcs; ++i)
     {
-        const float alpha = alphas[i];
-        radii_[i] = alpha * factors[i];
-        assert(std::isfinite(radii_[i]));
+        const float alpha  = alphas[i];
+        const float radius = radii_[i];
+        assert(std::isfinite(radius));
 
         const vec3f   laxis(tvmet::normalize(tvmet::cross(normals_[i+1], normals_[i])));
         const mat3x3f rot_pi2(axis_angle_matrix(M_PI_2, laxis));
         const vec3f   rm(rot_pi2*-normals_[i]);
         const vec3f   rp(tvmet::trans(rot_pi2)*normals_[i+1]);
         const vec3f   up(tvmet::cross(laxis,rm));
-        const vec3f   tf(alpha * normals_[i+1] + radii_[i]*rp + points_[i+1]);
+        const vec3f   tf(alpha * normals_[i+1] + radius*rp + points_[i+1]);
 
         frames_[i](0, 0) = -rm[0]; frames_[i](0, 1) = up[0]; frames_[i](0, 2) = laxis[0]; frames_[i](0, 3) = tf[0];
         frames_[i](1, 0) = -rm[1]; frames_[i](1, 1) = up[1]; frames_[i](1, 2) = laxis[1]; frames_[i](1, 3) = tf[1];

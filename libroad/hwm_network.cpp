@@ -295,7 +295,7 @@ namespace hwm
             new_road.rep.points_.push_back(vec3f(e.to->xy[0],
                                                  e.to->xy[1],
                                                  0.0f));
-            if(!new_road.rep.initialize(lane_width))
+            if(!new_road.rep.initialize_from_polyline(lane_width, new_road.rep.points_))
                 throw std::runtime_error("Failed to initialize arc_road in from_sumo");
         }
 
@@ -421,7 +421,7 @@ namespace hwm
                 last = n;
             }
 
-            if(!new_road.rep.initialize(0.7f))
+            if(!new_road.rep.initialize_from_polyline(0.7f, new_road.rep.points_))
                 throw std::runtime_error("Failed to initialize arc_road in from_osm");
         }
 

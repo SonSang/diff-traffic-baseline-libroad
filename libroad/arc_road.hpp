@@ -39,7 +39,10 @@ struct arc_road
                    const vec2f &range,
                    const vec2f &offsets, const float resolution) const;
 
-    bool   initialize(const float cull_prox);
+    bool   compute_geometric(std::vector<float> &lengths, std::vector<float> &factors);
+    bool   initialize_from_polyline(float cull_prox, const std::vector<vec3f> &points);
+
+    bool   initialize(const std::vector<float> &alphas, std::vector<float> &lengths);
 
     // arc roads are made up of 'features', i.e. alternating straight segments and arcs
     // so even features are segments (freqeuently degenerate) and odd features are arcs
