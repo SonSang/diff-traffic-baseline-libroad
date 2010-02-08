@@ -308,6 +308,22 @@ bool arc_road::initialize_from_polyline(const float cull_prox, const std::vector
     return initialize(alphas, lengths);
 }
 
+bool arc_road::initialize_from_points_radii(const std::vector<vec3f> &points, const std::vector<float> &radii)
+{
+    points_ = points;
+    radii_  = radii;
+
+    std::vector<float> lengths, factors;
+    if(!compute_geometric(lengths, factors))
+        return false;
+
+    std::vector<float> alphas(points_.size()-2, 0);
+    for(size_t i = 0; i < alphas.size(); ++i)
+        alphas[i] = radii_[i]/factors[i];
+
+    return initialize(alphas, lengths);
+}
+
 bool arc_road::compute_geometric(std::vector<float> &lengths, std::vector<float> &factors)
 {
     const size_t N_pts  = points_.size();

@@ -41,6 +41,7 @@ struct arc_road
 
     bool   compute_geometric(std::vector<float> &lengths, std::vector<float> &factors);
     bool   initialize_from_polyline(float cull_prox, const std::vector<vec3f> &points);
+    bool   initialize_from_points_radii(const std::vector<vec3f> &points, const std::vector<float> &radii);
 
     bool   initialize(const std::vector<float> &alphas, std::vector<float> &lengths);
 
@@ -56,6 +57,8 @@ struct arc_road
 
     void   xml_read_as_poly (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void   xml_write_as_poly(xmlpp::Element *elt) const;
+    void   xml_read(xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
+    void   xml_write(xmlpp::Element *elt) const;
     bool   check() const;
 
     std::vector<mat4x4f> frames_;

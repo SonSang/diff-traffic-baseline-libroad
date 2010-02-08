@@ -23,6 +23,24 @@ void arc_road::xml_write_as_poly(xmlpp::Element *elt) const
     }
 }
 
+void arc_road::xml_write(xmlpp::Element *elt) const
+{
+    xmlpp::Element *ar_elt = elt->add_child("arc_line_rep");
+    xmlpp::Element *pt_elt = ar_elt->add_child("points");
+
+    BOOST_FOREACH(const vec3f &pt, points_)
+    {
+        pt_elt->add_child_text(boost::str(boost::format("%f %f %f 0.0\n") % pt[0] % pt[1] % pt[2]));
+    }
+
+    xmlpp::Element *r_elt = ar_elt->add_child("radii");
+
+    BOOST_FOREACH(float pt, radii_)
+    {
+        r_elt->add_child_text(boost::str(boost::format("%f\n") % pt));
+    }
+}
+
 template <class T>
 void partition01<T>::xml_write(xmlpp::Element *elt, const str &name) const
 {
@@ -62,7 +80,7 @@ namespace hwm
         xmlpp::Element *road_elt = elt->add_child("road");
         road_elt->set_attribute("id",   id);
         road_elt->set_attribute("name", name);
-        rep.xml_write_as_poly(road_elt);
+        rep.xml_write(road_elt);
     }
 
     void lane::terminus::xml_write(xmlpp::Element *elt, const str &name) const

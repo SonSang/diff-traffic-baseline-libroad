@@ -45,6 +45,82 @@ void polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
     read_to_close(reader, "line_rep");
 }
 
+void arc_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
+{
+    assert(is_opening_element(reader, "arc_line_rep"));
+
+    read_to_open(reader, "points");
+
+    do
+    {
+        read_skip_comment(reader);
+
+        if(reader.get_node_type() == xmlpp::TextReader::Text ||
+           reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
+        {
+            std::string                 res(reader.get_value());
+            typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+            boost::char_separator<char> linesep("\n");
+            tokenizer                   linetokens(res, linesep);
+
+            BOOST_FOREACH(const std::string &ltok, linetokens)
+            {
+                std::string trim_ltok(ltok);
+                boost::trim_left(trim_ltok);
+                if(!trim_ltok.empty())
+                {
+                    std::stringstream instr(trim_ltok);
+
+                    vec3f pos;
+                    instr >> pos[0];
+                    instr >> pos[1];
+                    instr >> pos[2];
+
+                    points_.push_back(vec3f(pos*scale));
+                }
+            }
+        }
+    }
+    while(!is_closing_element(reader, "points"));
+
+    read_to_open(reader, "radii");
+
+    do
+    {
+        read_skip_comment(reader);
+
+        if(reader.get_node_type() == xmlpp::TextReader::Text ||
+           reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
+        {
+            std::string                 res(reader.get_value());
+            typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+            boost::char_separator<char> linesep("\n");
+            tokenizer                   linetokens(res, linesep);
+
+            BOOST_FOREACH(const std::string &ltok, linetokens)
+            {
+                std::string trim_ltok(ltok);
+                boost::trim_left(trim_ltok);
+                if(!trim_ltok.empty())
+                {
+                    std::stringstream instr(trim_ltok);
+
+                    float rad;
+                    instr >> rad;
+
+                    radii_.push_back(rad*scale[0]);
+                }
+            }
+        }
+    }
+    while(!is_closing_element(reader, "radii"));
+
+    if(!initialize_from_points_radii(points_, radii_))
+        throw xml_error(reader, "Failed to initialize arc_road!");
+
+    read_to_close(reader, "arc_line_rep");
+}
+
 void arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
 {
     assert(is_opening_element(reader, "line_rep"));
