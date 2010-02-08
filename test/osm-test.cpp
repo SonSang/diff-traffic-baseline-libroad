@@ -66,7 +66,7 @@ void glWindow::draw(){
      //Create from grid
      // osm::network s_net;
      // net = &s_net;
-     // net->create_grid(4, 4, 40, 40);
+     // net->create_grid(6, 6, 200, 200);
      // net->compute_edge_types();
      // net->compute_node_degrees();
      // net->join_logical_roads();

@@ -845,10 +845,10 @@ namespace osm
             BOOST_FOREACH(str id, road_split_points[_edge.id])
             {
                 //Skip the first splitter if it's the first point of the road.
-                if (id == _edge.shape[0]->id){
-                    assert(0);  //This should never occur.
-                    continue;
-                }
+                // if (id == _edge.shape[0]->id){
+                //     assert(0);  //This should never occur.
+                //     continue;
+                // }
 
 
                 if (not _first)
@@ -939,6 +939,12 @@ namespace osm
             {
                 e_type->speed = 65;
                 e_type->nolanes = 2;
+                e_type->oneway = 1;
+            }
+            if(e.highway_class == "motorway_link")
+            {
+                e_type->speed = 30;
+                e_type->nolanes = 1;
                 e_type->oneway = 1;
             }
             if(e.highway_class == "residential")

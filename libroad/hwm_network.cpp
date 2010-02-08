@@ -272,7 +272,7 @@ namespace hwm
                 rm.parent_road = parent_road;
                 rm.interval[0] = 0.0f;
                 rm.interval[1] = 1.0f;
-                rm.lane_position = lanect + 1;
+                rm.lane_position = -1*(lanect + 1);
                 new_lane.road_memberships.insert(0.0, rm);
 
                 new_lane.start.inters = start_inters;
@@ -307,7 +307,7 @@ namespace hwm
                     rm_rev.parent_road = parent_road;
                     rm_rev.interval[0] = 1.0f;
                     rm_rev.interval[1] = 0.0f;
-                    rm_rev.lane_position = -1*(lanect + 1);
+                    rm_rev.lane_position = (lanect + 1);
                     new_reverse_lane.road_memberships.insert(0.0, rm_rev);
 
                     new_reverse_lane.start.inters = end_inters;
