@@ -39,16 +39,15 @@ namespace osm
 
 
 
-    bool network::populate_edges_from_hash()
+    void network::populate_edges_from_hash()
     {
         BOOST_FOREACH(strhash<edge>::type::value_type& hash, edge_hash)
         {
-            if (hash.second.highway_class != "motorway_link")
                 edges.push_back(hash.second);
         }
     }
 
-    bool network::node_degrees_and_edges_agree()
+    void network::node_degrees_and_edges_agree()
     {
         strhash<int>::type node_degree_check;
         BOOST_FOREACH(const osm::node_pair &np, nodes)
@@ -85,7 +84,7 @@ namespace osm
     }
 
 
-    bool network::populate_edge_hash_from_edges()
+    void network::populate_edge_hash_from_edges()
     {
         edge_hash.erase(edge_hash.begin(), edge_hash.end());
 
@@ -111,7 +110,7 @@ namespace osm
         return len_thus_far;
     }
 
-    bool network::remove_small_roads(double min_len)
+    void network::remove_small_roads(double min_len)
     {
         for(int i = 0; i < edges.size(); )
         {
@@ -147,7 +146,7 @@ namespace osm
         }
     }
 
-    bool network::draw_network()
+    void network::draw_network()
     {
         glColor3f(0,0,0);
 
@@ -204,7 +203,7 @@ namespace osm
 
     }
 
-    bool network::create_grid(int w, int h, double dw, double dh)
+    void network::create_grid(int w, int h, double dw, double dh)
     {
         std::vector<std::vector< node*> > node_grid (w, std::vector<node*>(h));
 
@@ -275,7 +274,7 @@ namespace osm
         }
     }
 
-    bool network::compute_node_degrees()
+    void network::compute_node_degrees()
     {
         BOOST_FOREACH(const osm::node_pair &np, nodes)
         {
@@ -475,7 +474,7 @@ namespace osm
     }
 
 
-    bool network::intersection_check()
+    void network::intersection_check()
     {
         BOOST_FOREACH(const osm::intr_pair &ip, intersections)
         {
@@ -493,7 +492,8 @@ namespace osm
         }
     }
 
-    bool network::create_intersections()
+
+    void network::create_intersections()
     {
         BOOST_FOREACH(osm::edge &e, edges)
         {
@@ -666,10 +666,9 @@ namespace osm
                 }
             }
         }
-        return true;
     }
 
-    bool network::scale_and_translate()
+    void network::scale_and_translate()
     {
         bool first = true;
         vec2d bias;
@@ -685,7 +684,7 @@ namespace osm
         }
     }
 
-    bool network::join(osm::edge* a, osm::edge* b)
+    void network::join(osm::edge* a, osm::edge* b)
     {
         assert(a->shape[0]->id == a->from);
         assert(a->shape[a->shape.size() - 1]->id == a->to);
@@ -713,7 +712,7 @@ namespace osm
         std::reverse(shape.begin(), shape.end());
     }
 
-    bool network::join_logical_roads()
+    void network::join_logical_roads()
     {
         for(int i = 0; i < edges.size(); i++)
         {
@@ -810,7 +809,7 @@ namespace osm
     }
 
 
-    bool network::split_into_road_segments()
+    void network::split_into_road_segments()
     {
 
         //Locate all split points.
@@ -921,12 +920,10 @@ namespace osm
         {
             edges.push_back(e);
         }
-
-        return true;
     }
 
 
-    bool network::compute_edge_types()
+    void network::compute_edge_types()
     {
         BOOST_FOREACH(edge &e, edges)
         {

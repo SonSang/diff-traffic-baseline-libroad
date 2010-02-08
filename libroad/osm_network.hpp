@@ -87,27 +87,30 @@ namespace osm
 
         vec2d center;
 
-        bool node_degrees_and_edges_agree();
-        bool intersection_check();
+        //Error checking functions
+        void node_degrees_and_edges_agree();
+        void intersection_check();
+        void edges_including_rebuild();
 
-        bool populate_edges_from_hash();
-        bool populate_edge_hash_from_edges();
-        bool remove_small_roads(double min_len);
+        void create_ramps();
+        void populate_edges_from_hash();
+        void populate_edge_hash_from_edges();
+        void remove_small_roads(double min_len);
         void remove_highway_intersections();
-        bool create_grid(int, int, double, double);
-        bool scale_and_translate();
+        void create_grid(int, int, double, double);
+        void scale_and_translate();
         void compute_node_heights();
-        bool check_edge(const edge &e) const;
-        bool check_node(const node &n) const;
-        bool check() const;
-        bool compute_edge_types();
-        bool draw_network();
-        bool create_intersections();
-        bool compute_node_degrees();
-        bool join_logical_roads();
-        bool split_into_road_segments();
-        bool join(edge* , edge*);
-        bool check_nodes();
+        void check_edge(const edge &e) const;
+        void check_node(const node &n) const;
+        void check() const;
+        void compute_edge_types();
+        void draw_network();
+        void create_intersections();
+        void compute_node_degrees();
+        void join_logical_roads();
+        void split_into_road_segments();
+        void join(edge* , edge*);
+        void check_nodes();
         edge copy_no_shape(const edge& e);
 
         static size_t new_edges_id;
