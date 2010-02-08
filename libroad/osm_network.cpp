@@ -99,7 +99,7 @@ namespace osm
     {
         float len_thus_far = 0;
         float _len = 0;
-        for(int i = 0; i < shape.size() - 1; i++)
+        for(int i = 0; i < static_cast<int>(shape.size()) - 1; i++)
         {
             tvmet::Vector<float, 3> start = shape[i + 1]->xy;
             start -= shape[i]->xy;
@@ -112,7 +112,7 @@ namespace osm
 
     void network::remove_small_roads(double min_len)
     {
-        for(int i = 0; i < edges.size(); )
+        for(int i = 0; i < static_cast<int>(edges.size()); )
         {
             edge& e = edges[i];
             if (e.length() < min_len)
@@ -154,7 +154,7 @@ namespace osm
 
         if (first_for_display)
         {
-            BOOST_FOREACH(edge &ep, edges)
+            for(size_t i = 0; i < edges.size(); ++i)
             {
                 colors.push_back(boost::fusion::vector<double, double, double>(rand()/(double)RAND_MAX,rand()/(double)RAND_MAX,rand()/(double)RAND_MAX));
             }
@@ -169,7 +169,7 @@ namespace osm
                       at_c<1>(colors[i]),
                       at_c<2>(colors[i]));
 
-            for(int j = 0; j < e_nodes.size(); j++)
+            for(int j = 0; j < static_cast<int>(e_nodes.size()); j++)
             {
 
                 glVertex3f((e_nodes[j]->xy[0]),
@@ -225,7 +225,7 @@ namespace osm
                     str e_id = n->id+"to"+node_grid[i][j-1]->id;
 
                     edge* e = NULL;
-                    for(int k=0; k < edges.size(); k++)
+                    for(int k=0; k < static_cast<int>(edges.size()); k++)
                     {
                         if (edges[k].id == e_id)
                         {
@@ -250,7 +250,7 @@ namespace osm
                 {
                     str e_id = n->id+"to"+node_grid[i-1][j]->id;
                     edge* e = NULL;
-                    for(int k=0; k < edges.size(); k++)
+                    for(int k=0; k < static_cast<int>(edges.size()); k++)
                     {
                         if (edges[k].id == e_id)
                         {
@@ -298,7 +298,7 @@ namespace osm
         {
             if (e.highway_class == "motorway")
             {
-                for(int i = 0; i < e.shape.size(); i++)
+                for(int i = 0; i < static_cast<int>(e.shape.size()); i++)
                 {
                     node*& n = e.shape[i];
 
@@ -332,7 +332,7 @@ namespace osm
                         node_degrees[n->id]++;
 
                         //If node is at the end of the road
-                        if (i == e.shape.size() - 1)
+                        if (i == static_cast<int>(e.shape.size()) - 1)
                         {
                             e.to = n->id;
                         }
@@ -387,11 +387,10 @@ namespace osm
     void network::compute_node_heights()
     {
         float overpass_height = 1;
-        float overpass_radius = 50;
 
         BOOST_FOREACH(osm::edge& e, edges)
         {
-            for(int i = 0; i < e.shape.size(); i++)
+            for(int i = 0; i < static_cast<int>(e.shape.size()); i++)
             {
                 osm::node* n = e.shape[i];
                 //Find node that's part of overpass.
@@ -485,7 +484,7 @@ namespace osm
         //Check that intersections don't occur in the middle of roads.
         BOOST_FOREACH(const osm::edge &e, edges)
         {
-            for (int i = 1; i < e.shape.size() - 1; i++)
+            for (int i = 1; i < static_cast<int>(e.shape.size()) - 1; i++)
             {
                 assert(node_degrees[e.shape[i]->id] == 1);
             }
@@ -637,12 +636,11 @@ namespace osm
 
                 //Update node degree count
                 //Don't change count for the last node, as we use its id.
-                for (int i = new_end; i < e.shape.size() - 1; i++)
+                for (int i = new_end; i < static_cast<int>(e.shape.size()) - 1; i++)
                 {
                     node_degrees[e.shape[i]->id]--;
                 }
 
-                int size = e.shape.size();
                 tvmet::Vector<float, 3> end_seg = e.shape[new_end]->xy;
 
                 end_seg -=  e.shape[new_end - 1]->xy;
@@ -660,7 +658,7 @@ namespace osm
 
                 e.shape[new_end]->xy[1] = e.shape[new_end - 1]->xy[1] + end_seg[1];
 
-                if (new_end != e.shape.size() - 1)
+                if (new_end != static_cast<int>(e.shape.size()) - 1)
                 {
                     e.shape.erase(e.shape.begin() + new_end + 1, e.shape.end());
                 }
@@ -696,7 +694,7 @@ namespace osm
         uint b_size = b->shape.size();
 
         //Add all of b's nodes except the first one.
-        for (int i = 1; i < b->shape.size(); i++)
+        for (int i = 1; i < static_cast<int>(b->shape.size()); i++)
         {
             a->shape.push_back(b->shape[i]);
         }
@@ -706,7 +704,7 @@ namespace osm
         assert(a->shape.size() == a_size + b_size - 1);
     }
 
-    bool edge::reverse()
+    void edge::reverse()
     {
         std::swap(from, to);
         std::reverse(shape.begin(), shape.end());
@@ -714,12 +712,12 @@ namespace osm
 
     void network::join_logical_roads()
     {
-        for(int i = 0; i < edges.size(); i++)
+        for(int i = 0; i < static_cast<int>(edges.size()); i++)
         {
             edge& e = edges[i];
             assert(e.to == e.shape.back()->id);
             assert(e.from == e.shape[0]->id);
-            for (int j = 0; j < edges.size(); )
+            for (int j = 0; j < static_cast<int>(edges.size()); )
             {
                 if (i == j)
                 {
@@ -736,12 +734,12 @@ namespace osm
                     int e_size = e.shape.size();
                     int o_size = o.shape.size();
                     join(&e, &o);
-                    assert(e.shape.size() == e_size + o_size - 1);
+                    assert(static_cast<int>(e.shape.size()) == e_size + o_size - 1);
 
 
                     std::swap(edges[j], edges[edges.size() - 1]);
                     //Don't invalidate e if e is at the end.
-                    if (i == edges.size() - 1)
+                    if (i == static_cast<int>(edges.size()) - 1)
                         e = edges[j];
                     edges.pop_back();
                 }
@@ -754,12 +752,12 @@ namespace osm
                     o.reverse();
                     join(&e, &o);
 
-                    assert(e.shape.size() == e_size + o_size - 1);
+                    assert(static_cast<int>(e.shape.size()) == e_size + o_size - 1);
 
 
                     std::swap(edges[j], edges[edges.size() - 1]);
                     //Don't invalidate e if e is at the end.
-                    if (i == edges.size() - 1)
+                    if (i == static_cast<int>(edges.size()) - 1)
                         e = edges[j];
                     edges.pop_back();
                 }
@@ -772,11 +770,11 @@ namespace osm
                     e.reverse();
                     join(&e, &o);
 
-                    assert(e.shape.size() == e_size + o_size - 1);
+                    assert(static_cast<int>(e.shape.size()) == e_size + o_size - 1);
 
                     std::swap(edges[j], edges[edges.size() - 1]);
                     //Don't invalidate e if e is at the end.
-                    if (i == edges.size() - 1)
+    if (i == static_cast<int>(edges.size()) - 1)
                         e = edges[j];
                     edges.pop_back();
                 }
@@ -822,7 +820,7 @@ namespace osm
                  i++;
 
                  //Skip the first and last nodes.
-                 if (i == 0 or i == ep.shape.size() - 1)
+                 if (i == 0 or i == static_cast<int>(ep.shape.size()) - 1)
                      continue;
 
                  if (node_degrees[node->id] > 1)
@@ -901,7 +899,7 @@ namespace osm
                 new_edges.push_back(copy_no_shape(_edge));
                 new_edges.back().from = _edge.shape[node_index]->id;
 
-                for (;node_index < _edge.shape.size(); node_index++){
+                for (;node_index < static_cast<int>(_edge.shape.size()); node_index++){
                     new_edges.back().shape.push_back(_edge.shape[node_index]);
 
                     new_edges.back().to = _edge.shape[node_index]->id;

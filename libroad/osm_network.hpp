@@ -56,7 +56,7 @@ namespace osm
         std::vector<node*> overpass_nodes;
 
 
-        bool reverse();
+        void reverse();
         float length() const;
     };
 

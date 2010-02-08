@@ -575,10 +575,10 @@ namespace hwm
             hwm::intersection& hwm_isect = hnet.intersections[osm_isect.id_from_node];
 
             //Add states for every pairing of roads that are ending here.
-            for(int i = 0; i < osm_isect.edges_ending_here.size(); i++)
+            for(int i = 0; i < static_cast<int>(osm_isect.edges_ending_here.size()); i++)
             {
                 osm::edge& i_edge = (*osm_isect.edges_ending_here[i]);
-                for(int j = i+1; j < osm_isect.edges_ending_here.size(); j++)
+                for(int j = i+1; j < static_cast<int>(osm_isect.edges_ending_here.size()); j++)
                 {
                     osm::edge& j_edge = (*osm_isect.edges_ending_here[j]);
                     hwm::intersection::state state;
@@ -593,14 +593,14 @@ namespace hwm
 
                     //make every outgoing lane (out_id)th element of out_states an in_id with in_ref of matching incoming lane
 
-                    for (int k = 0; k < roads_to_lanes[i_edge.id].first.size(); k++)
+                    for (int k = 0; k < static_cast<int>(roads_to_lanes[i_edge.id].first.size()); k++)
                     {
                         lane* l = roads_to_lanes[i_edge.id].first[k];
                         const lane::intersection_terminus *l_it = dynamic_cast<lane::intersection_terminus*>(l->end);
                         assert(l_it);
 
                         //Other incoming road, so we need its reverse lanes
-                        if (k < roads_to_lanes[j_edge.id].second.size())
+                        if (k < static_cast<int>(roads_to_lanes[j_edge.id].second.size()))
                         {
                             lane* l_j = roads_to_lanes[j_edge.id].second[k];
                             const lane::intersection_terminus *l_j_it = dynamic_cast<lane::intersection_terminus*>(l_j->start);
@@ -610,13 +610,13 @@ namespace hwm
                     }
 
                     //Now match up the forward lanes of the j_edge with the reverse of the i_edge
-                    for (int k = 0; k < roads_to_lanes[j_edge.id].first.size(); k++)
+                    for (int k = 0; k < static_cast<int>(roads_to_lanes[j_edge.id].first.size()); k++)
                     {
                         lane* l = roads_to_lanes[j_edge.id].first[k];
                         const lane::intersection_terminus *l_it = dynamic_cast<lane::intersection_terminus*>(l->end);
                         assert(l_it);
 
-                        if (k < roads_to_lanes[i_edge.id].second.size())
+                        if (k < static_cast<int>(roads_to_lanes[i_edge.id].second.size()))
                         {
                             lane* l_i = roads_to_lanes[i_edge.id].second[k];
                             const lane::intersection_terminus *l_i_it = dynamic_cast<lane::intersection_terminus*>(l_i->start);
@@ -639,10 +639,10 @@ namespace hwm
             }
 
             //Add states for every pairing of roads that are starting here.
-            for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
+            for(int i = 0; i < static_cast<int>(osm_isect.edges_starting_here.size()); i++)
             {
                 osm::edge& i_edge = (*osm_isect.edges_starting_here[i]);
-                for(int j = i+1; j < osm_isect.edges_starting_here.size(); j++)
+                for(int j = i+1; j < static_cast<int>(osm_isect.edges_starting_here.size()); j++)
                 {
                     osm::edge& j_edge = (*osm_isect.edges_starting_here[j]);
                     hwm::intersection::state state;
@@ -653,14 +653,14 @@ namespace hwm
                     //These are "outgoing" roads, so reverse lanes will be incoming lanes, and forward lanes will be outgoing lanes.
                     //And the lane "start" is this intersection
 
-                    for (int k = 0; k < roads_to_lanes[i_edge.id].second.size(); k++)
+                    for (int k = 0; k < static_cast<int>(roads_to_lanes[i_edge.id].second.size()); k++)
                     {
                         lane* l = roads_to_lanes[i_edge.id].second[k];
                         const lane::intersection_terminus *l_it = dynamic_cast<lane::intersection_terminus*>(l->end);
                         assert(l_it);
 
                         //Other outgoing road, so we need its forward lanes
-                        if (k < roads_to_lanes[j_edge.id].first.size())
+                        if (k < static_cast<int>(roads_to_lanes[j_edge.id].first.size()))
                         {
                             lane* l_j = roads_to_lanes[j_edge.id].first[k];
                             const lane::intersection_terminus *l_j_it = dynamic_cast<lane::intersection_terminus*>(l_j->start);
@@ -670,13 +670,13 @@ namespace hwm
                     }
 
                     //make every outgoing lane (out_id)th element of out_states an in_id with in_ref of matching incoming lane
-                    for (int k = 0; k < roads_to_lanes[j_edge.id].second.size(); k++)
+                    for (int k = 0; k < static_cast<int>(roads_to_lanes[j_edge.id].second.size()); k++)
                     {
                         lane* l = roads_to_lanes[j_edge.id].second[k];
                         const lane::intersection_terminus *l_it = dynamic_cast<lane::intersection_terminus*>(l->end);
                         assert(l_it);
 
-                        if (k < roads_to_lanes[i_edge.id].first.size())
+                        if (k < static_cast<int>(roads_to_lanes[i_edge.id].first.size()))
                         {
                             lane* l_i = roads_to_lanes[i_edge.id].first[k];
                             const lane::intersection_terminus *l_i_it = dynamic_cast<lane::intersection_terminus*>(l_i->start);
@@ -690,10 +690,10 @@ namespace hwm
 
 
             //Every pair of outgoing to incoming roads
-            for(int i = 0; i < osm_isect.edges_starting_here.size(); i++)
+            for(int i = 0; i < static_cast<int>(osm_isect.edges_starting_here.size()); i++)
             {
                 osm::edge& i_edge = (*osm_isect.edges_starting_here[i]);
-                for(int j = 0; j < osm_isect.edges_ending_here.size(); j++)
+                for(int j = 0; j < static_cast<int>(osm_isect.edges_ending_here.size()); j++)
                 {
                     osm::edge& j_edge = (*osm_isect.edges_ending_here[j]);
                     hwm::intersection::state state;
@@ -702,14 +702,14 @@ namespace hwm
                     //Match the reverse lanes (incoming) of the road starting here
                     // with the reverse lanes (outgoing) of the road ending here
 
-                    for (int k = 0; k < roads_to_lanes[i_edge.id].second.size(); k++)
+                    for (int k = 0; k < static_cast<int>(roads_to_lanes[i_edge.id].second.size()); k++)
                     {
                         lane* l = roads_to_lanes[i_edge.id].second[k];
                         const lane::intersection_terminus *l_it = dynamic_cast<lane::intersection_terminus*>(l->end);
                         assert(l_it);
 
                         //Other incoming road, so we need its reverse lanes
-                        if (k < roads_to_lanes[j_edge.id].second.size())
+                        if (k < static_cast<int>(roads_to_lanes[j_edge.id].second.size()))
                         {
                             lane* l_j = roads_to_lanes[j_edge.id].second[k];
                             const lane::intersection_terminus *l_j_it = dynamic_cast<lane::intersection_terminus*>(l_j->start);
@@ -722,13 +722,13 @@ namespace hwm
                     //Match the forward lanes (outgoing) of the road ending here
                     // with the forward lanes (incoming) of the road starting here.
 
-                    for (int k = 0; k < roads_to_lanes[j_edge.id].first.size(); k++)
+                    for (int k = 0; k < static_cast<int>(roads_to_lanes[j_edge.id].first.size()); k++)
                     {
                         lane* l = roads_to_lanes[j_edge.id].first[k];
                         const lane::intersection_terminus *l_it = dynamic_cast<lane::intersection_terminus*>(l->end);
                         assert(l_it);
 
-                        if (k < roads_to_lanes[i_edge.id].first.size())
+                        if (k < static_cast<int>(roads_to_lanes[i_edge.id].first.size()))
                         {
                             lane* l_i = roads_to_lanes[i_edge.id].first[k];
                             const lane::intersection_terminus *l_i_it = dynamic_cast<lane::intersection_terminus*>(l_i->start);
