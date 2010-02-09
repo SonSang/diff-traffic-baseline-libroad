@@ -40,7 +40,7 @@ void polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
     while(!is_closing_element(reader, "points"));
 
     if(!initialize())
-        throw std::exception();
+        throw xml_error(reader, "Failed to initialize polyine");
 
     read_to_close(reader, "line_rep");
 }
@@ -84,7 +84,7 @@ void arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
     while(!is_closing_element(reader, "points"));
 
     if(!initialize(0.7f))
-        throw std::exception();
+        throw xml_error(reader, "Failed to initialize arc_road");
 
     read_to_close(reader, "line_rep");
 }
@@ -477,23 +477,23 @@ namespace hwm
         read_skip_comment(reader);
 
         if(!is_opening_element(reader, "network"))
-            throw std::exception();
+            throw xml_error(reader, "No network element found!");
 
         str version;
         get_attribute(version, reader, "version");
         if(version != "1.3")
-            throw std::exception();
+            throw xml_error(reader, "Invalid network xml version!");
 
         get_attribute(n.lane_width, reader, "lane_width");
         if(n.lane_width <= 0.0f)
-            throw std::exception();
+            throw xml_error(reader, "Invalid lane_width!");
 
         get_attribute(n.name, reader, "name");
 
         get_attribute(n.gamma, reader, "gamma");
         if(n.gamma <= 0.0f ||
            n.gamma >= 1.0f)
-            throw std::exception();
+            throw xml_error(reader, "Invalid gamma!");
 
         bool have_roads         = false;
         bool have_lanes         = false;

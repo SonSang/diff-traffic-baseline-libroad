@@ -296,7 +296,7 @@ namespace hwm
                                                  e.to->xy[1],
                                                  0.0f));
             if(!new_road.rep.initialize(lane_width))
-                throw std::exception();
+                throw std::runtime_error("Failed to initialize arc_road in from_sumo");
         }
 
         BOOST_FOREACH(const strhash<size_t>::type::value_type &ndeg, node_degree)
@@ -422,7 +422,7 @@ namespace hwm
             }
 
             if(!new_road.rep.initialize(0.7f))
-                throw std::exception();
+                throw std::runtime_error("Failed to initialize arc_road in from_osm");
         }
 
         BOOST_FOREACH(const strhash<size_t>::type::value_type &ndeg, node_degree)
