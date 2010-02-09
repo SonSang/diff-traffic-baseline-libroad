@@ -6,9 +6,7 @@
 
 namespace osm
 {
-
-
-    static inline bool xml_read(network &n, node &no, xmlpp::TextReader &reader)
+    static inline void xml_read(network &n, node &no, xmlpp::TextReader &reader)
     {
         get_attribute(no.id,    reader, "id");
         get_attribute(no.xy[0], reader, "lon");
@@ -23,11 +21,9 @@ namespace osm
         {
             no.type = node::unknown;
         }
-
-        return true;
     }
 
-    static inline bool xml_read(network &n, edge &e, str id, xmlpp::TextReader &reader)
+    static inline void xml_read(network &n, edge &e, str id, xmlpp::TextReader &reader)
     {
         bool first_node = true;
         bool is_road = false;
@@ -62,8 +58,6 @@ namespace osm
                 str k, v;
                 get_attribute(k, reader, "k");
 
-
-
                 if (k== "highway"){
                     is_road = true;
                     get_attribute(v, reader, "v");
@@ -73,26 +67,21 @@ namespace osm
           }
         }while(!is_closing_element(reader, "way"));
 
-
         if (!is_road){
             n.edge_hash.erase(e.id);
         }
-
-        return true;
     }
 
-    static inline bool xml_read_nodes(network &n, xmlpp::TextReader &reader)
+    static inline void xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
         read_skip_comment(reader);
         read_map_no_container(n, n.nodes, reader, "node", "nodes");
-        return true;
     }
 
-    static inline bool xml_read_edges(network &n, xmlpp::TextReader &reader)
+    static inline void xml_read_edges(network &n, xmlpp::TextReader &reader)
     {
         read_skip_comment(reader);
         read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd");
-        return true;
     }
 
     static inline void xml_read_center(network &n, const char* filename)
@@ -128,35 +117,25 @@ namespace osm
         }while(1);
     }
 
-    static inline bool xml_read_nodes(network &n, const char *filename)
+    static inline void xml_read_nodes(network &n, const char *filename)
     {
         std::cout << "xml_read_nodes1\n";
-        try
-        {
-            xmlpp::TextReader reader(filename);
+        xmlpp::TextReader reader(filename);
 
-            bool res = xml_read_nodes(n, reader);
+        xml_read_nodes(n, reader);
 
-            reader.close();
-
-            return res;
-        }
-        catch(const std::exception &e)
-        {
-            return false;
-        }
+        reader.close();
     }
 
-    static inline bool xml_read_edges(network &n, const char *filename)
+    static inline void xml_read_edges(network &n, const char *filename)
     {
         std::cout << "xml_read_edges\n";
 
         xmlpp::TextReader reader(filename);
         read_skip_comment(reader);
-        bool res = xml_read_edges(n, reader);
+        xml_read_edges(n, reader);
 
         reader.close();
-        return res;
     }
 
     network load_xml_network(const char *osm_file)
@@ -166,12 +145,8 @@ namespace osm
 
         xml_read_center(n, osm_file);
 
-        if(!((xml_read_nodes(n, osm_file)) && (xml_read_edges(n, osm_file)))){
-            std::cout << "exception thrown here\n";
-            throw std::exception();
-        }
-
-
+        xml_read_nodes(n, osm_file);
+        xml_read_edges(n, osm_file);
 
         return n;
     }
