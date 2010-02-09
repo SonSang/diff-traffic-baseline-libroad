@@ -5,8 +5,7 @@ bool polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
 {
     assert(is_opening_element(reader, "line_rep"));
 
-    if(!read_to_open(reader, "points"))
-        return false;
+    read_to_open(reader, "points");
 
     do
     {
@@ -44,15 +43,15 @@ bool polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
     if(!initialize())
         throw std::exception();
 
-    return read_to_close(reader, "line_rep");
+    read_to_close(reader, "line_rep");
+    return true;
 }
 
 bool arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
 {
     assert(is_opening_element(reader, "line_rep"));
 
-    if(!read_to_open(reader, "points"))
-        return false;
+    read_to_open(reader, "points");
 
     do
     {
@@ -90,28 +89,28 @@ bool arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
     if(!initialize(0.7f))
         throw std::exception();
 
-    return read_to_close(reader, "line_rep");
+    read_to_close(reader, "line_rep");
+    return true;
 }
 
 template <class T>
 template <class C>
 bool partition01<T>::xml_read(C &n, xmlpp::TextReader &reader, const str &tag)
 {
-    if(!read_to_open(reader, "interval"))
-        return false;
+    read_to_open(reader, "interval");
 
     if(is_closing_element(reader, "interval"))
         return true;
 
-    if(!(read_to_open(reader, "base") &&
-         read_to_open(reader, tag)))
-        return false;
+    read_to_open(reader, "base") ;
+    read_to_open(reader, tag);
 
     T elt0;
     if(!elt0.xml_read(n, reader))
         return false;
 
-    bool res = read_to_close(reader, "base");
+    read_to_close(reader, "base");
+    bool res = true;
     while(res && !is_closing_element(reader, "interval"))
     {
         if(!read_skip_comment(reader))
@@ -122,8 +121,7 @@ bool partition01<T>::xml_read(C &n, xmlpp::TextReader &reader, const str &tag)
             float div;
             get_attribute(div, reader, "value");
 
-            if(!read_to_open(reader, tag))
-                return false;
+            read_to_open(reader, tag);
 
             T elt;
             if(!elt.xml_read(n, reader))
@@ -131,8 +129,7 @@ bool partition01<T>::xml_read(C &n, xmlpp::TextReader &reader, const str &tag)
 
             insert(div, elt);
 
-            if(!read_to_close(reader, "divider"))
-                return false;
+            read_to_close(reader, "divider");
         }
     }
 
@@ -173,7 +170,7 @@ namespace hwm
                 get_attribute(out_id, reader, "out_id");
                 state_pairs.insert(state_pair(in_id, out_id));
 
-                res = read_to_close(reader, "lane_pair");
+                read_to_close(reader, "lane_pair");
             }
         }
 
@@ -194,7 +191,9 @@ namespace hwm
 
         scale_offsets(n.lane_width);
 
-        return read_to_close(reader, "road_membership");
+        read_to_close(reader, "road_membership");
+
+        return true;
     }
 
     bool lane::adjacency::xml_read(network &n, xmlpp::TextReader &reader)
@@ -237,14 +236,16 @@ namespace hwm
         else
             return false;
 
-        return read_to_close(reader, "lane_adjacency");
+        read_to_close(reader, "lane_adjacency");
+        return true;
     }
 
     bool lane::terminus::xml_read(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
     {
         assert(is_opening_element(reader, "dead_end"));
 
-        return read_to_close(reader, tag);
+        read_to_close(reader, tag);
+        return true;
     }
 
     bool lane::intersection_terminus::xml_read(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
@@ -270,7 +271,8 @@ namespace hwm
             intersect_in_ref = pos;
         }
 
-        return read_to_close(reader, tag);
+        read_to_close(reader, tag);
+        return true;
     }
 
     bool lane::lane_terminus::xml_read(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
@@ -282,7 +284,8 @@ namespace hwm
 
         adjacent_lane = retrieve<lane>(n.lanes, ref);
 
-        return read_to_close(reader, tag);
+        read_to_close(reader, tag);
+        return true;
     }
 
     bool road::xml_read(const vec3f &scale, xmlpp::TextReader &reader)
@@ -296,13 +299,13 @@ namespace hwm
 
         get_attribute(name, reader, "name");
 
-        if(!read_to_open(reader, "line_rep"))
-            return false;
+        read_to_open(reader, "line_rep");
 
         if(!rep.xml_read_as_poly(reader, scale))
             return false;
 
-        return read_to_close(reader, "road");
+        read_to_close(reader, "road");
+        return true;
     }
 
     inline static lane::terminus *terminus_helper(network &n, const lane *parent, xmlpp::TextReader &reader, const str &tag)
@@ -360,7 +363,8 @@ namespace hwm
                 if(!road_memberships.xml_read(n, reader, "road_membership"))
                     return false;
 
-                res = have_road_int = read_to_close(reader, "road_intervals");
+                read_to_close(reader, "road_intervals");
+                have_road_int = true;
             }
             else if(is_opening_element(reader, "adjacency_intervals"))
             {
@@ -372,13 +376,13 @@ namespace hwm
 
                     if(is_opening_element(reader, "left"))
                     {
-                        have_left = (left.xml_read(n, reader, "lane_adjacency") &&
-                                     read_to_close(reader, "left"));
+                        have_left = left.xml_read(n, reader, "lane_adjacency");
+                        read_to_close(reader, "left");
                     }
                     else if(is_opening_element(reader, "right"))
                     {
-                        have_right = (right.xml_read(n, reader, "lane_adjacency") &&
-                                      read_to_close(reader, "right"));
+                        have_right = right.xml_read(n, reader, "lane_adjacency");
+                        read_to_close(reader, "right");
                     }
                 }
                 have_adjacency = res && have_left && have_right;
@@ -413,7 +417,8 @@ namespace hwm
             term->intersect_in_ref = loc;
         }
 
-        return read_to_close(reader, "lane_ref");
+        read_to_close(reader, "lane_ref");
+        return true;
     }
 
     bool intersection::xml_read(network &n, xmlpp::TextReader &reader)
@@ -425,8 +430,9 @@ namespace hwm
         if(id != in_id)
             return false;
 
-        bool res = read_to_open(reader, "incident");
+        read_to_open(reader, "incident");
 
+        bool res = true;
         while(res && !is_closing_element(reader, "incident"))
         {
             res = read_skip_comment(reader);
@@ -453,7 +459,7 @@ namespace hwm
             }
         }
 
-        res = read_to_open(reader, "states");
+        read_to_open(reader, "states");
 
         while(res && !is_closing_element(reader, "states"))
         {

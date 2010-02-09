@@ -13,9 +13,9 @@ inline str xml_line_str(const xmlpp::TextReader &reader)
 {
     const xmlpp::Node *n = reader.get_current_node();
     if(n)
-        return boost::str(boost::format(" %d :") % n->get_line());
+        return boost::str(boost::format("%d") % n->get_line());
     else
-        return str(" ? :");
+        return str("?");
 }
 
 inline bool read_skip_comment(xmlpp::TextReader &reader)
@@ -34,6 +34,11 @@ struct missing_attribute : std::exception
 {
     missing_attribute(const xmlpp::TextReader &r, const str &en) : std::exception(), reader(r), eltname(en)
     {}
+
+    virtual const char *what() const throw()
+    {
+        return boost::str(boost::format("Line %s: no attribute %s") % xml_line_str(reader) % eltname).c_str();
+    }
 
     const xmlpp::TextReader &reader;
     const str &eltname;
@@ -73,22 +78,46 @@ inline bool is_closing_element(const xmlpp::TextReader &reader, const str &name)
             reader.get_name() == name);
 }
 
-inline bool read_to_open(xmlpp::TextReader &reader, const str &opentag)
+struct xml_eof_opening : public std::exception
 {
-    bool res = true;
-    while(res && !is_opening_element(reader, opentag))
-        res = read_skip_comment(reader);
+    xml_eof_opening(const str &o) : std::exception(), opening(o)
+    {
+    }
 
-    return res;
+    virtual const char *what() const throw()
+    {
+        return boost::str(boost::format("Reached EOF while looking for opening %s element!") % opening).c_str();
+    }
+
+    const str &opening;
+};
+
+inline void read_to_open(xmlpp::TextReader &reader, const str &opentag)
+{
+    while(!is_opening_element(reader, opentag))
+        if(!read_skip_comment(reader))
+            throw xml_eof_opening(opentag);
 }
 
-inline bool read_to_close(xmlpp::TextReader &reader, const str &endtag)
+struct xml_eof_closing : public std::exception
 {
-    bool res = true;
-    while(res && !is_closing_element(reader, endtag))
-        res = read_skip_comment(reader);
+    xml_eof_closing(const str &c) : std::exception(), closing(c)
+    {
+    }
 
-    return res;
+    virtual const char *what() const throw()
+    {
+        return boost::str(boost::format("Reached EOF while looking for closing %s element!") % closing).c_str();
+    }
+
+    const str &closing;
+};
+
+inline void read_to_close(xmlpp::TextReader &reader, const str &endtag)
+{
+    while(!is_closing_element(reader, endtag))
+        if(!read_skip_comment(reader))
+            throw xml_eof_closing(endtag);
 }
 
 template <class closure, typename T>
