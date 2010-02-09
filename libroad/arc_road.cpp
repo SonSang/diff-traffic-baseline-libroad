@@ -310,6 +310,9 @@ bool arc_road::initialize_from_polyline(const float cull_prox, const std::vector
 
 bool arc_road::initialize_from_points_radii(const std::vector<vec3f> &points, const std::vector<float> &radii)
 {
+    if(points.size() != radii_.size() + 2)
+        return false;
+
     points_ = points;
     radii_  = radii;
 
