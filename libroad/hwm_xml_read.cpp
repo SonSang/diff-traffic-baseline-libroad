@@ -85,7 +85,7 @@ void arc_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
 
     read_to_open(reader, "radii");
 
-    do
+    while(!is_closing_element(reader, "radii"))
     {
         read_skip_comment(reader);
 
@@ -113,7 +113,6 @@ void arc_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
             }
         }
     }
-    while(!is_closing_element(reader, "radii"));
 
     if(!initialize_from_points_radii(points_, radii_))
         throw xml_error(reader, "Failed to initialize arc_road!");
