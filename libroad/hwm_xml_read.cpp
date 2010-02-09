@@ -156,8 +156,7 @@ namespace hwm
 
         get_attribute(duration, reader, "duration");
 
-        bool res = true;
-        while(res && !is_closing_element(reader, "state"))
+        while(!is_closing_element(reader, "state"))
         {
             read_skip_comment(reader);
             if(is_opening_element(reader, "lane_pair"))
@@ -171,7 +170,7 @@ namespace hwm
             }
         }
 
-        return res;
+        return true;
     }
 
     bool lane::road_membership::xml_read(network &n, xmlpp::TextReader &reader)
@@ -505,21 +504,26 @@ namespace hwm
         bool have_roads         = false;
         bool have_lanes         = false;
         bool have_intersections = false;
-        bool res                = true;
-        while(res && !is_closing_element(reader, "network"))
+        while(!is_closing_element(reader, "network"))
         {
             read_skip_comment(reader);
 
             if(is_opening_element(reader, "roads"))
-                res = have_roads = read_map(scale, n.roads, reader, "road", "roads");
+            {
+                read_map(scale, n.roads, reader, "road", "roads");
+                have_roads = true;
+            }
             else if(is_opening_element(reader, "lanes"))
-                res = have_lanes = read_map(n, n.lanes, reader, "lane", "lanes");
+            {
+                read_map(n, n.lanes, reader, "lane", "lanes");
+                have_lanes = true;
+            }
             else if(is_opening_element(reader, "intersections"))
-                res = have_intersections = read_map(n, n.intersections, reader, "intersection", "intersections");
+            {
+                read_map(n, n.intersections, reader, "intersection", "intersections");
+                have_intersections = true;
+            }
         }
-
-        if(!res)
-            std::cerr << "Error at line: " << reader.get_current_node()->get_line() << std::endl;
 
         reader.close();
 

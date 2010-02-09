@@ -17,6 +17,21 @@ inline int xml_line(const xmlpp::Node *n)
         return -1;
 }
 
+struct xml_error : public std::exception
+{
+    xml_error(const xmlpp::TextReader &reader, const str &e) : std::exception(), line(xml_line(reader.get_current_node())), error(e)
+    {
+    }
+
+    virtual const char *what() const throw()
+    {
+        return boost::str(boost::format("Line %d: %s") % line % error).c_str();
+    }
+
+    const int  line;
+    const str &error;
+};
+
 struct xml_eof : public std::exception
 {
     xml_eof(const int l) : std::exception(), line(l)
@@ -152,7 +167,7 @@ inline void read_to_close(xmlpp::TextReader &reader, const str &endtag)
 }
 
 template <class closure, typename T>
-inline bool read_map_no_container_and_children(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &child_name)
+inline void read_map_no_container_and_children(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &child_name)
 {
     do
     {
@@ -174,13 +189,11 @@ inline bool read_map_no_container_and_children(closure &c, T &themap, xmlpp::Tex
         }
     }
     while(1);
-
-    return true;
 }
 
 
 template <class closure, typename T>
-inline bool read_map_no_container(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
+inline void read_map_no_container(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
     do
     {
@@ -197,18 +210,15 @@ inline bool read_map_no_container(closure &c, T &themap, xmlpp::TextReader &read
                     vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
                 vp->second.id = vp->first;
 
-                if(!xml_read(c, themap[id], reader))
-                    return false;
+                xml_read(c, themap[id], reader);
             }
         }
     }
     while(!is_closing_element(reader, container_name));
-
-    return true;
 }
 
 template <class closure, typename T>
-inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
+inline void read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
     while(!is_closing_element(reader, container_name))
     {
@@ -216,28 +226,23 @@ inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
-            if(reader.get_name() == item_name)
-            {
-                str id(reader.get_attribute("id"));
-                assert(id != str());
-                typename T::iterator vp(themap.find(id));
-                if(vp == themap.end())
-                    vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
-                vp->second.id = vp->first;
+            if(reader.get_name() != item_name)
+                throw xml_error(reader, boost::str(boost::format("Found stray %s in %s container search (expected %s)") % reader.get_name() % container_name % item_name));
 
-                if(!themap[id].xml_read(c, reader))
-                    return false;
-            }
-            else
-                return false;
+            str id(reader.get_attribute("id"));
+            assert(id != str());
+            typename T::iterator vp(themap.find(id));
+            if(vp == themap.end())
+                vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
+            vp->second.id = vp->first;
+
+            themap[id].xml_read(c, reader);
         }
     }
-
-    return true;
 }
 
 template <class closure, typename T>
-inline bool sumo_read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
+inline void sumo_read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
     do
     {
@@ -245,24 +250,19 @@ inline bool sumo_read_map(closure &c, T &themap, xmlpp::TextReader &reader, cons
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
-            if(reader.get_name() == item_name)
-            {
-                str id(reader.get_attribute("id"));
+            if(reader.get_name() != item_name)
+                throw xml_error(reader, boost::str(boost::format("Found stray %s in %s container search (expected %s)") % reader.get_name() % container_name % item_name));
 
-                typename T::iterator vp(themap.find(id));
-                if(vp == themap.end())
-                    vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
-                vp->second.id = vp->first;
+            str id(reader.get_attribute("id"));
 
-                if(!xml_read(c, themap[id], reader))
-                    return false;
-            }
-            else
-                return false;
+            typename T::iterator vp(themap.find(id));
+            if(vp == themap.end())
+                vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
+            vp->second.id = vp->first;
+
+            xml_read(c, themap[id], reader);
         }
     }
     while(!is_closing_element(reader, container_name));
-
-    return true;
 }
 #endif

@@ -84,13 +84,15 @@ namespace osm
     static inline bool xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
         read_skip_comment(reader);
-        return read_map_no_container(n, n.nodes, reader, "node", "nodes");
+        read_map_no_container(n, n.nodes, reader, "node", "nodes");
+        return true;
     }
 
     static inline bool xml_read_edges(network &n, xmlpp::TextReader &reader)
     {
         read_skip_comment(reader);
-        return read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd");
+        read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd");
+        return true;
     }
 
     static inline void xml_read_center(network &n, const char* filename)

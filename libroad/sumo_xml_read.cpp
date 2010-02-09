@@ -159,14 +159,16 @@ namespace sumo
     {
         assert(is_opening_element(reader, "nodes"));
         read_skip_comment(reader);
-        return sumo_read_map(n, n.nodes, reader, "node", "nodes");
+        sumo_read_map(n, n.nodes, reader, "node", "nodes");
+        return true;
     }
 
     static inline bool xml_read_types(network &n, xmlpp::TextReader &reader)
     {
         assert(is_opening_element(reader, "types"));
         read_skip_comment(reader);
-        return sumo_read_map(n, n.types, reader, "type", "types");
+        sumo_read_map(n, n.types, reader, "type", "types");
+        return true;
     }
 
 
@@ -174,7 +176,8 @@ namespace sumo
     {
         assert(is_opening_element(reader, "edges"));
         read_skip_comment(reader);
-        return sumo_read_map(n, n.edges, reader, "edge", "edges");
+        sumo_read_map(n, n.edges, reader, "edge", "edges");
+        return true;
     }
 
     static inline bool xml_read_nodes(network &n, const char *filename)
