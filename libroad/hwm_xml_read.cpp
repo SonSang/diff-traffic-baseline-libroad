@@ -9,8 +9,7 @@ bool polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
 
     do
     {
-        if(!read_skip_comment(reader))
-            return false;
+        read_skip_comment(reader);
 
         if(reader.get_node_type() == xmlpp::TextReader::Text ||
            reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
@@ -55,8 +54,7 @@ bool arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
 
     do
     {
-        if(!read_skip_comment(reader))
-            return false;
+        read_skip_comment(reader);
 
         if(reader.get_node_type() == xmlpp::TextReader::Text ||
            reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
@@ -113,8 +111,7 @@ bool partition01<T>::xml_read(C &n, xmlpp::TextReader &reader, const str &tag)
     bool res = true;
     while(res && !is_closing_element(reader, "interval"))
     {
-        if(!read_skip_comment(reader))
-            return false;
+        read_skip_comment(reader);
 
         if(is_opening_element(reader, "divider"))
         {
@@ -162,7 +159,7 @@ namespace hwm
         bool res = true;
         while(res && !is_closing_element(reader, "state"))
         {
-            res = read_skip_comment(reader);
+            read_skip_comment(reader);
             if(is_opening_element(reader, "lane_pair"))
             {
                 size_t in_id, out_id;
@@ -316,8 +313,7 @@ namespace hwm
 
         while(!res)
         {
-            if(!read_skip_comment(reader))
-                return 0;
+            read_skip_comment(reader);
 
             if(is_opening_element(reader, "dead_end"))
                 res = new lane::terminus();
@@ -352,7 +348,7 @@ namespace hwm
         bool res            = true;
         while(res && !is_closing_element(reader, "lane"))
         {
-            res = read_skip_comment(reader);
+            read_skip_comment(reader);
 
             if(is_opening_element(reader, "start"))
                 res = have_start = (start = terminus_helper(n, this, reader, "start"));
@@ -372,7 +368,7 @@ namespace hwm
                 bool have_right = false;
                 while(res && !is_closing_element(reader, "adjacency_intervals"))
                 {
-                    res = read_skip_comment(reader);
+                    read_skip_comment(reader);
 
                     if(is_opening_element(reader, "left"))
                     {
@@ -435,13 +431,13 @@ namespace hwm
         bool res = true;
         while(res && !is_closing_element(reader, "incident"))
         {
-            res = read_skip_comment(reader);
+            read_skip_comment(reader);
 
             if(is_opening_element(reader, "incoming"))
             {
                 while(res && !is_closing_element(reader, "incoming"))
                 {
-                    res = read_skip_comment(reader);
+                    read_skip_comment(reader);
 
                     if(is_opening_element(reader, "lane_ref"))
                         res = xml_incident_read(n, incoming, reader, true, id);
@@ -451,7 +447,7 @@ namespace hwm
             {
                 while(res && !is_closing_element(reader, "outgoing"))
                 {
-                    res = read_skip_comment(reader);
+                    read_skip_comment(reader);
 
                     if(is_opening_element(reader, "lane_ref"))
                         res = xml_incident_read(n, outgoing, reader, false, id);
@@ -463,7 +459,7 @@ namespace hwm
 
         while(res && !is_closing_element(reader, "states"))
         {
-            res = read_skip_comment(reader);
+            read_skip_comment(reader);
 
             if(is_opening_element(reader, "state"))
             {
@@ -485,8 +481,7 @@ namespace hwm
         network n;
         xmlpp::TextReader reader(filename);
 
-        if(!read_skip_comment(reader))
-            throw std::exception();
+        read_skip_comment(reader);
 
         if(!is_opening_element(reader, "network"))
             throw std::exception();
@@ -513,7 +508,7 @@ namespace hwm
         bool res                = true;
         while(res && !is_closing_element(reader, "network"))
         {
-            res = read_skip_comment(reader);
+            read_skip_comment(reader);
 
             if(is_opening_element(reader, "roads"))
                 res = have_roads = read_map(scale, n.roads, reader, "road", "roads");

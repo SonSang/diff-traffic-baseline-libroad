@@ -29,14 +29,12 @@ namespace osm
 
     static inline bool xml_read(network &n, edge &e, str id, xmlpp::TextReader &reader)
     {
-        bool ret;
         bool first_node = true;
         bool is_road = false;
         do
         {
-          ret = read_skip_comment(reader);
-          if (!ret)
-            return 1;
+          read_skip_comment(reader);
+
           if (reader.get_node_type() == xmlpp::TextReader::Element){
             if (reader.get_name() == "nd")
               {
@@ -73,40 +71,41 @@ namespace osm
                 }
             }
           }
-        }while(ret && !is_closing_element(reader, "way"));
+        }while(!is_closing_element(reader, "way"));
 
 
         if (!is_road){
             n.edge_hash.erase(e.id);
         }
 
-
         return true;
     }
 
     static inline bool xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
-
-        bool ret = read_skip_comment(reader);
-
-        ret = ret and read_map_no_container(n, n.nodes, reader, "node", "nodes");
-
-        return ret;
+        read_skip_comment(reader);
+        return read_map_no_container(n, n.nodes, reader, "node", "nodes");
     }
 
     static inline bool xml_read_edges(network &n, xmlpp::TextReader &reader)
     {
-        return (read_skip_comment(reader) &&
-                read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd"));
+        read_skip_comment(reader);
+        return read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd");
     }
 
     static inline void xml_read_center(network &n, const char* filename)
     {
-        bool ret;
         xmlpp::TextReader reader(filename);
         do
         {
-            ret = read_skip_comment(reader);
+            try
+            {
+                read_skip_comment(reader);
+            }
+            catch(xml_eof &e)
+            {
+                break;
+            }
             if (reader.get_node_type() == xmlpp::TextReader::Element)
             {
                 if (reader.get_name() == "bounds")
@@ -124,7 +123,7 @@ namespace osm
                     std::cout << n.center[0] << " " << n.center[1] << std::endl;
                 }
             }
-        }while(ret);
+        }while(1);
     }
 
     static inline bool xml_read_nodes(network &n, const char *filename)
@@ -151,9 +150,8 @@ namespace osm
         std::cout << "xml_read_edges\n";
 
         xmlpp::TextReader reader(filename);
-
-        bool res = (read_skip_comment(reader) &&
-                    xml_read_edges(n, reader));
+        read_skip_comment(reader);
+        bool res = xml_read_edges(n, reader);
 
         reader.close();
         return res;

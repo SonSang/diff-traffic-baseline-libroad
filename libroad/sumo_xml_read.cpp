@@ -157,51 +157,40 @@ namespace sumo
 
     static inline bool xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
-        return (is_opening_element(reader, "nodes") &&
-                read_skip_comment(reader) &&
-                sumo_read_map(n, n.nodes, reader, "node", "nodes"));
+        assert(is_opening_element(reader, "nodes"));
+        read_skip_comment(reader);
+        return sumo_read_map(n, n.nodes, reader, "node", "nodes");
     }
 
     static inline bool xml_read_types(network &n, xmlpp::TextReader &reader)
     {
-        return (is_opening_element(reader, "types") &&
-                read_skip_comment(reader) &&
-                sumo_read_map(n, n.types, reader, "type", "types"));
+        assert(is_opening_element(reader, "types"));
+        read_skip_comment(reader);
+        return sumo_read_map(n, n.types, reader, "type", "types");
     }
 
 
     static inline bool xml_read_edges(network &n, xmlpp::TextReader &reader)
     {
-        return (is_opening_element(reader, "edges") &&
-                read_skip_comment(reader) &&
-                sumo_read_map(n, n.edges, reader, "edge", "edges"));
+        assert(is_opening_element(reader, "edges"));
+        read_skip_comment(reader);
+        return sumo_read_map(n, n.edges, reader, "edge", "edges");
     }
 
     static inline bool xml_read_nodes(network &n, const char *filename)
     {
-        try
-        {
-            xmlpp::TextReader reader(filename);
-
-            bool res = (read_skip_comment(reader) &&
-                        xml_read_nodes(n, reader));
-
-            reader.close();
-
-            return res;
-        }
-        catch(const std::exception &e)
-        {
-            return false;
-        }
+        xmlpp::TextReader reader(filename);
+        read_skip_comment(reader);
+        bool res = xml_read_nodes(n, reader);
+        reader.close();
+        return res;
     }
 
     static inline bool xml_read_types(network &n, const char *filename)
     {
         xmlpp::TextReader reader(filename);
-
-        bool res = (read_skip_comment(reader) &&
-                    xml_read_types(n, reader));
+        read_skip_comment(reader);
+        bool res = xml_read_types(n, reader);
 
         reader.close();
         return res;
@@ -210,10 +199,8 @@ namespace sumo
     static inline bool xml_read_edges(network &n, const char *filename)
     {
         xmlpp::TextReader reader(filename);
-
-        bool res = (read_skip_comment(reader) &&
-                    xml_read_edges(n, reader));
-
+        read_skip_comment(reader);
+        bool res = xml_read_edges(n, reader);
         reader.close();
         return res;
     }

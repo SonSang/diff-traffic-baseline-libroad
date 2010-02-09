@@ -9,24 +9,38 @@
 //TODO
 #include <iostream>
 
-inline str xml_line_str(const xmlpp::Node *n)
+inline int xml_line(const xmlpp::Node *n)
 {
     if(n)
-        return boost::str(boost::format("%d") % n->get_line());
+        return n->get_line();
     else
-        return str("?");
+        return -1;
 }
 
-inline bool read_skip_comment(xmlpp::TextReader &reader)
+struct xml_eof : public std::exception
 {
-    bool res;
+    xml_eof(const int l) : std::exception(), line(l)
+    {
+    }
+
+    virtual const char *what() const throw()
+    {
+        return boost::str(boost::format("Reached unexpected EOF (started search at line: %d)") % line).c_str();
+    }
+
+    const int line;
+};
+
+inline void read_skip_comment(xmlpp::TextReader &reader)
+{
+    const int line = xml_line(reader.get_current_node());
+
     do
     {
-        res = reader.read();
+        if(!reader.read())
+            throw xml_eof(line);
     }
-    while(res && reader.get_node_type() == xmlpp::TextReader::Comment);
-
-    return res;
+    while(reader.get_node_type() == xmlpp::TextReader::Comment);
 }
 
 struct missing_attribute : std::exception
@@ -36,7 +50,7 @@ struct missing_attribute : std::exception
 
     virtual const char *what() const throw()
     {
-        return boost::str(boost::format("Line %s: no attribute %s") % xml_line_str(reader.get_current_node()) % eltname).c_str();
+        return boost::str(boost::format("Line %d: no attribute %s") % xml_line(reader.get_current_node()) % eltname).c_str();
     }
 
     const xmlpp::TextReader &reader;
@@ -79,67 +93,76 @@ inline bool is_closing_element(const xmlpp::TextReader &reader, const str &name)
 
 struct xml_eof_opening : public std::exception
 {
-    xml_eof_opening(const xmlpp::Node *b, const str &o) : std::exception(), begin(b), opening(o)
+    xml_eof_opening(const int l, const str &o) : std::exception(), line(l), opening(o)
     {
     }
 
     virtual const char *what() const throw()
     {
-        return boost::str(boost::format("Reached EOF while looking for opening %s element! (Started search at line: %s") % opening % xml_line_str(begin)).c_str();
+        return boost::str(boost::format("Reached EOF while looking for opening %s element! (Started search at line: %d)") % opening % line).c_str();
     }
 
-    const xmlpp::Node *begin;
+    const int line;
     const str &opening;
 };
 
 inline void read_to_open(xmlpp::TextReader &reader, const str &opentag)
 {
-    const xmlpp::Node *begin = reader.get_current_node();
-    while(!is_opening_element(reader, opentag))
-        if(!read_skip_comment(reader))
-            throw xml_eof_opening(begin, opentag);
+    const int line = xml_line(reader.get_current_node());
+
+    try
+    {
+        while(!is_opening_element(reader, opentag))
+            read_skip_comment(reader);
+    }
+    catch(xml_eof &e)
+    {
+        throw xml_eof_opening(line, opentag);
+    }
 }
 
 struct xml_eof_closing : public std::exception
 {
-    xml_eof_closing(const xmlpp::Node *b, const str &c) : std::exception(), begin(b), closing(c)
+    xml_eof_closing(const int l, const str &c) : std::exception(), line(l), closing(c)
     {
     }
 
     virtual const char *what() const throw()
     {
-        return boost::str(boost::format("Reached EOF while looking for closing %s element! (Started search at line: %s") % closing % xml_line_str(begin)).c_str();
+        return boost::str(boost::format("Reached EOF while looking for closing %s element! (Started search at line: %d)") % closing % line).c_str();
     }
 
-    const xmlpp::Node *begin;
-    const str         &closing;
+    const int  line;
+    const str &closing;
 };
 
 inline void read_to_close(xmlpp::TextReader &reader, const str &endtag)
 {
-    const xmlpp::Node *begin = reader.get_current_node();
-    while(!is_closing_element(reader, endtag))
-        if(!read_skip_comment(reader))
-            throw xml_eof_closing(begin, endtag);
+    const int line = xml_line(reader.get_current_node());
+
+    try
+    {
+        while(!is_closing_element(reader, endtag))
+            read_skip_comment(reader);
+    }
+    catch(xml_eof &e)
+    {
+        throw xml_eof_closing(line, endtag);
+    }
 }
 
 template <class closure, typename T>
 inline bool read_map_no_container_and_children(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &child_name)
 {
-    bool ret;
     do
     {
-        ret = read_skip_comment(reader);
-        if(!ret)
-            return 1;
+        read_skip_comment(reader);
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
-
             if(reader.get_name() == item_name)
             {
                 str id(reader.get_attribute("id"));
-
 
                 typename T::iterator vp(themap.find(id));
                 if(vp == themap.end())
@@ -150,25 +173,21 @@ inline bool read_map_no_container_and_children(closure &c, T &themap, xmlpp::Tex
              }
         }
     }
-    while(ret);
+    while(1);
 
-    return ret;
+    return true;
 }
 
 
 template <class closure, typename T>
 inline bool read_map_no_container(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
-    bool ret;
     do
     {
-        ret = read_skip_comment(reader);
-        if(!ret)
-            return 1;
+        read_skip_comment(reader);
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
-
             if(reader.get_name() == item_name)
             {
                 str id(reader.get_attribute("id"));
@@ -178,26 +197,22 @@ inline bool read_map_no_container(closure &c, T &themap, xmlpp::TextReader &read
                     vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
                 vp->second.id = vp->first;
 
-
                 if(!xml_read(c, themap[id], reader))
                     return false;
             }
         }
     }
-    while(ret && !is_closing_element(reader, container_name));
+    while(!is_closing_element(reader, container_name));
 
-    return ret;
+    return true;
 }
 
 template <class closure, typename T>
 inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
-    bool ret = true;
-    while(ret && !is_closing_element(reader, container_name))
+    while(!is_closing_element(reader, container_name))
     {
-        ret = read_skip_comment(reader);
-        if(!ret)
-            return false;
+        read_skip_comment(reader);
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
@@ -218,18 +233,15 @@ inline bool read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str
         }
     }
 
-    return ret;
+    return true;
 }
 
 template <class closure, typename T>
 inline bool sumo_read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
 {
-    bool ret;
     do
     {
-        ret = read_skip_comment(reader);
-        if(!ret)
-            return false;
+        read_skip_comment(reader);
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
@@ -249,8 +261,8 @@ inline bool sumo_read_map(closure &c, T &themap, xmlpp::TextReader &reader, cons
                 return false;
         }
     }
-    while(ret && !is_closing_element(reader, container_name));
+    while(!is_closing_element(reader, container_name));
 
-    return ret;
+    return true;
 }
 #endif
