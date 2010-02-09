@@ -356,9 +356,21 @@ namespace hwm
 
         get_attribute(name, reader, "name");
 
-        read_to_open(reader, "line_rep");
+        while(1)
+        {
+            read_skip_comment(reader);
 
-        rep.xml_read_as_poly(reader, scale);
+            if(is_opening_element(reader, "line_rep"))
+            {
+                rep.xml_read_as_poly(reader, scale);
+                break;
+            }
+            else if(is_opening_element(reader, "arc_line_rep"))
+            {
+                rep.xml_read(reader, scale);
+                break;
+            }
+        }
 
         read_to_close(reader, "road");
     }
