@@ -23,7 +23,7 @@ namespace osm
         }
     }
 
-    static inline void xml_read(network &n, edge &e, str id, xmlpp::TextReader &reader)
+    static inline void xml_read(network &n, edge &e, xmlpp::TextReader &reader)
     {
         bool first_node = true;
         bool is_road = false;
@@ -75,13 +75,13 @@ namespace osm
     static inline void xml_read_nodes(network &n, xmlpp::TextReader &reader)
     {
         read_skip_comment(reader);
-        read_map_no_container(n, n.nodes, reader, "node", "nodes");
+        read_map_no_container(n, n.nodes, reader, "node");
     }
 
     static inline void xml_read_edges(network &n, xmlpp::TextReader &reader)
     {
         read_skip_comment(reader);
-        read_map_no_container_and_children(n, n.edge_hash, reader, "way", "nd");
+        read_map_no_container(n, n.edge_hash, reader, "way");
     }
 
     static inline void xml_read_center(network &n, const char* filename)

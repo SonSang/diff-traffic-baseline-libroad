@@ -163,37 +163,18 @@ inline void read_to_close(xmlpp::TextReader &reader, const str &endtag)
 }
 
 template <class closure, typename T>
-inline void read_map_no_container_and_children(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &child_name)
+inline void read_map_no_container(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name)
 {
-    do
+    while(1)
     {
-        read_skip_comment(reader);
-
-        if(reader.get_node_type() == xmlpp::TextReader::Element)
+        try
         {
-            if(reader.get_name() == item_name)
-            {
-                str id(reader.get_attribute("id"));
-
-                typename T::iterator vp(themap.find(id));
-                if(vp == themap.end())
-                    vp = themap.insert(vp, std::make_pair(id, typename T::value_type::second_type()));
-                vp->second.id = vp->first;
-
-                xml_read(c, themap[id], id, reader);
-             }
+            read_skip_comment(reader);
         }
-    }
-    while(1);
-}
-
-
-template <class closure, typename T>
-inline void read_map_no_container(closure &c, T &themap, xmlpp::TextReader &reader, const str &item_name, const str &container_name)
-{
-    do
-    {
-        read_skip_comment(reader);
+        catch(xml_eof &e)
+        {
+            return;
+        }
 
         if(reader.get_node_type() == xmlpp::TextReader::Element)
         {
@@ -207,10 +188,9 @@ inline void read_map_no_container(closure &c, T &themap, xmlpp::TextReader &read
                 vp->second.id = vp->first;
 
                 xml_read(c, themap[id], reader);
-            }
+             }
         }
     }
-    while(!is_closing_element(reader, container_name));
 }
 
 template <class closure, typename T>
