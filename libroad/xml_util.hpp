@@ -180,7 +180,7 @@ inline void read_map_no_container(closure &c, T &themap, xmlpp::TextReader &read
         {
             if(reader.get_name() == item_name)
             {
-                str id(reader.get_attribute("id"));
+                const str id(reader.get_attribute("id"));
 
                 typename T::iterator vp(themap.find(id));
                 if(vp == themap.end())
@@ -205,7 +205,7 @@ inline void read_map(closure &c, T &themap, xmlpp::TextReader &reader, const str
             if(reader.get_name() != item_name)
                 throw xml_error(reader, boost::str(boost::format("Found stray %s in %s container search (expected %s)") % reader.get_name() % container_name % item_name));
 
-            str id(reader.get_attribute("id"));
+            const str id(reader.get_attribute("id"));
             assert(id != str());
             typename T::iterator vp(themap.find(id));
             if(vp == themap.end())
@@ -229,7 +229,7 @@ inline void sumo_read_map(closure &c, T &themap, xmlpp::TextReader &reader, cons
             if(reader.get_name() != item_name)
                 throw xml_error(reader, boost::str(boost::format("Found stray %s in %s container search (expected %s)") % reader.get_name() % container_name % item_name));
 
-            str id(reader.get_attribute("id"));
+            const str id(reader.get_attribute("id"));
 
             typename T::iterator vp(themap.find(id));
             if(vp == themap.end())
