@@ -51,7 +51,7 @@ struct arc_road
     size_t locate(float t, float offset) const;
     size_t locate_scale(float t, float offset, float &local) const;
 
-    bool   xml_read_as_poly (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
+    void   xml_read_as_poly (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void   xml_write_as_poly(xmlpp::Element *elt) const;
     bool   check() const;
 

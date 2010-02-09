@@ -1,7 +1,7 @@
 #include "hwm_network.hpp"
 #include "xml_util.hpp"
 
-bool polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
+void polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
 {
     assert(is_opening_element(reader, "line_rep"));
 
@@ -43,10 +43,9 @@ bool polyline_road::xml_read(xmlpp::TextReader &reader, const vec3f &scale)
         throw std::exception();
 
     read_to_close(reader, "line_rep");
-    return true;
 }
 
-bool arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
+void arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
 {
     assert(is_opening_element(reader, "line_rep"));
 
@@ -88,7 +87,6 @@ bool arc_road::xml_read_as_poly(xmlpp::TextReader &reader, const vec3f &scale)
         throw std::exception();
 
     read_to_close(reader, "line_rep");
-    return true;
 }
 
 template <class T>
