@@ -62,77 +62,95 @@ namespace sumo
 
     static inline bool xml_read(network &n, node &no, xmlpp::TextReader &reader)
     {
-        bool res = get_attribute(no.id,    reader, "id") &&
-                   get_attribute(no.xy[0], reader, "x")  &&
-                   get_attribute(no.xy[1], reader, "y");
-        if(!res)
-            return false;
+        get_attribute(no.id,    reader, "id");
+        get_attribute(no.xy[0], reader, "x");
+        get_attribute(no.xy[1], reader, "y");
 
-        if(!get_attribute(no.type, reader, "type"))
+        try
+        {
+            get_attribute(no.type, reader, "type");
+        }
+        catch(missing_attribute &ma)
+        {
             no.type = node::unknown;
+        }
 
         return true;
     }
 
     static inline bool xml_read(network &n, edge_type &et, xmlpp::TextReader &reader)
     {
-        return (get_attribute(et.id,       reader, "id")       &&
-                get_attribute(et.priority, reader, "priority") &&
-                get_attribute(et.nolanes,  reader, "nolanes")  &&
-                get_attribute(et.speed,    reader, "speed"));
+        get_attribute(et.id,       reader, "id");
+        get_attribute(et.priority, reader, "priority");
+        get_attribute(et.nolanes,  reader, "nolanes");
+        get_attribute(et.speed,    reader, "speed");
+
+        return true;
     }
 
     static inline bool xml_read(network &n, edge &e, xmlpp::TextReader &reader)
     {
-        if(!get_attribute(e.id, reader, "id"))
-            return false;
+        get_attribute(e.id, reader, "id");
 
         str from_id;
         str to_id;
-        if(!(get_attribute(from_id, reader, "fromnode") &&
-             get_attribute(to_id,   reader, "tonode")))
+
+        try
+        {
+            get_attribute(from_id, reader, "fromnode");
+            get_attribute(to_id,   reader, "tonode");
+            e.from = retrieve<node>(n.nodes, from_id);
+            e.to   = retrieve<node>(n.nodes, to_id);
+        }
+        catch(missing_attribute &mi)
         {
             vec2d from;
             vec2d to;
-            if(!(get_attribute(from[0], reader, "xfrom") &&
-                 get_attribute(from[1], reader, "yfrom") &&
-                 get_attribute(to[0],   reader, "xto")   &&
-                 get_attribute(to[1],   reader, "yto")))
-                return false;
+            get_attribute(from[0], reader, "xfrom");
+            get_attribute(from[1], reader, "yfrom");
+            get_attribute(to[0],   reader, "xto");
+            get_attribute(to[1],   reader, "yto");
 
             e.from = anon_node(n, from);
             e.to   = anon_node(n, to);
         }
-        else
-        {
-            e.from = retrieve<node>(n.nodes, from_id);
-            e.to   = retrieve<node>(n.nodes, to_id);
-        }
 
-        str type_id;
-        if(!get_attribute(type_id, reader, "type"))
+        try
+        {
+            str type_id;
+            get_attribute(type_id, reader, "type");
+            e.type = retrieve<edge_type>(n.types, type_id);
+        }
+        catch(missing_attribute &mi)
         {
             int priority;
             int nolanes;
             double speed;
-            if(!(get_attribute(priority, reader, "priority") &&
-                 get_attribute(nolanes, reader, "nolanes") &&
-                 get_attribute(speed, reader, "speed")))
-                return false;
+            get_attribute(priority, reader, "priority");
+            get_attribute(nolanes, reader, "nolanes");
+            get_attribute(speed, reader, "speed");
 
             e.type = anon_edge_type(n, priority, nolanes, speed);
         }
-        else
+
+        try
         {
-            e.type = retrieve<edge_type>(n.types, type_id);
+            get_attribute(e.spread, reader, "spread");
+        }
+        catch(missing_attribute &mi)
+        {
+            e.spread = edge::right;
         }
 
-        if(!get_attribute(e.spread, reader, "spread"))
-            e.spread = edge::right;
-
         str shape_str;
-        if(get_attribute(shape_str, reader, "shape"))
+        try
+        {
+            get_attribute(shape_str, reader, "shape");
             read_shape(e.shape, shape_str);
+        }
+        catch(missing_attribute &mi)
+        {
+        }
 
         return true;
     }

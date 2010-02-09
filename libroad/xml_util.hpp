@@ -9,7 +9,14 @@
 //TODO
 #include <iostream>
 
-
+inline str xml_line_str(const xmlpp::TextReader &reader)
+{
+    const xmlpp::Node *n = reader.get_current_node();
+    if(n)
+        return boost::str(boost::format(" %d :") % n->get_line());
+    else
+        return str(" ? :");
+}
 
 inline bool read_skip_comment(xmlpp::TextReader &reader)
 {
@@ -23,22 +30,33 @@ inline bool read_skip_comment(xmlpp::TextReader &reader)
     return res;
 }
 
+struct missing_attribute : std::exception
+{
+    missing_attribute(const xmlpp::TextReader &r, const str &en) : std::exception(), reader(r), eltname(en)
+    {}
+
+    const xmlpp::TextReader &reader;
+    const str &eltname;
+};
+
 template <typename T>
-inline bool get_attribute(T &res, xmlpp::TextReader &reader, const str &eltname)
+inline void get_attribute(T &res, xmlpp::TextReader &reader, const str &eltname)
 {
     str val(reader.get_attribute(eltname));
 
     if(val.empty())
-        return false;
+        throw missing_attribute(reader, eltname);
+
     res = boost::lexical_cast<T>(val);
-    return true;
 }
 
 template <>
-inline bool get_attribute(str &res, xmlpp::TextReader &reader, const str &eltname)
+inline void get_attribute(str &res, xmlpp::TextReader &reader, const str &eltname)
 {
     res = reader.get_attribute(eltname);
-    return !res.empty();
+
+    if(res.empty())
+        throw missing_attribute(reader, eltname);
 }
 
 inline bool is_opening_element(const xmlpp::TextReader &reader, const str &name)

@@ -120,8 +120,7 @@ bool partition01<T>::xml_read(C &n, xmlpp::TextReader &reader, const str &tag)
         if(is_opening_element(reader, "divider"))
         {
             float div;
-            if(!get_attribute(div, reader, "value"))
-                return false;
+            get_attribute(div, reader, "value");
 
             if(!read_to_open(reader, tag))
                 return false;
@@ -161,18 +160,17 @@ namespace hwm
     {
         assert(is_opening_element(reader, "state"));
 
-        bool res = get_attribute(duration, reader, "duration");
+        get_attribute(duration, reader, "duration");
 
+        bool res = true;
         while(res && !is_closing_element(reader, "state"))
         {
             res = read_skip_comment(reader);
             if(is_opening_element(reader, "lane_pair"))
             {
                 size_t in_id, out_id;
-                if(!(get_attribute(in_id, reader, "in_id") &&
-                     get_attribute(out_id, reader, "out_id")))
-                    return false;
-
+                get_attribute(in_id, reader, "in_id");
+                get_attribute(out_id, reader, "out_id");
                 state_pairs.insert(state_pair(in_id, out_id));
 
                 res = read_to_close(reader, "lane_pair");
@@ -187,11 +185,10 @@ namespace hwm
         assert(is_opening_element(reader, "road_membership"));
 
         str ref;
-        if(!(get_attribute(ref, reader, "parent_road_ref") &&
-             get_attribute(interval[0], reader, "interval_start") &&
-             get_attribute(interval[1], reader, "interval_end") &&
-             get_attribute(lane_position, reader, "lane_position")))
-            return false;
+        get_attribute(ref, reader, "parent_road_ref");
+        get_attribute(interval[0], reader, "interval_start");
+        get_attribute(interval[1], reader, "interval_end");
+        get_attribute(lane_position, reader, "lane_position");
 
         parent_road = retrieve<road>(n.roads, ref);
 
@@ -205,9 +202,34 @@ namespace hwm
         assert(is_opening_element(reader, "lane_adjacency"));
 
         str ref;
-        int acount = get_attribute(ref, reader, "lane_ref") +
-                     get_attribute(neighbor_interval[0], reader, "interval_start") +
-                     get_attribute(neighbor_interval[1], reader, "interval_end");
+        int acount = 0;
+        try
+        {
+            get_attribute(ref, reader, "lane_ref");
+            ++acount;
+        }
+        catch(missing_attribute &ma)
+        {
+        }
+
+        try
+        {
+            get_attribute(neighbor_interval[0], reader, "interval_start");
+            ++acount;
+        }
+        catch(missing_attribute &ma)
+        {
+        }
+
+        try
+        {
+            get_attribute(neighbor_interval[1], reader, "interval_end");
+            ++acount;
+        }
+        catch(missing_attribute &ma)
+        {
+        }
+
         if(acount == 3)
             neighbor = retrieve<lane>(n.lanes, ref);
         else if(acount == 0)
@@ -230,8 +252,7 @@ namespace hwm
         assert(is_opening_element(reader, "intersection_ref"));
 
         str ref;
-        if(!(get_attribute(ref, reader, "ref")))
-            return false;
+        get_attribute(ref, reader, "ref");
 
         adjacent_intersection = retrieve<intersection>(n.intersections, ref);
         intersect_in_ref = -1;
@@ -257,8 +278,7 @@ namespace hwm
         assert(is_opening_element(reader, "lane_ref"));
 
         str ref;
-        if(!(get_attribute(ref, reader, "ref")))
-            return false;
+        get_attribute(ref, reader, "ref");
 
         adjacent_lane = retrieve<lane>(n.lanes, ref);
 
@@ -274,8 +294,7 @@ namespace hwm
         if(id != read_id)
             return false;
 
-        if(!get_attribute(name, reader, "name"))
-            return false;
+        get_attribute(name, reader, "name");
 
         if(!read_to_open(reader, "line_rep"))
             return false;
@@ -319,8 +338,7 @@ namespace hwm
         if(id != read_id)
             return false;
 
-        if(!get_attribute(speedlimit, reader, "speedlimit"))
-            return false;
+        get_attribute(speedlimit, reader, "speedlimit");
 
         active = true;
 
@@ -377,9 +395,8 @@ namespace hwm
 
         str ref;
         size_t loc;
-        if(!(get_attribute(ref, reader, "ref") &&
-             get_attribute(loc, reader, "local_id")))
-            return false;
+        get_attribute(ref, reader, "ref");
+        get_attribute(loc, reader, "local_id");
 
         if(lv.size() <= loc)
             lv.resize(loc+1);
@@ -445,8 +462,7 @@ namespace hwm
             if(is_opening_element(reader, "state"))
             {
                 size_t read_id;
-                if(!get_attribute(read_id, reader, "id"))
-                    return false;
+                get_attribute(read_id, reader, "id");
 
                 if(states.size() <= read_id)
                     states.resize(read_id+1);
@@ -470,19 +486,18 @@ namespace hwm
             throw std::exception();
 
         str version;
-        if(!get_attribute(version, reader, "version") ||
-           version != "1.3")
+        get_attribute(version, reader, "version");
+        if(version != "1.3")
             throw std::exception();
 
-        if(!get_attribute(n.lane_width, reader, "lane_width") ||
-           n.lane_width <= 0.0f)
+        get_attribute(n.lane_width, reader, "lane_width");
+        if(n.lane_width <= 0.0f)
             throw std::exception();
 
-        if(!get_attribute(n.name, reader, "name"))
-            throw std::exception();
+        get_attribute(n.name, reader, "name");
 
-        if(!get_attribute(n.gamma, reader, "gamma") ||
-           n.gamma <= 0.0f ||
+        get_attribute(n.gamma, reader, "gamma");
+        if(n.gamma <= 0.0f ||
            n.gamma >= 1.0f)
             throw std::exception();
 

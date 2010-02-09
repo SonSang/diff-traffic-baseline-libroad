@@ -10,22 +10,24 @@ namespace osm
 
     static inline bool xml_read(network &n, node &no, xmlpp::TextReader &reader)
     {
-        bool res = get_attribute(no.id,    reader, "id") &&
-                   get_attribute(no.xy[0], reader, "lon")  &&
-                   get_attribute(no.xy[1], reader, "lat");
+        get_attribute(no.id,    reader, "id");
+        get_attribute(no.xy[0], reader, "lon");
+        get_attribute(no.xy[1], reader, "lat");
         no.xy[2] = 0.0f;
-        if(!res)
-            return false;
 
-        if(!get_attribute(no.type, reader, "type"))
+        try
+        {
+            get_attribute(no.type, reader, "type");
+        }
+        catch(missing_attribute &ma)
+        {
             no.type = node::unknown;
+        }
 
         return true;
     }
 
-
-
-  static inline bool xml_read(network &n, edge &e, str id, xmlpp::TextReader &reader)
+    static inline bool xml_read(network &n, edge &e, str id, xmlpp::TextReader &reader)
     {
         bool ret;
         bool first_node = true;
