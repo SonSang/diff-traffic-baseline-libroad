@@ -6,9 +6,6 @@
 #include <libxml++/libxml++.h>
 #include <libxml++/parsers/textreader.h>
 
-//TODO
-#include <iostream>
-
 inline int xml_line(const xmlpp::Node *n)
 {
     if(n)
@@ -17,19 +14,18 @@ inline int xml_line(const xmlpp::Node *n)
         return -1;
 }
 
-struct xml_error : public std::exception
+struct xml_error : public std::runtime_error
 {
-    xml_error(const xmlpp::TextReader &reader, const str &e) : std::exception(), line(xml_line(reader.get_current_node())), error(e)
+    xml_error(const xmlpp::TextReader &reader, const str &e) : std::runtime_error(e), line(xml_line(reader.get_current_node()))
     {
     }
 
     virtual const char *what() const throw()
     {
-        return boost::str(boost::format("Line %d: %s") % line % error).c_str();
+        return boost::str(boost::format("Line %d: %s") % line % std::runtime_error::what()).c_str();
     }
 
-    const int  line;
-    const str &error;
+    const int line;
 };
 
 struct xml_eof : public std::exception

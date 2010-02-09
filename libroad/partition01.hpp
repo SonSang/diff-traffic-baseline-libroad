@@ -18,7 +18,7 @@ struct partition01 : public std::map<float, T>
     {}
 
     template <class C>
-    bool xml_read (C &n, xmlpp::TextReader &reader, const str &name);
+    void xml_read (C &n, xmlpp::TextReader &reader, const str &name);
     void xml_write(xmlpp::Element *elt, const str &name) const;
 
     iterator insert(float x, const T &val)

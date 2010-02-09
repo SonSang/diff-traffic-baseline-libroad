@@ -18,7 +18,7 @@ namespace hwm
 
     struct road
     {
-        bool xml_read (const vec3f &scale, xmlpp::TextReader &reader);
+        void xml_read (const vec3f &scale, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
 
@@ -47,7 +47,7 @@ namespace hwm
         {
             virtual void update_pointers(network &n);
             virtual terminus* clone() const;
-            virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
+            virtual void xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual bool check(bool start, const lane *parent) const;
             virtual lane *incident(bool start) const;
@@ -63,7 +63,7 @@ namespace hwm
 
             virtual void update_pointers(network &n);
             virtual intersection_terminus* clone() const;
-            virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
+            virtual void xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual bool check(bool start, const lane *parent) const;
             virtual lane *incident(bool start) const;
@@ -82,7 +82,7 @@ namespace hwm
 
             virtual void update_pointers(network &n);
             virtual lane_terminus* clone() const;
-            virtual bool xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
+            virtual void xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual bool check(bool start, const lane *parent) const;
             virtual lane *incident(bool start) const;
@@ -92,7 +92,7 @@ namespace hwm
 
         struct road_membership
         {
-            bool xml_read (network &n, xmlpp::TextReader &reader);
+            void xml_read (network &n, xmlpp::TextReader &reader);
             void xml_write(xmlpp::Element *elt) const;
             bool check() const;
             bool empty() const;
@@ -112,7 +112,7 @@ namespace hwm
 
         struct adjacency
         {
-            bool xml_read (network &n, xmlpp::TextReader &reader);
+            void xml_read (network &n, xmlpp::TextReader &reader);
             void xml_write(xmlpp::Element *elt) const;
             bool check() const;
             bool empty() const;
@@ -122,7 +122,7 @@ namespace hwm
             intervals::interval_t           neighbor_interval;
         };
 
-        bool xml_read (network &n, xmlpp::TextReader &reader);
+        void xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
         void auto_scale_memberships();
@@ -204,7 +204,7 @@ namespace hwm
             typedef intersection::state::state_pair_set::index<intersection::state::in >::type state_pair_in;
             typedef intersection::state::state_pair_set::index<intersection::state::out>::type state_pair_out;
 
-            bool xml_read (xmlpp::TextReader &reader);
+            void xml_read (xmlpp::TextReader &reader);
             void xml_write(const size_t id, xmlpp::Element *elt) const;
             bool check(const intersection &parent) const;
 
@@ -225,7 +225,7 @@ namespace hwm
             strhash<lane>::type fict_lanes;
         };
 
-        bool xml_read (network &n, xmlpp::TextReader &reader);
+        void xml_read (network &n, xmlpp::TextReader &reader);
         void xml_write(xmlpp::Element *elt) const;
         bool check() const;
 
@@ -268,7 +268,7 @@ namespace hwm
 
         network &operator=(const network &n);
 
-        bool xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f,1.0f,1.0f));
+        void xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f,1.0f,1.0f));
         void xml_write(const char *filename) const;
         void xml_write(xmlpp::Element *elt)  const;
         bool check() const;
