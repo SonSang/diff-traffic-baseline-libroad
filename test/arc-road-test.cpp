@@ -477,6 +477,12 @@ public:
                     glColor3f(0.0, 0.0, 1.0);
                 glVertex3fv(ar->points_[i].data());
             }
+            for(size_t i = 1; i < ar->points_.size()-1; ++i)
+            {
+                glColor3f(1.0, 0.0, 0.0);
+                const vec3f c(ar->center(i));
+                glVertex3fv(c.data());
+            }
             glEnd();
 
             glUseProgram(0);
