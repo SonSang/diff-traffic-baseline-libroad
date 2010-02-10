@@ -4,8 +4,8 @@ libroad_la_SOURCES  = polyline_road.cpp \
 		      arc_road.cpp \
 		      sumo_network.cpp \
 		      sumo_xml_read.cpp \
-			  osm_network.cpp \
-			  osm_xml_read.cpp \
+		      osm_network.cpp \
+		      osm_xml_read.cpp \
 		      hwm_network.cpp \
 		      hwm_road.cpp \
 		      hwm_lane.cpp \
@@ -18,7 +18,7 @@ pkginclude_HEADERS  = partition01.hpp \
 		      polyline_road.hpp \
 		      arc_road.hpp \
 		      sumo_network.hpp \
-			  osm_network.hpp \
+		      osm_network.hpp \
 		      hwm_network.hpp \
 		      xml_util.hpp \
 		      libroad_common.hpp \
