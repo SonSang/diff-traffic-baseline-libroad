@@ -1,6 +1,8 @@
 #ifndef _LIBROAD_COMMON_HPP_
 #define _LIBROAD_COMMON_HPP_
 
+const char *libroad_package_string();
+
 #include <vector>
 #include <map>
 #include <algorithm>
