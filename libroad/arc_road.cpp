@@ -1,4 +1,5 @@
 #include "arc_road.hpp"
+#include "svg_helper.hpp"
 
 static mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
 {
@@ -992,6 +993,199 @@ bool arc_road::check() const
     && seg_clengths_.size() == N_pts
     && arc_clengths_.size() == N_pts-1
     && normals_.size()      == N_pts-1;
+}
+
+str  arc_road::svg_arc_path_center(const vec2f &interval, const float offset, const bool continuation) const
+{
+    const vec2f new_range(parameter_map(interval[0], offset), parameter_map(interval[1], offset));
+    return svg_arc_path(new_range, offset, continuation);
+}
+
+str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool continuation) const
+{
+    const vec3f up(0.0, 0.0, 1.0);
+
+    vec2f range(interval);
+    bool reversed = range[0] > range[1];
+    if(reversed)
+        std::swap(range[0], range[1]);
+
+    float        start_local;
+    size_t       start_arc;
+    const size_t start_feature = locate_scale(range[0], offset, start_local);
+
+    float        end_local;
+    const size_t end_feature   = locate_scale(range[1], offset, end_local);
+
+    std::vector<path_element*> path;
+    vec3f last_point;
+    if(start_feature & 1)
+    {
+        float end;
+        if(start_feature == end_feature)
+            end = end_local;
+        else
+            end = 1.0f;
+
+        vec2f in_range(std::max(0.0f, start_local),
+                       std::min(1.0f, end));
+
+        vec3f start;
+        {
+            vec3f pos;
+            vec3f tan;
+            circle_frame(pos, tan, in_range[0]*arcs_[start_feature/2], frames_[start_feature/2], radii_[start_feature/2]);
+
+            const vec3f left   (tvmet::normalize(tvmet::cross(up, tan)));
+            const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+            start = pos + left*offset;
+        }
+        {
+            vec3f pos;
+            vec3f tan;
+            circle_frame(pos, tan, in_range[1]*arcs_[start_feature/2], frames_[start_feature/2], radii_[start_feature/2]);
+            const vec3f left   (tvmet::normalize(tvmet::cross(up, tan)));
+            const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+            last_point = pos + left*offset;
+        }
+
+        path.push_back(new arc_segment(start, radii_[start_feature/2], offset, (frames_[start_feature/2](2,2) < 0), last_point));
+
+        start_arc = start_feature/2 + 1;
+    }
+    else
+    {
+        vec3f pos, tan;
+        const int real_idx = start_feature/2-1;
+        if(real_idx < 0 || frames_.empty())
+        {
+            pos = points_.front();
+            tan = normals_.front();
+        }
+        else
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+        last_point = vec3f(pos + left*offset + tan*start_local*feature_size(start_feature, offset));
+
+        start_arc = start_feature/2;
+    }
+
+    const size_t end_arc = end_feature/2;
+    for(size_t i = start_arc; i < end_arc; ++i)
+    {
+        vec3f point0;
+        {
+            vec3f pos;
+            vec3f tan;
+            circle_frame(pos, tan, 0, frames_[i], radii_[i]);
+            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+            const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+            point0 = vec3f(pos + left*offset);
+        }
+
+        vec3f point1;
+        {
+            vec3f pos;
+            vec3f tan;
+            circle_frame(pos, tan, arcs_[i], frames_[i], radii_[i]);
+            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+            const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+            point1 = vec3f(pos + left*offset);
+        }
+
+        path.push_back(new line_segment(last_point, point0));
+        last_point = point1;
+        path.push_back(new arc_segment(point0, radii_[i], offset, (frames_[i](2,2) < 0), point1));
+    }
+
+    if(end_feature & 1)
+    {
+        if(start_feature != end_feature)
+        {
+            vec3f point0;
+            {
+                vec3f pos;
+                vec3f tan;
+                circle_frame(pos, tan, 0, frames_[end_feature/2], radii_[end_feature/2]);
+                const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+                const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+                point0 = vec3f(pos + left*offset);
+            }
+
+            vec3f point1;
+            {
+                vec3f pos;
+                vec3f tan;
+                circle_frame(pos, tan, end_local*arcs_[end_feature/2], frames_[end_feature/2], radii_[end_feature/2]);
+                const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+                const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+                point1 = vec3f(pos + left*offset);
+            }
+
+            path.push_back(new line_segment(last_point, point0));
+            last_point = point1;
+            path.push_back(new arc_segment(point0, radii_[end_feature/2], offset, (frames_[end_feature/2](2,2) < 0), point1));
+        }
+    }
+    else
+    {
+        vec3f pos, tan;
+        const int real_idx = end_feature/2-1;
+        if(real_idx < 0 || frames_.empty())
+        {
+            pos = points_.front();
+            tan = normals_.front();
+        }
+        else
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+        const vec3f end(pos + left*offset + tan*end_local*feature_size(end_feature, offset));
+        path.push_back(new line_segment(last_point, end));
+    }
+
+    if(reversed)
+    {
+        std::reverse(path.begin(), path.end());
+        BOOST_FOREACH(path_element *p, path)
+        {
+            p->reverse();
+        }
+    }
+
+    str res;
+    std::vector<path_element*>::iterator c = path.begin();
+    res.append((*c)->stringify(true));
+    for(; c != path.end(); ++c)
+        res.append((*c)->stringify(false));
+
+    BOOST_FOREACH(path_element *p, path)
+    {
+        delete p;
+    }
+
+    return res;
+}
+
+str arc_road::svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const
+{
+    polyline_road pr;
+    pr.points_ = points_;
+    pr.initialize();
+
+    return pr.svg_poly_path_center(interval, offset, continuation);
+}
+
+str arc_road::svg_poly_path(const vec2f &interval, const float offset, const bool continuation) const
+{
+    polyline_road pr;
+    pr.points_ = points_;
+    pr.initialize();
+
+    return pr.svg_poly_path(interval, offset, continuation);
 }
 
 bool projection_intersect(vec3f &result,

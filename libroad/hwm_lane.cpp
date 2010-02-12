@@ -267,6 +267,48 @@ namespace hwm
         ::make_mesh(faces, verts, vec2i(start_high, end_high), vec2i(verts.size(), end_high));
     }
 
+    str lane::svg_arc_path(const float lane_width) const
+    {
+        str res;
+        typedef road_membership::intervals::const_iterator rm_it;
+        for(rm_it current = road_memberships.begin(); current != road_memberships.end(); ++current)
+        {
+            const road_membership &rm = current->second;
+            res.append(rm.parent_road->rep.svg_arc_path_center(rm.interval, rm.lane_position-lane_width*0.5, false));
+        }
+
+        typedef road_membership::intervals::const_reverse_iterator rm_it_r;
+        for(rm_it_r current = road_memberships.rbegin(); current != road_memberships.rend(); ++current)
+        {
+            const road_membership &rm = current->second;
+            const vec2f rev_interval(rm.interval[1], rm.interval[0]);
+            res.append(rm.parent_road->rep.svg_arc_path_center(rev_interval, rm.lane_position+lane_width*0.5, false));
+        }
+
+        return res;
+    }
+
+    str lane::svg_poly_path(const float lane_width) const
+    {
+        str res;
+        typedef road_membership::intervals::const_iterator rm_it;
+        for(rm_it current = road_memberships.begin(); current != road_memberships.end(); ++current)
+        {
+            const road_membership &rm = current->second;
+            res.append(rm.parent_road->rep.svg_poly_path_center(rm.interval, rm.lane_position-lane_width*0.5, false));
+        }
+
+        typedef road_membership::intervals::const_reverse_iterator rm_it_r;
+        for(rm_it_r current = road_memberships.rbegin(); current != road_memberships.rend(); ++current)
+        {
+            const road_membership &rm = current->second;
+            const vec2f rev_interval(rm.interval[1], rm.interval[0]);
+            res.append(rm.parent_road->rep.svg_poly_path_center(rev_interval, rm.lane_position+lane_width*0.5, false));
+        }
+
+        return res;
+    }
+
     float lane::length     () const
     {
         float total = 0.0f;

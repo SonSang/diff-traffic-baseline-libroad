@@ -128,6 +128,8 @@ namespace hwm
         void auto_scale_memberships();
 
         void make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, float lane_width, float resolution) const;
+        str  svg_arc_path (float lane_width) const;
+        str  svg_poly_path(float lane_width) const;
 
         float   length     () const;
         vec3f   point      (float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
@@ -271,6 +273,9 @@ namespace hwm
         void xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f,1.0f,1.0f));
         void xml_write(const char *filename) const;
         void xml_write(xmlpp::Element *elt)  const;
+        void svg_road_write(const char *filename) const;
+        void svg_lane_write(const char *filename) const;
+
         bool check() const;
         void build_intersections();
         void build_fictitious_lanes();

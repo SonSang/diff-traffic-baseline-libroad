@@ -1,4 +1,5 @@
 #include "polyline_road.hpp"
+#include "svg_helper.hpp"
 
 #include <iostream>
 
@@ -6,27 +7,30 @@ polyline_road::~polyline_road()
 {
 }
 
-float polyline_road::length() const
+float polyline_road::length(const float offset) const
 {
-    return clengths_.back();
+    return clengths_.back() - 2*offset*cmitres_.back();
 }
 
-vec3f polyline_road::point(const float t) const
+vec3f polyline_road::point(const float t, const float offset) const
 {
-    float        local_t;
-    const size_t idx = locate_scale(t, local_t);
+    const size_t idx = locate(t, offset);
 
-    return vec3f(points_[idx] + local_t*(clengths_[idx+1] - clengths_[idx])*normals_[idx]);
+    const float last_cmitre = idx == 0 ? 0 : cmitres_[idx-1];
+    const float mitre       = cmitres_[idx] - last_cmitre;
+
+    const float local_t = t*length(offset) - (clengths_[idx] - offset*(cmitres_[idx] + last_cmitre));
+
+    const vec3f right(normals_[idx][1], -normals_[idx][0], 0.0f);
+    return vec3f(points_[idx] + (local_t + offset*mitre)*normals_[idx] - offset*right);
 }
 
-mat3x3f polyline_road::frame(const float t) const
+mat3x3f polyline_road::frame(const float t, const float offset) const
 {
-    float local_t;
-    const size_t idx = locate_scale(t, local_t);
+    const size_t idx = locate(t, offset);
 
     //* Equal to tvmet::cross(normals_[idX], vec3f(0,0,1));
-    const float rightlen = 1.0f/std::sqrt(normals_[idx][0]*normals_[idx][0] + normals_[idx][1]*normals_[idx][1]);
-    const vec3f right(normals_[idx][1]*rightlen, -normals_[idx][0]*rightlen, 0.0f);
+    const vec3f right(normals_[idx][1], -normals_[idx][0], 0.0f);
     const vec3f up(tvmet::cross(right, normals_[idx]));
 
     mat3x3f res;
@@ -37,20 +41,25 @@ mat3x3f polyline_road::frame(const float t) const
     return res;
 }
 
-mat4x4f polyline_road::point_frame(const float t) const
+mat4x4f polyline_road::point_frame(const float t, const float offset) const
 {
-    float local_t;
-    const size_t idx = locate_scale(t, local_t);
+    const size_t idx = locate(t, offset);
 
     //* Equal to tvmet::cross(normals_[idX], vec3f(0,0,1));
-    const float rightlen = 1.0f/std::sqrt(normals_[idx][0]*normals_[idx][0] + normals_[idx][1]*normals_[idx][1]);
-    const vec3f right(normals_[idx][1]*rightlen, -normals_[idx][0]*rightlen, 0.0f);
+    const vec3f right(normals_[idx][1], -normals_[idx][0], 0.0f);
     const vec3f up(tvmet::cross(right, normals_[idx]));
 
+    const float last_cmitre = idx == 0 ? 0 : cmitres_[idx-1];
+    const float mitre       = cmitres_[idx] - last_cmitre;
+
+    const float local_t = t*length(offset) - (clengths_[idx] - offset*(cmitres_[idx] + last_cmitre));
+
+    const vec3f point(points_[idx] + (local_t + offset*mitre)*normals_[idx] - offset*right);
+
     mat4x4f fr;
-    fr = normals_[idx][0], right[0], up[0], points_[idx][0] + local_t*normals_[idx][0],
-         normals_[idx][1], right[1], up[1], points_[idx][1] + local_t*normals_[idx][1],
-         normals_[idx][2], right[2], up[2], points_[idx][2] + local_t*normals_[idx][2],
+    fr = normals_[idx][0], right[0], up[0], point[0],
+         normals_[idx][1], right[1], up[1], point[1],
+         normals_[idx][2], right[2], up[2], point[2],
          0.0f,             0.0f,     0.0f,  1.0f;
     return fr;
 }
@@ -88,12 +97,11 @@ bool polyline_road::initialize()
     if (N >= 2){
         for(size_t i = 0; i < N - 2; ++i)
         {
-
             const float dot = tvmet::dot(normals_[i], normals_[i+1]);
             if(std::abs(dot + 1.0f) < FLT_EPSILON)
                 return false;
             const float orient = normals_[i][1] * normals_[i+1][0] - normals_[i][0]*normals_[i+1][1];
-            const float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f - dot)/(1.0f + dot)), orient);
+            const float mitre  = (dot > 1.0f) ? 0.0f : copysign(std::sqrt((1.0f - dot)/(1.0f + dot)), -orient);
 
             cmitres_[i+1] += cmitres_[i] + mitre;
         }
@@ -105,17 +113,17 @@ bool polyline_road::initialize()
     return true;
 }
 
-inline size_t polyline_road::locate(const float t) const
+inline size_t polyline_road::locate(const float t, const float offset) const
 {
-    const float                              scale_t = t*length();
+    const float                              scale_t = t*length(offset);
     const std::vector<float>::const_iterator found   = std::upper_bound(clengths_.begin(), clengths_.end(), scale_t);
     const size_t                             idx     = found - clengths_.begin();
     return (idx > 0) ? idx - 1 : 0;
 }
 
-inline size_t polyline_road::locate_scale(const float t, float &local_t) const
+inline size_t polyline_road::locate_scale(float &local_t, const float offset, const float t) const
 {
-    const float                              scale_t = t*length();
+    const float                              scale_t = t*length(offset);
     const std::vector<float>::const_iterator found   = std::upper_bound(clengths_.begin(), clengths_.end(), scale_t);
     const size_t                             idx     = found - clengths_.begin();
     if(idx > 0)
@@ -134,6 +142,70 @@ bool polyline_road::check() const
 {
     return (!points_.empty() &&
             points_.size() == clengths_.size() &&
+            points_.size() == cmitres_.size() &&
             points_.size() == normals_.size() + 1);
 }
 
+str polyline_road::svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const
+{
+    return svg_poly_path(interval, offset, continuation);
+}
+
+str polyline_road::svg_poly_path       (const vec2f &interval, const float offset, const bool continuation) const
+{
+    vec2f range(interval);
+    bool reversed = range[0] > range[1];
+    if(reversed)
+        std::swap(range[0], range[1]);
+
+    const size_t start_idx = std::min(normals_.size()-1, locate(range[0], offset));
+    const size_t end_idx   = std::min(normals_.size()-1, locate(range[1], offset));
+
+    std::vector<line_segment> path;
+
+    vec3f last_point;
+    {
+        const float last_cmitre = start_idx == 0 ? 0 : cmitres_[start_idx-1];
+        const float mitre       = cmitres_[start_idx] - last_cmitre;
+
+        const float local_t = range[0]*length(offset) - (clengths_[start_idx] - offset*(cmitres_[start_idx] + last_cmitre));
+
+        const vec3f right(normals_[start_idx][1], -normals_[start_idx][0], 0.0f);
+        last_point = points_[start_idx] + (local_t + offset*mitre)*normals_[start_idx] - offset*right;
+    }
+    for(int c = start_idx + 1; c <= static_cast<int>(end_idx); ++c)
+    {
+        const float mitre = cmitres_[c] - cmitres_[c-1];
+
+        const vec3f right(normals_[c][1], -normals_[c][0], 0.0f);
+        const vec3f new_point(points_[c] + offset*(mitre*normals_[c] - right));
+        path.push_back(line_segment(last_point, new_point));
+        last_point = new_point;
+    }
+    {
+        const float last_cmitre = end_idx == 0 ? 0 : cmitres_[end_idx-1];
+        const float mitre       = cmitres_[end_idx] - last_cmitre;
+
+        const float local_t = range[1]*length(offset) - (clengths_[end_idx] - offset*(cmitres_[end_idx] + last_cmitre));
+
+        const vec3f right(normals_[end_idx][1], -normals_[end_idx][0], 0.0f);
+        path.push_back(line_segment(last_point, vec3f(points_[end_idx] + (local_t + offset*mitre)*normals_[end_idx] - offset*right)));
+    }
+
+    if(reversed)
+    {
+        std::reverse(path.begin(), path.end());
+        BOOST_FOREACH(line_segment &l, path)
+        {
+            l.reverse();
+        }
+    }
+
+    str res;
+    std::vector<line_segment>::iterator c = path.begin();
+    res.append(c->stringify(true));
+    for(; c != path.end(); ++c)
+        res.append(c->stringify(false));
+
+    return res;
+}

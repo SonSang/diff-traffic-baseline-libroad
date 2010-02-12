@@ -7,15 +7,15 @@ struct polyline_road
 {
     ~polyline_road();
 
-    float   length     ()        const;
-    vec3f   point      (float t) const;
-    mat3x3f frame      (float t) const;
-    mat4x4f point_frame(float t) const;
+    float   length     (float offset)          const;
+    vec3f   point      (float t, float offset) const;
+    mat3x3f frame      (float t, float offset) const;
+    mat4x4f point_frame(float t, float offset) const;
     void    translate(const vec3f &o);
 
     bool   initialize();
-    size_t locate(float t) const;
-    size_t locate_scale(float t, float &local) const;
+    size_t locate(float t, float offset) const;
+    size_t locate_scale(float &local, float t, float offset) const;
 
     void   xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void   xml_write(xmlpp::Element *elt) const;
@@ -25,6 +25,9 @@ struct polyline_road
     std::vector<vec3f> normals_;
     std::vector<float> clengths_;
     std::vector<float> cmitres_;
+
+    str svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const;
+    str svg_poly_path       (const vec2f &interval, const float offset, const bool continuation) const;
 
     float inv_len_;
 };

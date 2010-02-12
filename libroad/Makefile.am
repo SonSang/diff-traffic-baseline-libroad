@@ -22,6 +22,7 @@ pkginclude_HEADERS  = partition01.hpp \
 		      hwm_network.hpp \
 		      xml_util.hpp \
 		      libroad_common.hpp \
+		      svg_helper.hpp \
 		      hwm_draw.hpp
 
 libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
