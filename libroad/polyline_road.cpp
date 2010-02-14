@@ -161,7 +161,7 @@ str polyline_road::svg_poly_path       (const vec2f &interval, const float offse
     const size_t start_idx = std::min(normals_.size()-1, locate(range[0], offset));
     const size_t end_idx   = std::min(normals_.size()-1, locate(range[1], offset));
 
-    std::vector<line_segment> path;
+    path p;
 
     vec3f last_point;
     {
@@ -179,7 +179,7 @@ str polyline_road::svg_poly_path       (const vec2f &interval, const float offse
 
         const vec3f right(normals_[c][1], -normals_[c][0], 0.0f);
         const vec3f new_point(points_[c] + offset*(mitre*normals_[c] - right));
-        path.push_back(line_segment(last_point, new_point));
+        p.add_line(last_point, new_point);
         last_point = new_point;
     }
     {
@@ -189,23 +189,11 @@ str polyline_road::svg_poly_path       (const vec2f &interval, const float offse
         const float local_t = range[1]*length(offset) - (clengths_[end_idx] - offset*(cmitres_[end_idx] + last_cmitre));
 
         const vec3f right(normals_[end_idx][1], -normals_[end_idx][0], 0.0f);
-        path.push_back(line_segment(last_point, vec3f(points_[end_idx] + (local_t + offset*mitre)*normals_[end_idx] - offset*right)));
+        p.add_line(last_point, vec3f(points_[end_idx] + (local_t + offset*mitre)*normals_[end_idx] - offset*right));
     }
 
     if(reversed)
-    {
-        std::reverse(path.begin(), path.end());
-        BOOST_FOREACH(line_segment &l, path)
-        {
-            l.reverse();
-        }
-    }
+        p.reverse();
 
-    str res;
-    std::vector<line_segment>::iterator c = path.begin();
-    res.append(c->stringify(true));
-    for(; c != path.end(); ++c)
-        res.append(c->stringify(false));
-
-    return res;
+    return p.stringify();
 }

@@ -1017,7 +1017,7 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
     float        end_local;
     const size_t end_feature   = locate_scale(range[1], offset, end_local);
 
-    std::vector<path_element*> path;
+    path p;
     vec3f last_point;
     if(start_feature & 1)
     {
@@ -1049,7 +1049,7 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
             last_point = pos + left*offset;
         }
 
-        path.push_back(new arc_segment(start, radii_[start_feature/2], offset, (frames_[start_feature/2](2,2) < 0), last_point));
+        p.add_arc(start, radii_[start_feature/2], offset, (frames_[start_feature/2](2,2) < 0), last_point);
 
         start_arc = start_feature/2 + 1;
     }
@@ -1095,9 +1095,9 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
             point1 = vec3f(pos + left*offset);
         }
 
-        path.push_back(new line_segment(last_point, point0));
+        p.add_line(last_point, point0);
         last_point = point1;
-        path.push_back(new arc_segment(point0, radii_[i], offset, (frames_[i](2,2) < 0), point1));
+        p.add_arc(point0, radii_[i], offset, (frames_[i](2,2) < 0), point1);
     }
 
     if(end_feature & 1)
@@ -1124,9 +1124,9 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
                 point1 = vec3f(pos + left*offset);
             }
 
-            path.push_back(new line_segment(last_point, point0));
+            p.add_line(last_point, point0);
             last_point = point1;
-            path.push_back(new arc_segment(point0, radii_[end_feature/2], offset, (frames_[end_feature/2](2,2) < 0), point1));
+            p.add_arc(point0, radii_[end_feature/2], offset, (frames_[end_feature/2](2,2) < 0), point1);
         }
     }
     else
@@ -1144,30 +1144,13 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
         const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
         const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
         const vec3f end(pos + left*offset + tan*end_local*feature_size(end_feature, offset));
-        path.push_back(new line_segment(last_point, end));
+        p.add_line(last_point, end);
     }
 
     if(reversed)
-    {
-        std::reverse(path.begin(), path.end());
-        BOOST_FOREACH(path_element *p, path)
-        {
-            p->reverse();
-        }
-    }
+        p.reverse();
 
-    str res;
-    std::vector<path_element*>::iterator c = path.begin();
-    res.append((*c)->stringify(true));
-    for(; c != path.end(); ++c)
-        res.append((*c)->stringify(false));
-
-    BOOST_FOREACH(path_element *p, path)
-    {
-        delete p;
-    }
-
-    return res;
+    return p.stringify();
 }
 
 str arc_road::svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const
