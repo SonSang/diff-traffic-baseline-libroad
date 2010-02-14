@@ -66,6 +66,8 @@ struct arc_road
     str  svg_arc_path_center (const vec2f &interval, const float offset, const bool continuation) const;
     str  svg_arc_path        (const vec2f &interval, const float offset, const bool continuation) const;
     void svg_arc_circles     (const str &id, xmlpp::Element *parent) const;
+    void svg_arc_arcs        (const str &id, xmlpp::Element *parent) const;
+    str  svg_arc_arc_path    (const size_t feature) const;
     str  svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const;
     str  svg_poly_path       (const vec2f &interval, const float offset, const bool continuation) const;
 

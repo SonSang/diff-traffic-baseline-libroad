@@ -263,7 +263,7 @@ namespace hwm
 
     struct network
     {
-        static const int SVG_ROADS=1, SVG_LANES=4, SVG_ARCS=8;
+        static const int SVG_ROADS=1, SVG_LANES=4, SVG_ARCS=8, SVG_CIRCLES=16;
 
         network() {};
         network(const network &n);

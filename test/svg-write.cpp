@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    net.svg_write(argv[2], hwm::network::SVG_ROADS);
+    net.svg_write(argv[2], hwm::network::SVG_ROADS | hwm::network::SVG_ARCS | hwm::network::SVG_CIRCLES);
 
     return 0;
 }

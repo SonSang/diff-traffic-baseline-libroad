@@ -1155,6 +1155,20 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
     return p.stringify();
 }
 
+str arc_road::svg_arc_arc_path(const size_t i) const
+{
+    assert(i > 0 && i < normals_.size());
+
+    const vec3f c(center(i));
+    vec3f start,tan;
+    circle_frame(start, tan, 0, frames_[i-1], radii_[i-1]);
+
+    vec3f end;
+    circle_frame(end, tan, arcs_[i-1], frames_[i-1], radii_[i-1]);
+
+    return boost::str(boost::format("M%f,%f L%f,%f A%f,%f 0 0,%d %f,%f z") % c[0] % c[1] % start[0] % start[1] % radii_[i-1] % radii_[i-1] % (frames_[i-1](2,2) < 0) % end[0] % end[1]);
+}
+
 str arc_road::svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const
 {
     polyline_road pr;

@@ -41,13 +41,30 @@ void arc_road::xml_write(xmlpp::Element *elt) const
     }
 }
 
+void arc_road::svg_arc_arcs(const str &id, xmlpp::Element *parent) const
+{
+    if(points_.size() <= 2)
+        return;
+
+    xmlpp::Element *circle_group = parent->add_child("g");
+    circle_group->set_attribute("id", boost::str(boost::format("id%s_arcs") % id));
+
+    for(size_t i = 1; i < points_.size()-1; ++i)
+    {
+        xmlpp::Element *circle = circle_group->add_child("path");
+        circle->set_attribute("id", boost::str(boost::format("id%s_arc_%d") % id % (i-1)));
+
+        circle->set_attribute("d",  svg_arc_arc_path(i));
+    }
+}
+
 void arc_road::svg_arc_circles(const str &id, xmlpp::Element *parent) const
 {
+    if(points_.size() <= 2)
+        return;
+
     xmlpp::Element *circle_group = parent->add_child("g");
     circle_group->set_attribute("id", boost::str(boost::format("id%s_circles") % id));
-    circle_group->set_attribute("fill", "none");
-    circle_group->set_attribute("stroke", "red");
-    circle_group->set_attribute("stroke-width", "1");
 
     for(size_t i = 1; i < points_.size()-1; ++i)
     {
@@ -55,6 +72,7 @@ void arc_road::svg_arc_circles(const str &id, xmlpp::Element *parent) const
         assert(std::isfinite(c[0]));
         xmlpp::Element *circle = circle_group->add_child("circle");
         circle->set_attribute("id", boost::str(boost::format("id%s_circle_%d") % id % (i-1)));
+
         circle->set_attribute("cx", boost::lexical_cast<str>(c[0]));
         circle->set_attribute("cy", boost::lexical_cast<str>(c[1]));
         circle->set_attribute("r", boost::lexical_cast<str>(radii_[i-1]));
@@ -278,6 +296,24 @@ namespace hwm
             polygroup->set_attribute("stroke", "black");
             polygroup->set_attribute("stroke-width", "0.5");
 
+            xmlpp::Element *arc_arcgroup, *arc_circlegroup;
+            if(flags & SVG_ARCS)
+            {
+                arc_arcgroup = arcgroup->add_child("g");
+                arc_arcgroup->set_attribute("id", "arcs");
+                arc_arcgroup->set_attribute("fill", "none");
+                arc_arcgroup->set_attribute("opacity", "1.0");
+                arc_arcgroup->set_attribute("stroke", "blue");
+            }
+            if(flags & SVG_CIRCLES)
+            {
+                arc_circlegroup = arcgroup->add_child("g");
+                arc_circlegroup->set_attribute("id", "circles");
+                arc_circlegroup->set_attribute("fill", "none");
+                arc_circlegroup->set_attribute("opacity", "1.0");
+                arc_circlegroup->set_attribute("stroke", "red");
+            }
+
             BOOST_FOREACH(const road_pair &rp, roads)
             {
                 {
@@ -286,7 +322,9 @@ namespace hwm
                     path->set_attribute("id", boost::str(boost::format("id%s_arc") % rp.first));
                 }
                 if(flags & SVG_ARCS)
-                    rp.second.rep.svg_arc_circles(rp.first, arcgroup);
+                    rp.second.rep.svg_arc_arcs(rp.first, arc_arcgroup);
+                if(flags & SVG_CIRCLES)
+                    rp.second.rep.svg_arc_circles(rp.first, arc_circlegroup);
                 {
                     xmlpp::Element *path = polygroup->add_child("path");
                     path->set_attribute("d", rp.second.rep.svg_poly_path(vec2f(0.0, 1.0), 0.0, false));
@@ -349,7 +387,9 @@ namespace hwm
                             path->set_attribute("id", boost::str(boost::format("%s_arc") % id));
                         }
                         if(flags & SVG_ARCS)
-                            ar.svg_arc_circles(id, arcgroup);
+                            ar.svg_arc_arcs(id, arc_arcgroup);
+                        if(flags & SVG_CIRCLES)
+                            ar.svg_arc_circles(id, arc_circlegroup);
                         {
                             xmlpp::Element *path  = polygroup->add_child("path");
                             path->set_attribute("d", ar.svg_poly_path(vec2f(0.0, 1.0), 0.0, false));
