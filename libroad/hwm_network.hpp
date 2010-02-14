@@ -273,8 +273,7 @@ namespace hwm
         void xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f,1.0f,1.0f));
         void xml_write(const char *filename) const;
         void xml_write(xmlpp::Element *elt)  const;
-        void svg_road_write(const char *filename) const;
-        void svg_lane_write(const char *filename) const;
+        void svg_write(const char *filename) const;
 
         bool check() const;
         void build_intersections();

@@ -204,7 +204,7 @@ namespace hwm
         xml_write_map(intersections, elt, "intersections");
     }
 
-    void network::svg_road_write(const char *filename) const
+    void network::svg_write(const char *filename) const
     {
         xmlpp::Document out;
         out.set_internal_subset("svg", "-//W3C//DTD SVG 1.1//EN", "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd");
@@ -234,20 +234,23 @@ namespace hwm
         root->set_attribute("version", "1.1");
 
         xmlpp::Element *title = root->add_child("title");
-        title->add_child_text(boost::str(boost::format("Roads in %s network") % name));
+        title->add_child_text(boost::str(boost::format("%s network") % name));
         xmlpp::Element *desc  = root->add_child("desc");
-        desc->add_child_text(boost::str(boost::format("Roads in %s network") % name));
+        desc->add_child_text(boost::str(boost::format("%s network") % name));
 
         xmlpp::Element *flipgroup = root->add_child("g");
         flipgroup->set_attribute("transform", boost::str(boost::format("scale(%11.8f,%11.8f) translate(%f,%f) scale(1, -1)") % (image_scale*width/wi) % (image_scale*height/hi) % h[0] % h[1]));
 
-        xmlpp::Element *arcgroup = flipgroup->add_child("g");
+        xmlpp::Element *roadgroup = flipgroup->add_child("g");
+        roadgroup->set_attribute("id", "roads");
+
+        xmlpp::Element *arcgroup = roadgroup->add_child("g");
         arcgroup->set_attribute("id", "arc_roads");
         arcgroup->set_attribute("fill", "none");
         arcgroup->set_attribute("stroke", "black");
         arcgroup->set_attribute("stroke-width", "1");
 
-        xmlpp::Element *polygroup = flipgroup->add_child("g");
+        xmlpp::Element *polygroup = roadgroup->add_child("g");
         polygroup->set_attribute("id", "poly_roads");
         polygroup->set_attribute("fill", "none");
         polygroup->set_attribute("stroke", "black");
@@ -330,53 +333,16 @@ namespace hwm
             }
         }
 
-        out.write_to_file_formatted(filename, "utf-8");
-    }
+        xmlpp::Element *lanegroup = flipgroup->add_child("g");
+        lanegroup->set_attribute("id", "lanes");
 
-    void network::svg_lane_write(const char *filename) const
-    {
-        xmlpp::Document out;
-        out.set_internal_subset("svg", "-//W3C//DTD SVG 1.1//EN", "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd");
-        xmlpp::Element *root(out.create_root_node("svg", "http://www.w3.org/2000/svg"));
-
-        vec3f l(FLT_MAX);
-        vec3f h(-FLT_MAX);
-        bounding_box(l, h);
-        const float wi = h[0] - l[0];
-        const float hi = h[1] - l[1];
-        float width;
-        float height;
-        if(wi > hi)
-        {
-            width = 1;
-            height = hi/wi;
-        }
-        else
-        {
-            height = 1;
-            width = wi/hi;
-        }
-        float image_scale = 500;
-
-        root->set_attribute("width", boost::str(boost::format("%fpx") % (image_scale*width)));
-        root->set_attribute("height", boost::str(boost::format("%fpx") % (image_scale*height)));
-        root->set_attribute("version", "1.1");
-
-        xmlpp::Element *title = root->add_child("title");
-        title->add_child_text(boost::str(boost::format("Lanes in %s network") % name));
-        xmlpp::Element *desc  = root->add_child("desc");
-        desc->add_child_text(boost::str(boost::format("Lanes in %s network") % name));
-
-        xmlpp::Element *flipgroup = root->add_child("g");
-        flipgroup->set_attribute("transform", boost::str(boost::format("scale(%11.8f,%11.8f) translate(%f,%f) scale(1, -1)") % (image_scale*width/wi) % (image_scale*height/hi) % h[0] % h[1]));
-
-        xmlpp::Element *arcgroup = flipgroup->add_child("g");
+        arcgroup = lanegroup->add_child("g");
         arcgroup->set_attribute("id", "arc_lanes");
         arcgroup->set_attribute("fill", "none");
         arcgroup->set_attribute("stroke", "black");
         arcgroup->set_attribute("stroke-width", "0.5");
 
-        xmlpp::Element *polygroup = flipgroup->add_child("g");
+        polygroup = lanegroup->add_child("g");
         polygroup->set_attribute("id", "poly_lanes");
         polygroup->set_attribute("fill", "none");
         polygroup->set_attribute("stroke", "black");
