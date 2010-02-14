@@ -195,5 +195,6 @@ str polyline_road::svg_poly_path       (const vec2f &interval, const float offse
     if(reversed)
         p.reverse();
 
+    p.remove_duplicates();
     return p.stringify();
 }

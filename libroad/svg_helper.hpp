@@ -107,6 +107,23 @@ struct path
         elements.push_back(new arc_segment(p0, r, off, o, p1));
     }
 
+    void remove_duplicates()
+    {
+        std::vector<path_element*> new_elements;
+        new_elements.push_back(elements.front());
+        std::vector<path_element*>::iterator c = boost::next(elements.begin());
+        for(; c != elements.end(); ++c)
+        {
+            if(distance2((*c)->point0(), (new_elements.back())->point0()) < 1e-4 ||
+               distance2((*c)->point1(), (new_elements.back())->point1()) < 1e-4)
+                delete *c;
+            else
+                new_elements.push_back(*c);
+        }
+
+        elements.swap(new_elements);
+    }
+
     void reverse()
     {
         std::reverse(elements.begin(), elements.end());
