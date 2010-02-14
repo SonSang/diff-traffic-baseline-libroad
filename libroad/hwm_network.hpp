@@ -263,6 +263,8 @@ namespace hwm
 
     struct network
     {
+        static const int SVG_ROADS=1, SVG_LANES=4, SVG_ARCS=8;
+
         network() {};
         network(const network &n);
 
@@ -273,7 +275,7 @@ namespace hwm
         void xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f,1.0f,1.0f));
         void xml_write(const char *filename) const;
         void xml_write(xmlpp::Element *elt)  const;
-        void svg_write(const char *filename) const;
+        void svg_write(const char *filename, const int flags) const;
 
         bool check() const;
         void build_intersections();

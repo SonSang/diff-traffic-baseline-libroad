@@ -63,10 +63,11 @@ struct arc_road
     void   xml_write(xmlpp::Element *elt) const;
     bool   check() const;
 
-    str svg_arc_path_center (const vec2f &interval, const float offset, const bool continuation) const;
-    str svg_arc_path        (const vec2f &interval, const float offset, const bool continuation) const;
-    str svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const;
-    str svg_poly_path       (const vec2f &interval, const float offset, const bool continuation) const;
+    str  svg_arc_path_center (const vec2f &interval, const float offset, const bool continuation) const;
+    str  svg_arc_path        (const vec2f &interval, const float offset, const bool continuation) const;
+    void svg_arc_circles     (const str &id, xmlpp::Element *parent) const;
+    str  svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const;
+    str  svg_poly_path       (const vec2f &interval, const float offset, const bool continuation) const;
 
     std::vector<mat4x4f> frames_;
     std::vector<float>   radii_;

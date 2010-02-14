@@ -41,6 +41,26 @@ void arc_road::xml_write(xmlpp::Element *elt) const
     }
 }
 
+void arc_road::svg_arc_circles(const str &id, xmlpp::Element *parent) const
+{
+    xmlpp::Element *circle_group = parent->add_child("g");
+    circle_group->set_attribute("id", boost::str(boost::format("id%s_circles") % id));
+    circle_group->set_attribute("fill", "none");
+    circle_group->set_attribute("stroke", "red");
+    circle_group->set_attribute("stroke-width", "1");
+
+    for(size_t i = 1; i < points_.size()-1; ++i)
+    {
+        const vec3f c(center(i));
+        assert(std::isfinite(c[0]));
+        xmlpp::Element *circle = circle_group->add_child("circle");
+        circle->set_attribute("id", boost::str(boost::format("id%s_circle_%d") % id % (i-1)));
+        circle->set_attribute("cx", boost::lexical_cast<str>(c[0]));
+        circle->set_attribute("cy", boost::lexical_cast<str>(c[1]));
+        circle->set_attribute("r", boost::lexical_cast<str>(radii_[i-1]));
+    }
+}
+
 template <class T>
 void partition01<T>::xml_write(xmlpp::Element *elt, const str &name) const
 {
@@ -204,7 +224,7 @@ namespace hwm
         xml_write_map(intersections, elt, "intersections");
     }
 
-    void network::svg_write(const char *filename) const
+    void network::svg_write(const char *filename, const int flags) const
     {
         xmlpp::Document out;
         out.set_internal_subset("svg", "-//W3C//DTD SVG 1.1//EN", "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd");
@@ -241,142 +261,152 @@ namespace hwm
         xmlpp::Element *flipgroup = root->add_child("g");
         flipgroup->set_attribute("transform", boost::str(boost::format("scale(%11.8f,%11.8f) translate(%f,%f) scale(1, -1)") % (image_scale*width/wi) % (image_scale*height/hi) % h[0] % h[1]));
 
-        xmlpp::Element *roadgroup = flipgroup->add_child("g");
-        roadgroup->set_attribute("id", "roads");
-
-        xmlpp::Element *arcgroup = roadgroup->add_child("g");
-        arcgroup->set_attribute("id", "arc_roads");
-        arcgroup->set_attribute("fill", "none");
-        arcgroup->set_attribute("stroke", "black");
-        arcgroup->set_attribute("stroke-width", "1");
-
-        xmlpp::Element *polygroup = roadgroup->add_child("g");
-        polygroup->set_attribute("id", "poly_roads");
-        polygroup->set_attribute("fill", "none");
-        polygroup->set_attribute("stroke", "black");
-        polygroup->set_attribute("stroke-width", "1");
-
-        BOOST_FOREACH(const road_pair &rp, roads)
+        if(flags & SVG_ROADS)
         {
-            {
-                xmlpp::Element *path = arcgroup->add_child("path");
-                path->set_attribute("d", rp.second.rep.svg_arc_path(vec2f(0.0, 1.0), 0.0, false));
-                path->set_attribute("id", boost::str(boost::format("id%s_arc") % rp.first));
-            }
-            {
-                xmlpp::Element *path = polygroup->add_child("path");
-                path->set_attribute("d", rp.second.rep.svg_poly_path(vec2f(0.0, 1.0), 0.0, false));
-                path->set_attribute("id", boost::str(boost::format("id%s_poly") % rp.first));
-            }
-        }
+            xmlpp::Element *roadgroup = flipgroup->add_child("g");
+            roadgroup->set_attribute("id", "roads");
 
-        std::tr1::unordered_map<const str, bool, hash<const str> > fict_road_map;
-        BOOST_FOREACH(const intersection_pair &ip, intersections)
-        {
-            BOOST_FOREACH(const intersection::state &s, ip.second.states)
+            xmlpp::Element *arcgroup = roadgroup->add_child("g");
+            arcgroup->set_attribute("id", "arc_roads");
+            arcgroup->set_attribute("fill", "none");
+            arcgroup->set_attribute("stroke", "black");
+            arcgroup->set_attribute("stroke-width", "0.5");
+
+            xmlpp::Element *polygroup = roadgroup->add_child("g");
+            polygroup->set_attribute("id", "poly_roads");
+            polygroup->set_attribute("fill", "none");
+            polygroup->set_attribute("stroke", "black");
+            polygroup->set_attribute("stroke-width", "0.5");
+
+            BOOST_FOREACH(const road_pair &rp, roads)
             {
-                intersection::state::state_pair_in::iterator current = s.in_pair().begin();
-                for(; current != s.in_pair().end(); ++current)
                 {
-                    const intersection::state::state_pair &sp = *current;
+                    xmlpp::Element *path = arcgroup->add_child("path");
+                    path->set_attribute("d", rp.second.rep.svg_arc_path(vec2f(0.0, 1.0), 0.0, false));
+                    path->set_attribute("id", boost::str(boost::format("id%s_arc") % rp.first));
+                }
+                if(flags & SVG_ARCS)
+                    rp.second.rep.svg_arc_circles(rp.first, arcgroup);
+                {
+                    xmlpp::Element *path = polygroup->add_child("path");
+                    path->set_attribute("d", rp.second.rep.svg_poly_path(vec2f(0.0, 1.0), 0.0, false));
+                    path->set_attribute("id", boost::str(boost::format("id%s_poly") % rp.first));
+                }
+            }
 
-                    const lane *in_lane  = ip.second.incoming[sp.in_idx];
-                    const lane *out_lane = ip.second.outgoing[sp.out_idx];
-
-                    const str id(boost::str(boost::format("id%s_to_%s") % in_lane->id % out_lane->id));
-
-                    std::tr1::unordered_map<const str, bool, hash<const str> >::const_iterator f = fict_road_map.find(id);
-                    if(f != fict_road_map.end())
-                        continue;
-
-                    fict_road_map.insert(std::make_pair(id, true));
-
-                    const arc_road &in_road     = in_lane->road_memberships[1.0]->second.parent_road->rep;
-                    const float     in_param    = in_lane->road_memberships[1.0]->second.interval[1];
-                    const bool      in_reverse  = in_lane->road_memberships[1.0]->second.interval[0] > in_lane->road_memberships[1.0]->second.interval[1];
-
-                    const arc_road &out_road    = out_lane->road_memberships[0.0]->second.parent_road->rep;
-                    const float     out_param   = out_lane->road_memberships[0.0]->second.interval[0];
-                    const bool      out_reverse = out_lane->road_memberships[0.0]->second.interval[0] > out_lane->road_memberships[0.0]->second.interval[1];
-
-                    vec3f start_point;
-                    vec3f start_tan;
-                    vec3f end_point;
-                    vec3f end_tan;
+            std::tr1::unordered_map<const str, bool, hash<const str> > fict_road_map;
+            BOOST_FOREACH(const intersection_pair &ip, intersections)
+            {
+                BOOST_FOREACH(const intersection::state &s, ip.second.states)
+                {
+                    intersection::state::state_pair_in::iterator current = s.in_pair().begin();
+                    for(; current != s.in_pair().end(); ++current)
                     {
-                        const mat4x4f start(in_road. point_frame(in_param,  0,  in_reverse));
-                        const mat4x4f end  (out_road.point_frame(out_param, 0, out_reverse));
-                        for(int i = 0; i < 3; ++i)
+                        const intersection::state::state_pair &sp = *current;
+
+                        const lane *in_lane  = ip.second.incoming[sp.in_idx];
+                        const lane *out_lane = ip.second.outgoing[sp.out_idx];
+
+                        const str id(boost::str(boost::format("id%s_to_%s") % in_lane->id % out_lane->id));
+
+                        std::tr1::unordered_map<const str, bool, hash<const str> >::const_iterator f = fict_road_map.find(id);
+                        if(f != fict_road_map.end())
+                            continue;
+
+                        fict_road_map.insert(std::make_pair(id, true));
+
+                        const arc_road &in_road     = in_lane->road_memberships[1.0]->second.parent_road->rep;
+                        const float     in_param    = in_lane->road_memberships[1.0]->second.interval[1];
+                        const bool      in_reverse  = in_lane->road_memberships[1.0]->second.interval[0] > in_lane->road_memberships[1.0]->second.interval[1];
+
+                        const arc_road &out_road    = out_lane->road_memberships[0.0]->second.parent_road->rep;
+                        const float     out_param   = out_lane->road_memberships[0.0]->second.interval[0];
+                        const bool      out_reverse = out_lane->road_memberships[0.0]->second.interval[0] > out_lane->road_memberships[0.0]->second.interval[1];
+
+                        vec3f start_point;
+                        vec3f start_tan;
+                        vec3f end_point;
+                        vec3f end_tan;
                         {
-                            start_point[i] = start(i, 3);
-                            start_tan[i]   = start(i, 0);
-                            end_point[i]   = end(i, 3);
-                            end_tan[i]     = -end(i, 0);
+                            const mat4x4f start(in_road. point_frame(in_param,  0,  in_reverse));
+                            const mat4x4f end  (out_road.point_frame(out_param, 0, out_reverse));
+                            for(int i = 0; i < 3; ++i)
+                            {
+                                start_point[i] = start(i, 3);
+                                start_tan[i]   = start(i, 0);
+                                end_point[i]   = end(i, 3);
+                                end_tan[i]     = -end(i, 0);
+                            }
                         }
-                    }
-                    arc_road ar;
-                    ar.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
-                                                                     start_tan,
-                                                                     end_point,
-                                                                     end_tan));
-                    {
-                        xmlpp::Element *path  = arcgroup->add_child("path");
-                        path->set_attribute("d", ar.svg_arc_path(vec2f(0.0, 1.0), 0.0, false));
-                        path->set_attribute("id", boost::str(boost::format("%s_arc") % id));
-                    }
-                    {
-                        xmlpp::Element *path  = polygroup->add_child("path");
-                        path->set_attribute("d", ar.svg_poly_path(vec2f(0.0, 1.0), 0.0, false));
-                        path->set_attribute("id", boost::str(boost::format("%s_poly") % id));
+                        arc_road ar;
+                        ar.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
+                                                                         start_tan,
+                                                                         end_point,
+                                                                         end_tan));
+                        {
+                            xmlpp::Element *path  = arcgroup->add_child("path");
+                            path->set_attribute("d", ar.svg_arc_path(vec2f(0.0, 1.0), 0.0, false));
+                            path->set_attribute("id", boost::str(boost::format("%s_arc") % id));
+                        }
+                        if(flags & SVG_ARCS)
+                            ar.svg_arc_circles(id, arcgroup);
+                        {
+                            xmlpp::Element *path  = polygroup->add_child("path");
+                            path->set_attribute("d", ar.svg_poly_path(vec2f(0.0, 1.0), 0.0, false));
+                            path->set_attribute("id", boost::str(boost::format("%s_poly") % id));
+                        }
                     }
                 }
             }
         }
 
-        xmlpp::Element *lanegroup = flipgroup->add_child("g");
-        lanegroup->set_attribute("id", "lanes");
-
-        arcgroup = lanegroup->add_child("g");
-        arcgroup->set_attribute("id", "arc_lanes");
-        arcgroup->set_attribute("fill", "none");
-        arcgroup->set_attribute("stroke", "black");
-        arcgroup->set_attribute("stroke-width", "0.5");
-
-        polygroup = lanegroup->add_child("g");
-        polygroup->set_attribute("id", "poly_lanes");
-        polygroup->set_attribute("fill", "none");
-        polygroup->set_attribute("stroke", "black");
-        polygroup->set_attribute("stroke-width", "0.5");
-
-        BOOST_FOREACH(const lane_pair &lp, lanes)
+        if(flags & SVG_LANES)
         {
-            {
-                xmlpp::Element *path = arcgroup->add_child("path");
-                path->set_attribute("d", lp.second.svg_arc_path(lane_width));
-                path->set_attribute("id", boost::str(boost::format("id%s_arc") % lp.first));
-            }
-            {
-                xmlpp::Element *path = polygroup->add_child("path");
-                path->set_attribute("d", lp.second.svg_poly_path(lane_width));
-                path->set_attribute("id", boost::str(boost::format("id%s_poly") % lp.first));
-            }
-        }
+            xmlpp::Element *lanegroup = flipgroup->add_child("g");
+            lanegroup->set_attribute("id", "lanes");
 
-        BOOST_FOREACH(const intersection_pair &ip, intersections)
-        {
-            BOOST_FOREACH(const intersection::state &s, ip.second.states)
+            xmlpp::Element *arcgroup = lanegroup->add_child("g");
+            arcgroup->set_attribute("id", "arc_lanes");
+            arcgroup->set_attribute("fill", "none");
+            arcgroup->set_attribute("stroke", "black");
+            arcgroup->set_attribute("stroke-width", "0.5");
+
+            xmlpp::Element *polygroup = lanegroup->add_child("g");
+            polygroup->set_attribute("id", "poly_lanes");
+            polygroup->set_attribute("fill", "none");
+            polygroup->set_attribute("stroke", "black");
+            polygroup->set_attribute("stroke-width", "0.5");
+
+            BOOST_FOREACH(const lane_pair &lp, lanes)
             {
-                BOOST_FOREACH(const lane_pair &lp, s.fict_lanes)
                 {
+                    xmlpp::Element *path = arcgroup->add_child("path");
+                    path->set_attribute("d", lp.second.svg_arc_path(lane_width));
+                    path->set_attribute("id", boost::str(boost::format("id%s_arc") % lp.first));
+                }
+                {
+                    xmlpp::Element *path = polygroup->add_child("path");
+                    path->set_attribute("d", lp.second.svg_poly_path(lane_width));
+                    path->set_attribute("id", boost::str(boost::format("id%s_poly") % lp.first));
+                }
+            }
+
+            BOOST_FOREACH(const intersection_pair &ip, intersections)
+            {
+                BOOST_FOREACH(const intersection::state &s, ip.second.states)
+                {
+                    BOOST_FOREACH(const lane_pair &lp, s.fict_lanes)
                     {
-                        xmlpp::Element *path = arcgroup->add_child("path");
-                        path->set_attribute("d", lp.second.svg_arc_path(lane_width));
-                        path->set_attribute("id", boost::str(boost::format("id%s_arc") % lp.first));
-                    }
-                    {
-                        xmlpp::Element *path = polygroup->add_child("path");
-                        path->set_attribute("d", lp.second.svg_poly_path(lane_width));
-                        path->set_attribute("id", boost::str(boost::format("id%s_poly") % lp.first));
+                        {
+                            xmlpp::Element *path = arcgroup->add_child("path");
+                            path->set_attribute("d", lp.second.svg_arc_path(lane_width));
+                            path->set_attribute("id", boost::str(boost::format("id%s_arc") % lp.first));
+                        }
+                        {
+                            xmlpp::Element *path = polygroup->add_child("path");
+                            path->set_attribute("d", lp.second.svg_poly_path(lane_width));
+                            path->set_attribute("id", boost::str(boost::format("id%s_poly") % lp.first));
+                        }
                     }
                 }
             }
@@ -385,4 +415,3 @@ namespace hwm
         out.write_to_file_formatted(filename, "utf-8");
     }
 }
-

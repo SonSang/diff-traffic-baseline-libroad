@@ -310,6 +310,7 @@ static vec3f inv_center(const vec3f center, const vec3f normal0, const vec3f nor
 
 vec3f arc_road::center(const size_t p) const
 {
+    assert(p > 0 && p < normals_.size());
     return ::center(points_[p], normals_[p-1], normals_[p], radii_[p-1]);
 }
 
