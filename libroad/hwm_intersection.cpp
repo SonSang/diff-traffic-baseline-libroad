@@ -37,27 +37,6 @@ namespace hwm
         }
     }
 
-    static inline bool projection_intersect(vec3f &result,
-                                            const vec3f &o0, const vec3f &n0,
-                                            const vec3f &o1, const vec3f &n1)
-    {
-        vec3f od(o1 - o0);
-        od[2] = 0.0f;
-        const float denom = -n0[0] * n1[1] + n0[1]*n1[0];
-        if(length2(od) < 1e-6 || std::abs(denom) < 1e-6)
-            return false;
-        const float t0 = (-n1[1]*od[0] + n1[0]*od[1])/denom;
-        const float t1 = (-n0[1]*od[0] + n0[0]*od[1])/denom;
-        if(t0 >= 2.0f && t1 >= 2.0f)
-        {
-            result = vec3f(o0 + n0*t0);
-            result[2] = (o0[2] + o1[2])/2;
-            return true;
-        }
-
-        return false;
-    }
-
     void intersection::state::build_fictitious_lanes(const intersection &parent)
     {
         intersection::state::state_pair_in::iterator current = in_pair().begin();
@@ -75,8 +54,8 @@ namespace hwm
             new_road_itr = fict_roads.insert(new_road_itr, std::make_pair(road_id, road()));
 
             road &new_road = new_road_itr->second;
-            new_road.name        = road_id;
-            new_road.id          = road_id;
+            new_road.name  = road_id;
+            new_road.id    = road_id;
 
             vec3f start_point;
             vec3f start_tan;
@@ -94,24 +73,10 @@ namespace hwm
                 }
             }
 
-            new_road.rep.points_.push_back(start_point);
-
-            vec3f middle;
-            bool okay(projection_intersect(middle,
-                                           start_point, start_tan,
-                                           end_point,   end_tan));
-
-            if(!okay)
-            {
-                new_road.rep.points_.push_back(vec3f(start_point + start_tan*4));
-                new_road.rep.points_.push_back(vec3f(end_point   + end_tan*4));
-            }
-            else
-                new_road.rep.points_.push_back(middle);
-
-            new_road.rep.points_.push_back(end_point);
-
-            new_road.rep.initialize_from_polyline(0.0f, new_road.rep.points_);
+            new_road.rep.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
+                                                                       start_tan,
+                                                                       end_point,
+                                                                       end_tan));
 
             assert(new_road.check());
 

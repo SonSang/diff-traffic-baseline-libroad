@@ -993,3 +993,50 @@ bool arc_road::check() const
     && arc_clengths_.size() == N_pts-1
     && normals_.size()      == N_pts-1;
 }
+
+bool projection_intersect(vec3f &result,
+                          const vec3f &o0, const vec3f &n0,
+                          const vec3f &o1, const vec3f &n1)
+{
+    vec3f od(o1 - o0);
+    od[2] = 0.0f;
+    const float denom = -n0[0] * n1[1] + n0[1]*n1[0];
+    if(length2(od) < 1e-6 || std::abs(denom) < 1e-6)
+            return false;
+    const float t0 = (-n1[1]*od[0] + n1[0]*od[1])/denom;
+    const float t1 = (-n0[1]*od[0] + n0[0]*od[1])/denom;
+    if(t0 >= 2.0f && t1 >= 2.0f)
+    {
+        result = vec3f(o0 + n0*t0);
+        result[2] = (o0[2] + o1[2])/2;
+        return true;
+    }
+
+    return false;
+}
+
+std::vector<vec3f> from_tan_pairs(const vec3f &start_point,
+                                  const vec3f &start_tan,
+                                  const vec3f &end_point,
+                                  const vec3f &end_tan)
+{
+
+    std::vector<vec3f> pts;
+    pts.push_back(start_point);
+
+    vec3f middle;
+    const bool okay(projection_intersect(middle,
+                                         start_point, start_tan,
+                                         end_point,   end_tan));
+    if(!okay)
+    {
+        pts.push_back(vec3f(start_point + start_tan*4));
+        pts.push_back(vec3f(end_point   + end_tan*4));
+    }
+    else
+        pts.push_back(middle);
+
+    pts.push_back(end_point);
+
+    return pts;
+}
