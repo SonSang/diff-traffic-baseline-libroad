@@ -1,4 +1,4 @@
-noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm
+noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write
 
 EXTRA_DIST = arcball.hpp
 
@@ -26,6 +26,11 @@ sumo_xml_to_hwm_SOURCES  = sumo-xml-to-hwm.cpp
 sumo_xml_to_hwm_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 sumo_xml_to_hwm_LDFLAGS  = $(LDFLAGS)
 sumo_xml_to_hwm_LDADD    = $(top_builddir)/libroad/libroad.la
+
+svg_write_SOURCES  = svg-write.cpp
+svg_write_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+svg_write_LDFLAGS  = $(LDFLAGS)
+svg_write_LDADD    = $(top_builddir)/libroad/libroad.la
 
 if DO_VISUAL
 noinst_PROGRAMS += arc-road-test view-network micro osm-test
