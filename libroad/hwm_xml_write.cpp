@@ -190,7 +190,7 @@ namespace hwm
         xmlpp::Element *root(out.create_root_node("network"));
         xml_write(root);
 
-        out.write_to_file_formatted(filename);
+        out.write_to_file_formatted(filename, "utf-8");
     }
 
     void network::xml_write(xmlpp::Element *elt) const
