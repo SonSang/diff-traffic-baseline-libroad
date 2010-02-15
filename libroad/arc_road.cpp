@@ -298,6 +298,15 @@ static vec3f center(const vec3f point, const vec3f normal0, const vec3f normal1,
     return vec3f(point + normal1*alpha + support*radius);
 }
 
+static vec3f inv_center(const vec3f center, const vec3f normal0, const vec3f normal1, const float radius)
+{
+    const float alpha(radius/cot_theta(normal0, normal1));
+    const vec3f plane(tvmet::normalize(tvmet::cross(normal0, normal1)));
+    const vec3f support(tvmet::normalize(tvmet::cross(plane, normal1)));
+
+    return vec3f(center - normal1*alpha - support*radius);
+}
+
 vec3f arc_road::center(const size_t p) const
 {
     return ::center(points_[p], normals_[p-1], normals_[p], radii_[p-1]);
@@ -318,6 +327,15 @@ bool arc_road::initialize_from_polyline(const float cull_prox, const std::vector
     radii_.resize(alphas.size());
     for(size_t i = 0; i < alphas.size(); ++i)
         radii_[i] = factors[i]*alphas[i];
+
+    remove_redundant();
+
+    if(!compute_geometric(lengths, factors))
+        return false;
+
+    alphas.resize(radii_.size());
+    for(size_t i = 0; i < alphas.size(); ++i)
+        alphas[i] = radii_[i]/factors[i];
 
     return initialize(alphas, lengths);
 }
@@ -364,6 +382,58 @@ bool arc_road::compute_geometric(std::vector<float> &lengths, std::vector<float>
         factors[i] = cot_theta(normals_[i], normals_[i+1]);
 
     return true;
+}
+
+void arc_road::remove_redundant()
+{
+    if(points_.size() <= 3)
+        return;
+
+    std::vector<vec3f> new_points;
+    std::vector<float> new_radii;
+    new_points.push_back(points_.front());
+
+    vec3f  last_center(center(1));
+    float  last_radius(radii_[0]);
+    size_t last_interior = 0;
+    for(size_t i = 1; i < radii_.size(); ++i)
+    {
+        vec3f new_center(center(i+1));
+        if(std::abs(radii_[i] - last_radius) < 1e-4 && distance2(new_center, last_center) < 1e-5)
+            continue;
+
+        if(last_interior+1 != i)
+        {
+            new_radii.push_back(last_radius);
+            new_points.push_back(inv_center(last_center, normals_[last_interior], normals_[i+1], last_radius));
+        }
+        else
+        {
+            new_radii.push_back(radii_[last_interior]);
+            new_points.push_back(points_[last_interior+1]);
+        }
+
+        last_center   = new_center;
+        last_radius   = radii_[i];
+        last_interior = i;
+    }
+
+    if(last_interior+1 < radii_.size())
+    {
+        new_radii.push_back(last_radius);
+
+        new_points.push_back(inv_center(last_center, normals_[last_interior], normals_.back(), last_radius));
+    }
+    else
+    {
+        new_radii.push_back(radii_[last_interior]);
+        new_points.push_back(points_[last_interior+1]);
+    }
+
+    new_points.push_back(points_.back());
+
+    radii_.swap(new_radii);
+    points_.swap(new_points);
 }
 
 bool arc_road::initialize(const std::vector<float> &alphas, std::vector<float> &lengths)

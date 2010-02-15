@@ -43,6 +43,7 @@ struct arc_road
     bool   compute_geometric(std::vector<float> &lengths, std::vector<float> &factors);
     bool   initialize_from_polyline(float cull_prox, const std::vector<vec3f> &points);
     bool   initialize_from_points_radii(const std::vector<vec3f> &points, const std::vector<float> &radii);
+    void   remove_redundant();
 
     bool   initialize(const std::vector<float> &alphas, std::vector<float> &lengths);
 
