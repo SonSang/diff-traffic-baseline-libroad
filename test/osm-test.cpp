@@ -81,10 +81,14 @@ void glWindow::draw(){
      osm::network s_net(osm::load_xml_network(argv[1]));
      net = &s_net;
      net->populate_edges_from_hash();
+     net->clip_roads_to_bounds();
      net->compute_edge_types();
      net->compute_node_degrees();
      net->scale_and_translate();
      net->split_into_road_segments();
+     net->create_ramps();
+     net->join_logical_roads();
+     net->join_logical_roads();
      net->remove_highway_intersections();
      net->compute_node_heights();
      net->join_logical_roads();

@@ -398,6 +398,8 @@ namespace hwm
             ++node_degree[e.shape[0]->id];
             ++node_degree[e.shape.back()->id];
 
+
+
             road &new_road = retrieve<road>(hnet.roads, e.id);
             new_road.name = new_road.id;
 
@@ -406,7 +408,6 @@ namespace hwm
             const osm::node* last;
             BOOST_FOREACH(const osm::node *n, e.shape)
             {
-
                 if (n->id != e.shape[0]->id)
                 {
                     if(sqrt(pow(n->xy[0] - last->xy[0],2)
@@ -455,38 +456,40 @@ namespace hwm
 
             for(int lanect = 0; lanect < et.nolanes; ++lanect)
             {
-                lane &new_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % e.id % lanect));
-                newlanes[lanect] = &new_lane;
-
-                //Store road to lane pointers.
-                roads_to_lanes[e.id].first.push_back(&new_lane);
-
-                new_lane.speedlimit = et.speed;
-                lane::road_membership rm;
-                rm.parent_road = parent_road;
-                rm.interval[0] = 0.0f;
-                rm.interval[1] = 1.0f;
-                rm.lane_position = -1*(lanect + 1);
-                new_lane.road_memberships.insert(0.0, rm);
-
-                if(start_inters)
-                {
-                    start_inters->outgoing.push_back(&new_lane);
-                    new_lane.start = new lane::intersection_terminus(start_inters, start_inters->outgoing.size()-1);
-                }
-                else
-                    new_lane.start = new lane::terminus();
-
-                if(end_inters)
-                {
-                    end_inters->incoming.push_back(&new_lane);
-                    new_lane.end = new lane::intersection_terminus(end_inters, end_inters->incoming.size()-1);
-                }
-                else
-                    new_lane.end = new lane::terminus();
-
                 if (et.oneway == 0)
                 {
+                    lane &new_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % e.id % lanect));
+                    newlanes[lanect] = &new_lane;
+
+                    //Store road to lane pointers.
+                    roads_to_lanes[e.id].first.push_back(&new_lane);
+
+                    new_lane.speedlimit = et.speed;
+                    lane::road_membership rm;
+                    rm.parent_road = parent_road;
+                    rm.interval[0] = 0.0f;
+                    rm.interval[1] = 1.0f;
+                    rm.lane_position = (2.5)*(-0.5 + -1*(lanect));
+
+                    new_lane.road_memberships.insert(0.0, rm);
+
+                    if(start_inters)
+                    {
+                        start_inters->outgoing.push_back(&new_lane);
+                        new_lane.start = new lane::intersection_terminus(start_inters, start_inters->outgoing.size()-1);
+                    }
+                    else
+                        new_lane.start = new lane::terminus();
+
+                    if(end_inters)
+                    {
+                        end_inters->incoming.push_back(&new_lane);
+                        new_lane.end = new lane::intersection_terminus(end_inters, end_inters->incoming.size()-1);
+                    }
+                    else
+                        new_lane.end = new lane::terminus();
+
+
                     //Add reverse lanes  (TODO one way roads)
                     lane &new_reverse_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d_reverse") % e.id % lanect));
                     new_reverse_lanes[lanect] = &new_reverse_lane;
@@ -499,7 +502,8 @@ namespace hwm
                     rm_rev.parent_road = parent_road;
                     rm_rev.interval[0] = 1.0f;
                     rm_rev.interval[1] = 0.0f;
-                    rm_rev.lane_position = (lanect + 1);
+                    rm_rev.lane_position = (2.5)*(0.5 + (lanect));;
+
                     new_reverse_lane.road_memberships.insert(0.0, rm_rev);
 
                     if(end_inters)
@@ -518,8 +522,50 @@ namespace hwm
                     else
                         new_reverse_lane.end = new lane::terminus();
                 }
+                else //Oneway road
+                {
+                    lane &new_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % e.id % lanect));
+                    newlanes[lanect] = &new_lane;
+
+                    //Store road to lane pointers.
+                    roads_to_lanes[e.id].first.push_back(&new_lane);
+
+                    new_lane.speedlimit = et.speed;
+                    lane::road_membership rm;
+                    rm.parent_road = parent_road;
+                    rm.interval[0] = 0.0f;
+                    rm.interval[1] = 1.0f;
+
+                    //TODO use lane width value, not constant
+
+                    float position = (2.5)*(lanect + -((et.nolanes - 1)/2.0));
+                    //Units possibly in half lane widths...
+
+                    rm.lane_position = position;
+                    new_lane.road_memberships.insert(0.0, rm);
+
+                    if(start_inters)
+                    {
+                        start_inters->outgoing.push_back(&new_lane);
+                        new_lane.start = new lane::intersection_terminus(start_inters, start_inters->outgoing.size()-1);
+                    }
+                    else
+                        new_lane.start = new lane::terminus();
+
+                    if(end_inters)
+                    {
+                        end_inters->incoming.push_back(&new_lane);
+                        new_lane.end = new lane::intersection_terminus(end_inters, end_inters->incoming.size()-1);
+                    }
+                    else
+                        new_lane.end = new lane::terminus();
+
+                }
 
             }
+
+            //Add merging lanes TODO
+
 
             for(int lanect = 0; lanect < et.nolanes; ++lanect)
             {
@@ -563,9 +609,11 @@ namespace hwm
             }
         }
 
+
         float STATE_DURATION = 20;
 
         //TODO Use geometric method to get minimal set of traffic states.
+
         typedef std::pair<const str, osm::intersection> isect_pair;
         BOOST_FOREACH(const isect_pair& i_pair, snet.intersections)
         {
@@ -574,6 +622,10 @@ namespace hwm
             assert(osm_isect.id_from_node != "");
 
             hwm::intersection& hwm_isect = hnet.intersections[osm_isect.id_from_node];
+            if (hwm_isect.id == "")
+            {
+                assert(0);
+            }
 
             //Add states for every pairing of roads that are ending here.
             for(int i = 0; i < static_cast<int>(osm_isect.edges_ending_here.size()); i++)
@@ -751,6 +803,17 @@ namespace hwm
             assert(i.second.id != "");
         }
 
+        // typedef strhash<hwm::road>::type::value_type hwm_r_pair;
+        // BOOST_FOREACH(const hwm_r_pair& r, hnet.roads)
+        // {
+        //     BOOST_FOREACH(const vec3f& v, r.second.rep.points_)
+        //     {
+        //         if (v[2] > 0)
+        //         {
+        //             std::cout << v[2] << std::endl;
+        //         }
+        //     }
+        // }
         return hnet;
     }
 }

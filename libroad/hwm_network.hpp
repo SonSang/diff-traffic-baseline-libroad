@@ -98,8 +98,6 @@ namespace hwm
             void check() const;
             bool empty() const;
 
-            void scale_offsets(float lane_width);
-
             float   length      () const;
             vec3f   point       (float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
             mat3x3f frame       (float t,                    const vec3f &up=vec3f(0, 0, 1)) const;

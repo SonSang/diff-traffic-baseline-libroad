@@ -109,6 +109,11 @@ namespace osm
 
                     n.center[0] = (maxlon - minlon)/2.0 + minlon;
                     n.center[1] = (maxlat - minlat)/2.0 + minlat;
+
+                    n.topleft[0] = minlon;
+                    n.topleft[1] = maxlat;
+                    n.bottomright[0] = maxlon;
+                    n.bottomright[1] = minlat;
                     std::cout << "Got " << minlat << " " << minlon << " " << maxlat
                               << " " << maxlon << std::endl;
                     std::cout << n.center[0] << " " << n.center[1] << std::endl;

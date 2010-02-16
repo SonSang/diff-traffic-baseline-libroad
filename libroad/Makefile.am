@@ -12,7 +12,8 @@ libroad_la_SOURCES  = polyline_road.cpp \
 		      hwm_intersection.cpp \
 		      hwm_xml_read.cpp \
 		      hwm_xml_write.cpp \
-		      libroad_common.cpp
+		      libroad_common.cpp \
+		      hwm_from_osm.cpp
 pkginclude_HEADERS  = partition01.hpp \
 		      road_rep.hpp \
 		      polyline_road.hpp \

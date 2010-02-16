@@ -53,8 +53,17 @@ namespace osm
         SPREAD     spread;
         str        highway_class;
 
-        std::vector<node*> overpass_nodes;
+        struct lane
+        {
+            lane(float s, float e, bool left):start_t(s), end_t(e), left_side(left){}
 
+            float start_t;
+            float end_t;
+            bool left_side;
+        };
+
+        std::vector<node*> overpass_nodes;
+        std::vector<lane>  additional_lanes;
 
         void reverse();
         float length() const;
@@ -86,12 +95,18 @@ namespace osm
 
 
         vec2d center;
+        vec2d topleft;
+        vec2d bottomright;
 
         //Error checking functions
         void node_degrees_and_edges_agree();
         void intersection_check();
         void edges_including_rebuild();
+        void display_used_node_heights();
 
+
+        bool out_of_bounds(tvmet::Vector<float, 3>);
+        void clip_roads_to_bounds();
         void create_ramps();
         void populate_edges_from_hash();
         void populate_edge_hash_from_edges();

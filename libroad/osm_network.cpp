@@ -1,4 +1,5 @@
 #include "osm_network.hpp"
+#include "arc_road.hpp"
 #include <FL/gl.h>
 #include <FL/glu.h>
 #include <FL/glut.H>
@@ -15,6 +16,7 @@
 #include <vector>
 #include <sstream>
 #include <limits>
+#include <algorithm>
 
 
 vec2d bias, prev;
@@ -37,7 +39,52 @@ namespace osm
     typedef std::pair<const str, intersection> intr_pair;
 
 
+    bool network::out_of_bounds(tvmet::Vector<float, 3> pt)
+    {
+        if ((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
+                and
+            (pt[1] >= bottomright[1] and pt[1] <= topleft[1]))
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
 
+
+    void network::clip_roads_to_bounds()
+    {
+        //Remove any node that's outside the bounding box.
+        int j = 0;
+        while (j < edges.size())
+        {
+            edge& e = edges[j];
+            int i = 0;
+            while (i < e.shape.size())
+            {
+                if (out_of_bounds(e.shape[i]->xy))
+                {
+                    e.shape.erase(e.shape.begin() + i);
+                }
+                else
+                    i++;
+            }
+
+            // std::cout << "ns " << new_start << " ne " << new_end << std::endl;
+            // e.shape.erase(e.shape.begin(), e.shape.begin() + new_start);
+            // e.shape.erase(e.shape.begin() + new_end, e.shape.end());
+            e.to = e.shape.back()->id;
+            e.from = e.shape[0]->id;
+
+            if (e.shape.size() < 2)
+                edges.erase(edges.begin() + j);
+            else
+                j++;
+
+        }
+    }
 
     void network::populate_edges_from_hash()
     {
@@ -276,6 +323,8 @@ namespace osm
 
     void network::compute_node_degrees()
     {
+        node_degrees.erase(node_degrees.begin(), node_degrees.end());
+
         BOOST_FOREACH(const osm::node_pair &np, nodes)
         {
             node_degrees.insert(std::pair<str,int>(np.first, 0));
@@ -288,6 +337,164 @@ namespace osm
             {
                 node_degrees[n->id]++;
                 n->edges_including.push_back(&e);
+            }
+        }
+    }
+
+    void network::edges_including_rebuild()
+    {
+        BOOST_FOREACH(osm::node_pair &np, nodes)
+        {
+            np.second.edges_including.erase(np.second.edges_including.begin(), np.second.edges_including.end());
+        }
+
+        BOOST_FOREACH(osm::edge &e, edges)
+        {
+            BOOST_FOREACH(node* n, e.shape)
+            {
+                if (find(n->edges_including.begin(), n->edges_including.end(), &e) == n->edges_including.end())
+                {
+                    n->edges_including.push_back(&e);
+                }
+            }
+        }
+    }
+
+    void network::create_ramps()
+    {
+        edges_including_rebuild();
+
+        BOOST_FOREACH(osm::edge &e, edges)
+        {
+            if (e.highway_class == "motorway_link")
+            {
+                for (int i = 0; i < e.shape.size(); i++)
+                {
+                    node*& n = e.shape[i];
+
+                    if (node_degrees[n->id] > 1)
+                    {
+                        bool highway_intersection = false;
+                        osm::edge* highway = NULL;
+                        BOOST_FOREACH(osm::edge *e, n->edges_including)
+                        {
+                            highway_intersection = (e->highway_class == "motorway") or highway_intersection;
+                            if (highway_intersection)
+                            {
+                                highway = e;
+                            }
+                        }
+
+                        if (highway_intersection)
+                        {
+
+                            //Decrease the degree of the node.
+                            node_degrees[n->id]--;
+                            std::cout << "degree3 " << node_degrees[n->id] << std::endl;
+                            //Initialize new node for ramp.
+                            node* old = n;
+                            str new_id = old->id + "_RAMP";
+                            n = retrieve<node>(nodes, new_id);
+
+                            n->xy = old->xy;
+                            //TODO edges_including..
+                            n->id = new_id;
+                            n->edges_including.push_back(&e);
+                            if (find(old->edges_including.begin(),
+                                     old->edges_including.end(),
+                                     &e) != old->edges_including.end())
+                                old->edges_including.erase(find(old->edges_including.begin(),
+                                                                old->edges_including.end(),
+                                                                &e));
+
+                            if (node_degrees.find(n->id) == node_degrees.end())
+                            {
+                                node_degrees[n->id] = 0;
+                            }
+                            node_degrees[n->id]++;
+
+                            //If node is at the end of the road
+                            if (i == e.shape.size() - 1)
+                            {
+                                e.to = n->id;
+                            }
+                            if (i == 0)
+                            {
+                                e.from = n->id;
+                            }
+
+                            //Create arc road for highway.
+                            arc_road highway_shape;
+
+                            BOOST_FOREACH(node* n, highway->shape)
+                            {
+                                highway_shape.points_.push_back(n->xy);
+                            }
+
+                            highway_shape.initialize_from_polyline(0.7, highway_shape.points_);
+
+                            //Find index of intersection point
+                            int index = 0;
+                            for (index = 0;
+                                 index < highway_shape.points_.size();
+                                 index++)
+                            {
+                                if (tvmet::all_elements(highway_shape.points_[index] == old->xy))
+                                {
+                                    std::cout << "Found at index " << index << std::endl;
+                                    break;
+                                }
+                            }
+
+                            //Find t of point.
+
+                            ///First, we need the offset of the point where the ramp will merge.
+                            ///This will always be on the right side of the road, one lane beyond the end of the road.
+                            float lanect = -1;
+                            float nolanes = 2;
+
+                            //TODO use lane width value, not constant
+
+                            float offset = (2.5)*(lanect + -((nolanes - 1)/2.0));
+                            std::cout << "offset " << offset << std::endl;
+
+                            ///length up to feature i
+                            ///+ 1/2 length of feature i
+                            //// length of total road
+                            int feature_index = (2*(index + 1)) - 3;
+                            if (index == 0){ feature_index = 0;}
+                            if (index == highway_shape.points_.size() - 1){ feature_index--;}
+
+                            std::cout << "highway_shape.points.size() " << highway_shape.points_.size() << " index " << index << " f index " << feature_index << std::endl;
+                            float t = (highway_shape.feature_base(feature_index, offset) + (highway_shape.feature_size(feature_index, offset) / 2.0)) / highway_shape.length(offset);
+
+                            std::cout << highway_shape.feature_base(feature_index, offset) << " + " <<  (highway_shape.feature_size(feature_index, offset) / 2.0) << " / " <<  highway_shape.length(offset) << std::endl;
+
+
+                            vec3f pt = highway_shape.point(t, offset);
+                            std::cout << "t " << t << std::endl;
+
+                            n->xy = pt;
+
+                            float len = 15;
+                            //Load the tangent based on the direction of the ramp.
+                            //Move the next to last (or second) point to make the ramp tangent to the highway.
+                            if (i == 0)
+                            {
+                                vec3f tan(col(highway_shape.frame(t, offset, false), 0));
+                                e.shape[i + 1]->xy = len*tan + n->xy;
+                            }
+                            else
+                            {
+                                vec3f tan(col(highway_shape.frame(t, offset, true), 0));
+                                e.shape[i - 1]->xy = len*tan + n->xy;
+                            }
+
+                            //Add a merging lane to the highway
+                            highway->additional_lanes.push_back(osm::edge::lane(0,1,true));
+                        }
+                    }
+                }
             }
         }
     }
@@ -396,7 +603,6 @@ namespace osm
                 //Find node that's part of overpass.
                 if (n->is_overpass)
                 {
-                    std::cout << "Here " << std::endl;
                     //TODO What if road ends before ramp radius is reached? Could continue to traverse connecting roads, but that could produce odd effects.
 
                     n->xy[2] = overpass_height;
@@ -494,6 +700,8 @@ namespace osm
 
     void network::create_intersections()
     {
+        compute_node_degrees();
+
         BOOST_FOREACH(osm::edge &e, edges)
         {
             assert(e.to == e.shape.back()->id);
@@ -684,6 +892,7 @@ namespace osm
 
     void network::join(osm::edge* a, osm::edge* b)
     {
+        //Adds b to a
         assert(a->shape[0]->id == a->from);
         assert(a->shape[a->shape.size() - 1]->id == a->to);
         assert(b->shape[0]->id == b->from);
@@ -785,6 +994,21 @@ namespace osm
             }
         }
     }
+
+    void network::display_used_node_heights()
+    {
+        BOOST_FOREACH(edge& e, edges)
+        {
+            BOOST_FOREACH(node* n, e.shape)
+            {
+                if (n->xy[2] > 0)
+                {
+                    std::cout << n->id << " " << n->xy[2] << std::endl;
+                }
+            }
+        }
+    }
+
 
     edge network::copy_no_shape(const edge& e)
     {

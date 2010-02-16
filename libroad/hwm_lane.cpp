@@ -109,15 +109,6 @@ namespace hwm
             throw std::runtime_error("Bad parent road in road_membership!");
     }
 
-    void lane::road_membership::scale_offsets(const float lane_width)
-    {
-        if(lane_position < 0)
-            lane_position +=  0.5f;
-        else if(lane_position > 0)
-            lane_position += -0.5f;
-        lane_position *= lane_width;
-    }
-
     bool lane::road_membership::empty() const
     {
         return !parent_road;

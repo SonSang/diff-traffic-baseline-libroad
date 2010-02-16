@@ -251,8 +251,6 @@ namespace hwm
 
         parent_road = retrieve<road>(n.roads, ref);
 
-        scale_offsets(n.lane_width);
-
         read_to_close(reader, "road_membership");
     }
 
