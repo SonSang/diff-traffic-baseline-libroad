@@ -18,6 +18,9 @@ const char *libroad_package_string();
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 #include <glibmm/ustring.h>
 
@@ -88,4 +91,13 @@ inline float distance(const T& t1, const T& t2)
 {
     return std::sqrt(distance2(t1, t2));
 }
+
+inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filename)
+{
+    boost::iostreams::filtering_ostream *out_stream = new boost::iostreams::filtering_ostream();
+    out_stream->push(boost::iostreams::gzip_compressor(boost::iostreams::gzip_params(9)));
+    out_stream->push(boost::iostreams::file_descriptor_sink(boost::str(boost::format("%s.gz") % filename)));
+    return out_stream;
+}
+
 #endif

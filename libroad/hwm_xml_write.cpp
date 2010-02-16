@@ -228,7 +228,9 @@ namespace hwm
         xmlpp::Element *root(out.create_root_node("network"));
         xml_write(root);
 
-        out.write_to_file_formatted(filename, "utf-8");
+        std::ostream *out_stream = compressing_ostream(filename);
+        out.write_to_stream_formatted(*out_stream, "utf-8");
+        delete out_stream;
     }
 
     void network::xml_write(xmlpp::Element *elt) const
@@ -452,6 +454,8 @@ namespace hwm
             }
         }
 
-        out.write_to_file_formatted(filename, "utf-8");
+        std::ostream *out_stream = compressing_ostream(filename);
+        out.write_to_stream_formatted(*out_stream, "utf-8");
+        delete out_stream;
     }
 }
