@@ -13,7 +13,7 @@ namespace osm
     {
         typedef enum {priority, traffic_light, unknown} TYPES;
 
-        node(){ is_overpass = false; }
+        node(){ is_overpass = false; ramp_merging_point = NULL;}
 
         str   id;
         tvmet::Vector<float, 3> xy;
@@ -21,6 +21,7 @@ namespace osm
         std::vector<edge*> edges_including; //Currently not maintained
 
         bool is_overpass;
+        node* ramp_merging_point;
     };
 
     struct edge_type

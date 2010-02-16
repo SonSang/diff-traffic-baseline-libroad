@@ -390,7 +390,7 @@ namespace osm
 
                             //Decrease the degree of the node.
                             node_degrees[n->id]--;
-                            std::cout << "degree3 " << node_degrees[n->id] << std::endl;
+
                             //Initialize new node for ramp.
                             node* old = n;
                             str new_id = old->id + "_RAMP";
@@ -501,6 +501,8 @@ namespace osm
 
     void network::remove_highway_intersections()
     {
+        edges_including_rebuild();
+
         BOOST_FOREACH(osm::edge &e, edges)
         {
             if (e.highway_class == "motorway")
@@ -517,9 +519,20 @@ namespace osm
                         //Make old node an overpass.
                         n->is_overpass = true;
 
+
+
                         node* old = n;
                         str new_id = old->id + "_HWY";
                         n = retrieve<node>(nodes, new_id);
+
+                        //If there is a ramp at this intersection, store the connecting node
+                        BOOST_FOREACH(edge* e, old->edges_including)
+                        {
+                            if (e->highway_class == "motorway_link")
+                            {
+                                old->ramp_merging_point = n;
+                            }
+                        }
 
                         n->xy = old->xy;
                         //TODO edges_including..
