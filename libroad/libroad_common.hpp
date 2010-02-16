@@ -96,7 +96,12 @@ inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filen
 {
     boost::iostreams::filtering_ostream *out_stream = new boost::iostreams::filtering_ostream();
     out_stream->push(boost::iostreams::gzip_compressor(boost::iostreams::gzip_params(9)));
-    out_stream->push(boost::iostreams::file_descriptor_sink(boost::str(boost::format("%s.gz") % filename)));
+    str zip_name;
+    if(filename.substr(static_cast<int>(filename.size())-1, static_cast<int>(filename.size())-1) == str("z"))
+        zip_name = filename;
+    else
+        zip_name = boost::str(boost::format("%s.gz") % filename);
+    out_stream->push(boost::iostreams::file_descriptor_sink(zip_name.raw()));
     return out_stream;
 }
 
