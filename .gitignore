@@ -2,6 +2,10 @@
 *.o
 *.lo
 *.la
+*.gz
+*.svg
+*.svgz
+*.xml
 .deps/
 .libs/
 m4/libtool.m4
