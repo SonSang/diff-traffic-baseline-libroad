@@ -138,12 +138,16 @@ inline size_t polyline_road::locate_scale(float &local_t, const float offset, co
     }
 }
 
-bool polyline_road::check() const
+void polyline_road::check() const
 {
-    return (!points_.empty() &&
-            points_.size() == clengths_.size() &&
-            points_.size() == cmitres_.size() &&
-            points_.size() == normals_.size() + 1);
+    if(points_.empty())
+        throw std::runtime_error("No points in polyline_road");
+    if(points_.size() == clengths_.size())
+        throw std::runtime_error("Wrong number of clengths in polyline_road");
+    if(points_.size() == cmitres_.size())
+        throw std::runtime_error("Wrong number of cmitres in polyline_road");
+    if(points_.size() == normals_.size() + 1)
+        throw std::runtime_error("Wrong number of normals in polyline_road");
 }
 
 path polyline_road::svg_poly_path_center(const vec2f &interval, const float offset) const

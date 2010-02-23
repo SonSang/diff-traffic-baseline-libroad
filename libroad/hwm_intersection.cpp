@@ -2,31 +2,32 @@
 
 namespace hwm
 {
-    bool intersection::state::state_pair::check(const intersection &parent) const
+    void intersection::state::state_pair::check(const intersection &parent) const
     {
-        return fict_lane && in_idx >= 0 && in_idx < static_cast<int>(parent.incoming.size())
-        && out_idx >= 0 && out_idx < static_cast<int>(parent.outgoing.size());
+        if(!fict_lane)
+            throw std::runtime_error("Invalid fictious lane in state_pair");
+        else if(!(in_idx >= 0 && in_idx < static_cast<int>(parent.incoming.size())))
+            throw std::runtime_error("in_idx in state_pair out of range");
+        else if(!(out_idx >= 0 && out_idx < static_cast<int>(parent.outgoing.size())))
+            throw std::runtime_error("out_idx in state_pair out of range");
     }
 
-    bool intersection::state::check(const intersection &parent) const
+    void intersection::state::check(const intersection &parent) const
     {
         if(duration <= 0.0f)
-            return false;
+            throw std::runtime_error("Invalid duration in intersection state");
 
         BOOST_FOREACH(const intersection::state::state_pair &sp, in_pair())
         {
-            if(!sp.check(parent))
-                return false;
+            sp.check(parent);
         }
 
         bool first = fict_lanes.begin()->second.active;
         BOOST_FOREACH(const lane_pair &lp, fict_lanes)
         {
             if(lp.second.active != first)
-                return false;
+                throw std::runtime_error("Fictious lanes in state have inconsitent active flag");
         }
-
-        return true;
     }
 
     void intersection::state::translate(const vec3f &o)
@@ -78,7 +79,7 @@ namespace hwm
                                                                        end_point,
                                                                        end_tan));
 
-            assert(new_road.check());
+            new_road.check();
 
             assert(!sp.fict_lane);
             const str lane_id(boost::str(boost::format("%s_to_%s_fict_lane") % in->id % out->id));
@@ -153,22 +154,22 @@ namespace hwm
         }
     }
 
-    bool intersection::check() const
+    void intersection::check() const
     {
         if(id.empty())
-            return false;
+           throw std::runtime_error("Intersection has no id");
 
         if(incoming.empty() && outgoing.empty())
-            return false;
+           throw std::runtime_error("Intersection reports no incident lanes");
 
         int count = 0;
         BOOST_FOREACH(const lane* lp, incoming)
         {
             if(!lp)
-                return false;
+                throw std::runtime_error("Bad lane pointer in intersection incoming");
             const lane::intersection_terminus *it = dynamic_cast<const lane::intersection_terminus*>(lp->end);
             if(!it || it->adjacent_intersection != this || it->intersect_in_ref != count)
-                return false;
+                throw std::runtime_error("In intersection, corresponding intersection_terminus does not match");
 
             ++count;
         }
@@ -177,21 +178,18 @@ namespace hwm
         BOOST_FOREACH(const lane* lp, outgoing)
         {
             if(!lp)
-                return false;
+                throw std::runtime_error("Bad lane pointer in intersection outgoing");
             const lane::intersection_terminus *it = dynamic_cast<const lane::intersection_terminus*>(lp->start);
             if(!it || it->adjacent_intersection != this || it->intersect_in_ref != count)
-                return false;
+                throw std::runtime_error("In intersection, corresponding intersection_terminus does not match");
 
             ++count;
         }
 
         BOOST_FOREACH(const intersection::state &s, states)
         {
-            if(!s.check(*this))
-                return false;
+            s.check(*this);
         }
-
-        return true;
     }
 
     void intersection::translate(const vec3f &o)

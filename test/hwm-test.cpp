@@ -9,10 +9,16 @@ int main(int argc, char *argv[])
 
     std::cerr << "HWM net loaded successfully" << std::endl;
 
-    if(net.check())
+    try
+    {
+        net.check();
         std::cerr << "HWM net checks out" << std::endl;
-    else
-        std::cerr << "HWM net doesn't check out" << std::endl;
+    }
+    catch(std::runtime_error &e)
+    {
+        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
+        exit(1);
+    }
 
     BOOST_FOREACH(const hwm::road_pair &r, net.roads)
     {

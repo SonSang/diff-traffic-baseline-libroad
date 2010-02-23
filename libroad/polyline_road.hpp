@@ -20,7 +20,7 @@ struct polyline_road
 
     void   xml_read (xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void   xml_write(xmlpp::Element *elt) const;
-    bool   check() const;
+    void   check() const;
 
     std::vector<vec3f> points_;
     std::vector<vec3f> normals_;

@@ -980,15 +980,21 @@ size_t arc_road::locate_scale(const float t, const float offset, float &local) c
     return low;
 }
 
-bool arc_road::check() const
+void arc_road::check() const
 {
     const size_t N_pts       = points_.size();
-    return frames_.size()   == N_pts-2
-    && radii_.size()        == N_pts-2
-    && arcs_.size()         == N_pts-2
-    && seg_clengths_.size() == N_pts
-    && arc_clengths_.size() == N_pts-1
-    && normals_.size()      == N_pts-1;
+    if(frames_.size()       != N_pts-2)
+        throw std::runtime_error("Wrong number of frames in arc_road");
+    else if(radii_.size()        != N_pts-2)
+        throw std::runtime_error("Wrong number of radii in arc_road");
+    else if(arcs_.size()         != N_pts-2)
+        throw std::runtime_error("Wrong number of arcs in arc_road");
+    else if(seg_clengths_.size() != N_pts  )
+        throw std::runtime_error("Wrong number of seg_clegnths in arc_road");
+    else if(arc_clengths_.size() != N_pts-1)
+        throw std::runtime_error("Wrong number of arc_clengths in arc_road");
+    else if(normals_.size()      != N_pts-1)
+        throw std::runtime_error("Wrong number of normals in arc_road");
 }
 
 path  arc_road::svg_arc_path_center(const vec2f &interval, const float offset) const

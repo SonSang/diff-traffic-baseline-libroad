@@ -26,9 +26,9 @@ namespace hwm
         return new lane::terminus();
     }
 
-    bool lane::terminus::check(bool start, const lane *parent) const
+    void lane::terminus::check(bool start, const lane *parent) const
     {
-        return true;
+        return;
     }
 
     lane* lane::terminus::incident(bool start) const
@@ -41,7 +41,7 @@ namespace hwm
         const intersection_map::iterator mine = n.intersections.find(adjacent_intersection->id);
         assert(mine != n.intersections.end());
         assert(mine->first == adjacent_intersection->id);
-        adjacent_intersection                                  = &(mine->second);
+        adjacent_intersection                 = &(mine->second);
     }
 
     lane::intersection_terminus* lane::intersection_terminus::clone() const
@@ -49,13 +49,16 @@ namespace hwm
         return new lane::intersection_terminus(adjacent_intersection, intersect_in_ref);
     }
 
-    bool lane::intersection_terminus::check(bool start, const lane *parent) const
+    void lane::intersection_terminus::check(bool start, const lane *parent) const
     {
         if(!adjacent_intersection || intersect_in_ref < 0)
-            return false;
+            throw std::runtime_error("Incomplete intersection_terminus");
 
         const std::vector<lane*> &cont = start ? adjacent_intersection->outgoing : adjacent_intersection->incoming;
-        return intersect_in_ref < static_cast<int>(cont.size()) && cont[intersect_in_ref] == parent;
+        if(intersect_in_ref >= static_cast<int>(cont.size()))
+            throw std::runtime_error("intersection_terminus in_ref beyond containter size");
+        else if(cont[intersect_in_ref] != parent)
+            throw std::runtime_error("Mismatch in intersection_terminus parent ref and intersection ref");
     }
 
     lane* lane::intersection_terminus::incident(bool start) const
@@ -80,13 +83,16 @@ namespace hwm
         return new lane::lane_terminus(adjacent_lane);
     }
 
-    bool lane::lane_terminus::check(bool start, const lane *parent) const
+    void lane::lane_terminus::check(bool start, const lane *parent) const
     {
         if(!adjacent_lane)
-            return false;
+            throw std::runtime_error("Incomplete lane_terminus");
 
         const lane_terminus *other = dynamic_cast<const lane_terminus*>(start ? adjacent_lane->end : adjacent_lane->start);
-        return other && other->adjacent_lane == parent;
+        if(!other)
+            throw std::runtime_error("No reciprocal lane_terminus");
+        else if(other->adjacent_lane != parent)
+            throw std::runtime_error("Reciprocal lane_terminus inconsistent");
     }
 
     lane* lane::lane_terminus::incident(bool start) const
@@ -95,10 +101,12 @@ namespace hwm
         return adjacent_lane;
     }
 
-    bool lane::road_membership::check() const
+    void lane::road_membership::check() const
     {
-        return (!empty() &&
-                !parent_road->id.empty());
+        if(empty())
+            throw std::runtime_error("Empty road_membership");
+        else if(parent_road->id.empty())
+            throw std::runtime_error("Bad parent road in road_membership!");
     }
 
     void lane::road_membership::scale_offsets(const float lane_width)
@@ -141,10 +149,11 @@ namespace hwm
         return parent_road->rep.point_frame(t, lane_position+offset, reversed, up);
     }
 
-    bool lane::adjacency::check() const
+    void lane::adjacency::check() const
     {
         // could enforce symmetry here, but probably not necessary
-        return !neighbor || !(neighbor->id.empty());
+        if(neighbor && neighbor->id.empty())
+            throw std::runtime_error("Adjacency references nonexistent neighbor");
     }
 
     bool lane::adjacency::empty() const
@@ -152,33 +161,33 @@ namespace hwm
         return !neighbor;
     }
 
-    bool lane::check() const
+    void lane::check() const
     {
-        if(id.empty() ||
-           road_memberships.empty() ||
-           !start->check(true, this) || !end->check(false, this) ||
-           speedlimit <= 0.0f)
-            return false;
+        if(id.empty())
+            throw std::runtime_error("Lane with no id was created!");
+        else if(road_memberships.empty())
+            throw std::runtime_error("Lane has no road memberships!");
+
+        start->check(true, this);
+        end->check(false, this);
+
+        if(speedlimit <= 0.0f)
+            throw std::runtime_error("Lane has invalid speedlimit");
 
         BOOST_FOREACH(const road_membership::intervals::entry &rmie, road_memberships)
         {
-            if(!rmie.second.check())
-                return false;
+            rmie.second.check();
         }
 
         BOOST_FOREACH(const adjacency::intervals::entry &aie, left)
         {
-            if(!aie.second.check())
-                return false;
+            aie.second.check();
         }
 
         BOOST_FOREACH(const adjacency::intervals::entry &aie, right)
         {
-            if(!aie.second.check())
-                return false;
+            aie.second.check();
         }
-
-        return true;
     }
 
     void lane::auto_scale_memberships()

@@ -12,10 +12,16 @@ int main(int argc, char *argv[])
 
     hwm::network hnet(hwm::from_sumo("test", 0.5f, 2.5f, snet));
 
-    if(hnet.check())
+    try
+    {
+        hnet.check();
         std::cerr << "Derived HWM net checks out" << std::endl;
-    else
+    }
+    catch(std::runtime_error &e)
+    {
         std::cerr << "Derived HWM net doesn't check out" << std::endl;
+        exit(1);
+    }
 
     BOOST_FOREACH(const hwm::road_pair &r, hnet.roads)
     {

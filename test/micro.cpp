@@ -665,11 +665,15 @@ int main(int argc, char** argv)
     hnet->build_fictitious_lanes();
     hnet->auto_scale_memberships();
     hnet->center();
-    if(hnet->check())
-        std::cerr << "HWM net checks out" << std::endl;
-    else
+
+    try
     {
-        std::cerr << "HWM net doesn't check out" << std::endl;
+        hnet->check();
+        std::cerr << "HWM net checks out" << std::endl;
+    }
+    catch(std::runtime_error &e)
+    {
+        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
         exit(1);
     }
 

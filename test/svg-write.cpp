@@ -15,11 +15,14 @@ int main(int argc, char *argv[])
     net.center();
     std::cerr << "HWM net loaded successfully" << std::endl;
 
-    if(net.check())
-        std::cerr << "HWM net checks out" << std::endl;
-    else
+    try
     {
-        std::cerr << "HWM net doesn't check out" << std::endl;
+        net.check();
+        std::cerr << "HWM net checks out" << std::endl;
+    }
+    catch(std::runtime_error &e)
+    {
+        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
         exit(1);
     }
 

@@ -156,33 +156,34 @@ namespace hwm
         return *this;
     }
 
-    bool network::check() const
+    void network::check() const
     {
         if(gamma <= 0.0f || gamma >= 1.0f)
-            return false;
+            throw std::runtime_error("Gamma in network out of range");
 
         if(lane_width <= 0.0f)
-            return false;
+            throw std::runtime_error("lane_width in network out of range");
 
         BOOST_FOREACH(const road_pair &r, roads)
         {
-            if(r.first != r.second.id || !r.second.check())
-                return false;
+            if(r.first != r.second.id)
+                throw std::runtime_error("Container id and local id mismatch for road");
+            r.second.check();
         }
 
         BOOST_FOREACH(const lane_pair &l, lanes)
         {
-            if(l.first != l.second.id || !l.second.check())
-                return false;
+            if(l.first != l.second.id)
+                throw std::runtime_error("Container id and local id mismatch for lane");
+            l.second.check();
         }
 
         BOOST_FOREACH(const intersection_pair &i, intersections)
         {
-            if(i.first != i.second.id || !i.second.check())
-                return false;
+            if(i.first != i.second.id)
+                throw std::runtime_error("Container id and local id mismatch for road");
+               i.second.check();
         }
-
-        return true;
     }
 
     void network::translate(const vec3f &o)

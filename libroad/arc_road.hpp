@@ -62,7 +62,7 @@ struct arc_road
     void   xml_write_as_poly(xmlpp::Element *elt) const;
     void   xml_read(xmlpp::TextReader &reader, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void   xml_write(xmlpp::Element *elt) const;
-    bool   check() const;
+    void   check() const;
 
     path svg_arc_path_center (const vec2f &interval, const float offset) const;
     path svg_arc_path        (const vec2f &interval, const float offset) const;

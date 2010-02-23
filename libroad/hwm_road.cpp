@@ -2,9 +2,11 @@
 
 namespace hwm
 {
-    bool road::check() const
+    void road::check() const
     {
-        return !id.empty() && rep.check();
+        if(id.empty())
+            throw std::runtime_error("Road with empty id");
+        rep.check();
     }
 
     void road::translate(const vec3f &o)
