@@ -400,37 +400,26 @@ void arc_road::remove_redundant()
     size_t last_interior = 0;
     for(size_t i = 1; i < radii_.size(); ++i)
     {
-        vec3f new_center(center(i+1));
+        const vec3f new_center(center(i+1));
         if(std::abs(radii_[i] - last_radius) < 1e-4 && distance2(new_center, last_center) < 1e-5)
             continue;
 
+        new_radii.push_back(last_radius);
         if(last_interior+1 != i)
-        {
-            new_radii.push_back(last_radius);
             new_points.push_back(inv_center(last_center, normals_[last_interior], normals_[i+1], last_radius));
-        }
         else
-        {
-            new_radii.push_back(radii_[last_interior]);
             new_points.push_back(points_[last_interior+1]);
-        }
 
         last_center   = new_center;
         last_radius   = radii_[i];
         last_interior = i;
     }
 
+    new_radii.push_back(last_radius);
     if(last_interior+1 < radii_.size())
-    {
-        new_radii.push_back(last_radius);
-
         new_points.push_back(inv_center(last_center, normals_[last_interior], normals_.back(), last_radius));
-    }
     else
-    {
-        new_radii.push_back(radii_[last_interior]);
         new_points.push_back(points_[last_interior+1]);
-    }
 
     new_points.push_back(points_.back());
 
