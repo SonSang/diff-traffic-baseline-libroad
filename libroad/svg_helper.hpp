@@ -114,8 +114,7 @@ struct path
         std::vector<path_element*>::iterator c = boost::next(elements.begin());
         for(; c != elements.end(); ++c)
         {
-            if(distance2((*c)->point0(), (new_elements.back())->point0()) < 1e-4 ||
-               distance2((*c)->point1(), (new_elements.back())->point1()) < 1e-4)
+            if(distance2((*c)->point0(), (*c)->point1()) < 1e-6)
                 delete *c;
             else
                 new_elements.push_back(*c);
