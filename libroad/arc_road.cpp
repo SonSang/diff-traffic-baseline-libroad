@@ -406,7 +406,7 @@ void arc_road::remove_redundant()
 
         new_radii.push_back(last_radius);
         if(last_interior+1 != i)
-            new_points.push_back(inv_center(last_center, normals_[last_interior], normals_[i+1], last_radius));
+            new_points.push_back(inv_center(last_center, normals_[last_interior], normals_[i], last_radius));
         else
             new_points.push_back(points_[last_interior+1]);
 
