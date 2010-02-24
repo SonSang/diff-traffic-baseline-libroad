@@ -401,7 +401,8 @@ void arc_road::remove_redundant()
     for(size_t i = 1; i < radii_.size(); ++i)
     {
         const vec3f new_center(center(i+1));
-        if(std::abs(radii_[i] - last_radius) < 1e-4 && distance2(new_center, last_center) < 1e-5)
+        if(std::abs(radii_[i] - last_radius) < 1e-4 && distance2(new_center, last_center) < 1e-5 &&
+           (M_PI - std::acos(tvmet::dot(-normals_[last_interior], normals_[i+1])) < 7.0/8.0*M_PI))
             continue;
 
         new_radii.push_back(last_radius);
