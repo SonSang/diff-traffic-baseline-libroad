@@ -56,11 +56,13 @@ namespace osm
 
         struct lane
         {
-            lane(float s, float e, bool left):start_t(s), end_t(e), left_side(left){}
+            lane(float s, float e, float off, str id, bool offr):start_t(s), end_t(e), offset(off), ramp_id(id), offramp(offr){}
 
             float start_t;
             float end_t;
-            bool left_side;
+            float offset;
+            str ramp_id;
+            bool offramp;
         };
 
         std::vector<node*> overpass_nodes;

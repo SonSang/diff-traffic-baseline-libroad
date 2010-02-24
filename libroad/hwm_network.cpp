@@ -473,22 +473,27 @@ namespace hwm
 
                     new_lane.road_memberships.insert(0.0, rm);
 
-                    if(start_inters)
+                    //Create intersections only if one has not been assigned.
+                    if (!new_lane.start)
                     {
-                        start_inters->outgoing.push_back(&new_lane);
-                        new_lane.start = new lane::intersection_terminus(start_inters, start_inters->outgoing.size()-1);
+                        if(start_inters)
+                        {
+                            start_inters->outgoing.push_back(&new_lane);
+                            new_lane.start = new lane::intersection_terminus(start_inters, start_inters->outgoing.size()-1);
+                        }
+                        else
+                            new_lane.start = new lane::terminus();
                     }
-                    else
-                        new_lane.start = new lane::terminus();
-
-                    if(end_inters)
+                    if (!new_lane.end)
                     {
-                        end_inters->incoming.push_back(&new_lane);
-                        new_lane.end = new lane::intersection_terminus(end_inters, end_inters->incoming.size()-1);
+                        if(end_inters)
+                        {
+                            end_inters->incoming.push_back(&new_lane);
+                            new_lane.end = new lane::intersection_terminus(end_inters, end_inters->incoming.size()-1);
+                        }
+                        else
+                            new_lane.end = new lane::terminus();
                     }
-                    else
-                        new_lane.end = new lane::terminus();
-
 
                     //Add reverse lanes  (TODO one way roads)
                     lane &new_reverse_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d_reverse") % e.id % lanect));
@@ -505,22 +510,28 @@ namespace hwm
                     rm_rev.lane_position = (2.5)*(0.5 + (lanect));;
 
                     new_reverse_lane.road_memberships.insert(0.0, rm_rev);
-
-                    if(end_inters)
+                    //Create intersections only if one has not been assigned.
+                    if (!new_reverse_lane.start)
                     {
-                        end_inters->outgoing.push_back(&new_reverse_lane);
-                        new_reverse_lane.start = new lane::intersection_terminus(end_inters, end_inters->outgoing.size()-1);
+                        if(end_inters)
+                        {
+                            end_inters->outgoing.push_back(&new_reverse_lane);
+                            new_reverse_lane.start = new lane::intersection_terminus(end_inters, end_inters->outgoing.size()-1);
+                        }
+                        else
+                            new_reverse_lane.start = new lane::terminus();
                     }
-                    else
-                        new_reverse_lane.start = new lane::terminus();
 
-                    if(start_inters)
+                    if (!new_reverse_lane.end)
                     {
-                        start_inters->incoming.push_back(&new_reverse_lane);
-                        new_reverse_lane.end = new lane::intersection_terminus(start_inters, start_inters->incoming.size()-1);
+                        if(start_inters)
+                        {
+                            start_inters->incoming.push_back(&new_reverse_lane);
+                            new_reverse_lane.end = new lane::intersection_terminus(start_inters, start_inters->incoming.size()-1);
+                        }
+                        else
+                            new_reverse_lane.end = new lane::terminus();
                     }
-                    else
-                        new_reverse_lane.end = new lane::terminus();
                 }
                 else //Oneway road
                 {
@@ -544,29 +555,32 @@ namespace hwm
                     rm.lane_position = position;
                     new_lane.road_memberships.insert(0.0, rm);
 
-                    if(start_inters)
+                    //Create intersections only if one has not been assigned.
+                    if (!new_lane.start)
                     {
-                        start_inters->outgoing.push_back(&new_lane);
-                        new_lane.start = new lane::intersection_terminus(start_inters, start_inters->outgoing.size()-1);
+                        if(start_inters)
+                        {
+                            start_inters->outgoing.push_back(&new_lane);
+                            new_lane.start = new lane::intersection_terminus(start_inters, start_inters->outgoing.size()-1);
+                        }
+                        else
+                            new_lane.start = new lane::terminus();
                     }
-                    else
-                        new_lane.start = new lane::terminus();
 
-                    if(end_inters)
+                    if (!new_lane.end)
                     {
-                        end_inters->incoming.push_back(&new_lane);
-                        new_lane.end = new lane::intersection_terminus(end_inters, end_inters->incoming.size()-1);
+                        if(end_inters)
+                        {
+                            end_inters->incoming.push_back(&new_lane);
+                            new_lane.end = new lane::intersection_terminus(end_inters, end_inters->incoming.size()-1);
+                        }
+                        else
+                            new_lane.end = new lane::terminus();
                     }
-                    else
-                        new_lane.end = new lane::terminus();
-
                 }
-
             }
 
             //Add merging lanes TODO
-
-
             for(int lanect = 0; lanect < et.nolanes; ++lanect)
             {
                 if(lanect > 0)
@@ -607,6 +621,73 @@ namespace hwm
                     }
                 }
             }
+
+            BOOST_FOREACH(const osm::edge::lane& l, e.additional_lanes)
+            {
+                str id = boost::str(boost::format("%1%_%2%_%3%_%4%") % e.id % l.start_t % l.end_t % l.offset);
+                lane &new_lane = retrieve<lane>(hnet.lanes, id);
+                //Store road to lane pointers.
+                roads_to_lanes[e.id].first.push_back(&new_lane);
+
+                new_lane.speedlimit = et.speed;
+                lane::road_membership rm;
+                rm.parent_road = parent_road;
+                rm.interval[0] = l.start_t;
+                rm.interval[1] = l.end_t;
+
+                //TODO use lane width value, not constant
+
+                float position = l.offset;
+                //Units possibly in half lane widths...
+
+                rm.lane_position = position;
+                new_lane.road_memberships.insert(0.0, rm);
+
+                lane &ramp_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % l.ramp_id % 0));
+
+
+                //Create lane terminus so that ramp flows into extra lane.
+                if (l.offramp)
+                {
+                    lane::lane_terminus* foo = new lane::lane_terminus();
+                    foo->adjacent_lane = &ramp_lane;
+                    new_lane.end = foo;
+
+                    delete ramp_lane.start;
+                    lane::lane_terminus* bar = new lane::lane_terminus();
+                    bar->adjacent_lane = &new_lane;
+                    ramp_lane.start = bar;
+
+
+                    new_lane.start = new lane::terminus();
+
+                }
+                else
+                {
+                    lane::lane_terminus* foo = new lane::lane_terminus();
+                    foo->adjacent_lane = &ramp_lane;
+                    new_lane.start = foo;
+
+                    delete ramp_lane.end;
+                    lane::lane_terminus* bar = new lane::lane_terminus();
+                    bar->adjacent_lane = &new_lane;
+                    ramp_lane.end = bar;
+
+                    new_lane.end = new lane::terminus();
+                }
+
+                lane::adjacency la;
+                la.neighbor = newlanes[0];
+                la.neighbor_interval[0] = l.start_t;
+                la.neighbor_interval[1] = l.end_t;
+                new_lane.left.insert(0.0f, la);
+            }
+        }
+
+        typedef strhash<hwm::lane>::type::value_type hwm_l_pair;
+        BOOST_FOREACH(const hwm_l_pair& l, hnet.lanes)
+        {
+            l.second.check();
         }
 
 
@@ -797,23 +878,17 @@ namespace hwm
 
         }
 
+
+
         typedef strhash<hwm::intersection>::type::value_type hwm_i_pair;
         BOOST_FOREACH(const hwm_i_pair& i, hnet.intersections)
         {
             assert(i.second.id != "");
         }
 
-        // typedef strhash<hwm::road>::type::value_type hwm_r_pair;
-        // BOOST_FOREACH(const hwm_r_pair& r, hnet.roads)
-        // {
-        //     BOOST_FOREACH(const vec3f& v, r.second.rep.points_)
-        //     {
-        //         if (v[2] > 0)
-        //         {
-        //             std::cout << v[2] << std::endl;
-        //         }
-        //     }
-        // }
+
+
+
         return hnet;
     }
 }

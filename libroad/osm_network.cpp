@@ -372,11 +372,12 @@ namespace osm
                 {
                     node*& n = e.shape[i];
 
-                    if (node_degrees[n->id] > 1)
+                    if (n->ramp_merging_point != NULL)
                     {
+                        node* highway_node = n->ramp_merging_point;
                         bool highway_intersection = false;
                         osm::edge* highway = NULL;
-                        BOOST_FOREACH(osm::edge *e, n->edges_including)
+                        BOOST_FOREACH(osm::edge *e, highway_node->edges_including)
                         {
                             highway_intersection = (e->highway_class == "motorway") or highway_intersection;
                             if (highway_intersection)
@@ -387,48 +388,12 @@ namespace osm
 
                         if (highway_intersection)
                         {
-
-                            //Decrease the degree of the node.
-                            node_degrees[n->id]--;
-
-                            //Initialize new node for ramp.
-                            node* old = n;
-                            str new_id = old->id + "_RAMP";
-                            n = retrieve<node>(nodes, new_id);
-
-                            n->xy = old->xy;
-                            //TODO edges_including..
-                            n->id = new_id;
-                            n->edges_including.push_back(&e);
-                            if (find(old->edges_including.begin(),
-                                     old->edges_including.end(),
-                                     &e) != old->edges_including.end())
-                                old->edges_including.erase(find(old->edges_including.begin(),
-                                                                old->edges_including.end(),
-                                                                &e));
-
-                            if (node_degrees.find(n->id) == node_degrees.end())
-                            {
-                                node_degrees[n->id] = 0;
-                            }
-                            node_degrees[n->id]++;
-
-                            //If node is at the end of the road
-                            if (i == e.shape.size() - 1)
-                            {
-                                e.to = n->id;
-                            }
-                            if (i == 0)
-                            {
-                                e.from = n->id;
-                            }
-
                             //Create arc road for highway.
                             arc_road highway_shape;
 
-                            BOOST_FOREACH(node* n, highway->shape)
+                            BOOST_FOREACH(node* foo, highway->shape)
                             {
-                                highway_shape.points_.push_back(n->xy);
+                                highway_shape.points_.push_back(foo->xy);
                             }
 
                             highway_shape.initialize_from_polyline(0.7, highway_shape.points_);
@@ -439,7 +404,7 @@ namespace osm
                                  index < highway_shape.points_.size();
                                  index++)
                             {
-                                if (tvmet::all_elements(highway_shape.points_[index] == old->xy))
+                                if (tvmet::all_elements(highway_shape.points_[index] == highway_node->xy))
                                 {
                                     std::cout << "Found at index " << index << std::endl;
                                     break;
@@ -456,7 +421,6 @@ namespace osm
                             //TODO use lane width value, not constant
 
                             float offset = (2.5)*(lanect + -((nolanes - 1)/2.0));
-                            std::cout << "offset " << offset << std::endl;
 
                             ///length up to feature i
                             ///+ 1/2 length of feature i
@@ -465,14 +429,11 @@ namespace osm
                             if (index == 0){ feature_index = 0;}
                             if (index == highway_shape.points_.size() - 1){ feature_index--;}
 
-                            std::cout << "highway_shape.points.size() " << highway_shape.points_.size() << " index " << index << " f index " << feature_index << std::endl;
                             float t = (highway_shape.feature_base(feature_index, offset) + (highway_shape.feature_size(feature_index, offset) / 2.0)) / highway_shape.length(offset);
 
-                            std::cout << highway_shape.feature_base(feature_index, offset) << " + " <<  (highway_shape.feature_size(feature_index, offset) / 2.0) << " / " <<  highway_shape.length(offset) << std::endl;
-
+                            std::cout << t << std::endl;
 
                             vec3f pt = highway_shape.point(t, offset);
-                            std::cout << "t " << t << std::endl;
 
                             n->xy = pt;
 
@@ -490,8 +451,17 @@ namespace osm
                                 e.shape[i - 1]->xy = len*tan + n->xy;
                             }
 
+                            float t_center = (highway_shape.feature_base(feature_index, 0.0) + (highway_shape.feature_size(feature_index, 0.0) / 2.0)) / highway_shape.length(0.0);
+
+                            float merge_lane_len = 60;
+                            float merge_lane_parametric_len = merge_lane_len / highway_shape.length(0.0);
+
                             //Add a merging lane to the highway
-                            highway->additional_lanes.push_back(osm::edge::lane(0,1,true));
+                            if (i == 0)//Offramp
+                                highway->additional_lanes.push_back(osm::edge::lane(t_center - merge_lane_parametric_len,t_center,offset,e.id, true));
+                            else//Onramp
+                                highway->additional_lanes.push_back(osm::edge::lane(t_center,t_center + merge_lane_parametric_len,offset,e.id, false));
+
                         }
                     }
                 }
@@ -509,15 +479,13 @@ namespace osm
             {
                 for(int i = 0; i < static_cast<int>(e.shape.size()); i++)
                 {
+                    bool ramp_node = false;
                     node*& n = e.shape[i];
 
                     if (node_degrees[n->id] > 1)
                     {
                         //Removing node from highway
                         node_degrees[n->id]--;
-
-                        //Make old node an overpass.
-                        n->is_overpass = true;
 
 
 
@@ -531,7 +499,14 @@ namespace osm
                             if (e->highway_class == "motorway_link")
                             {
                                 old->ramp_merging_point = n;
+                                ramp_node = true;
                             }
+                        }
+
+                        if (!ramp_node)
+                        {
+                            //Make old node an overpass.
+                            old->is_overpass = true;
                         }
 
                         n->xy = old->xy;
@@ -606,7 +581,7 @@ namespace osm
 
     void network::compute_node_heights()
     {
-        float overpass_height = 1;
+        float overpass_height = 15;
 
         BOOST_FOREACH(osm::edge& e, edges)
         {

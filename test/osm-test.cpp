@@ -90,7 +90,7 @@ void glWindow::draw(){
      net->compute_node_heights();
      net->join_logical_roads();
      net->join_logical_roads();
-     // net->create_ramps();
+     net->create_ramps();
      // net->join_logical_roads();
      // net->join_logical_roads();
      net->remove_small_roads(40);
