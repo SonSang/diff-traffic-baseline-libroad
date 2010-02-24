@@ -26,8 +26,8 @@ struct polyline_road
     std::vector<float> clengths_;
     std::vector<float> cmitres_;
 
-    str svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const;
-    str svg_poly_path       (const vec2f &interval, const float offset, const bool continuation) const;
+    str svg_poly_path_center(const vec2f &interval, const float offset, const bool start) const;
+    str svg_poly_path       (const vec2f &interval, const float offset, const bool start) const;
 
     float inv_len_;
 };

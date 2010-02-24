@@ -354,6 +354,11 @@ bool arc_road::initialize_from_points_radii(const std::vector<vec3f> &points, co
     if(!compute_geometric(lengths, factors))
         return false;
 
+    remove_redundant();
+
+    if(!compute_geometric(lengths, factors))
+        return false;
+
     std::vector<float> alphas(points_.size()-2, 0);
     for(size_t i = 0; i < alphas.size(); ++i)
         alphas[i] = radii_[i]/factors[i];
@@ -986,13 +991,13 @@ bool arc_road::check() const
     && normals_.size()      == N_pts-1;
 }
 
-str  arc_road::svg_arc_path_center(const vec2f &interval, const float offset, const bool continuation) const
+str  arc_road::svg_arc_path_center(const vec2f &interval, const float offset, const bool start) const
 {
     const vec2f new_range(parameter_map(interval[0], offset), parameter_map(interval[1], offset));
-    return svg_arc_path(new_range, offset, continuation);
+    return svg_arc_path(new_range, offset, start);
 }
 
-str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool continuation) const
+str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool start) const
 {
     const vec3f up(0.0, 0.0, 1.0);
 
@@ -1142,7 +1147,7 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
         p.reverse();
 
     p.remove_duplicates();
-    return p.stringify();
+    return p.stringify(start);
 }
 
 str arc_road::svg_arc_arc_path(const size_t i) const

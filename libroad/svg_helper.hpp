@@ -36,7 +36,7 @@ struct line_segment : public path_element
         if(start)
             return boost::str(boost::format("M%f,%f L%f,%f ") % points[0][0] % points[0][1] % points[1][0] % points[1][1]);
         else
-            return boost::str(boost::format("L%f,%f ") % points[1][0] % points[1][1]);
+            return boost::str(boost::format("L%f,%f L%f,%f ") % points[0][0] % points[0][1] % points[1][0] % points[1][1]);
     }
 
     vec3f points[2];
@@ -77,7 +77,7 @@ struct arc_segment : public path_element
         if(start)
             return boost::str(boost::format("M%f,%f A%f,%f 0 0,%d %f,%f ") % points[0][0] % points[0][1] % (radius+offset_val) % (radius+offset_val) % orientation % points[1][0] % points[1][1]);
         else
-            return boost::str(boost::format("A%f,%f 0 0,%d %f,%f ") %  (radius+offset_val) % (radius+offset_val) % orientation % points[1][0] % points[1][1]);
+            return boost::str(boost::format("L%f,%f A%f,%f 0 0,%d %f,%f ") % points[0][0] % points[0][1] % (radius+offset_val) % (radius+offset_val) % orientation % points[1][0] % points[1][1]);
     }
 
     vec3f points[2];
@@ -132,11 +132,11 @@ struct path
         }
     }
 
-    str stringify() const
+    str stringify(bool start) const
     {
         str res;
         std::vector<path_element*>::const_iterator c = elements.begin();
-        res.append((*c)->stringify(true));
+        res.append((*c)->stringify(start));
         for(; c != elements.end(); ++c)
             res.append((*c)->stringify(false));
 

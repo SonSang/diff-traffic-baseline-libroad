@@ -151,7 +151,7 @@ str polyline_road::svg_poly_path_center(const vec2f &interval, const float offse
     return svg_poly_path(interval, offset, continuation);
 }
 
-str polyline_road::svg_poly_path       (const vec2f &interval, const float offset, const bool continuation) const
+str polyline_road::svg_poly_path       (const vec2f &interval, const float offset, const bool start) const
 {
     vec2f range(interval);
     bool reversed = range[0] > range[1];
@@ -196,5 +196,5 @@ str polyline_road::svg_poly_path       (const vec2f &interval, const float offse
         p.reverse();
 
     p.remove_duplicates();
-    return p.stringify();
+    return p.stringify(start);
 }
