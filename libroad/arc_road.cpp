@@ -290,7 +290,7 @@ static std::vector<vec3f> remove_proximity(const std::vector<vec3f> &v, const fl
     return res;
 }
 
-static vec3f center(const vec3f point, const vec3f normal0, const vec3f normal1, const float radius)
+static vec3f center(const vec3f &point, const vec3f &normal0, const vec3f &normal1, const float radius)
 {
     const float alpha(radius/cot_theta(normal0, normal1));
     const vec3f plane(tvmet::normalize(tvmet::cross(normal0, normal1)));
@@ -299,7 +299,7 @@ static vec3f center(const vec3f point, const vec3f normal0, const vec3f normal1,
     return vec3f(point + normal1*alpha + support*radius);
 }
 
-static vec3f inv_center(const vec3f center, const vec3f normal0, const vec3f normal1, const float radius)
+static vec3f inv_center(const vec3f &center, const vec3f &normal0, const vec3f &normal1, const float radius)
 {
     const float alpha(radius/cot_theta(normal0, normal1));
     const vec3f plane(tvmet::normalize(tvmet::cross(normal0, normal1)));
