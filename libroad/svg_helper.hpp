@@ -1,3 +1,6 @@
+#ifndef _SVG_HELPER_HPP_
+#define _SVG_HELPER_HPP_
+
 #include "libroad_common.hpp"
 
 struct path_element
@@ -145,3 +148,4 @@ struct path
 
     std::vector<path_element*> elements;
 };
+#endif
