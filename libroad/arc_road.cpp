@@ -1146,7 +1146,6 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
     if(reversed)
         p.reverse();
 
-    p.remove_duplicates();
     return p.stringify(start);
 }
 

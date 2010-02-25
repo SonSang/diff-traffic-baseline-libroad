@@ -113,28 +113,14 @@ struct path
 
     void add_line(const vec3f &p0, const vec3f &p1)
     {
-        elements.push_back(new line_segment(p0, p1));
+        if(distance2(p0, p1) > 1e-6 && (elements.empty() || distance2(elements.back()->point1(), p1) > 1e-6))
+            elements.push_back(new line_segment(p0, p1));
     }
 
     void add_arc(const vec3f &p0, const float r, const float off, const bool o, const vec3f &p1)
     {
-        elements.push_back(new arc_segment(p0, r, off, o, p1));
-    }
-
-    void remove_duplicates()
-    {
-        std::vector<path_element*> new_elements;
-        new_elements.push_back(elements.front());
-        std::vector<path_element*>::iterator c = boost::next(elements.begin());
-        for(; c != elements.end(); ++c)
-        {
-            if(distance2((*c)->point0(), (*c)->point1()) < 1e-6)
-                delete *c;
-            else
-                new_elements.push_back(*c);
-        }
-
-        elements.swap(new_elements);
+        if(distance2(p0, p1) > 1e-6 && (elements.empty() || distance2(elements.back()->point1(), p1) > 1e-6))
+            elements.push_back(new arc_segment(p0, r, off, o, p1));
     }
 
     void reverse()
