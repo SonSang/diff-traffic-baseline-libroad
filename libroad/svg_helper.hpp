@@ -5,10 +5,11 @@
 
 struct path_element
 {
-    virtual void   reverse()                   = 0;
-    virtual vec3f &point0()                    = 0;
-    virtual vec3f &point1()                    = 0;
-    virtual str    stringify(bool start) const = 0;
+    virtual void          reverse()                   = 0;
+    virtual vec3f        &point0()                    = 0;
+    virtual vec3f        &point1()                    = 0;
+    virtual path_element *copy() const                = 0;
+    virtual str           stringify(bool start) const = 0;
 };
 
 struct line_segment : public path_element
@@ -32,6 +33,11 @@ struct line_segment : public path_element
     virtual vec3f &point1()
     {
         return points[1];
+    }
+
+    virtual path_element *copy() const
+    {
+        return new line_segment(points[0], points[1]);
     }
 
     virtual str stringify(bool start) const
@@ -71,6 +77,11 @@ struct arc_segment : public path_element
     virtual vec3f &point1()
     {
         return points[1];
+    }
+
+    virtual path_element *copy() const
+    {
+        return new arc_segment(points[0], radius, offset, orientation, points[1]);
     }
 
     virtual str stringify(bool start) const
