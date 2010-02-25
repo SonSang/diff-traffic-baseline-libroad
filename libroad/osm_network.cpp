@@ -18,8 +18,8 @@
 #include <limits>
 #include <algorithm>
 
-bool first_for_display = 1;
-double scale = 157253.2964;
+bool   first_for_display = 1;
+double scale             = 157253.2964;
 
 using boost::fusion::at_c;
 
@@ -39,13 +39,9 @@ namespace osm
         if ((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
             and
             (pt[1] >= bottomright[1] and pt[1] <= topleft[1]))
-        {
             return false;
-        }
         else
-        {
             return true;
-        }
     }
 
     void network::clip_roads_to_bounds()
@@ -57,16 +53,11 @@ namespace osm
             edge& e = edges[j];
             int i = 0;
             while (i < e.shape.size())
-            {
                 if (out_of_bounds(e.shape[i]->xy))
-                {
                     e.shape.erase(e.shape.begin() + i);
-                }
                 else
                     i++;
-            }
 
-            // std::cout << "ns " << new_start << " ne " << new_end << std::endl;
             // e.shape.erase(e.shape.begin(), e.shape.begin() + new_start);
             // e.shape.erase(e.shape.begin() + new_end, e.shape.end());
             e.to = e.shape.back()->id;
@@ -76,7 +67,6 @@ namespace osm
                 edges.erase(edges.begin() + j);
             else
                 j++;
-
         }
     }
 
@@ -156,7 +146,6 @@ namespace osm
             edge& e = edges[i];
             if (e.length() < min_len)
             {
-
                 //Update intersections
                 if (intersections.find(e.to) != intersections.end())
                 {
@@ -190,7 +179,6 @@ namespace osm
         glColor3f(0,0,0);
 
         int i = 0;
-
         if (first_for_display)
         {
             for(size_t i = 0; i < edges.size(); ++i)
@@ -217,14 +205,6 @@ namespace osm
             }
             glEnd();
 
-            // glPointSize(5);
-            // glBegin(GL_POINTS);
-            // BOOST_FOREACH(osm::node* n, e_nodes)
-            // {
-            //     glVertex3f(n->xy[0], n->xy[1], 0);
-            // }
-            // glEnd();
-
             i++;
         }
 
@@ -239,7 +219,6 @@ namespace osm
         glEnd();
 
         first_for_display = false;
-
     }
 
     void network::create_grid(int w, int h, double dw, double dh)
@@ -265,13 +244,11 @@ namespace osm
 
                     edge* e = NULL;
                     for(int k=0; k < static_cast<int>(edges.size()); k++)
-                    {
                         if (edges[k].id == e_id)
                         {
                             e = &edges[k];
                             break;
                         }
-                    }
                     if (e == NULL)
                     {
                         edges.push_back(edge());
@@ -290,13 +267,11 @@ namespace osm
                     str e_id = n->id+"to"+node_grid[i-1][j]->id;
                     edge* e = NULL;
                     for(int k=0; k < static_cast<int>(edges.size()); k++)
-                    {
                         if (edges[k].id == e_id)
                         {
                             e = &edges[k];
                             break;
                         }
-                    }
                     if (e == NULL)
                     {
                         edges.push_back(edge());
@@ -320,7 +295,6 @@ namespace osm
         BOOST_FOREACH(const osm::node_pair &np, nodes)
         {
             node_degrees.insert(std::pair<str,int>(np.first, 0));
-
         }
 
         BOOST_FOREACH(osm::edge &e, edges)
@@ -345,9 +319,7 @@ namespace osm
             BOOST_FOREACH(node* n, e.shape)
             {
                 if (find(n->edges_including.begin(), n->edges_including.end(), &e) == n->edges_including.end())
-                {
                     n->edges_including.push_back(&e);
-                }
             }
         }
     }
@@ -363,7 +335,6 @@ namespace osm
                 for (int i = 0; i < e.shape.size(); i++)
                 {
                     node*& n = e.shape[i];
-
                     if (n->ramp_merging_point != NULL)
                     {
                         node* highway_node = n->ramp_merging_point;
@@ -373,16 +344,13 @@ namespace osm
                         {
                             highway_intersection = (e->highway_class == "motorway") or highway_intersection;
                             if (highway_intersection)
-                            {
                                 highway = e;
-                            }
                         }
 
                         if (highway_intersection)
                         {
                             //Create arc road for highway.
                             arc_road highway_shape;
-
                             BOOST_FOREACH(node* foo, highway->shape)
                             {
                                 highway_shape.points_.push_back(foo->xy);
@@ -411,7 +379,6 @@ namespace osm
                             float nolanes = 2;
 
                             //TODO use lane width value, not constant
-
                             float offset = (2.5)*(lanect + -((nolanes - 1)/2.0));
 
                             ///length up to feature i
@@ -493,11 +460,9 @@ namespace osm
                             }
                         }
 
+                        //Make old node an overpass.
                         if (!ramp_node)
-                        {
-                            //Make old node an overpass.
                             old->is_overpass = true;
-                        }
 
                         n->xy = old->xy;
                         //TODO edges_including..
@@ -511,20 +476,14 @@ namespace osm
                                                             &e));
 
                         if (node_degrees.find(n->id) == node_degrees.end())
-                        {
                             node_degrees[n->id] = 0;
-                        }
                         node_degrees[n->id]++;
 
                         //If node is at the end of the road
                         if (i == static_cast<int>(e.shape.size()) - 1)
-                        {
                             e.to = n->id;
-                        }
                         if (i == 0)
-                        {
                             e.from = n->id;
-                        }
                     }
                 }
             }
@@ -547,7 +506,6 @@ namespace osm
                     return 1;
             }
         } sign_func;
-
 
         float x1 = pt1[0] - center[0];
         float y1 = pt1[1] - center[1];
@@ -655,7 +613,6 @@ namespace osm
         }
     }
 
-
     void network::intersection_check()
     {
         BOOST_FOREACH(const osm::intr_pair &ip, intersections)
@@ -668,9 +625,7 @@ namespace osm
         BOOST_FOREACH(const osm::edge &e, edges)
         {
             for (int i = 1; i < static_cast<int>(e.shape.size()) - 1; i++)
-            {
                 assert(node_degrees[e.shape[i]->id] == 1);
-            }
         }
     }
 
@@ -765,23 +720,24 @@ namespace osm
                 // }
 
                 double len_thus_far = 0;
-                double _len = 0;
+                double _len         = 0;
                 //Remove elements until the next segment's length is greater than offset - previous segments.
-                int new_start = -1;
-                do{
+                int    new_start    = -1;
+                do
+                {
                     //TODO could go infinite for tiny roads.
-                    len_thus_far += _len;
+                    len_thus_far                 += _len;
                     new_start++;
-                    tvmet::Vector<float,3> start = e.shape[new_start + 1]->xy;
-                    start -= e.shape[new_start]->xy;
-                    _len = sqrt(start[0]*start[0] + start[1]*start[1]);
-                }while (len_thus_far + _len<= tmp_offset); //TODO degenerate case when equal.
+                    tvmet::Vector<float,3> start  = e.shape[new_start + 1]->xy;
+                    start                        -= e.shape[new_start]->xy;
+                    _len                          = sqrt(start[0]*start[0] + start[1]*start[1]);
+                }
+                while (len_thus_far + _len<= tmp_offset); //TODO degenerate case when equal.
 
                 //Update node degree count.
                 for (int i = 1; i <= new_start; i++)
-                {
                     node_degrees[e.shape[i]->id]--;
-                }
+
                 //Modify geometry to make room for intersection.
                 tvmet::Vector<float, 3> start_seg = e.shape[new_start + 1]->xy;
                 start_seg -= e.shape[new_start]->xy;
@@ -790,15 +746,13 @@ namespace osm
                 double factor = (len - (tmp_offset - len_thus_far))/len;
                 start_seg *= factor;
 
-                e.shape[new_start] = new node(*e.shape[new_start]);
-                e.shape[new_start]->id = e.shape[0]->id;
+                e.shape[new_start]        = new node(*e.shape[new_start]);
+                e.shape[new_start]->id    = e.shape[0]->id;
                 e.shape[new_start]->xy[0] = e.shape[new_start + 1]->xy[0] - start_seg[0];
                 e.shape[new_start]->xy[1] = e.shape[new_start + 1]->xy[1] - start_seg[1];
 
                 if (new_start != 0)
-                {
                     e.shape.erase(e.shape.begin(), e.shape.begin() + new_start);
-                }
             }
 
             BOOST_FOREACH(edge* edge_p, i.edges_ending_here)
@@ -806,46 +760,39 @@ namespace osm
                 edge& e = (*edge_p);
 
                 double len_thus_far = 0;
-                double _len = 0;
-                int new_end = e.shape.size();
-                do{
+                double _len         = 0;
+                int    new_end      = e.shape.size();
+                do
+                {
                     //TODO could go infinite for tiny roads.
-                    len_thus_far += _len;
+                    len_thus_far                += _len;
                     new_end--;
-                    tvmet::Vector<float, 3> seg = e.shape[new_end]->xy;
-                    seg -= e.shape[new_end - 1]->xy;
-                    _len = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
-                }while(len_thus_far + _len <= tmp_offset);
-
+                    tvmet::Vector<float, 3> seg  = e.shape[new_end]->xy;
+                    seg                         -= e.shape[new_end - 1]->xy;
+                    _len                         = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
+                }
+                while(len_thus_far + _len <= tmp_offset);
 
                 //Update node degree count
                 //Don't change count for the last node, as we use its id.
                 for (int i = new_end; i < static_cast<int>(e.shape.size()) - 1; i++)
-                {
                     node_degrees[e.shape[i]->id]--;
-                }
 
                 tvmet::Vector<float, 3> end_seg = e.shape[new_end]->xy;
 
                 end_seg -=  e.shape[new_end - 1]->xy;
 
-                double len = sqrt(end_seg[0]*end_seg[0] + end_seg[1]*end_seg[1]);
+                double len    = sqrt(end_seg[0]*end_seg[0] + end_seg[1]*end_seg[1]);
                 double factor = (len - (tmp_offset - len_thus_far))/len;
 
-                end_seg *= factor;
-
-                e.shape[new_end] = new node(*e.shape[new_end]);
-
-                e.shape[new_end]->id = e.shape[e.shape.size() - 1]->id;
-
-                e.shape[new_end]->xy[0] = e.shape[new_end - 1]->xy[0] + end_seg[0];
-
-                e.shape[new_end]->xy[1] = e.shape[new_end - 1]->xy[1] + end_seg[1];
+                end_seg                 *= factor;
+                e.shape[new_end]         = new node(*e.shape[new_end]);
+                e.shape[new_end]->id     = e.shape[e.shape.size() - 1]->id;
+                e.shape[new_end]->xy[0]  = e.shape[new_end - 1]->xy[0] + end_seg[0];
+                e.shape[new_end]->xy[1]  = e.shape[new_end - 1]->xy[1] + end_seg[1];
 
                 if (new_end != static_cast<int>(e.shape.size()) - 1)
-                {
                     e.shape.erase(e.shape.begin() + new_end + 1, e.shape.end());
-                }
             }
         }
     }
@@ -858,9 +805,7 @@ namespace osm
         BOOST_FOREACH(osm::node_pair &np, nodes)
         {
             if (first)
-            {
                 bias = center*scale;
-            }
             np.second.xy[0] = np.second.xy[0]*scale - bias[0];
             np.second.xy[1] = np.second.xy[1]*scale - bias[1];
         }
@@ -880,9 +825,7 @@ namespace osm
 
         //Add all of b's nodes except the first one.
         for (int i = 1; i < static_cast<int>(b->shape.size()); i++)
-        {
             a->shape.push_back(b->shape[i]);
-        }
 
         a->to = b->to;
 
@@ -911,9 +854,9 @@ namespace osm
                 }
 
                 edge& o = edges[j];
-
                 //Combine roads at degenerate intersections.
-                if ((nodes[e.to].id == nodes[o.from].id) and (node_degrees[e.to] == 2)){
+                if ((nodes[e.to].id == nodes[o.from].id) and (node_degrees[e.to] == 2))
+                {
                     node_degrees[e.to]--;
 
                     int e_size = e.shape.size();
@@ -921,14 +864,14 @@ namespace osm
                     join(&e, &o);
                     assert(static_cast<int>(e.shape.size()) == e_size + o_size - 1);
 
-
                     std::swap(edges[j], edges[edges.size() - 1]);
                     //Don't invalidate e if e is at the end.
                     if (i == static_cast<int>(edges.size()) - 1)
                         e = edges[j];
                     edges.pop_back();
                 }
-                else if ((nodes[e.to].id == nodes[o.to].id) and (node_degrees[e.to] == 2)){
+                else if ((nodes[e.to].id == nodes[o.to].id) and (node_degrees[e.to] == 2))
+                {
                     node_degrees[e.to]--;
 
                     int e_size = e.shape.size();
@@ -939,14 +882,14 @@ namespace osm
 
                     assert(static_cast<int>(e.shape.size()) == e_size + o_size - 1);
 
-
                     std::swap(edges[j], edges[edges.size() - 1]);
                     //Don't invalidate e if e is at the end.
                     if (i == static_cast<int>(edges.size()) - 1)
                         e = edges[j];
                     edges.pop_back();
                 }
-                else if ((nodes[e.from].id == nodes[o.from].id) and (node_degrees[e.from] == 2)){
+                else if ((nodes[e.from].id == nodes[o.from].id) and (node_degrees[e.from] == 2))
+                {
                     node_degrees[e.from]--;
 
                     int e_size = e.shape.size();
@@ -964,9 +907,7 @@ namespace osm
                     edges.pop_back();
                 }
                 else
-                {
                     j++;
-                }
             }
         }
     }
@@ -978,9 +919,7 @@ namespace osm
             BOOST_FOREACH(node* n, e.shape)
             {
                 if (n->xy[2] > 0)
-                {
                     std::cout << n->id << " " << n->xy[2] << std::endl;
-                }
             }
         }
     }
@@ -990,10 +929,9 @@ namespace osm
         edge to_return;
         to_return.type = e.type;
 
-
         //Initialized to values that must be changed.
         to_return.from = "-1";
-        to_return.to = "-1";
+        to_return.to   = "-1";
 
         std::stringstream sout;
         sout << network::new_edges_id;
@@ -1007,7 +945,6 @@ namespace osm
 
     void network::split_into_road_segments()
     {
-
         //Locate all split points.
         std::map<str, std::vector<str> > road_split_points;
         BOOST_FOREACH(edge &ep, edges)
@@ -1022,9 +959,7 @@ namespace osm
                     continue;
 
                 if (node_degrees[node->id] > 1)
-                {
                     road_split_points[ep.id].push_back(node->id);
-                }
             }
         }
 
@@ -1045,13 +980,11 @@ namespace osm
                 //     continue;
                 // }
 
-
                 if (not _first)
                 {
                     new_edges.push_back(copy_no_shape(_edge));
                     new_edges.back().from = _edge.shape[node_index]->id;
                     new_edges.back().shape.push_back(&nodes[_edge.shape[node_index]->id]);
-
                 }
 
                 //Increase the node degree as the road is being split.
@@ -1070,7 +1003,6 @@ namespace osm
                         (--new_edges.end())->to = _edge.shape[node_index]->id;
 
                         assert( (node_degrees[_edge.shape[node_index]->id] < 2) or _edge.shape[node_index]->id == id);
-
                     }
                 }
 
@@ -1081,11 +1013,9 @@ namespace osm
                 if (_first)
                 {
                     //Update the node this road goes up to.
-                    _edge.to = _edge.shape[node_index]->id;
-
+                    _edge.to          = _edge.shape[node_index]->id;
                     _edge_ending_node = node_index;
-
-                    _first = false;
+                    _first            = false;
                 }
             }
 
@@ -1122,65 +1052,64 @@ namespace osm
         BOOST_FOREACH(edge &e, edges)
         {
             edge_type* e_type = retrieve<edge_type>(types, e.id);
-            e.type = e_type;
-            e_type->speed = 25;
-            e_type->nolanes = 1;
-            e_type->oneway = 0;
+            e.type            = e_type;
+            e_type->speed     = 25;
+            e_type->nolanes   = 1;
+            e_type->oneway    = 0;
             if(e.highway_class == "motorway")
             {
-                e_type->speed = 65;
+                e_type->speed   = 65;
                 e_type->nolanes = 2;
-                e_type->oneway = 1;
+                e_type->oneway  = 1;
             }
             if(e.highway_class == "motorway_link")
             {
-                e_type->speed = 30;
+                e_type->speed   = 30;
                 e_type->nolanes = 1;
-                e_type->oneway = 1;
+                e_type->oneway  = 1;
             }
             if(e.highway_class == "residential")
             {
-                e_type->speed = 30;
+                e_type->speed   = 30;
                 e_type->nolanes = 1;
-                e_type->oneway = 0;
+                e_type->oneway  = 0;
             }
             if(e.highway_class == "primary")
             {
                 e_type->nolanes = 2;
-                e_type->oneway = 0;
-                e_type->speed = 50;
+                e_type->oneway  = 0;
+                e_type->speed   = 50;
             }
             if(e.highway_class == "secondary")
             {
-                e_type->speed = 40;
+                e_type->speed   = 40;
                 e_type->nolanes = 2;
-                e_type->oneway = 0;
+                e_type->oneway  = 0;
             }
             if(e.highway_class == "service")
             {
-                e_type->speed = 25;
+                e_type->speed   = 25;
                 e_type->nolanes = 1;
-                e_type->oneway = 0;
+                e_type->oneway  = 0;
             }
             if(e.highway_class == "primary_link")
             {
-                e_type->speed = 30;
+                e_type->speed   = 30;
                 e_type->nolanes = 1;
-                e_type->oneway = 1;
+                e_type->oneway  = 1;
             }
             if(e.highway_class == "secondary_link")
             {
-                e_type->speed = 30;
+                e_type->speed   = 30;
                 e_type->nolanes = 1;
-                e_type->oneway = 1;
+                e_type->oneway  = 1;
             }
-
             //Classes added for grid
             if(e.highway_class == "urban")
             {
-                e_type->speed = 30;
+                e_type->speed   = 30;
                 e_type->nolanes = 2;
-                e_type->oneway = 0;
+                e_type->oneway  = 0;
             }
         }
 
