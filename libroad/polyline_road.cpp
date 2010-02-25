@@ -146,12 +146,12 @@ bool polyline_road::check() const
             points_.size() == normals_.size() + 1);
 }
 
-str polyline_road::svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const
+path polyline_road::svg_poly_path_center(const vec2f &interval, const float offset) const
 {
-    return svg_poly_path(interval, offset, continuation);
+    return svg_poly_path(interval, offset);
 }
 
-str polyline_road::svg_poly_path       (const vec2f &interval, const float offset, const bool start) const
+path polyline_road::svg_poly_path       (const vec2f &interval, const float offset) const
 {
     vec2f range(interval);
     bool reversed = range[0] > range[1];
@@ -195,5 +195,5 @@ str polyline_road::svg_poly_path       (const vec2f &interval, const float offse
     if(reversed)
         p.reverse();
 
-    return p.stringify(start);
+    return p;
 }

@@ -5,6 +5,7 @@
 #include "polyline_road.hpp"
 #include "arc_road.hpp"
 #include "libroad_common.hpp"
+#include "svg_helper.hpp"
 #include "sumo_network.hpp"
 #include "osm_network.hpp"
 
@@ -128,8 +129,8 @@ namespace hwm
         void auto_scale_memberships();
 
         void make_mesh(std::vector<vertex> &verts, std::vector<vec3u> &faces, float lane_width, float resolution) const;
-        str  svg_arc_path (float lane_width) const;
-        str  svg_poly_path(float lane_width) const;
+        path svg_arc_path (float lane_width) const;
+        path svg_poly_path(float lane_width) const;
 
         float   length     () const;
         vec3f   point      (float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;

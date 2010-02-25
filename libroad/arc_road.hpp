@@ -2,6 +2,7 @@
 #define _ARC_ROAD_HPP_
 
 #include "libroad_common.hpp"
+#include "svg_helper.hpp"
 #include "polyline_road.hpp"
 
 struct vertex
@@ -63,13 +64,13 @@ struct arc_road
     void   xml_write(xmlpp::Element *elt) const;
     bool   check() const;
 
-    str  svg_arc_path_center (const vec2f &interval, const float offset, const bool start) const;
-    str  svg_arc_path        (const vec2f &interval, const float offset, const bool start) const;
+    path svg_arc_path_center (const vec2f &interval, const float offset) const;
+    path svg_arc_path        (const vec2f &interval, const float offset) const;
     void svg_arc_circles     (const str &id, xmlpp::Element *parent) const;
     void svg_arc_arcs        (const str &id, xmlpp::Element *parent) const;
     str  svg_arc_arc_path    (const size_t feature) const;
-    str  svg_poly_path_center(const vec2f &interval, const float offset, const bool start) const;
-    str  svg_poly_path       (const vec2f &interval, const float offset, const bool start) const;
+    path svg_poly_path_center(const vec2f &interval, const float offset) const;
+    path svg_poly_path       (const vec2f &interval, const float offset) const;
 
     std::vector<mat4x4f> frames_;
     std::vector<float>   radii_;

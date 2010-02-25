@@ -2,6 +2,7 @@
 #define _POLYLINE_ROAD_HPP_
 
 #include "libroad_common.hpp"
+#include "svg_helper.hpp"
 
 struct polyline_road
 {
@@ -26,8 +27,8 @@ struct polyline_road
     std::vector<float> clengths_;
     std::vector<float> cmitres_;
 
-    str svg_poly_path_center(const vec2f &interval, const float offset, const bool start) const;
-    str svg_poly_path       (const vec2f &interval, const float offset, const bool start) const;
+    path svg_poly_path_center(const vec2f &interval, const float offset) const;
+    path svg_poly_path       (const vec2f &interval, const float offset) const;
 
     float inv_len_;
 };

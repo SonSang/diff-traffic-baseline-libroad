@@ -991,14 +991,15 @@ bool arc_road::check() const
     && normals_.size()      == N_pts-1;
 }
 
-str  arc_road::svg_arc_path_center(const vec2f &interval, const float offset, const bool start) const
+path  arc_road::svg_arc_path_center(const vec2f &interval, const float offset) const
 {
     const vec2f new_range(parameter_map(interval[0], offset), parameter_map(interval[1], offset));
-    return svg_arc_path(new_range, offset, start);
+    return svg_arc_path(new_range, offset);
 }
 
-str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool start) const
+path arc_road::svg_arc_path(const vec2f &interval, const float offset) const
 {
+    path p;
     const vec3f up(0.0, 0.0, 1.0);
 
     vec2f range(interval);
@@ -1013,7 +1014,6 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
     float        end_local;
     const size_t end_feature   = locate_scale(range[1], offset, end_local);
 
-    path p;
     vec3f last_point;
     if(start_feature & 1)
     {
@@ -1146,7 +1146,7 @@ str arc_road::svg_arc_path(const vec2f &interval, const float offset, const bool
     if(reversed)
         p.reverse();
 
-    return p.stringify(start);
+    return p;
 }
 
 str arc_road::svg_arc_arc_path(const size_t i) const
@@ -1163,22 +1163,22 @@ str arc_road::svg_arc_arc_path(const size_t i) const
     return boost::str(boost::format("M%f,%f L%f,%f A%f,%f 0 0,%d %f,%f z") % c[0] % c[1] % start[0] % start[1] % radii_[i-1] % radii_[i-1] % (frames_[i-1](2,2) < 0) % end[0] % end[1]);
 }
 
-str arc_road::svg_poly_path_center(const vec2f &interval, const float offset, const bool continuation) const
+path arc_road::svg_poly_path_center(const vec2f &interval, const float offset) const
 {
     polyline_road pr;
     pr.points_ = points_;
     pr.initialize();
 
-    return pr.svg_poly_path_center(interval, offset, continuation);
+    return pr.svg_poly_path_center(interval, offset);
 }
 
-str arc_road::svg_poly_path(const vec2f &interval, const float offset, const bool continuation) const
+path arc_road::svg_poly_path(const vec2f &interval, const float offset) const
 {
     polyline_road pr;
     pr.points_ = points_;
     pr.initialize();
 
-    return pr.svg_poly_path(interval, offset, continuation);
+    return pr.svg_poly_path(interval, offset);
 }
 
 bool projection_intersect(vec3f &result,

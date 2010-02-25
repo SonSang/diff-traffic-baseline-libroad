@@ -267,19 +267,14 @@ namespace hwm
         ::make_mesh(faces, verts, vec2i(start_high, end_high), vec2i(verts.size(), end_high));
     }
 
-    str lane::svg_arc_path(const float lane_width) const
+    path lane::svg_arc_path(const float lane_width) const
     {
-        str res;
+        path res;
         typedef road_membership::intervals::const_iterator rm_it;
-        {
-            const rm_it current = road_memberships.begin();
-            const road_membership &rm = current->second;
-            res.append(rm.parent_road->rep.svg_arc_path_center(rm.interval, rm.lane_position-lane_width*0.5, true));
-        }
-        for(rm_it current = boost::next(road_memberships.begin()); current != road_memberships.end(); ++current)
+        for(rm_it current = road_memberships.begin(); current != road_memberships.end(); ++current)
         {
             const road_membership &rm = current->second;
-            res.append(rm.parent_road->rep.svg_arc_path_center(rm.interval, rm.lane_position-lane_width*0.5, false));
+            res.append(rm.parent_road->rep.svg_arc_path_center(rm.interval, rm.lane_position-lane_width*0.5));
         }
 
         typedef road_membership::intervals::const_reverse_iterator rm_it_r;
@@ -287,27 +282,20 @@ namespace hwm
         {
             const road_membership &rm = current->second;
             const vec2f rev_interval(rm.interval[1], rm.interval[0]);
-            res.append(rm.parent_road->rep.svg_arc_path_center(rev_interval, rm.lane_position+lane_width*0.5, false));
+            res.append(rm.parent_road->rep.svg_arc_path_center(rev_interval, rm.lane_position+lane_width*0.5));
         }
-
-        res.append("Z");
 
         return res;
     }
 
-    str lane::svg_poly_path(const float lane_width) const
+    path lane::svg_poly_path(const float lane_width) const
     {
-        str res;
+        path res;
         typedef road_membership::intervals::const_iterator rm_it;
-        {
-            const rm_it current = road_memberships.begin();
-            const road_membership &rm = current->second;
-            res.append(rm.parent_road->rep.svg_poly_path_center(rm.interval, rm.lane_position-lane_width*0.5, true));
-        }
-        for(rm_it current = boost::next(road_memberships.begin()); current != road_memberships.end(); ++current)
+        for(rm_it current = road_memberships.begin(); current != road_memberships.end(); ++current)
         {
             const road_membership &rm = current->second;
-            res.append(rm.parent_road->rep.svg_poly_path_center(rm.interval, rm.lane_position-lane_width*0.5, false));
+            res.append(rm.parent_road->rep.svg_poly_path_center(rm.interval, rm.lane_position-lane_width*0.5));
         }
 
         typedef road_membership::intervals::const_reverse_iterator rm_it_r;
@@ -315,10 +303,8 @@ namespace hwm
         {
             const road_membership &rm = current->second;
             const vec2f rev_interval(rm.interval[1], rm.interval[0]);
-            res.append(rm.parent_road->rep.svg_poly_path_center(rev_interval, rm.lane_position+lane_width*0.5, false));
+            res.append(rm.parent_road->rep.svg_poly_path_center(rev_interval, rm.lane_position+lane_width*0.5));
         }
-
-        res.append("Z");
 
         return res;
     }
