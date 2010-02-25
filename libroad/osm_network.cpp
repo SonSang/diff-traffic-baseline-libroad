@@ -18,8 +18,6 @@
 #include <limits>
 #include <algorithm>
 
-
-vec2d bias, prev;
 bool first_for_display = 1;
 double scale = 157253.2964;
 
@@ -30,19 +28,16 @@ std::vector<boost::fusion::vector<double, double, double> > colors;
 namespace osm
 {
     //Instantiate static
-
     size_t network::new_edges_id = 0;
-
 
     typedef std::pair<const str, edge> edge_pair;
     typedef std::pair<const str, node> node_pair;
     typedef std::pair<const str, intersection> intr_pair;
 
-
     bool network::out_of_bounds(tvmet::Vector<float, 3> pt)
     {
         if ((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
-                and
+            and
             (pt[1] >= bottomright[1] and pt[1] <= topleft[1]))
         {
             return false;
@@ -52,7 +47,6 @@ namespace osm
             return true;
         }
     }
-
 
     void network::clip_roads_to_bounds()
     {
@@ -90,7 +84,7 @@ namespace osm
     {
         BOOST_FOREACH(strhash<edge>::type::value_type& hash, edge_hash)
         {
-                edges.push_back(hash.second);
+            edges.push_back(hash.second);
         }
     }
 
@@ -130,7 +124,6 @@ namespace osm
         }
     }
 
-
     void network::populate_edge_hash_from_edges()
     {
         edge_hash.erase(edge_hash.begin(), edge_hash.end());
@@ -140,7 +133,6 @@ namespace osm
             edge_hash.insert(std::make_pair(e.id, e));
         }
     }
-
 
     float edge::length() const
     {
@@ -487,8 +479,6 @@ namespace osm
                         //Removing node from highway
                         node_degrees[n->id]--;
 
-
-
                         node* old = n;
                         str new_id = old->id + "_HWY";
                         n = retrieve<node>(nodes, new_id);
@@ -577,7 +567,6 @@ namespace osm
 
         return std::make_pair(isect1 + center, isect2 + center);
     }
-
 
     void network::compute_node_heights()
     {
@@ -685,7 +674,6 @@ namespace osm
         }
     }
 
-
     void network::create_intersections()
     {
         compute_node_degrees();
@@ -774,7 +762,7 @@ namespace osm
                 //     {
                 //         min_angle = angle;
                 //     }
-                 // }
+                // }
 
                 double len_thus_far = 0;
                 double _len = 0;
@@ -971,7 +959,7 @@ namespace osm
 
                     std::swap(edges[j], edges[edges.size() - 1]);
                     //Don't invalidate e if e is at the end.
-    if (i == static_cast<int>(edges.size()) - 1)
+                    if (i == static_cast<int>(edges.size()) - 1)
                         e = edges[j];
                     edges.pop_back();
                 }
@@ -997,7 +985,6 @@ namespace osm
         }
     }
 
-
     edge network::copy_no_shape(const edge& e)
     {
         edge to_return;
@@ -1018,7 +1005,6 @@ namespace osm
         return to_return;
     }
 
-
     void network::split_into_road_segments()
     {
 
@@ -1028,18 +1014,18 @@ namespace osm
         {
             int i = -1;
             BOOST_FOREACH(node *node, ep.shape)
-             {
-                 i++;
+            {
+                i++;
 
-                 //Skip the first and last nodes.
-                 if (i == 0 or i == static_cast<int>(ep.shape.size()) - 1)
-                     continue;
+                //Skip the first and last nodes.
+                if (i == 0 or i == static_cast<int>(ep.shape.size()) - 1)
+                    continue;
 
-                 if (node_degrees[node->id] > 1)
-                 {
-                     road_split_points[ep.id].push_back(node->id);
-                 }
-             }
+                if (node_degrees[node->id] > 1)
+                {
+                    road_split_points[ep.id].push_back(node->id);
+                }
+            }
         }
 
         //Split each edge at its split points.
@@ -1061,7 +1047,7 @@ namespace osm
 
 
                 if (not _first)
-                 {
+                {
                     new_edges.push_back(copy_no_shape(_edge));
                     new_edges.back().from = _edge.shape[node_index]->id;
                     new_edges.back().shape.push_back(&nodes[_edge.shape[node_index]->id]);
@@ -1101,7 +1087,6 @@ namespace osm
 
                     _first = false;
                 }
-
             }
 
             if (road_split_points[_edge.id].size() > 0)
@@ -1131,7 +1116,6 @@ namespace osm
             edges.push_back(e);
         }
     }
-
 
     void network::compute_edge_types()
     {
@@ -1205,7 +1189,5 @@ namespace osm
             assert(e.type->nolanes > 0);
             assert(e.type->nolanes < 10);
         }
-
-
     }
 }
