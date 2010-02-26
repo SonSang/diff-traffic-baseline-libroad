@@ -16,7 +16,7 @@ namespace osm
     typedef std::pair<const str, node>         node_pair;
     typedef std::pair<const str, intersection> intr_pair;
 
-    bool network::out_of_bounds(tvmet::Vector<float, 3> pt)
+    bool network::out_of_bounds(vec3f pt)
     {
         if ((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
             and
@@ -111,10 +111,10 @@ namespace osm
         float _len         = 0;
         for(int i = 0; i < static_cast<int>(shape.size()) - 1; i++)
         {
-            tvmet::Vector<float, 3> start  = shape[i + 1]->xy;
-            start                         -= shape[i]->xy;
-            _len                           = sqrt(start[0]*start[0] + start[1]*start[1]);
-            len_thus_far                  += _len;
+            vec3f start   = shape[i + 1]->xy;
+            start        -= shape[i]->xy;
+            _len          = sqrt(start[0]*start[0] + start[1]*start[1]);
+            len_thus_far += _len;
         }
 
         return len_thus_far;
@@ -422,10 +422,10 @@ namespace osm
         }
     }
 
-    typedef std::pair<tvmet::Vector<float, 2>, tvmet::Vector<float,2> > pair_of_isects;
-    pair_of_isects circle_line_intersection(tvmet::Vector<float, 2> pt1,
-                                            tvmet::Vector<float, 2> pt2,
-                                            tvmet::Vector<float, 2> center,
+    typedef std::pair<vec2f, vec2f > pair_of_isects;
+    pair_of_isects circle_line_intersection(vec2f pt1,
+                                            vec2f pt2,
+                                            vec2f center,
                                             float r)
     {
         struct sign
@@ -449,11 +449,11 @@ namespace osm
         float dr = sqrt(pow(dx,2) + pow(dy,2));
         float D  = x1*y2 - x2*y1;
 
-        tvmet::Vector<float, 2> isect1((D*dy + sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
-                                       -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+        vec2f isect1((D*dy + sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                     -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
-        tvmet::Vector<float, 2> isect2((D*dy - sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
-                                       -D*dx - std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+        vec2f isect2((D*dy - sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                     -D*dx - std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
         return std::make_pair(isect1 + center, isect2 + center);
     }
@@ -474,7 +474,7 @@ namespace osm
 
                     n->xy[2] = overpass_height;
 
-                    tvmet::Vector<float, 2> n_2d(n->xy[0], n->xy[1]);
+                    vec2f n_2d(n->xy[0], n->xy[1]);
 
                     //Walk back until
                     //  1) another overpass is found, or
@@ -483,7 +483,7 @@ namespace osm
                     // {
                     //     osm::node* j_node = e.shape[j];
 
-                    //     tvmet::Vector<float, 2> j_2d(j_node->xy[0], j_node->xy[1]);
+                    //     vec2f j_2d(j_node->xy[0], j_node->xy[1]);
 
                     //     if (j_node->is_overpass)
                     //         break;
@@ -492,9 +492,9 @@ namespace osm
                     //     if (dist > overpass_radius)
                     //     {
                     //         //Intersect line segment (j and j + 1) with circle and add point.
-                    //         tvmet::Vector<float, 2> jp1_2d(e.shape[j + 1]->xy[0], e.shape[j + 1]->xy[1]);
+                    //         vec2f jp1_2d(e.shape[j + 1]->xy[0], e.shape[j + 1]->xy[1]);
 
-                    //         std::pair<tvmet::Vector<float, 2>, tvmet::Vector<float, 2> > isects =
+                    //         std::pair<vec2f, vec2f> isects =
                     //             circle_line_intersection(j_2d, jp1_2d, n_2d, overpass_radius);
 
                     //         bool first_is_on_seg = ((std::min(j_2d[0], jp1_2d[0]) < isects.first[0])
@@ -518,7 +518,7 @@ namespace osm
                     //             //Add first intersection as new node on the line.
                     //             osm::node ramp_start;
                     //             ramp_start.id = n->id + "_opassramp";
-                    //             ramp_start.xy = tvmet::Vector<float, 3>(isects.first[0], isects.first[1], 0.0f);
+                    //             ramp_start.xy = vec3f(isects.first[0], isects.first[1], 0.0f);
                     //             ramp_start.edges_including.push_back(&e);
                     //             node_degrees[ramp_start.id] = 1;
                     //             nodes.insert(std::make_pair(ramp_start.id, ramp_start));
@@ -607,7 +607,7 @@ namespace osm
                 edge& e = (*edge_p);
 
                 //TODO Put the min angle calculations in a seperate function
-                // tvmet::Vector<float, 3> alpha(e.shape[1]->xy[0] - e.shape[0]->xy[0],
+                // vec3f alpha(e.shape[1]->xy[0] - e.shape[0]->xy[0],
                 //                               e.shape[1]->xy[1] - e.shape[0]->xy[1],
                 //                               0.0f);
                 // alpha *= 1.0/tvmet::norm2(alpha);
@@ -620,7 +620,7 @@ namespace osm
                 //     if (e.id == f.id)
                 //         continue;
 
-                //     tvmet::Vector<float, 3> beta(f.shape[1]->xy[0] - f.shape[0]->xy[0],
+                //     vec3f beta(f.shape[1]->xy[0] - f.shape[0]->xy[0],
                 //                                  f.shape[1]->xy[1] - f.shape[0]->xy[1],
                 //                                  0.0f);
                 //     beta *= 1.0/tvmet::norm2(beta);
@@ -637,7 +637,7 @@ namespace osm
                 // {
                 //     edge& f = (*other_edge_p);
 
-                //     tvmet::Vector<float, 3> beta;
+                //     vec3f beta;
                 //     beta = f.shape[f.shape.size() - 2]->xy;
                 //     beta -= f.shape[f.shape.size() - 1]->xy;
 
@@ -671,7 +671,7 @@ namespace osm
                     node_degrees[e.shape[i]->id]--;
 
                 //Modify geometry to make room for intersection.
-                tvmet::Vector<float, 3> start_seg = e.shape[new_start + 1]->xy;
+                vec3f start_seg = e.shape[new_start + 1]->xy;
                 start_seg -= e.shape[new_start]->xy;
 
                 double len = sqrt(start_seg[0]*start_seg[0] + start_seg[1]*start_seg[1]);
@@ -697,11 +697,11 @@ namespace osm
                 do
                 {
                     //TODO could go infinite for tiny roads.
-                    len_thus_far                += _len;
+                    len_thus_far += _len;
                     new_end--;
-                    tvmet::Vector<float, 3> seg  = e.shape[new_end]->xy;
-                    seg                         -= e.shape[new_end - 1]->xy;
-                    _len                         = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
+                    vec3f seg     = e.shape[new_end]->xy;
+                    seg          -= e.shape[new_end - 1]->xy;
+                    _len          = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
                 }
                 while(len_thus_far + _len <= tmp_offset);
 
@@ -710,7 +710,7 @@ namespace osm
                 for (int i = new_end; i < static_cast<int>(e.shape.size()) - 1; i++)
                     node_degrees[e.shape[i]->id]--;
 
-                tvmet::Vector<float, 3> end_seg = e.shape[new_end]->xy;
+                vec3f end_seg = e.shape[new_end]->xy;
 
                 end_seg -=  e.shape[new_end - 1]->xy;
 

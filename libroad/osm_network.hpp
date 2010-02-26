@@ -14,12 +14,12 @@ namespace osm
 
         node(){ is_overpass = false; ramp_merging_point = NULL;}
 
-        str                     id;
-        tvmet::Vector<float, 3> xy;
-        TYPES                   type;
-        std::vector<edge*>      edges_including; //Currently not maintained
-        bool                    is_overpass;
-        node*                   ramp_merging_point;
+        str                id;
+        vec3f              xy;
+        TYPES              type;
+        std::vector<edge*> edges_including; //Currently not maintained
+        bool               is_overpass;
+        node*              ramp_merging_point;
     };
 
     struct edge_type
@@ -100,7 +100,7 @@ namespace osm
         void edges_including_rebuild();
         void display_used_node_heights();
 
-        bool out_of_bounds(tvmet::Vector<float, 3>);
+        bool out_of_bounds(vec3f);
         void clip_roads_to_bounds();
         void create_ramps();
         void populate_edges_from_hash();
