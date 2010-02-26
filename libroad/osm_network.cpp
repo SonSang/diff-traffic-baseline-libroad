@@ -419,11 +419,11 @@ namespace osm
         }
     }
 
-    typedef std::pair<vec2f, vec2f > pair_of_isects;
-    pair_of_isects circle_line_intersection(vec2f pt1,
-                                            vec2f pt2,
-                                            vec2f center,
-                                            float r)
+    typedef std::pair<vec2f, vec2f> pair_of_isects;
+    static pair_of_isects circle_line_intersection(const vec2f &pt1,
+                                                   const vec2f &pt2,
+                                                   const vec2f &center,
+                                                   float r)
     {
         struct sign
         {
@@ -436,21 +436,21 @@ namespace osm
             }
         } sign_func;
 
-        float x1 = pt1[0] - center[0];
-        float y1 = pt1[1] - center[1];
-        float x2 = pt2[0] - center[0];
-        float y2 = pt2[1] - center[1];
+        const float x1 = pt1[0] - center[0];
+        const float y1 = pt1[1] - center[1];
+        const float x2 = pt2[0] - center[0];
+        const float y2 = pt2[1] - center[1];
 
-        float dx = (x2 - x1);
-        float dy = (y2 - y1);
-        float dr = sqrt(pow(dx,2) + pow(dy,2));
-        float D  = x1*y2 - x2*y1;
+        const float dx = (x2 - x1);
+        const float dy = (y2 - y1);
+        const float dr = sqrt(pow(dx,2) + pow(dy,2));
+        const float D  = x1*y2 - x2*y1;
 
-        vec2f isect1((D*dy + sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
-                     -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+        const vec2f isect1((D*dy + sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                           -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
-        vec2f isect2((D*dy - sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
-                     -D*dx - std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+        const vec2f isect2((D*dy - sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                           -D*dx - std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
         return std::make_pair(isect1 + center, isect2 + center);
     }
