@@ -309,8 +309,8 @@ namespace osm
                             ///+ 1/2 length of feature i
                             //// length of total road
                             int feature_index = (2*(index + 1)) - 3;
-                            if (index == 0){ feature_index = 0;}
-                            if (index == highway_shape.points_.size() - 1){ feature_index--;}
+                            if (index == 0) feature_index = 0;
+                            if (index == highway_shape.points_.size() - 1) feature_index--;
 
                             float t = (highway_shape.feature_base(feature_index, offset) + (highway_shape.feature_size(feature_index, offset) / 2.0)) / highway_shape.length(offset);
 
@@ -882,7 +882,8 @@ namespace osm
             BOOST_FOREACH(str id, road_split_points[_edge.id])
             {
                 //Skip the first splitter if it's the first point of the road.
-                // if (id == _edge.shape[0]->id){
+                // if (id == _edge.shape[0]->id)
+                // {
                 //     assert(0);  //This should never occur.
                 //     continue;
                 // }
@@ -933,9 +934,9 @@ namespace osm
                 new_edges.push_back(copy_no_shape(_edge));
                 new_edges.back().from = _edge.shape[node_index]->id;
 
-                for (;node_index < static_cast<int>(_edge.shape.size()); node_index++){
+                for (;node_index < static_cast<int>(_edge.shape.size()); node_index++)
+                {
                     new_edges.back().shape.push_back(_edge.shape[node_index]);
-
                     new_edges.back().to = _edge.shape[node_index]->id;
                 }
 

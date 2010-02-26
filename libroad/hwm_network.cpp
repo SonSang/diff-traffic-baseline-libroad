@@ -422,7 +422,8 @@ namespace hwm
 
         BOOST_FOREACH(const strhash<size_t>::type::value_type &ndeg, node_degree)
         {
-            if(ndeg.second > 1){
+            if(ndeg.second > 1)
+            {
                 assert(ndeg.first != "");
                 retrieve<intersection>(hnet.intersections, ndeg.first);
             }
@@ -695,9 +696,7 @@ namespace hwm
 
             hwm::intersection& hwm_isect = hnet.intersections[osm_isect.id_from_node];
             if (hwm_isect.id == "")
-            {
                 assert(0);
-            }
 
             //Add states for every pairing of roads that are ending here.
             for(int i = 0; i < static_cast<int>(osm_isect.edges_ending_here.size()); i++)
