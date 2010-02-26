@@ -407,8 +407,7 @@ namespace hwm
             {
                 if (n->id != e.shape[0]->id)
                 {
-                    if(sqrt(pow(n->xy[0] - last->xy[0],2)
-                            + pow(n->xy[1] - last->xy[1],2)) > 1e-7){
+                    if(planar_distance(n->xy, last->xy) > 1e-7){
                         new_road.rep.points_.push_back(vec3f(n->xy[0],
                                                              n->xy[1],
                                                              n->xy[2]));

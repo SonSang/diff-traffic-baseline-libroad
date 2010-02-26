@@ -105,14 +105,8 @@ namespace osm
     float edge::length() const
     {
         float len_thus_far = 0;
-        float _len         = 0;
         for(int i = 0; i < static_cast<int>(shape.size()) - 1; i++)
-        {
-            vec3f start   = shape[i + 1]->xy;
-            start        -= shape[i]->xy;
-            _len          = sqrt(start[0]*start[0] + start[1]*start[1]);
-            len_thus_far += _len;
-        }
+            len_thus_far += planar_distance(shape[i + 1]->xy, shape[i]->xy);
 
         return len_thus_far;
     }
@@ -432,14 +426,14 @@ namespace osm
 
         const float dx = (x2 - x1);
         const float dy = (y2 - y1);
-        const float dr = sqrt(pow(dx,2) + pow(dy,2));
+        const float dr = std::sqrt(std::pow(dx,2) + std::pow(dy,2));
         const float D  = x1*y2 - x2*y1;
 
-        const vec2f isect1((D*dy + copysign(1, dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
-                           -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+        const vec2f isect1((D*dy + copysign(1, dy)*dx*std::sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                           -D*dx + std::abs(dy)*std::sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
-        const vec2f isect2((D*dy - copysign(1, dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
-                           -D*dx - std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
+        const vec2f isect2((D*dy - copysign(1, dy)*dx*std::sqrt(r*r*dr*dr - D*D))/(dr*dr),
+                           -D*dx - std::abs(dy)*std::sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
         return std::make_pair(isect1 + center, isect2 + center);
     }
@@ -646,9 +640,7 @@ namespace osm
                     //TODO could go infinite for tiny roads.
                     len_thus_far                 += _len;
                     new_start++;
-                    tvmet::Vector<float,3> start  = e.shape[new_start + 1]->xy;
-                    start                        -= e.shape[new_start]->xy;
-                    _len                          = sqrt(start[0]*start[0] + start[1]*start[1]);
+                    _len                          = planar_distance(e.shape[new_start + 1]->xy, e.shape[new_start]->xy);
                 }
                 while (len_thus_far + _len<= tmp_offset); //TODO degenerate case when equal.
 
@@ -657,10 +649,9 @@ namespace osm
                     node_degrees[e.shape[i]->id]--;
 
                 //Modify geometry to make room for intersection.
-                vec3f start_seg = e.shape[new_start + 1]->xy;
-                start_seg -= e.shape[new_start]->xy;
-
-                double len = sqrt(start_seg[0]*start_seg[0] + start_seg[1]*start_seg[1]);
+                vec3f start_seg(e.shape[new_start + 1]->xy - e.shape[new_start]->xy);
+                start_seg[2] = 0.0f;
+                const double len = length(start_seg);
                 double factor = (len - (tmp_offset - len_thus_far))/len;
                 start_seg *= factor;
 
@@ -685,9 +676,7 @@ namespace osm
                     //TODO could go infinite for tiny roads.
                     len_thus_far += _len;
                     new_end--;
-                    vec3f seg     = e.shape[new_end]->xy;
-                    seg          -= e.shape[new_end - 1]->xy;
-                    _len          = sqrt(seg[0]*seg[0] + seg[1]*seg[1]);
+                    _len          = planar_distance(e.shape[new_end]->xy, e.shape[new_end-1]->xy);
                 }
                 while(len_thus_far + _len <= tmp_offset);
 
@@ -700,7 +689,7 @@ namespace osm
 
                 end_seg -=  e.shape[new_end - 1]->xy;
 
-                double len    = sqrt(end_seg[0]*end_seg[0] + end_seg[1]*end_seg[1]);
+                const double len = planar_distance(e.shape[new_end]->xy, e.shape[new_end - 1]->xy);
                 double factor = (len - (tmp_offset - len_thus_far))/len;
 
                 end_seg                 *= factor;

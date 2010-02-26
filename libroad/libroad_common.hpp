@@ -92,6 +92,12 @@ inline float distance(const T& t1, const T& t2)
     return std::sqrt(distance2(t1, t2));
 }
 
+inline float planar_distance(const vec3f &pt1, const vec3f &pt2)
+{
+    const vec2f diff(pt2[0] - pt1[0], pt2[1] - pt1[1]);
+    return std::sqrt(tvmet::dot(diff, diff));
+}
+
 inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filename)
 {
     boost::iostreams::filtering_ostream *out_stream = new boost::iostreams::filtering_ostream();
