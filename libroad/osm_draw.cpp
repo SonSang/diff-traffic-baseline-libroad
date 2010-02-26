@@ -18,7 +18,7 @@ namespace osm
         {
             for(size_t i = 0; i < edges.size(); ++i)
             {
-                colors.push_back(vec3f(rand()/(double)RAND_MAX,rand()/(double)RAND_MAX,rand()/(double)RAND_MAX));
+                colors.push_back(vec3f(drand48(), drand48(), drand48()));
             }
         }
 
