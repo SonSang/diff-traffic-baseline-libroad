@@ -425,17 +425,6 @@ namespace osm
                                                    const vec2f &center,
                                                    float r)
     {
-        struct sign
-        {
-            float operator()(float x)
-            {
-                if (x < 0)
-                    return -1;
-                else
-                    return 1;
-            }
-        } sign_func;
-
         const float x1 = pt1[0] - center[0];
         const float y1 = pt1[1] - center[1];
         const float x2 = pt2[0] - center[0];
@@ -446,10 +435,10 @@ namespace osm
         const float dr = sqrt(pow(dx,2) + pow(dy,2));
         const float D  = x1*y2 - x2*y1;
 
-        const vec2f isect1((D*dy + sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+        const vec2f isect1((D*dy + copysign(1, dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
                            -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
-        const vec2f isect2((D*dy - sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
+        const vec2f isect2((D*dy - copysign(1, dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
                            -D*dx - std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
         return std::make_pair(isect1 + center, isect2 + center);
