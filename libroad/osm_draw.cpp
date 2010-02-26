@@ -3,9 +3,8 @@
 #include <FL/glu.h>
 #include <FL/glut.H>
 
-bool   first_for_display = 1;
-
-std::vector<vec3f> colors;
+static bool               first_for_display = 1;
+static std::vector<vec3f> colors;
 
 namespace osm
 {
