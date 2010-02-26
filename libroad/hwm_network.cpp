@@ -34,7 +34,6 @@ namespace hwm
             assert(other->first == lane_id);
 
             const lane &other_lane = other->second;
-
             {
                 lane::road_membership::intervals::iterator       my_memb    = current_lane.road_memberships.begin();
                 lane::road_membership::intervals::const_iterator other_memb =   other_lane.road_memberships.begin();
@@ -398,8 +397,6 @@ namespace hwm
             ++node_degree[e.shape[0]->id];
             ++node_degree[e.shape.back()->id];
 
-
-
             road &new_road = retrieve<road>(hnet.roads, e.id);
             new_road.name = new_road.id;
 
@@ -645,7 +642,6 @@ namespace hwm
 
                 lane &ramp_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % l.ramp_id % 0));
 
-
                 //Create lane terminus so that ramp flows into extra lane.
                 if (l.offramp)
                 {
@@ -689,7 +685,6 @@ namespace hwm
         {
             l.second.check();
         }
-
 
         float STATE_DURATION = 20;
 
@@ -760,9 +755,7 @@ namespace hwm
                         }
                     }
 
-
                     hwm_isect.states.push_back(state);
-
                 }
             }
 
@@ -822,7 +815,6 @@ namespace hwm
                 }
             }
 
-
             //Every pair of outgoing to incoming roads
             for(int i = 0; i < static_cast<int>(osm_isect.edges_starting_here.size()); i++)
             {
@@ -849,7 +841,6 @@ namespace hwm
                             const lane::intersection_terminus *l_j_it = dynamic_cast<lane::intersection_terminus*>(l_j->start);
                             assert(l_j_it);
                             state.state_pairs.insert(intersection::state::state_pair(l_it->intersect_in_ref, l_j_it->intersect_in_ref));
-
                         }
                     }
 
@@ -875,19 +866,13 @@ namespace hwm
                     hwm_isect.states.push_back(state);
                 }
             }
-
         }
-
-
 
         typedef strhash<hwm::intersection>::type::value_type hwm_i_pair;
         BOOST_FOREACH(const hwm_i_pair& i, hnet.intersections)
         {
             assert(i.second.id != "");
         }
-
-
-
 
         return hnet;
     }

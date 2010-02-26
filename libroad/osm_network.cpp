@@ -5,15 +5,15 @@
 #include <limits>
 #include <algorithm>
 
-double scale             = 157253.2964;
+double scale = 157253.2964;
 
 namespace osm
 {
     //Instantiate static
     size_t network::new_edges_id = 0;
 
-    typedef std::pair<const str, edge> edge_pair;
-    typedef std::pair<const str, node> node_pair;
+    typedef std::pair<const str, edge>         edge_pair;
+    typedef std::pair<const str, node>         node_pair;
     typedef std::pair<const str, intersection> intr_pair;
 
     bool network::out_of_bounds(tvmet::Vector<float, 3> pt)
@@ -33,7 +33,7 @@ namespace osm
         while (j < edges.size())
         {
             edge& e = edges[j];
-            int i = 0;
+            int   i = 0;
             while (i < e.shape.size())
                 if (out_of_bounds(e.shape[i]->xy))
                     e.shape.erase(e.shape.begin() + i);
@@ -42,7 +42,7 @@ namespace osm
 
             // e.shape.erase(e.shape.begin(), e.shape.begin() + new_start);
             // e.shape.erase(e.shape.begin() + new_end, e.shape.end());
-            e.to = e.shape.back()->id;
+            e.to   = e.shape.back()->id;
             e.from = e.shape[0]->id;
 
             if (e.shape.size() < 2)
@@ -66,7 +66,6 @@ namespace osm
         BOOST_FOREACH(const osm::node_pair &np, nodes)
         {
             node_degree_check.insert(std::pair<str,int>(np.first, 0));
-
         }
 
         BOOST_FOREACH(osm::edge &e, edges)
@@ -109,13 +108,13 @@ namespace osm
     float edge::length() const
     {
         float len_thus_far = 0;
-        float _len = 0;
+        float _len         = 0;
         for(int i = 0; i < static_cast<int>(shape.size()) - 1; i++)
         {
-            tvmet::Vector<float, 3> start = shape[i + 1]->xy;
-            start -= shape[i]->xy;
-            _len = sqrt(start[0]*start[0] + start[1]*start[1]);
-            len_thus_far += _len;
+            tvmet::Vector<float, 3> start  = shape[i + 1]->xy;
+            start                         -= shape[i]->xy;
+            _len                           = sqrt(start[0]*start[0] + start[1]*start[1]);
+            len_thus_far                  += _len;
         }
 
         return len_thus_far;
@@ -175,9 +174,8 @@ namespace osm
 
                 if (j != 0) //create vertical edge
                 {
-                    str e_id = n->id+"to"+node_grid[i][j-1]->id;
-
-                    edge* e = NULL;
+                    str   e_id = n->id+"to"+node_grid[i][j-1]->id;
+                    edge* e    = NULL;
                     for(int k=0; k < static_cast<int>(edges.size()); k++)
                         if (edges[k].id == e_id)
                         {
@@ -199,8 +197,8 @@ namespace osm
 
                 if (i != 0)
                 {
-                    str e_id = n->id+"to"+node_grid[i-1][j]->id;
-                    edge* e = NULL;
+                    str   e_id = n->id+"to"+node_grid[i-1][j]->id;
+                    edge* e    = NULL;
                     for(int k=0; k < static_cast<int>(edges.size()); k++)
                         if (edges[k].id == e_id)
                         {
@@ -212,9 +210,9 @@ namespace osm
                         edges.push_back(edge());
                         e = &edges.back();
                     }
-                    e->id = e_id;
-                    e->from = n->id;
-                    e->to = node_grid[i-1][j]->id;
+                    e->id            = e_id;
+                    e->from          = n->id;
+                    e->to            = node_grid[i-1][j]->id;
                     e->highway_class = "urban";
                     e->shape.push_back(&nodes[e->from]);
                     e->shape.push_back(&nodes[e->to]);
@@ -272,9 +270,9 @@ namespace osm
                     node*& n = e.shape[i];
                     if (n->ramp_merging_point != NULL)
                     {
-                        node* highway_node = n->ramp_merging_point;
-                        bool highway_intersection = false;
-                        osm::edge* highway = NULL;
+                        node*      highway_node         = n->ramp_merging_point;
+                        bool       highway_intersection = false;
+                        osm::edge* highway              = NULL;
                         BOOST_FOREACH(osm::edge *e, highway_node->edges_including)
                         {
                             highway_intersection = (e->highway_class == "motorway") or highway_intersection;
@@ -310,7 +308,7 @@ namespace osm
 
                             ///First, we need the offset of the point where the ramp will merge.
                             ///This will always be on the right side of the road, one lane beyond the end of the road.
-                            float lanect = -1;
+                            float lanect  = -1;
                             float nolanes = 2;
 
                             //TODO use lane width value, not constant
@@ -345,9 +343,8 @@ namespace osm
                                 e.shape[i - 1]->xy = len*tan + n->xy;
                             }
 
-                            float t_center = (highway_shape.feature_base(feature_index, 0.0) + (highway_shape.feature_size(feature_index, 0.0) / 2.0)) / highway_shape.length(0.0);
-
-                            float merge_lane_len = 60;
+                            float t_center                  = (highway_shape.feature_base(feature_index, 0.0) + (highway_shape.feature_size(feature_index, 0.0) / 2.0)) / highway_shape.length(0.0);
+                            float merge_lane_len            = 60;
                             float merge_lane_parametric_len = merge_lane_len / highway_shape.length(0.0);
 
                             //Add a merging lane to the highway
@@ -373,17 +370,17 @@ namespace osm
             {
                 for(int i = 0; i < static_cast<int>(e.shape.size()); i++)
                 {
-                    bool ramp_node = false;
-                    node*& n = e.shape[i];
+                    bool   ramp_node = false;
+                    node*& n         = e.shape[i];
 
                     if (node_degrees[n->id] > 1)
                     {
                         //Removing node from highway
                         node_degrees[n->id]--;
 
-                        node* old = n;
-                        str new_id = old->id + "_HWY";
-                        n = retrieve<node>(nodes, new_id);
+                        node* old    = n;
+                        str   new_id = old->id + "_HWY";
+                        n            = retrieve<node>(nodes, new_id);
 
                         //If there is a ramp at this intersection, store the connecting node
                         BOOST_FOREACH(edge* e, old->edges_including)
@@ -450,7 +447,7 @@ namespace osm
         float dx = (x2 - x1);
         float dy = (y2 - y1);
         float dr = sqrt(pow(dx,2) + pow(dy,2));
-        float D = x1*y2 - x2*y1;
+        float D  = x1*y2 - x2*y1;
 
         tvmet::Vector<float, 2> isect1((D*dy + sign_func(dy)*dx*sqrt(r*r*dr*dr - D*D))/(dr*dr),
                                        -D*dx + std::abs(dy)*sqrt(r*r*dr*dr - D*D)/(dr*dr));
@@ -902,7 +899,7 @@ namespace osm
         std::vector<edge> new_edges;
         BOOST_FOREACH(edge &_edge, edges)
         {
-            int node_index = 0;
+            int node_index        = 0;
             int _edge_ending_node = 0;
 
             //Find first splitter.

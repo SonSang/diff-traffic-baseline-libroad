@@ -6,7 +6,6 @@
 
 namespace osm
 {
-
     struct edge;
 
     struct node
@@ -15,13 +14,12 @@ namespace osm
 
         node(){ is_overpass = false; ramp_merging_point = NULL;}
 
-        str   id;
+        str                     id;
         tvmet::Vector<float, 3> xy;
-        TYPES type;
-        std::vector<edge*> edges_including; //Currently not maintained
-
-        bool is_overpass;
-        node* ramp_merging_point;
+        TYPES                   type;
+        std::vector<edge*>      edges_including; //Currently not maintained
+        bool                    is_overpass;
+        node*                   ramp_merging_point;
     };
 
     struct edge_type
@@ -31,7 +29,6 @@ namespace osm
         double speed;
         int    priority;
         bool   oneway;
-
     };
 
     struct shape_t : public std::vector<node*>
@@ -47,8 +44,8 @@ namespace osm
         typedef enum {center, right} SPREAD;
 
         str        id;
-        str      from;
-        str      to;
+        str        from;
+        str        to;
         edge_type* type;
         shape_t    shape;
         SPREAD     spread;
@@ -61,8 +58,8 @@ namespace osm
             float start_t;
             float end_t;
             float offset;
-            str ramp_id;
-            bool offramp;
+            str   ramp_id;
+            bool  offramp;
         };
 
         std::vector<node*> overpass_nodes;
@@ -76,7 +73,7 @@ namespace osm
     {
         std::vector<edge*> edges_ending_here;
         std::vector<edge*> edges_starting_here;
-        str id_from_node;
+        str                id_from_node;
     };
 
     struct network
@@ -84,18 +81,14 @@ namespace osm
         network()
         {}
 
-        strhash<node>::type      nodes;
-        strhash<edge_type>::type types;
-        strhash<edge>::type      edge_hash;
-        strhash<intersection>::type intersections;
-
-        strhash<edge>::type      road_segs;
-
-        strhash<int>::type      node_degrees;
-        strhash<std::vector<str> >::type  node_connections;
-
-        std::vector<edge>             edges;
-
+        strhash<node>::type              nodes;
+        strhash<edge_type>::type         types;
+        strhash<edge>::type              edge_hash;
+        strhash<intersection>::type      intersections;
+        strhash<edge>::type              road_segs;
+        strhash<int>::type               node_degrees;
+        strhash<std::vector<str> >::type node_connections;
+        std::vector<edge>                edges;
 
         vec2d center;
         vec2d topleft;
@@ -106,7 +99,6 @@ namespace osm
         void intersection_check();
         void edges_including_rebuild();
         void display_used_node_heights();
-
 
         bool out_of_bounds(tvmet::Vector<float, 3>);
         void clip_roads_to_bounds();
@@ -135,7 +127,6 @@ namespace osm
     };
 
     network load_xml_network(const char *osm_file);
-
 }
 
 inline std::ostream &operator<<(std::ostream &o, const osm::node::TYPES &t)
@@ -182,7 +173,7 @@ inline std::ostream &operator<<(std::ostream &o, const osm::edge::SPREAD &t)
         break;
     default:
         o << "unknown_spread_type";
-       break;
+        break;
     }
     return o;
 }
@@ -200,16 +191,14 @@ inline std::istream &operator>>(std::istream &i, osm::edge::SPREAD &t)
     return i;
 }
 
-    template <class T>
-    static inline T* retrieve(typename strhash<T>::type &m, const str &id)
-    {
-        typedef typename strhash<T>::type val;
-        typename strhash<T>::type::iterator entry(m.find(id));
-        if(entry == m.end())
-            m.insert(entry, std::make_pair(id, T()));
+template <class T>
+static inline T* retrieve(typename strhash<T>::type &m, const str &id)
+{
+    typedef typename strhash<T>::type val;
+    typename strhash<T>::type::iterator entry(m.find(id));
+    if(entry == m.end())
+        m.insert(entry, std::make_pair(id, T()));
 
-        return &(m[id]);
-    }
-
-
+    return &(m[id]);
+}
 #endif
