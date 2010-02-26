@@ -6,5 +6,7 @@ sumo-xml-to-hwm
 arc-road-test
 view-network
 micro
-osm-test
 svg-write
+make-grid
+osm-import
+view-osm

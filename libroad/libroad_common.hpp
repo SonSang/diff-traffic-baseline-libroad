@@ -21,6 +21,7 @@ const char *libroad_package_string();
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <glibmm/ustring.h>
 

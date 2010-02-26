@@ -60,19 +60,12 @@ void timerCallback(void*)
 
 int main(int argc, char *argv[])
 {
-    //Create from grid
-    // osm::network s_net;
-    // net = &s_net;
-    // net->create_grid(6, 6, 200, 200);
-    // net->compute_edge_types();
-    // net->compute_node_degrees();
-    // net->join_logical_roads();
-    // net->split_into_road_segments();
-    // net->remove_small_roads(15);
-    // net->create_intersections();
-    // net->populate_edge_hash_from_edges();
-    // hwm::network hnet(hwm::from_osm("test", 0.5f, *net));
-    // write_xml_network(hnet, "test_net.xml");
+    std::cerr << libroad_package_string() << std::endl;
+    if(argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <input osm>" << std::endl;
+        return 1;
+    }
 
     //Load from file
     osm::network s_net(osm::load_xml_network(argv[1]));
@@ -93,11 +86,6 @@ int main(int argc, char *argv[])
     net->remove_small_roads(40);
     net->create_intersections();
     net->populate_edge_hash_from_edges();
-    hwm::network hnet(hwm::from_osm("test", 0.5f, 2.5, *net));
-    hnet.xml_write("test_net.xml");
-
-    //if (hnet.check())
-    //    std::cerr << "Conversion seems to have worked\n";
 
     Fl_Double_Window *window = new Fl_Double_Window(500,500);
     Fl::add_timeout(timestep, timerCallback);

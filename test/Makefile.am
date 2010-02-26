@@ -1,4 +1,4 @@
-noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write
+noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import
 
 EXTRA_DIST = arcball.hpp
 
@@ -32,8 +32,18 @@ svg_write_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVM
 svg_write_LDFLAGS  = $(LDFLAGS)
 svg_write_LDADD    = $(top_builddir)/libroad/libroad.la
 
+make_grid_SOURCES = make-grid.cpp
+make_grid_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+make_grid_LDFLAGS  = $(LDFLAGS)
+make_grid_LDADD    = $(top_builddir)/libroad/libroad.la
+
+osm_import_SOURCES = osm-import.cpp
+osm_import_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+osm_import_LDFLAGS  = $(LDFLAGS)
+osm_import_LDADD    = $(top_builddir)/libroad/libroad.la
+
 if DO_VISUAL
-noinst_PROGRAMS += arc-road-test view-network micro osm-test
+noinst_PROGRAMS += arc-road-test view-network micro view-osm
 
 arc_road_test_SOURCES = arc-road-test.cpp
 arc_road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
@@ -50,8 +60,8 @@ micro_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_C
 micro_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
 micro_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
 
-osm_test_SOURCES = osm-test.cpp
-osm_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-osm_test_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
-osm_test_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
+view_osm_SOURCES  = view-osm.cpp
+view_osm_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+view_osm_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
+view_osm_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
 endif
