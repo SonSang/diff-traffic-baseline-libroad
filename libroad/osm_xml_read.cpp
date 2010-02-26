@@ -29,47 +29,49 @@ namespace osm
         bool is_road = false;
         do
         {
-          read_skip_comment(reader);
+            read_skip_comment(reader);
 
-          if (reader.get_node_type() == xmlpp::TextReader::Element){
-            if (reader.get_name() == "nd")
-              {
-                str n_id;
-                node* current_node;
-                get_attribute(n_id, reader, "ref");
-                current_node = retrieve<node>(n.nodes, n_id);
-
-                e.shape.push_back(current_node);
-                current_node->edges_including.push_back(&e);
-
-                //Set the "to node" -- which is expected to be the last node --
-                //every time.  On the final iteration, the last node will be kept.
-                e.to = current_node->id;
-
-                //Save the first node as the "from" node
-                if (first_node){
-                  first_node = false;
-                  e.from = current_node->id;
-                }
-              }
-
-            if (reader.get_name() == "tag")
+            if (reader.get_node_type() == xmlpp::TextReader::Element)
             {
-                str k, v;
-                get_attribute(k, reader, "k");
+                if (reader.get_name() == "nd")
+                {
+                    str n_id;
+                    node* current_node;
+                    get_attribute(n_id, reader, "ref");
+                    current_node = retrieve<node>(n.nodes, n_id);
 
-                if (k== "highway"){
-                    is_road = true;
-                    get_attribute(v, reader, "v");
-                    e.highway_class = v;
+                    e.shape.push_back(current_node);
+                    current_node->edges_including.push_back(&e);
+
+                    //Set the "to node" -- which is expected to be the last node --
+                    //every time.  On the final iteration, the last node will be kept.
+                    e.to = current_node->id;
+
+                    //Save the first node as the "from" node
+                    if (first_node)
+                    {
+                        first_node = false;
+                        e.from = current_node->id;
+                    }
+                }
+
+                if (reader.get_name() == "tag")
+                {
+                    str k, v;
+                    get_attribute(k, reader, "k");
+
+                    if (k== "highway"){
+                        is_road = true;
+                        get_attribute(v, reader, "v");
+                        e.highway_class = v;
+                    }
                 }
             }
-          }
-        }while(!is_closing_element(reader, "way"));
-
-        if (!is_road){
-            n.edge_hash.erase(e.id);
         }
+        while(!is_closing_element(reader, "way"));
+
+        if (!is_road)
+            n.edge_hash.erase(e.id);
     }
 
     static inline void xml_read_nodes(network &n, xmlpp::TextReader &reader)
