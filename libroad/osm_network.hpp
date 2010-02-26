@@ -100,7 +100,7 @@ namespace osm
         void edges_including_rebuild();
         void display_used_node_heights();
 
-        bool out_of_bounds(vec3f);
+        bool out_of_bounds(const vec3f &) const;
         void clip_roads_to_bounds();
         void create_ramps();
         void populate_edges_from_hash();

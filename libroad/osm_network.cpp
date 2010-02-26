@@ -16,7 +16,7 @@ namespace osm
     typedef std::pair<const str, node>         node_pair;
     typedef std::pair<const str, intersection> intr_pair;
 
-    bool network::out_of_bounds(vec3f pt)
+    bool network::out_of_bounds(const vec3f &pt) const
     {
         return !((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
                  and
