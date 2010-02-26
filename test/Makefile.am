@@ -53,5 +53,5 @@ micro_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libro
 osm_test_SOURCES = osm-test.cpp
 osm_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 osm_test_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
-osm_test_LDADD    = $(top_builddir)/libroad/libroad.la
+osm_test_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
 endif

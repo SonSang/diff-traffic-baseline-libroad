@@ -122,7 +122,7 @@ namespace osm
         void check_node(const node &n) const;
         void check() const;
         void compute_edge_types();
-        void draw_network();
+        void draw_network() ;
         void create_intersections();
         void compute_node_degrees();
         void join_logical_roads();

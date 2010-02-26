@@ -32,7 +32,8 @@ libroad_la_LIBADD   = $(GLIBMM_LIBS) $(LIBXMLPP_LIBS)  $(BOOST_IOSTREAMS_LIBS) $
 if DO_VISUAL
 lib_LTLIBRARIES += libroad_visual.la
 
-libroad_visual_la_SOURCES  = hwm_draw.cpp
+libroad_visual_la_SOURCES  = hwm_draw.cpp \
+		             osm_draw.cpp
 
 libroad_visual_la_CPPFLAGS = $(TVMET_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
 libroad_visual_la_LDFLAGS  = -static -lGLU -lGL $(BOOST_IOSTREAMS_LDFLAGS)
