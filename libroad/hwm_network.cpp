@@ -407,15 +407,12 @@ namespace hwm
             {
                 if (n->id != e.shape[0]->id)
                 {
-                    if(planar_distance(n->xy, last->xy) > 1e-7){
-                        new_road.rep.points_.push_back(vec3f(n->xy[0],
-                                                             n->xy[1],
-                                                             n->xy[2]));
-                    }
+                    if(planar_distance(n->xy, last->xy) > 1e-7)
+                        new_road.rep.points_.push_back(n->xy);
                 }
-                else{
-                    new_road.rep.points_.push_back(vec3f(n->xy[0],n->xy[1],n->xy[2]));
-                }
+                else
+                    new_road.rep.points_.push_back(n->xy);
+
                 last = n;
             }
 
