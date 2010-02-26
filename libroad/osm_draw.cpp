@@ -2,22 +2,10 @@
 #include <FL/gl.h>
 #include <FL/glu.h>
 #include <FL/glut.H>
-#include <boost/fusion/sequence.hpp>
-#include <boost/fusion/include/sequence.hpp>
-#include <boost/fusion/container/vector.hpp>
-#include <boost/fusion/include/vector.hpp>
-#include <boost/fusion/container/vector/vector_fwd.hpp>
-#include <boost/fusion/include/vector_fwd.hpp>
-#include <boost/fusion/container/list.hpp>
-#include <boost/fusion/include/list.hpp>
-#include <boost/fusion/container/list/list_fwd.hpp>
-#include <boost/fusion/include/list_fwd.hpp>
 
 bool   first_for_display = 1;
 
-using boost::fusion::at_c;
-
-std::vector<boost::fusion::vector<double, double, double> > colors;
+std::vector<vec3f> colors;
 
 namespace osm
 {
@@ -30,7 +18,7 @@ namespace osm
         {
             for(size_t i = 0; i < edges.size(); ++i)
             {
-                colors.push_back(boost::fusion::vector<double, double, double>(rand()/(double)RAND_MAX,rand()/(double)RAND_MAX,rand()/(double)RAND_MAX));
+                colors.push_back(vec3f(rand()/(double)RAND_MAX,rand()/(double)RAND_MAX,rand()/(double)RAND_MAX));
             }
         }
 
@@ -39,9 +27,7 @@ namespace osm
             const shape_t& e_nodes = e.shape;
 
             glBegin(GL_LINE_STRIP);
-            glColor3f(at_c<0>(colors[i]),
-                      at_c<1>(colors[i]),
-                      at_c<2>(colors[i]));
+            glColor3fv(colors[i].data());
 
             for(int j = 0; j < static_cast<int>(e_nodes.size()); j++)
             {
