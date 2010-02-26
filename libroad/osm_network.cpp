@@ -18,12 +18,9 @@ namespace osm
 
     bool network::out_of_bounds(vec3f pt)
     {
-        if ((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
-            and
-            (pt[1] >= bottomright[1] and pt[1] <= topleft[1]))
-            return false;
-        else
-            return true;
+        return !((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
+                 and
+                 (pt[1] >= bottomright[1] and pt[1] <= topleft[1]));
     }
 
     void network::clip_roads_to_bounds()
