@@ -8,6 +8,18 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_LANG([C++])
 
+AC_ARG_ENABLE([tvmet-optimize],
+  [AS_HELP_STRING([--enable-tvmet-optimize],
+    [turn on tvmet's optimization flags @<:@default=no@:>@])],
+  [tvmet_optimize=$enableval],
+  [tvmet_optimize=no])
+
+AC_ARG_ENABLE([boost-optimize],
+  [AS_HELP_STRING([--enable-boost-optimize],
+    [turn on boost's optimization flags @<:@default=no@:>@])],
+  [boost_optimize=$enableval],
+  [boost_optimize=no])
+
 GIT_VERSION=`./GIT-VERSION-GEN`
 AC_SUBST(GIT_VERSION)
 AH_TEMPLATE([GIT_VERSION],
@@ -51,6 +63,10 @@ AS_IF([test x"$have_tvmet_conf" != xno],
 	    AC_SUBST([TVMET_LIBS])],
        [AC_MSG_ERROR([Could not find tvmet-config. Please install tvmet!])])
 
+AS_IF([test x"$tvmet_optimize" != xno],
+      [TVMET_CFLAGS+=" -finline-limit=5000 --param max-inline-insns-single=5000 --param inline-unit-growth=5000 --param large-function-growth=5000 -DTVMET_OPTIMIZE -O2 -ftemplate-depth-200 -fomit-frame-pointer"],
+      [TVMET_CFLAGS+=" -DTVMET_DEBUG"])
+
 AS_IF([test x"$enable_visual" != xno],
             [AC_CHECK_PROG(have_fltk, fltk-config, [yes], [no])
 	     PUSH_LIBS=$LIBS
@@ -84,6 +100,10 @@ BOOST_TOKENIZER
 BOOST_FORMAT
 BOOST_IOSTREAMS
 BOOST_CONVERSION
+
+AS_IF([test x"$boost_optimize" != xno],
+      [BOOST_CPPFLAGS+=" -DBOOST_DISABLE_ASSERTS"],
+      [])
 
 # Checks for header files.
 
