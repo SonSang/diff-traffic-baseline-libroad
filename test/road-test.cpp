@@ -4,6 +4,8 @@
 
 int main(int argc, char *argv[])
 {
+    std::cerr << libroad_package_string() << std::endl;
+
     polyline_road *pr = new polyline_road();
     pr->points_.push_back(vec3f(0.0, 0.0, 0.0));
     pr->points_.push_back(vec3f(1.0, 0.0, 0.5));

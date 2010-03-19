@@ -5,6 +5,13 @@
 
 int main(int argc, char *argv[])
 {
+    std::cerr << libroad_package_string() << std::endl;
+    if(argc < 5)
+    {
+        std::cerr << "Usage: " << argv[0] << " <node file> <edge type file> <edge file> <hwm output file>" << std::endl;
+        return 1;
+    }
+
     sumo::network snet(sumo::load_xml_network(argv[1],
                                               argv[2],
                                               argv[3]));

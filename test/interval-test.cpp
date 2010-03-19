@@ -7,6 +7,8 @@
 
 int main(int argc, char *argv[])
 {
+    std::cerr << libroad_package_string() << std::endl;
+
     partition01<std::string> test_int;
 
     test_int.insert(0.0f, "zero point zero");

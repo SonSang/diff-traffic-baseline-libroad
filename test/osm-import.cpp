@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
-    if(argc < 2)
+    if(argc < 3)
     {
         std::cerr << "Usage: " << argv[0] << " <input osm> <output file>" << std::endl;
         return 1;

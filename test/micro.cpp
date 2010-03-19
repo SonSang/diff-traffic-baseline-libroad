@@ -660,6 +660,13 @@ void timerCallback(void*)
 int cars_per_lane = 1;
 int main(int argc, char** argv)
 {
+    std::cerr << libroad_package_string() << std::endl;
+    if(argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <hwm network>" << std::endl;
+        return 1;
+    }
+
     hnet = new hwm::network(hwm::load_xml_network(argv[1]));
     hnet->build_intersections();
     hnet->build_fictitious_lanes();

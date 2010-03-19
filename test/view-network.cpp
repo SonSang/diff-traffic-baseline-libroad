@@ -380,6 +380,11 @@ public:
 int main(int argc, char *argv[])
 {
     std::cout << libroad_package_string() << std::endl;
+    if(argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
+        return 1;
+    }
     hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
 
     net.build_intersections();

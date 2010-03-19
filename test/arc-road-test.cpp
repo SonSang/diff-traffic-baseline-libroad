@@ -724,6 +724,8 @@ public:
 
 int main(int argc, char *argv[])
 {
+    std::cerr << libroad_package_string() << std::endl;
+
     arc_road ar;
     ar.points_.push_back(vec3f(00.0, 40.0, 0.0));
     ar.points_.push_back(vec3f(40.0, 30.0, 0.0));
