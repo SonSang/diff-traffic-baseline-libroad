@@ -27,6 +27,10 @@ AH_TEMPLATE([BUILD_DATE],
 
 AC_DEFINE_UNQUOTED(BUILD_DATE, "$BUILD_DATE")
 
+AH_TEMPLATE([CONFIGURE_ARGS],
+	    [Arguments passed to ./configure])
+AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$ac_configure_args")
+
 AC_ARG_ENABLE([visual],
   [AS_HELP_STRING([--enable-visual],
     [build graphical viewer components @<:@default=check@:>@])],
@@ -101,6 +105,9 @@ AC_OUTPUT
 
 echo "
   $PACKAGE_NAME version $PACKAGE_VERSION-$GIT_VERSION
+  Configuration host.......: $HOSTNAME
+  Configuration date.......: $BUILD_DATE
+  Configuration flags......: $ac_configure_args
   Prefix...................: $prefix
   TVMET_CFLAGS.............: $TVMET_CFLAGS
   TVMET_LIBS...............: $TVMET_LIBS

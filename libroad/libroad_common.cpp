@@ -3,7 +3,7 @@
 
 const char *libroad_package_string()
 {
-    static const char package_string[] = PACKAGE_NAME " " PACKAGE_VERSION "-" GIT_VERSION " built on " HOSTNAME " at " BUILD_DATE;
+    static const char package_string[] = PACKAGE_NAME " " PACKAGE_VERSION "-" GIT_VERSION " configured on " HOSTNAME " at " BUILD_DATE "\nConfigured with" CONFIGURE_ARGS;
     return package_string;
 }
 
