@@ -28,6 +28,7 @@ const char *mtl_string(int s)
 
 //static const float line_width     = 0.0381;
 
+
 struct polygon
 {
     polygon() {};
@@ -77,6 +78,42 @@ struct polygon
     int   mat_id;
 };
 
+struct edge
+{
+    edge() {};
+    edge(const int v0, const vec2f &tc0,
+         const int v1, const vec2f &tc1,
+         const int mat)
+        : mat_id(mat)
+    {
+        vrts[0] = v0;
+        vrts[1] = v1;
+        tc[0]   = tc0;
+        tc[1]   = tc1;
+    }
+
+    int   vrts[2];
+    vec2f tc[2];
+    int   mat_id;
+};
+
+struct edge_ring
+{
+    void transform(const mat4x4f &mat)
+    {
+        BOOST_FOREACH(vec3f &v, verts)
+        {
+            const vec4f v4i(v[0], v[1], v[2], 1.0);
+            const vec4f v4o(mat * v4i);
+            for(int i = 0; i < 3; ++i)
+                v[i] = v4o[i];
+        }
+    }
+
+    std::vector<vec3f> verts;
+    std::vector<edge>  edges;
+};
+
 struct mesh
 {
     std::vector<vec3f>   verts;
@@ -104,59 +141,101 @@ struct mesh
     }
 };
 
+
+mesh stitch_edge_rings(const std::vector<edge_ring> &er)
+{
+    mesh res;
+
+    const edge_ring *last = &(er.front());
+    size_t last_v_base = res.verts.size();
+    res.verts.insert(res.verts.end(), last->verts.begin(), last->verts.end());
+
+    for(std::vector<edge_ring>::const_iterator current = boost::next(er.begin());
+        current != er.end(); ++current)
+    {
+        size_t current_v_base      = res.verts.size();
+        res.verts.insert(res.verts.end(), current->verts.begin(), current->verts.end());
+        assert(last->verts.size() == current->verts.size());
+        assert(last->edges.size() == current->edges.size());
+
+        std::vector<edge>::const_iterator ledge = last->edges.begin();
+        std::vector<edge>::const_iterator cedge = current->edges.begin();
+        while(ledge != last->edges.end() && cedge != current->edges.end())
+        {
+            const float t0 = distance(res.verts[ledge->vrts[0]+last_v_base],
+                                      res.verts[cedge->vrts[0]+current_v_base]);
+            const float t1 = distance(res.verts[ledge->vrts[1]+last_v_base],
+                                      res.verts[cedge->vrts[1]+current_v_base]);
+            assert(ledge->mat_id == cedge->mat_id);
+            res.faces.push_back(polygon(ledge->vrts[1]+last_v_base, ledge->tc[1],
+                                        ledge->vrts[0]+last_v_base, ledge->tc[0],
+                                        cedge->vrts[0]+current_v_base, vec2f(cedge->tc[0]+vec2f(t0, 0.0f)),
+                                        cedge->vrts[1]+current_v_base, vec2f(cedge->tc[1]+vec2f(t1, 0.0f)),
+                                        ledge->mat_id));
+            ++ledge;
+            ++cedge;
+        }
+
+        last        = &(*current);
+        last_v_base = current_v_base;
+    }
+
+    return res;
+}
+
 /*
   v shoulder v | v lane -1 v . v lane -0 v || ^ lane 0 ^ . ^ lane 1 ^ . ^ lane 2 ^ | ^ shoulder ^
                 ^-lane width-^^-lane width-^
  */
 
-mesh road_verts(const vec2i &lanes)
+edge_ring road_verts(const vec2i &lanes)
 {
-    mesh res;
+    edge_ring res;
 
     res.verts.push_back(vec3f(0.0f, -(lane_width*lanes[0] + shoulder_width), 0.0f));
     res.verts.push_back(vec3f(0.0f, -lane_width*lanes[0], 0.0f));
-    res.faces.push_back(polygon(0, vec2f(1.0f, 0.0f),
-                                1, vec2f(0.0f, 0.0f),
-                                SHOULDER));
+    res.edges.push_back(edge(0, vec2f(0.0f, 1.0f),
+                             1, vec2f(0.0f, 0.0f),
+                             SHOULDER));
     int n = 2;
     for(int i = lanes[0] - 1; i > 0; --i)
     {
         res.verts.push_back(vec3f(0.0f, -lane_width*i, 0.0f));
         n++;
-        res.faces.push_back(polygon(n-2, vec2f(1.0f, 0.0f),
-                                    n-1, vec2f(0.0f, 0.0f),
-                                    LANE));
+        res.edges.push_back(edge(n-2, vec2f(0.0f, 1.0f),
+                                 n-1, vec2f(0.0f, 0.0f),
+                                 LANE));
     }
     res.verts.push_back(vec3f(0.0f, 0.0f, 0.0f));
     n++;
 
     if(lanes[1] > 0)
     {
-        res.faces.push_back(polygon(n-2, vec2f(1.0f, 0.0f),
-                                    n-1, vec2f(0.0f, 0.0f),
-                                    CENTER));
+        res.edges.push_back(edge(n-2, vec2f(0.0f, 1.0f),
+                                 n-1, vec2f(0.0f, 0.0f),
+                                 CENTER));
 
         res.verts.push_back(vec3f(0.0f, lane_width, 0.0f));
         n++;
-        res.faces.push_back(polygon(n-2, vec2f(0.0f, 0.0f),
-                                    n-1, vec2f(1.0f, 0.0f),
-                                    CENTER));
+        res.edges.push_back(edge(n-2, vec2f(0.0f, 0.0f),
+                                 n-1, vec2f(0.0f, 1.0f),
+                                 CENTER));
 
         for(int i = 2; i < lanes[1]; ++i)
         {
             res.verts.push_back(vec3f(0.0f, lane_width*i, 0.0f));
             n++;
-            res.faces.push_back(polygon(n-2, vec2f(0.0f, 0.0f),
-                                        n-1, vec2f(1.0f, 0.0f),
-                                        LANE));
+            res.edges.push_back(edge(n-2, vec2f(0.0f, 0.0f),
+                                     n-1, vec2f(0.0f, 1.0f),
+                                     LANE));
         }
     }
 
     res.verts.push_back(vec3f(0.0f, lane_width*lanes[1] + shoulder_width, 0.0f));
     n++;
-    res.faces.push_back(polygon(n-2, vec2f(0.0f, 0.0f),
-                                n-1, vec2f(1.0f, 0.0f),
-                                SHOULDER));
+    res.edges.push_back(edge(n-2, vec2f(0.0f, 0.0f),
+                             n-1, vec2f(0.0f, 1.0f),
+                             SHOULDER));
 
 
     return res;
@@ -164,9 +243,28 @@ mesh road_verts(const vec2i &lanes)
 
 int main(int argc, char *argv[])
 {
-    std::cout << libroad_package_string() << std::endl;
+    std::cerr << libroad_package_string() << std::endl;
 
-    mesh me(road_verts(vec2i(1, 1)));
+    std::vector<edge_ring> erv;
+    erv.push_back(road_verts(vec2i(1, 1)));
+    // erv.back().transform();
+
+    erv.push_back(road_verts(vec2i(1, 1)));
+    mat4x4f v;
+    v = 1.0f, 0.0f, 0.0f, 10.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f;
+    erv.back().transform(v);
+
+    erv.push_back(road_verts(vec2i(1, 1)));
+    v = 0.0f, -1.0f, 0.0f, 20.0f,
+        1.0f, 0.0f, 0.0f, 20.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f;
+    erv.back().transform(v);
+
+    mesh me(stitch_edge_rings(erv));
 
     me.dump_obj(std::cout);
 
