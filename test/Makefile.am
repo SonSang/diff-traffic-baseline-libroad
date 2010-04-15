@@ -1,4 +1,4 @@
-noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import
+noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import mesh-extract-test
 
 EXTRA_DIST = arcball.hpp
 
@@ -41,6 +41,11 @@ osm_import_SOURCES = osm-import.cpp
 osm_import_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 osm_import_LDFLAGS  = $(LDFLAGS)
 osm_import_LDADD    = $(top_builddir)/libroad/libroad.la
+
+mesh_extract_test_SOURCES = mesh-extract-test.cpp
+mesh_extract_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+mesh_extract_test_LDFLAGS  = $(LDFLAGS)
+mesh_extract_test_LDADD    = $(top_builddir)/libroad/libroad.la
 
 if DO_VISUAL
 noinst_PROGRAMS += arc-road-test view-network micro view-osm

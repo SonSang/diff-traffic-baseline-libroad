@@ -10,3 +10,4 @@ svg-write
 make-grid
 osm-import
 view-osm
+mesh-extract-test
