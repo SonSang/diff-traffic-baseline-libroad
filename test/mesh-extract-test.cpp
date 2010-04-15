@@ -1,6 +1,8 @@
 #include "libroad/partition01.hpp"
 #include "libroad/arc_road.hpp"
 
+#include <fstream>
+
 struct road
 {
     typedef partition01<vec2u> lane_intervals;
@@ -11,6 +13,19 @@ struct road
 
 static const float lane_width     = 2.5;
 static const float shoulder_width = 3.5;
+enum { SHOULDER = 0, LANE = 1, CENTER = 2 };
+const char *mtl_string(int s)
+{
+    static const char* strs[3] = { "shoulder",
+                                   "lane",
+                                   "center" };
+
+    if(s < 0 || s > 2)
+        return "unknown";
+
+    return strs[s];
+}
+
 //static const float line_width     = 0.0381;
 
 struct polygon
@@ -66,6 +81,27 @@ struct mesh
 {
     std::vector<vec3f>   verts;
     std::vector<polygon> faces;
+
+    void dump_obj(std::ostream &out)
+    {
+        BOOST_FOREACH(const vec3f &v, verts)
+        {
+            out << "v " << v[0] << " " << v[1] << " " << v[2] << "\n";
+        }
+
+        BOOST_FOREACH(const polygon &f, faces)
+        {
+            for(int i = 0; i < f.N; ++i)
+                out << "vt " << f.tc[i][0] << " " << f.tc[i][1] << "\n";
+
+            out << "usemtl " << mtl_string(f.mat_id) << "\nf ";
+            for(int i = 0; i < f.N; ++i)
+            {
+                out << f.vrts[i]+1 << "/" << i-f.N << " ";
+            }
+            out << "\n";
+        }
+    }
 };
 
 /*
@@ -73,24 +109,55 @@ struct mesh
                 ^-lane width-^^-lane width-^
  */
 
-mesh road_verts(const vec2u &lanes)
+mesh road_verts(const vec2i &lanes)
 {
     mesh res;
 
-    int n = 0;
     res.verts.push_back(vec3f(0.0f, -(lane_width*lanes[0] + shoulder_width), 0.0f));
-    n++;
-    for(int i = lanes[0]; i > 0; --i)
+    res.verts.push_back(vec3f(0.0f, -lane_width*lanes[0], 0.0f));
+    res.faces.push_back(polygon(0, vec2f(1.0f, 0.0f),
+                                1, vec2f(0.0f, 0.0f),
+                                SHOULDER));
+    int n = 2;
+    for(int i = lanes[0] - 1; i > 0; --i)
     {
         res.verts.push_back(vec3f(0.0f, -lane_width*i, 0.0f));
         n++;
-        res.faces.push_back(polygon(n-2, vec2f(0, 1),
-                                    n-1, vec2f(0, 1),
-                                    0));
+        res.faces.push_back(polygon(n-2, vec2f(1.0f, 0.0f),
+                                    n-1, vec2f(0.0f, 0.0f),
+                                    LANE));
     }
-    for(int i = 0; i < lanes[1]+1; ++i)
-        res[fill++]   = vec3f(0.0f, lane_width*i, 0.0f);
-    res[fill++]       = vec3f(0.0f, lane_width*lanes[1] + shoulder_width, 0.0f);
+    res.verts.push_back(vec3f(0.0f, 0.0f, 0.0f));
+    n++;
+
+    if(lanes[1] > 0)
+    {
+        res.faces.push_back(polygon(n-2, vec2f(1.0f, 0.0f),
+                                    n-1, vec2f(0.0f, 0.0f),
+                                    CENTER));
+
+        res.verts.push_back(vec3f(0.0f, lane_width, 0.0f));
+        n++;
+        res.faces.push_back(polygon(n-2, vec2f(0.0f, 0.0f),
+                                    n-1, vec2f(1.0f, 0.0f),
+                                    CENTER));
+
+        for(int i = 2; i < lanes[1]; ++i)
+        {
+            res.verts.push_back(vec3f(0.0f, lane_width*i, 0.0f));
+            n++;
+            res.faces.push_back(polygon(n-2, vec2f(0.0f, 0.0f),
+                                        n-1, vec2f(1.0f, 0.0f),
+                                        LANE));
+        }
+    }
+
+    res.verts.push_back(vec3f(0.0f, lane_width*lanes[1] + shoulder_width, 0.0f));
+    n++;
+    res.faces.push_back(polygon(n-2, vec2f(0.0f, 0.0f),
+                                n-1, vec2f(1.0f, 0.0f),
+                                SHOULDER));
+
 
     return res;
 }
@@ -99,13 +166,9 @@ int main(int argc, char *argv[])
 {
     std::cout << libroad_package_string() << std::endl;
 
-    std::vector<vec3f> verts(road_verts(vec2u(1, 1)));
+    mesh me(road_verts(vec2i(1, 1)));
 
-    BOOST_FOREACH(const vec3f &v, verts)
-    {
-        std::cout << v << " ";
-    }
-    std::cout << std::endl;
+    me.dump_obj(std::cout);
 
     return 0;
 }
