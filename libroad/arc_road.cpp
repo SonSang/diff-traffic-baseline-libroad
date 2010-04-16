@@ -743,9 +743,12 @@ void arc_road::extract_center(std::vector<vertex> &result, const vec2f &in_range
     const size_t last = result.size();
     extract_line(result, new_range, offset, resolution, up);
 
+    std::cerr << offset << std::endl;
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(result.begin(), last), result.end()))
     {
+        std::cerr << "first " << v.tex_coord[0];
         v.tex_coord[0] = parameter_map(v.tex_coord[0], offset);
+        std::cerr << " second " << v.tex_coord[0] << std::endl;
     }
 }
 
@@ -899,8 +902,8 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
     {
         if(real_length)
-            v.tex_coord[0] = length(offsets[0])*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
-            v.tex_coord[1] = 0.0f;
+            v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
+        v.tex_coord[1] = 0.0f;
 
     }
 
@@ -909,7 +912,7 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
     {
         if(real_length)
-            v.tex_coord[0] = length(offsets[1])*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
+            v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
         v.tex_coord[1] = 1.0f;
     }
 

@@ -149,26 +149,26 @@ int main(int argc, char *argv[])
     FreeImage_Unload(im);
 
     arc_road ar;
-    ar.points_.push_back(vec3f(000, 400, 0.0));
-    ar.points_.push_back(vec3f(400, 300, 0.0));
-    ar.points_.push_back(vec3f(400, 000, 0.0));
-    ar.points_.push_back(vec3f(600, 000, 0.0));
-    ar.points_.push_back(vec3f(300, -200, 0.0));
-    ar.points_.push_back(vec3f(200, -100, 10));
-    ar.points_.push_back(vec3f(200, -400, 10));
-    ar.points_.push_back(vec3f(005, -200, 10));
-    ar.points_.push_back(vec3f(005, -500, 20));
-    ar.points_.push_back(vec3f(100, -700, 20));
-    ar.points_.push_back(vec3f(000, -900, 20));
-    ar.points_.push_back(vec3f(500, -800, 30));
-    ar.points_.push_back(vec3f(705, -500, 30));
-    ar.points_.push_back(vec3f(1000, -300, 30));
+    ar.points_.push_back(vec3f(00.0, 40.0, 0.0));
+    ar.points_.push_back(vec3f(40.0, 30.0, 0.0));
+    ar.points_.push_back(vec3f(40.0, 00.0, 0.0));
+    ar.points_.push_back(vec3f(60.0, 00.0, 0.0));
+    ar.points_.push_back(vec3f(30.0, -20.0, 0.0));
+    ar.points_.push_back(vec3f(20.0, -10.0, 1.0));
+    ar.points_.push_back(vec3f(20.0, -40.0, 1.0));
+    ar.points_.push_back(vec3f(00.5, -20.0, 1.0));
+    ar.points_.push_back(vec3f(00.5, -50.0, 2.0));
+    ar.points_.push_back(vec3f(10.0, -70.0, 2.0));
+    ar.points_.push_back(vec3f(00.0, -90, 2.0));
+    ar.points_.push_back(vec3f(50.0, -80, 3.0));
+    ar.points_.push_back(vec3f(70.5, -50, 3.0));
+    ar.points_.push_back(vec3f(100, - 30, 3.0));
     ar.initialize_from_polyline(0.7f, ar.points_);
 
     std::vector<vertex> vrts;
     std::vector<vec3u>  fcs;
 
-    ar.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2*2.5f, 2*2.5f), 1.0f, true);
+    ar.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2.5f, 2.5f), 1.0f, true);
 
     dump_obj(std::cout, vrts, fcs);
 
