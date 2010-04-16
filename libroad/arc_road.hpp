@@ -39,7 +39,8 @@ struct arc_road
     void extract_center(std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
     void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                    const vec2f &range,
-                   const vec2f &offsets, const float resolution) const;
+                   const vec2f &offsets, const float resolution,
+                   const bool real_length = false) const;
 
     bool   compute_geometric(std::vector<float> &lengths, std::vector<float> &factors);
     bool   initialize_from_polyline(float cull_prox, const std::vector<vec3f> &points);
