@@ -50,6 +50,12 @@ AC_ARG_ENABLE([visual],
   [enable_visual=$enableval],
   [enable_visual=check])
 
+AC_ARG_ENABLE([images],
+  [AS_HELP_STRING([--enable-images],
+    [build components that write images @<:@default=check@:>@])],
+  [enable_images=$enableval],
+  [enable_images=check])
+
 # Checks for programs.
 AC_PROG_CXX
 LT_INIT
@@ -92,6 +98,16 @@ AS_IF([test x"$enable_visual" != xno -a x"$have_fltk" = xyes -a x"$have_glew" = 
       [visual_ok=no])
 
 AM_CONDITIONAL(DO_VISUAL, test x"$visual_ok" = xyes)
+
+AS_IF([test x"$enable_images" != xno],
+      [PKG_CHECK_MODULES(FREEIMAGE, [FreeImage >= 3.10],
+                         [image_ok=yes],
+       		         [AS_IF([test x"$enable_images" != xcheck],
+      		                AC_MSG_FAILURE([--enable-images given but test for freeimage failed!]))
+                          image_ok=no])],
+      [image_ok=no])
+
+AM_CONDITIONAL(DO_IMAGE, test x"$image_ok" = xyes)
 
 # Checks for libraries.
 BOOST_REQUIRE([1.39])
@@ -152,4 +168,13 @@ echo "
 else
 echo "
   Building visual: no"
+fi
+if test x"$image_ok" = xyes; then
+echo "
+  Building images: yes
+    FREEIMAGE_CFLAGS: $FREEIMAGE_CFLAGS
+    FREEIMAGE_LIBS..: $FREEIMAGE_LIBS"
+else
+echo "
+  Building images: no"
 fi
