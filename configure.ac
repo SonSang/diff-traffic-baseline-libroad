@@ -141,7 +141,7 @@ echo "
   BOOST_IOSTREAMS_LIBS.....: $BOOST_IOSTREAMS_LIBS
   C++ Compiler.............: $CXX $CXXFLAGS $CPPFLAGS
   Linker...................: $LD $LDFLAGS $LIBS"
-if test -z $DO_VISUAL; then
+if test x"$visual_ok" = xyes; then
 echo "
   Building visual: yes
     FLTK_CXXFLAGS...: $FLTK_CXXFLAGS
