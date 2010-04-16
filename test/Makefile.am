@@ -73,4 +73,13 @@ view_osm_SOURCES  = view-osm.cpp
 view_osm_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 view_osm_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
 view_osm_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
+
+if DO_IMAGE
+noinst_PROGRAMS += road-texture-test
+
+road_texture_test_SOURCES = road-texture-test.cpp
+road_texture_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FLTK_CXXFLAGS) $(FREEIMAGE_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+road_texture_test_LDFLAGS  = $(FREEIMAGE_LIBS) $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
+road_texture_test_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
+endif
 endif
