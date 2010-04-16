@@ -743,12 +743,9 @@ void arc_road::extract_center(std::vector<vertex> &result, const vec2f &in_range
     const size_t last = result.size();
     extract_line(result, new_range, offset, resolution, up);
 
-    std::cerr << offset << std::endl;
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(result.begin(), last), result.end()))
     {
-        std::cerr << "first " << v.tex_coord[0];
         v.tex_coord[0] = parameter_map(v.tex_coord[0], offset);
-        std::cerr << " second " << v.tex_coord[0] << std::endl;
     }
 }
 
@@ -775,7 +772,7 @@ static void rescale_tex_coords(const std::vector<vertex>::iterator &start, const
     }
 }
 
-void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
+void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up, const float tex_offset) const
 {
     const float resolution2 = resolution*resolution;
 
@@ -803,9 +800,9 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
             extract_arc(result, start_feature/2, vec2f(start_local, 1.0f),      offset, resolution, up);
         start_arc = start_feature/2 + 1;
 
-        const float fst = feature_base(start_feature, offset);
-        const vec2f frange(fst, fst+feature_size(start_feature, offset));
-        rescale_tex_coords(boost::next(result.begin(), last), result.end(), vec2f(frange/len), vec2f(0.0f, 1.0f));
+        const float fst = feature_base(start_feature, tex_offset);
+        const vec2f frange(fst, fst+feature_size(start_feature, tex_offset));
+        rescale_tex_coords(boost::next(result.begin(), last), result.end(), frange, vec2f(0.0f, 1.0f));
     }
     else
     {
@@ -819,14 +816,14 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         else
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
 
-        const float fst = feature_base(start_feature, offset);
-        const vec2f frange(fst, fst+feature_size(start_feature, offset));
+        const float fst = feature_base(start_feature, tex_offset);
+        const vec2f frange(fst, fst+feature_size(start_feature, tex_offset));
 
         const vec3f  left(tvmet::normalize(tvmet::cross(up, tan)));
         const vec3f  real_up(tvmet::normalize(tvmet::cross(tan, left)));
         const vertex start_vertex(vertex(vec3f(pos + left*offset + tan*start_local*feature_size(start_feature, offset)),
                                          real_up,
-                                         vec2f(lerp(start_local, frange[0]/len, frange[1]/len), 0.0f)));
+                                         vec2f(lerp(start_local, frange[0], frange[1]), 0.0f)));
         assert(lerp(start_local, frange[0]/len, frange[1]/len) >= 0.0f);
 
         if(result.empty() || distance2(start_vertex.position, result.back().position) >= resolution2)
@@ -838,24 +835,24 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
     const size_t end_arc = end_feature/2;
     for(size_t i = start_arc; i < end_arc; ++i)
     {
-        const float fst = feature_base(2*i+1, offset);
-        const vec2f frange(fst, fst+feature_size(2*i+1, offset));
+        const float fst = feature_base(2*i+1, tex_offset);
+        const vec2f frange(fst, fst+feature_size(2*i+1, tex_offset));
 
         const size_t last = result.size();
         extract_arc(result, i, vec2f(0.0, 1.0), offset, resolution, up);
-        rescale_tex_coords(boost::next(result.begin(), last), result.end(), vec2f(frange/len), vec2f(0.0f, 1.0f));
+        rescale_tex_coords(boost::next(result.begin(), last), result.end(), frange, vec2f(0.0f, 1.0f));
     }
 
     if(end_feature & 1)
     {
         if(start_feature != end_feature)
         {
-            const float fst = feature_base(end_feature, offset);
-            const vec2f frange(fst, fst+feature_size(end_feature, offset));
+            const float fst = feature_base(end_feature, tex_offset);
+            const vec2f frange(fst, fst+feature_size(end_feature, tex_offset));
 
             const size_t last = result.size();
             extract_arc(result, end_feature/2, vec2f(0.0, end_local), offset, resolution, up);
-            rescale_tex_coords(boost::next(result.begin(), last), result.end(), vec2f(frange/len), vec2f(0.0f, 1.0f));
+            rescale_tex_coords(boost::next(result.begin(), last), result.end(), frange, vec2f(0.0f, 1.0f));
         }
     }
     else
@@ -870,15 +867,15 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         else
             circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
 
-        const float fst = feature_base(end_feature, offset);
-        const vec2f frange(fst, fst+feature_size(end_feature, offset));
+        const float fst = feature_base(end_feature, tex_offset);
+        const vec2f frange(fst, fst+feature_size(end_feature, tex_offset));
 
         const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
         const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
         const vertex end_vertex(vertex(vec3f(pos + left*offset + tan*end_local*feature_size(end_feature, offset)),
                                        real_up,
-                                       vec2f(lerp(end_local, frange[0]/len, frange[1]/len), 0.0f)));
-        assert(lerp(end_local, frange[0]/len, frange[1]/len) >= 0.0f);
+                                       vec2f(lerp(end_local, frange[0], frange[1]), 0.0f)));
+        assert(lerp(end_local, frange[0], frange[1]) >= 0.0f);
 
         if(result.empty() || distance2(end_vertex.position, result.back().position) >= resolution2)
             result.push_back(end_vertex);
@@ -901,8 +898,8 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
     extract_center(vrts, range, offsets[0], resolution);
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
     {
-        if(real_length)
-            v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
+        //        if(real_length)
+            //            v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
         v.tex_coord[1] = 0.0f;
 
     }
@@ -911,8 +908,8 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
     extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
     {
-        if(real_length)
-            v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
+        // if(real_length)
+        //     v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
         v.tex_coord[1] = 1.0f;
     }
 

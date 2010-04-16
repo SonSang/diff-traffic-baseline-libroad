@@ -35,7 +35,7 @@ struct arc_road
 
     void extract_arc   (std::vector<vertex> &result, const size_t i, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const;
 
-    void extract_line  (std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
+    void extract_line  (std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1), float tex_offset=0.0f) const;
     void extract_center(std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
     void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                    const vec2f &range,
