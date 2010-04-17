@@ -1,4 +1,4 @@
-#include "libroad/arc_road.hpp"
+#include "libroad/hwm_network.hpp"
 
 #include <fstream>
 #include <FreeImage.h>
@@ -140,35 +140,87 @@ FIBITMAP *create_lane_image(bool lshoulder, int llanes, int rlanes, bool rshould
     return im;
 }
 
+struct lane_tex
+{
+    lane_tex(const std::string &r) : root(r) {}
+
+    static const int max_lanes = 1024;
+    static void canon(bool &lshoulder, int &llanes, int &rlanes, bool &rshoulder)
+    {
+        if(lshoulder > rshoulder)
+            std::swap(lshoulder, rshoulder);
+        if(llanes > rlanes)
+            std::swap(llanes, rlanes);
+    }
+    static int hash_index(bool lshoulder, int llanes, int rlanes, bool rshoulder)
+    {
+        canon(lshoulder, llanes, rlanes, rshoulder);
+        return (llanes * 1024 + rlanes) * 1024 +  lshoulder *2 + rshoulder;
+    }
+
+    std::string tex_string(bool lshoulder, int llanes, int rlanes, bool rshoulder)
+    {
+        canon(lshoulder, llanes, rlanes, rshoulder);
+        return boost::str(boost::format("%sls%d-ll%d-rl%d-rs%d.png") % root % lshoulder % llanes % rlanes % rshoulder);
+    }
+
+    const std::string write_tex(const bool lshoulder, const int llanes, const int rlanes, const bool rshoulder)
+    {
+        const int idx(hash_index(lshoulder, llanes, rlanes, rshoulder));
+        std::map<const int, const std::string>::iterator c(texes.find(idx));
+        if(c == texes.end())
+        {
+            FIBITMAP *im = create_lane_image(lshoulder, llanes, rlanes, rshoulder);
+            const std::string fi(tex_string(lshoulder, llanes, rlanes, rshoulder));
+            FreeImage_Save(FIF_PNG, im, fi.c_str());
+            texes.insert(c, std::make_pair(idx, fi));
+            FreeImage_Unload(im);
+            return fi;
+        }
+        return c->second;
+    }
+
+    std::map<const int, const std::string> texes;
+    std::string    root;
+};
+
 int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
 
-    FIBITMAP *im = create_lane_image(true, 2, 1, true);
-    FreeImage_Save(FIF_PNG, im, "test.png");
-    FreeImage_Unload(im);
+    lane_tex ltb("tex/");
 
-    arc_road ar;
-    ar.points_.push_back(vec3f(00.0, 40.0, 0.0));
-    ar.points_.push_back(vec3f(40.0, 30.0, 0.0));
-    ar.points_.push_back(vec3f(40.0, 00.0, 0.0));
-    ar.points_.push_back(vec3f(60.0, 00.0, 0.0));
-    ar.points_.push_back(vec3f(30.0, -20.0, 0.0));
-    ar.points_.push_back(vec3f(20.0, -10.0, 1.0));
-    ar.points_.push_back(vec3f(20.0, -40.0, 1.0));
-    ar.points_.push_back(vec3f(00.5, -20.0, 1.0));
-    ar.points_.push_back(vec3f(00.5, -50.0, 2.0));
-    ar.points_.push_back(vec3f(10.0, -70.0, 2.0));
-    ar.points_.push_back(vec3f(00.0, -90, 2.0));
-    ar.points_.push_back(vec3f(50.0, -80, 3.0));
-    ar.points_.push_back(vec3f(70.5, -50, 3.0));
-    ar.points_.push_back(vec3f(100, - 30, 3.0));
-    ar.initialize_from_polyline(0.7f, ar.points_);
+    if(argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
+        return 1;
+    }
+    hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
+
+    net.build_intersections();
+    net.build_fictitious_lanes();
+    net.auto_scale_memberships();
+    net.center();
+    std::cerr << "HWM net loaded successfully" << std::endl;
+
+    try
+    {
+        net.check();
+        std::cerr << "HWM net checks out" << std::endl;
+    }
+    catch(std::runtime_error &e)
+    {
+        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
+        exit(1);
+    }
 
     std::vector<vertex> vrts;
     std::vector<vec3u>  fcs;
 
-    ar.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2.5f, 2.5f), 1.0f, true);
+    BOOST_FOREACH(const hwm::road_pair &r, net.roads)
+    {
+        r.second.rep.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2.5f, 2.5f), 1.0);
+    }
 
     dump_obj(std::cout, vrts, fcs);
 
