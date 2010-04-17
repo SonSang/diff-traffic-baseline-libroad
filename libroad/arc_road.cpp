@@ -740,7 +740,6 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
 void arc_road::extract_center(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
 {
     const vec2f new_range(parameter_map(in_range[0], offset), parameter_map(in_range[1], offset));
-    const size_t last = result.size();
     extract_line(result, new_range, offset, resolution, up);
 }
 
@@ -886,8 +885,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 
 void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                          const vec2f &range,
-                         const vec2f &offsets, const float resolution,
-                         const bool real_length) const
+                         const vec2f &offsets, const float resolution) const
 {
     size_t r1 = vrts.size();
     extract_center(vrts, range, offsets[0], resolution);

@@ -489,7 +489,7 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             std::vector<vertex> v;
             std::vector<vec3u> f;
-            ar->make_mesh(v, f, vec2f(0.0, 1.0), vec2f(-2.5, 2.5), 0.1, true);
+            ar->make_mesh(v, f, vec2f(0.0, 1.0), vec2f(-2.5, 2.5), 0.1);
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, tex_);
             glDisable(GL_COLOR_MATERIAL);
