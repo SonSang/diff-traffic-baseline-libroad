@@ -11,6 +11,27 @@
 
 #include <FreeImage.h>
 
+void dump_obj(std::ostream &out, const std::vector<vertex> &verts,
+              std::vector<vec3u> &faces)
+{
+    BOOST_FOREACH(const vertex &v, verts)
+    {
+        out << "v " << v.position[0] << " " << v.position[1] << " " << v.position[2]  << "\n"
+            << "vn " << v.normal[0] << " " << v.normal[1] << " " << v.normal[2]  << "\n"
+            << "vt " << v.tex_coord[0] << " " << v.tex_coord[1] << "\n";
+    }
+
+    BOOST_FOREACH(const vec3u &f, faces)
+    {
+        out << "f ";
+        BOOST_FOREACH(const unsigned int i, f)
+        {
+            out << i+1 << "/" << i+1 << "/" << i+1 << " ";
+        }
+        out << "\n";
+    }
+};
+
 static const float lane_width      = 2.5f;
 static const float shoulder_width  = 2.0f;
 static const float line_width      = 0.125;
@@ -468,7 +489,7 @@ public:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             std::vector<vertex> v;
             std::vector<vec3u> f;
-            ar->make_mesh(v, f, vec2f(0.0, 1.0), vec2f(-2.5, 2.5), 2.0, true);
+            ar->make_mesh(v, f, vec2f(0.0, 1.0), vec2f(-2.5, 2.5), 0.1, true);
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, tex_);
             glDisable(GL_COLOR_MATERIAL);
@@ -837,16 +858,16 @@ int main(int argc, char *argv[])
     ar.points_.push_back(vec3f(40.0, 30.0, 0.0));
     ar.points_.push_back(vec3f(40.0, 00.0, 0.0));
     ar.points_.push_back(vec3f(60.0, 00.0, 0.0));
-    ar.points_.push_back(vec3f(30.0, -20.0, 0.0));
-    ar.points_.push_back(vec3f(20.0, -10.0, 1.0));
-    ar.points_.push_back(vec3f(20.0, -40.0, 1.0));
-    ar.points_.push_back(vec3f(00.5, -20.0, 1.0));
-    ar.points_.push_back(vec3f(00.5, -50.0, 2.0));
-    ar.points_.push_back(vec3f(10.0, -70.0, 2.0));
-    ar.points_.push_back(vec3f(00.0, -90, 2.0));
-    ar.points_.push_back(vec3f(50.0, -80, 3.0));
-    ar.points_.push_back(vec3f(70.5, -50, 3.0));
-    ar.points_.push_back(vec3f(100, - 30, 3.0));
+    // ar.points_.push_back(vec3f(30.0, -20.0, 0.0));
+    // ar.points_.push_back(vec3f(20.0, -10.0, 1.0));
+    // ar.points_.push_back(vec3f(20.0, -40.0, 1.0));
+    // ar.points_.push_back(vec3f(00.5, -20.0, 1.0));
+    // ar.points_.push_back(vec3f(00.5, -50.0, 2.0));
+    // ar.points_.push_back(vec3f(10.0, -70.0, 2.0));
+    // ar.points_.push_back(vec3f(00.0, -90, 2.0));
+    // ar.points_.push_back(vec3f(50.0, -80, 3.0));
+    // ar.points_.push_back(vec3f(70.5, -50, 3.0));
+    // ar.points_.push_back(vec3f(100, - 30, 3.0));
     ar.initialize_from_polyline(0.7f, ar.points_);
 
     fltkview mv(0, 0, 500, 500, "fltk View");

@@ -742,11 +742,6 @@ void arc_road::extract_center(std::vector<vertex> &result, const vec2f &in_range
     const vec2f new_range(parameter_map(in_range[0], offset), parameter_map(in_range[1], offset));
     const size_t last = result.size();
     extract_line(result, new_range, offset, resolution, up);
-
-    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(result.begin(), last), result.end()))
-    {
-        v.tex_coord[0] = parameter_map(v.tex_coord[0], offset);
-    }
 }
 
 template <typename T>
@@ -898,18 +893,13 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
     extract_center(vrts, range, offsets[0], resolution);
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
     {
-        //        if(real_length)
-            //            v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
         v.tex_coord[1] = 0.0f;
-
     }
 
     r1 = vrts.size();
     extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
     {
-        // if(real_length)
-        //     v.tex_coord[0] = length(0)*(v.tex_coord[0] * std::abs(range[1]-range[0]) + std::min(range[0], range[1]));
         v.tex_coord[1] = 1.0f;
     }
 
