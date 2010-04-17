@@ -894,14 +894,14 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
         v.tex_coord[1] = 0.0f;
     }
 
-    r1 = vrts.size();
+    size_t r2 = vrts.size();
     extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
-    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
+    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r2), vrts.end()))
     {
         v.tex_coord[1] = 1.0f;
     }
 
-    ::make_mesh(faces, vrts, vec2i(0, r1), vec2i(vrts.size(), r1));
+    ::make_mesh(faces, vrts, vec2i(r1, r2), vec2i(vrts.size(), r2));
 }
 
 float arc_road::feature_base(const size_t i, const float offset) const
