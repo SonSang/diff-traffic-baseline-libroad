@@ -147,6 +147,8 @@ FIBITMAP *create_lane_image(bool lshoulder, int llanes, int rlanes, bool rshould
         set_solid_white(im, current/total_length*FreeImage_GetHeight(im), bytespp);
     }
 
+    im = FreeImage_Rescale(im, 5*FreeImage_GetWidth(im), 5*FreeImage_GetHeight(im), FILTER_BOX);
+
     return im;
 }
 
