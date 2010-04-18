@@ -1,6 +1,28 @@
 #include "arc_road.hpp"
 #include "svg_helper.hpp"
 
+static vec3f point_on_line(const vec3f &p0, const vec3f &p1, const vec3f &c)
+{
+    const vec3f p0_p1(p1 - p0);
+    const vec3f p0_c(c - p0);
+
+    const float fac = tvmet::dot(p0_p1, p0_c)/length2(p0_p1);
+    return vec3f(p0 + fac*p0_p1);
+}
+
+static float distance2_to_line(const vec3f &p0, const vec3f &p1, const vec3f &c)
+{
+    return distance2(point_on_line(p0, p1, c), c);
+}
+
+static float fraction_offset2(const vec3f &p0, const vec3f &p1, const vec3f &c)
+{
+    const float pdist2 = distance2(p0, p1);
+    const float cdist2 = distance2_to_line(p0, p1, c);
+
+    return cdist2/pdist2;
+}
+
 static mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
 {
     const float c = std::cos(theta);
@@ -660,9 +682,10 @@ float arc_road::length_at_feature(const size_t i, const float p, const float off
     return feature_base(i, offset) + p*feature_size(i, offset);
 }
 
-void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const vec2f &i_range, const float offset, const float resolution, const vec3f &up) const
+void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const vec2f &i_range, const float offset, const float refine_threshold, const vec3f &up) const
 {
-    const float resolution2 = resolution*resolution;
+    const float min_distance      = 1e-2;
+    const float refine_threshold2 = refine_threshold*refine_threshold;
 
     vec2f in_range(i_range);
     in_range[0] = std::max(0.0f, in_range[0]);
@@ -698,7 +721,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
         const vertex vertex_start(vertex(vec3f(pos + left*offset), real_up, vec2f(in_range[0], 0.0f)));
 
-        if(result.empty() || distance2(vertex_start.position, result.back().position) >= resolution2)
+        if(result.empty() || distance2(vertex_start.position, result.back().position) >= min_distance)
         {
             new_points.push_back(std::make_pair(in_range[0]*arcs_[i], vertex_start));
             result.push_back(vertex_start);
@@ -712,18 +735,21 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         const std::pair<float, vertex> &front = new_points[new_points.size()-1];
         const std::pair<float, vertex> &next  = new_points[new_points.size()-2];
 
-        if (distance2(front.second.position, next.second.position) > resolution2)
-        {
-            //            assert(next.first - front.first > 1e-3);
-            const float new_theta = (next.first + front.first)/2;
-            vec3f pos;
-            vec3f tan;
-            circle_frame(pos, tan, new_theta, frames_[i], radii_[i]);
+        const float new_theta = (next.first + front.first)/2;
+        vec3f pos;
+        vec3f tan;
+        circle_frame(pos, tan, new_theta, frames_[i], radii_[i]);
 
-            const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
-            const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
-            assert(new_theta/arcs_[i] >= 0.0f);
-            new_points.push_back(std::make_pair(new_theta, vertex(vec3f(pos + left*offset),
+        const vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        const vec3f real_up(tvmet::normalize(tvmet::cross(tan, left)));
+        assert(new_theta/arcs_[i] >= 0.0f);
+
+        const vec3f new_pos(pos + left*offset);
+        if (fraction_offset2(front.second.position,
+                             next.second.position,
+                             new_pos) > refine_threshold2)
+        {
+            new_points.push_back(std::make_pair(new_theta, vertex(new_pos,
                                                                   real_up,
                                                                   vec2f(new_theta/arcs_[i], 0.0f))));
             std::swap(new_points[new_points.size()-1], new_points[new_points.size()-2]);
@@ -731,7 +757,7 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
         else
         {
             new_points.pop_back();
-            if(distance2(new_points.back().second.position, result.back().position) >= 1e-2)
+            if(distance2(new_points.back().second.position, result.back().position) >= min_distance)
                 result.push_back(new_points.back().second);
         }
     }

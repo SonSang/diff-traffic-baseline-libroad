@@ -459,7 +459,7 @@ public:
                                       CAR_REAR_AXLE);
 
             if(!network_drawer.initialized())
-                network_drawer.initialize(hnet, 0.4f);
+                network_drawer.initialize(hnet, 0.01f);
 
             setup_light();
 

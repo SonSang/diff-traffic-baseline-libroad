@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
     std::cout << "mtllib road.mtl\n";
     BOOST_FOREACH(const hwm::road_pair &r, net.roads)
     {
-        r.second.rep.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2*2.5f, 2*2.5f), 1.0);
+        r.second.rep.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2*2.5f, 2*2.5f), 0.01);
 
         dump_obj(std::cout,
                  r.first,

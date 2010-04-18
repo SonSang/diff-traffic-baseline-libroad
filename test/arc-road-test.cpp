@@ -190,7 +190,7 @@ class fltkview : public Fl_Gl_Window
 public:
     fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
                                                           zoom(2.0),
-                                                          low_bnd(0.0f), high_bnd(0.0f), low_res(0.3f), high_res(0.3f),
+                                                          low_bnd(0.0f), high_bnd(0.0f), low_res(0.01f), high_res(0.01f),
                                                           car_pos(0.0f),
                                                           glew_state(GLEW_OK+1),
                                                           vertex_shader(0), pixel_shader(0), program(0), texture(0), num_tex(0), pick_vert(-1), tex_(0)
@@ -368,7 +368,7 @@ public:
 
             std::vector<vertex> v;
             std::vector<vec3u> f;
-            ar->make_mesh(v, f, vec2f(0.0, 1.0), vec2f(-0.5, 0.5), 2.0);
+            ar->make_mesh(v, f, vec2f(0.0, 1.0), vec2f(-0.5, 0.5), 0.01);
             glBegin(GL_TRIANGLES);
             BOOST_FOREACH(const vec3u &fa, f)
             {

@@ -111,7 +111,7 @@ public:
                                       CAR_REAR_AXLE);
 
             if(!network_drawer.initialized())
-                network_drawer.initialize(net, 1.0f);
+                network_drawer.initialize(net, 0.01f);
 
             init_textures();
 
