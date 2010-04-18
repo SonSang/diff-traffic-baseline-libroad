@@ -236,7 +236,15 @@ namespace hwm
             const road_membership &rm = current->second;
             const size_t last = new_verts.size();
             rm.parent_road->rep.extract_center(new_verts, rm.interval, rm.lane_position-lane_width*0.5, resolution);
-            rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), road_memberships.containing_interval(current), rm.interval);
+
+            const vec2f interval(rm.parent_road->rep.length(rm.interval[0], rm.lane_position),
+                                 rm.parent_road->rep.length(rm.interval[1], rm.lane_position));
+
+            vec2f cont_interval(road_memberships.containing_interval(current));
+            cont_interval[0] = length()*cont_interval[0];
+            cont_interval[1] = length()*cont_interval[1];
+
+            rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), cont_interval, interval);
         }
 
         verts.insert(verts.end(), new_verts.begin(), new_verts.end());
@@ -250,7 +258,15 @@ namespace hwm
             const size_t last = new_verts.size();
             const vec2f rev_interval(rm.interval[1], rm.interval[0]);
             rm.parent_road->rep.extract_center(new_verts, rev_interval, rm.lane_position+lane_width*0.5, resolution);
-            rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), road_memberships.containing_interval(current), rm.interval);
+
+            const vec2f interval(rm.parent_road->rep.length(rm.interval[0], rm.lane_position),
+                                 rm.parent_road->rep.length(rm.interval[1], rm.lane_position));
+
+            vec2f cont_interval(road_memberships.containing_interval(current));
+            cont_interval[0] = length()*cont_interval[0];
+            cont_interval[1] = length()*cont_interval[1];
+
+            rescale_tex_coords(boost::next(new_verts.begin(), last), new_verts.end(), cont_interval, interval);
         }
 
         verts.insert(verts.end(), new_verts.begin(), new_verts.end());
