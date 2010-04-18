@@ -3,18 +3,28 @@
 #include <fstream>
 #include <FreeImage.h>
 
-void dump_obj(std::ostream &out, const std::vector<vertex> &verts,
-              std::vector<vec3u> &faces)
+
+void dump_obj(std::ostream      &out,
+              const std::string &name,
+              const std::string &material_name,
+              const std::vector<vertex> &verts,
+              size_t vert_start, size_t vert_end,
+              const std::vector<vec3u>  &faces,
+              size_t face_start, size_t face_end)
 {
-    BOOST_FOREACH(const vertex &v, verts)
+    out << "o " << name << "\n";
+    out << "usemtl " << material_name << "\n";
+    for(size_t i = vert_start; i < vert_end; ++i)
     {
+        const vertex &v = verts[i];
         out << "v " << v.position[0] << " " << v.position[1] << " " << v.position[2]  << "\n"
             << "vn " << v.normal[0] << " " << v.normal[1] << " " << v.normal[2]  << "\n"
             << "vt " << v.tex_coord[0] << " " << v.tex_coord[1] << "\n";
     }
 
-    BOOST_FOREACH(const vec3u &f, faces)
+    for(size_t i = face_start; i < face_end; ++i)
     {
+        const vec3u &f = faces[i];
         out << "f ";
         BOOST_FOREACH(const unsigned int i, f)
         {
@@ -161,7 +171,12 @@ struct lane_tex
     std::string tex_string(bool lshoulder, int llanes, int rlanes, bool rshoulder)
     {
         canon(lshoulder, llanes, rlanes, rshoulder);
-        return boost::str(boost::format("%sls%d-ll%d-rl%d-rs%d.png") % root % lshoulder % llanes % rlanes % rshoulder);
+        return boost::str(boost::format("ls%d-ll%d-rl%d-rs%d") % lshoulder % llanes % rlanes % rshoulder);
+    }
+
+    std::string tex_path(const std::string &s)
+    {
+        return boost::str(boost::format("%s%s.png") % root % s);
     }
 
     const std::string write_tex(const bool lshoulder, const int llanes, const int rlanes, const bool rshoulder)
@@ -172,7 +187,7 @@ struct lane_tex
         {
             FIBITMAP *im = create_lane_image(lshoulder, llanes, rlanes, rshoulder);
             const std::string fi(tex_string(lshoulder, llanes, rlanes, rshoulder));
-            FreeImage_Save(FIF_PNG, im, fi.c_str());
+            FreeImage_Save(FIF_PNG, im, tex_path(fi).c_str());
             texes.insert(c, std::make_pair(idx, fi));
             FreeImage_Unload(im);
             return fi;
@@ -216,13 +231,26 @@ int main(int argc, char *argv[])
 
     std::vector<vertex> vrts;
     std::vector<vec3u>  fcs;
+    size_t              last_v = 0;
+    size_t              last_f = 0;
 
+
+    std::cout << "mtllib road.mtl\n";
     BOOST_FOREACH(const hwm::road_pair &r, net.roads)
     {
-        r.second.rep.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2.5f, 2.5f), 1.0);
-    }
+        r.second.rep.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2*2.5f, 2*2.5f), 1.0);
 
-    dump_obj(std::cout, vrts, fcs);
+        dump_obj(std::cout,
+                 r.first,
+                 ltb.write_tex(true, 2, 2, true),
+                 vrts,
+                 last_v, vrts.size(),
+                 fcs,
+                 last_f, fcs.size());
+
+        last_v = vrts.size();
+        last_f = fcs.size();
+    }
 
     return 0;
 }
