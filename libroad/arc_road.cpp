@@ -766,7 +766,13 @@ void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const ve
 void arc_road::extract_center(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const
 {
     const vec2f new_range(parameter_map(in_range[0], offset), parameter_map(in_range[1], offset));
+    const size_t last = result.size();
     extract_line(result, new_range, offset, resolution, up);
+
+    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(result.begin(), last), result.end()))
+    {
+        v.tex_coord[0] = parameter_map(v.tex_coord[0], offset);
+    }
 }
 
 template <typename T>

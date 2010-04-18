@@ -119,6 +119,9 @@ namespace hwm
             ld.face_start = lane_faces.size();
 
             l.second.make_mesh(points, lane_faces, net->lane_width, resolution);
+            const float inv_len = 1.0f/l.second.length();
+            for(size_t i = ld.vert_start; i < points.size(); ++i)
+                points[i].tex_coord[0] *= inv_len;
 
             ld.vert_count = points.size()     -  ld.vert_start;
             ld.face_count = (lane_faces.size() - ld.face_start) * 3;
@@ -168,6 +171,10 @@ namespace hwm
                     fld.vert_start = points.size();
                     fld.face_start = lane_faces.size();
                     fict_lane.make_mesh(points, lane_faces, net->lane_width, resolution);
+                    const float inv_len = 1.0f/fict_lane.length();
+                    for(size_t i = fld.vert_start; i < points.size(); ++i)
+                        points[i].tex_coord[0] *= inv_len;
+
                     fld.vert_count = points.size()     - fld.vert_start;
                     fld.face_count = (lane_faces.size() - fld.face_start) * 3;
                     fld.face_start *= sizeof(vec3u);
