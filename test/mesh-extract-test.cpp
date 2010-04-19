@@ -271,7 +271,7 @@ struct road_rev_map
         start = lane_map.split_interval(start, vec2f(interval[0], std::min(interval[1], start_interval[1])), start->second);
 
         start->second.push_back(le);
-        if(interval[1] == start_interval[1])
+        if(interval[1] <= start_interval[1])
             return;
 
         partition01<lane_cont>::iterator end(lane_map.find(interval[1]));
