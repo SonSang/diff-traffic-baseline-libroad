@@ -917,20 +917,26 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 
 void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                          const vec2f &range,
-                         const vec2f &offsets, const float resolution) const
+                         const vec2f &offsets, const float resolution,
+                         const bool reverse_tex1) const
 {
     size_t r1 = vrts.size();
     extract_center(vrts, range, offsets[0], resolution);
+
+    vec2f texcoord1(0.0f, 1.0f);
+    if(reverse_tex1)
+        std::swap(texcoord1[0], texcoord1[1]);
+
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r1), vrts.end()))
     {
-        v.tex_coord[1] = 0.0f;
+        v.tex_coord[1] = texcoord1[0];
     }
 
     size_t r2 = vrts.size();
     extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r2), vrts.end()))
     {
-        v.tex_coord[1] = 1.0f;
+        v.tex_coord[1] = texcoord1[1];
     }
 
     ::make_mesh(faces, vrts, vec2i(r1, r2), vec2i(vrts.size(), r2));
