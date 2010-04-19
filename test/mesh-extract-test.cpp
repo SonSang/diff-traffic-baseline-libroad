@@ -155,7 +155,6 @@ struct lane_tex
 {
     typedef std::map<const int, const std::string> str_map;
 
-
     lane_tex(const std::string &r) : root(r) {}
 
     static const int max_lanes = 1024;
@@ -166,6 +165,7 @@ struct lane_tex
         if(llanes > rlanes)
             std::swap(llanes, rlanes);
     }
+
     static int hash_index(bool lshoulder, int llanes, int rlanes, bool rshoulder)
     {
         canon(lshoulder, llanes, rlanes, rshoulder);
@@ -233,17 +233,17 @@ struct road_rev_map
         lane_entry()
         {}
 
-        lane_entry(const hwm::lane* l, bool dw) :
-            lane(l), dir_with(dw)
+        lane_entry(const hwm::lane* l, const hwm::lane::road_membership *rm) :
+            lane(l), membership(rm)
         {}
 
-        const hwm::lane *lane;
-        bool dir_with;
+        const hwm::lane                  *lane;
+        const hwm::lane::road_membership *membership;
     };
 
-    typedef std::vector<lane_entry>  lane_cont;
-    partition01<lane_cont>           lane_map;
-    const hwm::road                 *road;
+    typedef std::map<const float, const lane_entry>  lane_cont;
+    partition01<lane_cont>  lane_map;
+    const hwm::road        *road;
 
     road_rev_map()
     {
@@ -255,22 +255,19 @@ struct road_rev_map
         lane_map.insert(0.0f, lane_cont());
     }
 
-    void add_lane(const hwm::lane *r, const vec2f &iv)
+    void add_lane(const hwm::lane *r, const hwm::lane::road_membership *rm)
     {
-        vec2f interval(iv);
-        lane_entry le(r, true);
-        if(iv[0] > iv[1])
-        {
+        vec2f interval(rm->interval);
+        lane_entry le(r, rm);
+        if(interval[0] > interval[1])
             std::swap(interval[0], interval[1]);
-            le.dir_with = false;
-        }
 
         partition01<lane_cont>::iterator start(lane_map.find(interval[0]));
         const vec2f         start_interval(lane_map.containing_interval(start));
 
         start = lane_map.split_interval(start, vec2f(interval[0], std::min(interval[1], start_interval[1])), start->second);
 
-        start->second.push_back(le);
+        start->second.insert(std::make_pair(le.membership->lane_position, le));
         if(interval[1] <= start_interval[1])
             return;
 
@@ -278,10 +275,10 @@ struct road_rev_map
         const vec2f         end_interval(lane_map.containing_interval(end));
 
         end = lane_map.split_interval(end, vec2f(end_interval[0], interval[1]), end->second);
-        end->second.push_back(le);
+        end->second.insert(std::make_pair(le.membership->lane_position, le));
 
         for(partition01<lane_cont>::iterator current = boost::next(start); current != end; ++current)
-            current->second.push_back(le);
+            current->second.insert(std::make_pair(le.membership->lane_position, le));
     }
 
     void print() const
@@ -289,10 +286,10 @@ struct road_rev_map
         for(partition01<lane_cont>::const_iterator current = lane_map.begin(); current != lane_map.end(); ++current)
         {
             std::cout << lane_map.containing_interval(current) << ": ";
-            BOOST_FOREACH(const lane_entry &le, current->second)
+            BOOST_FOREACH(const lane_cont::value_type &le, current->second)
             {
-                std::cout << le.lane->id;
-                if(le.dir_with)
+                std::cout << le.second.membership->lane_position << " " << le.second.lane->id;
+                if(le.second.membership->interval[0] < le.second.membership->interval[1])
                     std::cout << "(+) ";
                 else
                     std::cout << "(-) ";
@@ -347,11 +344,13 @@ int main(int argc, char *argv[])
     {
         BOOST_FOREACH(const hwm::lane::road_membership::intervals::entry &rm, l.second.road_memberships)
         {
-            rrm[rm.second.parent_road->id].add_lane(&(l.second), rm.second.interval);
+            strhash<road_rev_map>::type::iterator rev_itr(rrm.find(rm.second.parent_road->id));
+            assert(rev_itr != rrm.end());
+            rev_itr->second.add_lane(&(l.second), &(rm.second));
         }
     }
 
-    lane_tex ltb("tex/");
+    lane_tex ltb("/home/sewall/unc/traffic/libroad/test/tex/");
     std::cout << "mtllib road.mtl\n";
     BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
     {
@@ -362,17 +361,21 @@ int main(int argc, char *argv[])
             ++current)
         {
             const road_rev_map::lane_cont &e = current->second;
+
+            if(e.empty())
+                continue;
+
             size_t against = 0;
             size_t with    = 0;
-            BOOST_FOREACH(const road_rev_map::lane_entry &le, e)
+            BOOST_FOREACH(const road_rev_map::lane_cont::value_type &le, e)
             {
-                if(le.dir_with)
+                if(le.second.membership->interval[0] < le.second.membership->interval[1])
                     ++with;
                 else
                     ++against;
             }
 
-            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(-against*2.5f, with*2.5f), 0.01);
+            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width, boost::prior(e.end())->first+0.5*lane_width), 0.01);
 
             dump_obj(std::cout,
                      boost::str(boost::format("%s-%d") % r.id % re_c),
