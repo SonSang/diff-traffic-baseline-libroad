@@ -201,58 +201,123 @@ struct lane_tex
     std::string    root;
 };
 
+struct road_rev_map
+{
+    typedef std::vector<const hwm::lane*> lane_cont;
+    partition01<lane_cont>                lane_map;
+
+    road_rev_map()
+    {
+        lane_map.insert(0.0f, lane_cont());
+    }
+
+    void add_lane(const hwm::lane *r, const vec2f &interval)
+    {
+        partition01<lane_cont>::iterator start(lane_map.find(interval[0]));
+        const vec2f         start_interval(lane_map.containing_interval(start));
+
+        start = lane_map.split_interval(start, vec2f(interval[0], std::min(interval[1], start_interval[1])), start->second);
+
+        start->second.push_back(r);
+        if(interval[1] == start_interval[1])
+            return;
+
+        partition01<lane_cont>::iterator end(lane_map.find(interval[1]));
+        const vec2f         end_interval(lane_map.containing_interval(end));
+
+        end = lane_map.split_interval(end, vec2f(end_interval[0], interval[1]), end->second);
+        end->second.push_back(r);
+
+        for(partition01<lane_cont>::iterator current = boost::next(start); current != end; ++current)
+            current->second.push_back(r);
+    }
+
+    void print() const
+    {
+        for(partition01<lane_cont>::const_iterator current = lane_map.begin(); current != lane_map.end(); ++current)
+        {
+            std::cout << lane_map.containing_interval(current) << ": ";
+            BOOST_FOREACH(const hwm::lane *r, current->second)
+            {
+                std::cout << reinterpret_cast<size_t>(r) << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+};
+
 int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
 
-    lane_tex ltb("tex/");
+    road_rev_map rr;
 
-    if(argc < 2)
-    {
-        std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
-        return 1;
-    }
-    hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
+    rr.print();
 
-    net.build_intersections();
-    net.build_fictitious_lanes();
-    net.auto_scale_memberships();
-    net.center();
-    std::cerr << "HWM net loaded successfully" << std::endl;
+    rr.add_lane(0, vec2f(0, 1));
+    rr.add_lane(reinterpret_cast<hwm::lane*>(1), vec2f(0, 1));
+    rr.add_lane(reinterpret_cast<hwm::lane*>(2), vec2f(0, 1));
+    rr.add_lane(reinterpret_cast<hwm::lane*>(3), vec2f(0, 1));
 
-    try
-    {
-        net.check();
-        std::cerr << "HWM net checks out" << std::endl;
-    }
-    catch(std::runtime_error &e)
-    {
-        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
-        exit(1);
-    }
+    rr.add_lane(reinterpret_cast<hwm::lane*>(4), vec2f(0.5, 1));
 
-    std::vector<vertex> vrts;
-    std::vector<vec3u>  fcs;
-    size_t              last_v = 0;
-    size_t              last_f = 0;
+    rr.add_lane(reinterpret_cast<hwm::lane*>(5), vec2f(0.0, 0.5));
+    rr.add_lane(reinterpret_cast<hwm::lane*>(6), vec2f(0.33, 0.66));
 
+    rr.add_lane(reinterpret_cast<hwm::lane*>(7), vec2f(0.2, 0.8));
+    rr.add_lane(reinterpret_cast<hwm::lane*>(8), vec2f(0.2, 0.8));
 
-    std::cout << "mtllib road.mtl\n";
-    BOOST_FOREACH(const hwm::road_pair &r, net.roads)
-    {
-        r.second.rep.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2*2.5f, 2*2.5f), 0.01);
+    rr.add_lane(reinterpret_cast<hwm::lane*>(9), vec2f(0.33, 0.5));
 
-        dump_obj(std::cout,
-                 r.first,
-                 ltb.write_tex(true, 2, 2, true),
-                 vrts,
-                 last_v, vrts.size(),
-                 fcs,
-                 last_f, fcs.size());
+    rr.print();
 
-        last_v = vrts.size();
-        last_f = fcs.size();
-    }
+    // lane_tex ltb("tex/");
+
+    // if(argc < 2)
+    // {
+    //     std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
+    //     return 1;
+    // }
+    // hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
+
+    // net.build_intersections();
+    // net.build_fictitious_lanes();
+    // net.auto_scale_memberships();
+    // net.center();
+    // std::cerr << "HWM net loaded successfully" << std::endl;
+
+    // try
+    // {
+    //     net.check();
+    //     std::cerr << "HWM net checks out" << std::endl;
+    // }
+    // catch(std::runtime_error &e)
+    // {
+    //     std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
+    //     exit(1);
+    // }
+
+    // std::vector<vertex> vrts;
+    // std::vector<vec3u>  fcs;
+    // size_t              last_v = 0;
+    // size_t              last_f = 0;
+
+    // std::cout << "mtllib road.mtl\n";
+    // BOOST_FOREACH(const hwm::road_pair &r, net.roads)
+    // {
+    //     r.second.rep.make_mesh(vrts, fcs, vec2f(0.0f, 1.0f), vec2f(-2*2.5f, 2*2.5f), 0.01);
+
+    //     dump_obj(std::cout,
+    //              r.first,
+    //              ltb.write_tex(true, 2, 2, true),
+    //              vrts,
+    //              last_v, vrts.size(),
+    //              fcs,
+    //              last_f, fcs.size());
+
+    //     last_v = vrts.size();
+    //     last_f = fcs.size();
+    // }
 
     return 0;
 }

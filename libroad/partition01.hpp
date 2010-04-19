@@ -26,6 +26,31 @@ struct partition01 : public std::map<float, T>
         return base::insert(std::make_pair(x, val)).first;
     }
 
+    iterator split_interval(iterator c, const interval_t &iv, const T &val)
+    {
+        const interval_t ci(containing_interval(c));
+        // three cases:
+        // iv is wholly contained in ci
+        // iv abuts start of ci
+        // iv abuts end of ci
+
+        assert(ci[0] <= iv[0]);
+        assert(iv[1] <= ci[1]);
+        if(iv[0] == ci[0])
+        {
+            if(iv[1] < ci[1])
+                insert(iv[1], c->second);
+            c->second = val;
+            return c;
+        }
+        else
+        {
+            if(iv[1] < ci[1])
+                insert(iv[1], c->second);
+            return insert(iv[0], val);
+        }
+    }
+
     interval_t containing_interval(const_iterator c_this_itr) const
     {
         const_iterator c_next_itr(boost::next(c_this_itr));
