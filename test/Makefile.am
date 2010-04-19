@@ -1,6 +1,6 @@
 noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import
 
-EXTRA_DIST = arcball.hpp
+EXTRA_DIST = arcball.hpp texture-gen.hpp
 
 road_test_SOURCES  = road-test.cpp
 road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
@@ -46,8 +46,8 @@ if DO_IMAGE
 noinst_PROGRAMS += mesh-extract-test
 
 mesh_extract_test_SOURCES = mesh-extract-test.cpp
-mesh_extract_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FREEIMAGE_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-mesh_extract_test_LDFLAGS  = $(FREEIMAGE_LIBS) $(LDFLAGS)
+mesh_extract_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(FREEIMAGE_CFLAGS) $(CAIRO_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+mesh_extract_test_LDFLAGS  = $(FREEIMAGE_LIBS) $(CAIRO_LIBS) $(LDFLAGS)
 mesh_extract_test_LDADD    = $(top_builddir)/libroad/libroad.la
 endif
 
