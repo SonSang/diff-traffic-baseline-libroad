@@ -95,15 +95,15 @@ FIBITMAP *create_lane_image(bool lshoulder, int llanes, int rlanes, bool rshould
     assert(im);
     const int bytespp = FreeImage_GetLine(im) / FreeImage_GetWidth(im);
 
-    // for(unsigned int y = 0; y < FreeImage_GetHeight(im); y++)
-    // {
-    //     BYTE *bits = FreeImage_GetScanLine(im, y);
-    //     for(unsigned int x = 0; x < FreeImage_GetWidth(im); x++)
-    //     {
-    //         bits[FI_RGBA_ALPHA] = 255;
-    //         bits += bytespp;
-    //     }
-    // }
+    for(unsigned int y = 0; y < FreeImage_GetHeight(im); y++)
+    {
+        BYTE *bits = FreeImage_GetScanLine(im, y);
+        for(unsigned int x = 0; x < FreeImage_GetWidth(im); x++)
+        {
+            bits[FI_RGBA_ALPHA] = 255;
+            bits += bytespp;
+        }
+    }
 
     float current = 0.0f;
     if(lshoulder)

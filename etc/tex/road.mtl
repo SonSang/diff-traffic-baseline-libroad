@@ -1,11 +1,10 @@
 newmtl ls1-ll1-rl1-rs-1
-Ns 96.078431
-Ka 0.000000 0.000000 0.000000
-Kd 0.640000 0.640000 0.640000
-Ks 0.500000 0.500000 0.500000
-Ni 1.000000
+ns 96.078431
+ka 0.000000 0.000000 0.000000
+kd 0.640000 0.640000 0.640000
+ks 0.500000 0.500000 0.500000
+ni 1.000000
 d 1.000000
-illum 2
-map_Kd tex/ls1-ll1-rl1-rs-1.png
+map_kd /home/sewall/unc/traffic/libroad/test/tex/ls1-ll1-rl1-rs-1.png
 
 

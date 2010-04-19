@@ -1,1 +1,10 @@
-../etc/tex/road.mtl
+newmtl ls1-ll2-rl2-rs1
+ns 96.078431
+ka 0.000000 0.000000 0.000000
+kd 0.640000 0.640000 0.640000
+ks 0.500000 0.500000 0.500000
+ni 1.000000
+d 1.000000
+map_kd /home/sewall/unc/traffic/libroad/test/tex/ls1-ll2-rl2-rs1.png
+
+
