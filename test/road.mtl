@@ -1,10 +1,44 @@
-newmtl ls1-ll2-rl2-rs1
+newmtl ls0-ll2-rl2-rs0
 ns 96.078431
 ka 0.000000 0.000000 0.000000
 kd 0.640000 0.640000 0.640000
 ks 0.500000 0.500000 0.500000
 ni 1.000000
 d 1.000000
-map_kd /home/sewall/unc/traffic/libroad/test/tex/ls1-ll2-rl2-rs1.png
+map_kd /home/sewall/unc/traffic/libroad/test/tex/ls0-ll2-rl2-rs0.png
+newmtl ls0-ll0-rl1-rs0
+ns 96.078431
+ka 0.000000 0.000000 0.000000
+kd 0.640000 0.640000 0.640000
+ks 0.500000 0.500000 0.500000
+ni 1.000000
+d 1.000000
+map_kd /home/sewall/unc/traffic/libroad/test/tex/ls0-ll0-rl1-rs0.png
+newmtl ls0-ll0-rl2-rs0
+ns 96.078431
+ka 0.000000 0.000000 0.000000
+kd 0.640000 0.640000 0.640000
+ks 0.500000 0.500000 0.500000
+ni 1.000000
+d 1.000000
+map_kd /home/sewall/unc/traffic/libroad/test/tex/ls0-ll0-rl2-rs0.png
+newmtl ls0-ll1-rl1-rs0
+ns 96.078431
+ka 0.000000 0.000000 0.000000
+kd 0.640000 0.640000 0.640000
+ks 0.500000 0.500000 0.500000
+ni 1.000000
+d 1.000000
+map_kd /home/sewall/unc/traffic/libroad/test/tex/ls0-ll1-rl1-rs0.png
+newmtl ls0-ll1-rl2-rs0
+ns 96.078431
+ka 0.000000 0.000000 0.000000
+kd 0.640000 0.640000 0.640000
+ks 0.500000 0.500000 0.500000
+ni 1.000000
+d 1.000000
+map_kd /home/sewall/unc/traffic/libroad/test/tex/ls0-ll1-rl2-rs0.png
+
+
 
 
