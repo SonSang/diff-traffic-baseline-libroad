@@ -7,27 +7,25 @@ void dump_obj(std::ostream      &out,
               const std::string &name,
               const std::string &material_name,
               const std::vector<vertex> &verts,
-              size_t vert_start, size_t vert_end,
-              const std::vector<vec3u>  &faces,
-              size_t face_start, size_t face_end)
+              const std::vector<vec3u>  &faces)
 {
     out << "o " << name << "\n";
     out << "usemtl " << material_name << "\n";
-    for(size_t i = vert_start; i < vert_end; ++i)
+    BOOST_FOREACH(const vertex &v, verts)
     {
-        const vertex &v = verts[i];
         out << "v " << v.position[0] << " " << v.position[1] << " " << v.position[2]  << "\n"
             << "vn " << v.normal[0] << " " << v.normal[1] << " " << v.normal[2]  << "\n"
             << "vt " << v.tex_coord[0] << " " << v.tex_coord[1] << "\n";
     }
 
-    for(size_t i = face_start; i < face_end; ++i)
+    const size_t nverts = verts.size();
+    BOOST_FOREACH(const vec3u &f, faces)
     {
-        const vec3u &f = faces[i];
         out << "f ";
         BOOST_FOREACH(const unsigned int i, f)
         {
-            out << i+1 << "/" << i+1 << "/" << i+1 << " ";
+            const off_t idx = static_cast<off_t>(i) - nverts;
+            out << idx << "/" << idx << "/" << idx << " ";
         }
         out << "\n";
     }
@@ -328,11 +326,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    std::vector<vertex> vrts;
-    std::vector<vec3u>  fcs;
-    size_t              last_v = 0;
-    size_t              last_f = 0;
-
     strhash<road_rev_map>::type rrm;
 
     BOOST_FOREACH(const hwm::road_pair &r, net.roads)
@@ -355,6 +348,7 @@ int main(int argc, char *argv[])
     BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
     {
         const hwm::road &r = *(rrm_v.second.road);
+
         size_t re_c = 0;
         for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
             current != rrm_v.second.lane_map.end();
@@ -375,18 +369,15 @@ int main(int argc, char *argv[])
                     ++against;
             }
 
+            std::vector<vertex> vrts;
+            std::vector<vec3u>  fcs;
             r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width, boost::prior(e.end())->first+0.5*lane_width), 0.01);
 
             dump_obj(std::cout,
                      boost::str(boost::format("%s-%d") % r.id % re_c),
                      ltb.write_tex(false, against, with, false),
                      vrts,
-                     last_v, vrts.size(),
-                     fcs,
-                     last_f, fcs.size());
-
-            last_v = vrts.size();
-            last_f = fcs.size();
+                     fcs);
             ++re_c;
         }
     }
