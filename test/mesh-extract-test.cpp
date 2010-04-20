@@ -109,12 +109,10 @@ int main(int argc, char *argv[])
 
     lane_maker lm;
 
-    lm.boxes.push_back(fill_box(2.5, 1.0,
-                                2.5, 1.0,
-                                color4d(0.0, 0.0, 0.0, 1.0)));
-    lm.boxes.push_back(fill_box(0.0,   12.0,
-                                0.125,  3.0,
-                                color4d(1.0, 1.0, 1.0, 1.0)));
+    lm.boxes.push_back(new xgap(2.5));
+    lm.boxes.push_back(new fill_box(0.125,  12.0,
+                                    0,       3.0,
+                                    color4d(1.0, 1.0, 1.0, 1.0)));
 
     lm.res_scale();
 
