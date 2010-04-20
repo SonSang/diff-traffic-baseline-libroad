@@ -28,3 +28,4 @@ autoscan.log
 autom4te.cache/
 GIT-VERSION-FILE
 version
+*.png
