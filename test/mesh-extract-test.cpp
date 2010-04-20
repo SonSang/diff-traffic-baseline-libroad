@@ -108,16 +108,22 @@ int main(int argc, char *argv[])
     std::cerr << libroad_package_string() << std::endl;
 
     lane_maker lm;
-
-    lm.boxes.push_back(new xgap(2.5));
+    lm.boxes.push_back(new xgap(2.5-0.125));
     lm.boxes.push_back(new fill_box(0.125,  12.0,
                                     0,       3.0,
                                     color4d(1.0, 1.0, 1.0, 1.0)));
-
+    lm.boxes.push_back(new xgap(2.5-0.125-1.5*0.125));
+    lm.boxes.push_back(new fill_box(0.125,  12.0,
+                                    0,      12.0,
+                                    color4d(1.0, 1.0, 0.0, 1.0)));
+    lm.boxes.push_back(new xgap(0.125));
+    lm.boxes.push_back(new fill_box(0.125,  12.0,
+                                    0,      12.0,
+                                    color4d(1.0, 1.0, 0.0, 1.0)));
+    lm.boxes.push_back(new xgap(2.5-1.5*0.125));
     lm.res_scale();
 
     lm.draw("test.png");
-
 
     // if(argc < 2)
     // {

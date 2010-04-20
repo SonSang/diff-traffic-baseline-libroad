@@ -90,7 +90,20 @@ struct fill_box : public lane_op
     virtual void draw(cairo_t *cr) const
     {
         cairo_set_source_rgba(cr, c[0], c[1], c[2], c[3]);
-        cairo_rectangle(cr, 0, ybase, w, ylen);
+
+        double xv = 0, yv = ybase;
+        cairo_user_to_device(cr, &xv, &yv);
+        xv = std::floor(xv);
+        yv = std::floor(yv);
+        cairo_device_to_user(cr, &xv, &yv);
+
+        double xv_top = xv+w, yv_top = w+ylen;
+        cairo_user_to_device(cr, &xv_top, &yv_top);
+        xv_top = std::floor(xv_top);
+        yv_top = std::floor(yv_top);
+        cairo_device_to_user(cr, &xv_top, &yv_top);
+
+        cairo_rectangle(cr, xv, yv, xv_top-xv, yv_top-yv);
         cairo_fill(cr);
     }
 
@@ -118,8 +131,8 @@ struct lane_maker
         if(max_h == 0.0)
             max_h = 1.0;
 
-        im_res = 100*vec2u(static_cast<unsigned int>(std::ceil(total_w/min_x_feat)),
-                           static_cast<unsigned int>(std::ceil(max_h/min_y_feat)));
+        im_res = 3*vec2u(static_cast<unsigned int>(std::ceil(total_w/min_x_feat)),
+                       static_cast<unsigned int>(std::ceil(max_h/min_y_feat)));
         scale  = vec2d(total_w, max_h);
     }
 
@@ -130,7 +143,7 @@ struct lane_maker
                                                          im_res[1]);
         cairo_t         *cr = cairo_create(cs);
 
-        cairo_set_source_rgba(cr, 0, 0, 0, 0);
+        cairo_set_source_rgba(cr, 0, 0, 0, 1.0);
         cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
         cairo_paint(cr);
 
@@ -138,6 +151,7 @@ struct lane_maker
         std::cout << scale << std::endl;
         std::cout << im_res << std::endl;
         cairo_scale(cr, im_res[0]/scale[0], im_res[1]/scale[1]);
+        //        cairo_set_line_width(cr, 0.1);
 
         BOOST_FOREACH(const lane_op *lo, boxes)
         {
