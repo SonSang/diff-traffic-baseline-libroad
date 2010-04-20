@@ -30,7 +30,8 @@ void dump_obj(std::ostream      &out,
 };
 
 void write_mtl(std::ostream &o,
-               const std::string &ts)
+               const std::string &ts_name,
+               const std::string &ts_file)
 {
     o << boost::str(boost::format("newmtl %s\n"
                                   "ns 96.078431\n"
@@ -39,7 +40,7 @@ void write_mtl(std::ostream &o,
                                   "ks 0.5  0.5  0.5\n"
                                   "ni 1.0\n"
                                   "d  1.0\n"
-                                  "map_kd %s\n") % ts % ts);
+                                  "map_kd %s\n") % ts_name % ts_file);
 }
 
 struct road_rev_map
@@ -180,12 +181,18 @@ int main(int argc, char *argv[])
                 continue;
 
             lane_maker lm;
+            lm.add_xgap(0.25*lane_width);
+            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                       0,          line_length+line_gap_length,
+                                       color4d(1.0, 1.0, 1.0, 1.0)));
+
             road_rev_map::lane_cont::const_iterator i = e.begin();
-            while(i != e.end() && (i->second.membership->interval[0] > i->second.membership->interval[1]))
+            const float orient0 = copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]);
+            while(i != e.end() && orient0 == copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]))
             {
                 lm.add_xgap(lane_width);
                 road_rev_map::lane_cont::const_iterator next = boost::next(i);
-                if(next != e.end() && (next->second.membership->interval[0] > next->second.membership->interval[1]))
+                if(next != e.end() && orient0 == copysignf(1, next->second.membership->interval[0] - next->second.membership->interval[1]))
                     lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
                                                0, line_length,
                                                color4d(1.0, 1.0, 1.0, 1.0)));
@@ -194,7 +201,7 @@ int main(int argc, char *argv[])
             if(i != e.end() && !lm.boxes.empty())
             {
                 lm.add_cbox(new double_box(line_width, line_sep_width,
-                                           line_length+line_gap_length, 0, line_length,
+                                           line_length+line_gap_length, 0, line_length+line_gap_length,
                                            color4d(1.0, 1.0, 0.0, 1.0)));
             }
             while(i != e.end())
@@ -207,21 +214,25 @@ int main(int argc, char *argv[])
                                                color4d(1.0, 1.0, 1.0, 1.0)));
                 i = next;
             }
+            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                       0,          line_length+line_gap_length,
+                                       color4d(1.0, 1.0, 1.0, 1.0)));
+            lm.add_xgap(0.25*lane_width);
 
             std::vector<vertex> vrts;
             std::vector<vec3u>  fcs;
-            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width, boost::prior(e.end())->first+0.5*lane_width), 0.01);
+            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width-0.25*lane_width, boost::prior(e.end())->first+0.5*lane_width+0.25*lane_width), 0.01, orient0 < 0.0f);
 
             const std::string &oname(boost::str(boost::format("%s-%d") % r.id % re_c));
-            const std::string &texname(boost::str(boost::format("%s.png") % oname));
-            lm.draw(texname);
+            const std::string &texfilename(boost::str(boost::format("tex/%s.png") % oname));
+            lm.draw(texfilename);
             dump_obj(std::cout,
                      oname,
-                     texname,
+                     oname,
                      vrts,
                      fcs);
 
-            write_mtl(mtllib, texname);
+            write_mtl(mtllib, oname, texfilename);
             ++re_c;
         }
     }

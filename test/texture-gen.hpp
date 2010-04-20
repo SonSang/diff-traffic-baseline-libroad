@@ -59,7 +59,6 @@ struct xgap : public lane_op
 void aligned_rectangle(cairo_t *cr, double x, double y, double w, double h)
 {
     cairo_user_to_device(cr, &x, &y);
-    std::cout << "x " << x << " y " << y << std::endl;
     x = std::floor(x);
     y = std::floor(y);
     cairo_device_to_user(cr, &x, &y);
@@ -117,7 +116,7 @@ struct single_box : public center_box
     virtual void draw(cairo_t *cr) const
     {
         cairo_set_source_rgba(cr, c[0], c[1], c[2], c[3]);
-        aligned_rectangle(cr, 0, ybase, w, ylen);
+        aligned_rectangle(cr, ybase, 0, ylen, w);
         cairo_fill(cr);
     }
 
@@ -162,10 +161,10 @@ struct double_box : public center_box
     {
         cairo_set_source_rgba(cr, c[0], c[1], c[2], c[3]);
 
-        aligned_rectangle(cr, 0, ybase, bw, ylen);
+        aligned_rectangle(cr, ybase, 0, ylen, bw);
         cairo_fill(cr);
 
-        aligned_rectangle(cr, sep+bw, ybase, bw, ylen);
+        aligned_rectangle(cr, ybase, sep+bw, ylen, bw);
         cairo_fill(cr);
     }
 
@@ -223,15 +222,14 @@ struct lane_maker
         if(max_h == 0.0)
             max_h = 1.0;
 
-        im_res = 100*vec2u(static_cast<unsigned int>(std::ceil(total_w/min_x_feat)),
-                           static_cast<unsigned int>(std::ceil(max_h/min_y_feat)));
-        scale  = vec2d(total_w, max_h);
+        im_res = 100*vec2u(static_cast<unsigned int>(std::ceil(max_h/min_y_feat)),
+                           static_cast<unsigned int>(std::ceil(total_w/min_x_feat)));
+        scale  = vec2d(max_h, total_w);
     }
 
     void draw(const std::string &fname)
     {
         res_scale();
-        std::cout << im_res << std::endl;
         cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
                                                          im_res[0],
                                                          im_res[1]);
@@ -247,7 +245,7 @@ struct lane_maker
         BOOST_FOREACH(const lane_op *lo, boxes)
         {
             lo->draw(cr);
-            cairo_translate(cr, lo->width(), 0.0);
+            cairo_translate(cr, 0.0, lo->width());
         }
 
         cairo_destroy(cr);
