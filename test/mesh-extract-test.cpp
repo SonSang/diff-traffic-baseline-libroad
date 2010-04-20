@@ -1,5 +1,8 @@
 #include "libroad/hwm_network.hpp"
 #include "texture-gen.hpp"
+#include "boost/filesystem.hpp"
+
+namespace bf = boost::filesystem;
 
 void dump_obj(std::ostream      &out,
               const std::string &name,
@@ -171,34 +174,8 @@ struct road_rev_map
     }
 };
 
-int main(int argc, char *argv[])
+void obj_roads(std::ostream &os, hwm::network &net)
 {
-    std::cerr << libroad_package_string() << std::endl;
-
-    if(argc < 2)
-    {
-        std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
-        return 1;
-    }
-    hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
-
-    net.build_intersections();
-    net.build_fictitious_lanes();
-    net.auto_scale_memberships();
-    net.center();
-    std::cerr << "HWM net loaded successfully" << std::endl;
-
-    try
-    {
-        net.check();
-        std::cerr << "HWM net checks out" << std::endl;
-    }
-    catch(std::runtime_error &e)
-    {
-        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
-        exit(1);
-    }
-
     strhash<road_rev_map>::type rrm;
 
     BOOST_FOREACH(const hwm::road_pair &r, net.roads)
@@ -219,7 +196,7 @@ int main(int argc, char *argv[])
     const std::string mtlname("road.mtl");
     std::ofstream mtllib(mtlname.c_str());
 
-    std::cout << "mtllib " << mtlname << std::endl;
+    os << "mtllib " << mtlname << std::endl;
     BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
     {
         const hwm::road &r = *(rrm_v.second.road);
@@ -241,7 +218,7 @@ int main(int argc, char *argv[])
             const std::string &oname(boost::str(boost::format("%s-%d") % r.id % re_c));
             const std::string &texfilename(boost::str(boost::format("tex/%s.png") % oname));
             e.write_texture(texfilename);
-            dump_obj(std::cout,
+            dump_obj(os,
                      oname,
                      oname,
                      vrts,
@@ -251,6 +228,49 @@ int main(int argc, char *argv[])
             ++re_c;
         }
     }
+}
+
+int main(int argc, char *argv[])
+{
+    std::cerr << libroad_package_string() << std::endl;
+
+    if(argc < 3)
+    {
+        std::cerr << "Usage: " << argv[0] << " <input network> <output obj>" << std::endl;
+        return 1;
+    }
+    hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
+
+    net.build_intersections();
+    net.build_fictitious_lanes();
+    net.auto_scale_memberships();
+    net.center();
+    std::cerr << "HWM net loaded successfully" << std::endl;
+
+    try
+    {
+        net.check();
+        std::cerr << "HWM net checks out" << std::endl;
+    }
+    catch(std::runtime_error &e)
+    {
+        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
+        exit(1);
+    }
+
+    bf::path full_out_path(argv[2]);
+
+    bf::path dir(full_out_path.parent_path());
+    bf::path tex_dir(full_out_path.parent_path() / "tex");
+
+    if(!dir.empty())
+       bf::create_directory(dir);
+    bf::create_directory(tex_dir);
+
+    if(!dir.empty())
+        bf::current_path(dir);
+    std::ofstream out(full_out_path.filename().c_str());
+    obj_roads(out, net);
 
     return 0;
 }
