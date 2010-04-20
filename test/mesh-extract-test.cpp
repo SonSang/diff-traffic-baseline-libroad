@@ -107,87 +107,101 @@ int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
 
-    if(argc < 2)
-    {
-        std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
-        return 1;
-    }
-    hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
+    lane_maker lm;
 
-    net.build_intersections();
-    net.build_fictitious_lanes();
-    net.auto_scale_memberships();
-    net.center();
-    std::cerr << "HWM net loaded successfully" << std::endl;
+    lm.boxes.push_back(fill_box(2.5, 1.0,
+                                2.5, 1.0,
+                                color4d(0.0, 0.0, 0.0, 1.0)));
+    lm.boxes.push_back(fill_box(0.0,   12.0,
+                                0.125,  3.0,
+                                color4d(1.0, 1.0, 1.0, 1.0)));
 
-    try
-    {
-        net.check();
-        std::cerr << "HWM net checks out" << std::endl;
-    }
-    catch(std::runtime_error &e)
-    {
-        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
-        exit(1);
-    }
+    lm.res_scale();
 
-    strhash<road_rev_map>::type rrm;
+    lm.draw("test.png");
 
-    BOOST_FOREACH(const hwm::road_pair &r, net.roads)
-    {
-        rrm[r.first] = road_rev_map(&(r.second));
-    }
 
-    BOOST_FOREACH(const hwm::lane_pair &l, net.lanes)
-    {
-        BOOST_FOREACH(const hwm::lane::road_membership::intervals::entry &rm, l.second.road_memberships)
-        {
-            strhash<road_rev_map>::type::iterator rev_itr(rrm.find(rm.second.parent_road->id));
-            assert(rev_itr != rrm.end());
-            rev_itr->second.add_lane(&(l.second), &(rm.second));
-        }
-    }
+    // if(argc < 2)
+    // {
+    //     std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
+    //     return 1;
+    // }
+    // hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
 
-    lane_tex ltb("/home/sewall/unc/traffic/libroad/test/tex/");
-    std::cout << "mtllib road.mtl\n";
-    BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
-    {
-        const hwm::road &r = *(rrm_v.second.road);
+    // net.build_intersections();
+    // net.build_fictitious_lanes();
+    // net.auto_scale_memberships();
+    // net.center();
+    // std::cerr << "HWM net loaded successfully" << std::endl;
 
-        size_t re_c = 0;
-        for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
-            current != rrm_v.second.lane_map.end();
-            ++current)
-        {
-            const road_rev_map::lane_cont &e = current->second;
+    // try
+    // {
+    //     net.check();
+    //     std::cerr << "HWM net checks out" << std::endl;
+    // }
+    // catch(std::runtime_error &e)
+    // {
+    //     std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
+    //     exit(1);
+    // }
 
-            if(e.empty())
-                continue;
+    // strhash<road_rev_map>::type rrm;
 
-            size_t against = 0;
-            size_t with    = 0;
-            BOOST_FOREACH(const road_rev_map::lane_cont::value_type &le, e)
-            {
-                if(le.second.membership->interval[0] < le.second.membership->interval[1])
-                    ++with;
-                else
-                    ++against;
-            }
+    // BOOST_FOREACH(const hwm::road_pair &r, net.roads)
+    // {
+    //     rrm[r.first] = road_rev_map(&(r.second));
+    // }
 
-            std::vector<vertex> vrts;
-            std::vector<vec3u>  fcs;
-            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width, boost::prior(e.end())->first+0.5*lane_width), 0.01);
+    // BOOST_FOREACH(const hwm::lane_pair &l, net.lanes)
+    // {
+    //     BOOST_FOREACH(const hwm::lane::road_membership::intervals::entry &rm, l.second.road_memberships)
+    //     {
+    //         strhash<road_rev_map>::type::iterator rev_itr(rrm.find(rm.second.parent_road->id));
+    //         assert(rev_itr != rrm.end());
+    //         rev_itr->second.add_lane(&(l.second), &(rm.second));
+    //     }
+    // }
 
-            dump_obj(std::cout,
-                     boost::str(boost::format("%s-%d") % r.id % re_c),
-                     ltb.write_tex(false, against, with, false),
-                     vrts,
-                     fcs);
-            ++re_c;
-        }
-    }
+    // lane_tex ltb("/home/sewall/unc/traffic/libroad/test/tex/");
+    // std::cout << "mtllib road.mtl\n";
+    // BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
+    // {
+    //     const hwm::road &r = *(rrm_v.second.road);
 
-    ltb.write_mtllib("road.mtl");
+    //     size_t re_c = 0;
+    //     for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
+    //         current != rrm_v.second.lane_map.end();
+    //         ++current)
+    //     {
+    //         const road_rev_map::lane_cont &e = current->second;
+
+    //         if(e.empty())
+    //             continue;
+
+    //         size_t against = 0;
+    //         size_t with    = 0;
+    //         BOOST_FOREACH(const road_rev_map::lane_cont::value_type &le, e)
+    //         {
+    //             if(le.second.membership->interval[0] < le.second.membership->interval[1])
+    //                 ++with;
+    //             else
+    //                 ++against;
+    //         }
+
+    //         std::vector<vertex> vrts;
+    //         std::vector<vec3u>  fcs;
+    //         r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width, boost::prior(e.end())->first+0.5*lane_width), 0.01);
+
+    //         dump_obj(std::cout,
+    //                  boost::str(boost::format("%s-%d") % r.id % re_c),
+    //                  ltb.write_tex(false, against, with, false),
+    //                  vrts,
+    //                  fcs);
+    //         ++re_c;
+    //     }
+    // }
+
+    // ltb.write_mtllib("road.mtl");
 
     return 0;
 }

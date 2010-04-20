@@ -12,190 +12,100 @@ static const float line_sep_width  = 0.125;
 static const float line_length     = 3.0f;
 static const float line_gap_length = 9.0f;
 
-void set_dashed(FIBITMAP *im, const int y, const int bytespp)
+typedef tvmet::Vector<double, 4> color4d;
+
+struct fill_box
 {
-    BYTE *bits = FreeImage_GetScanLine(im, y);
-    for(unsigned int x = static_cast<unsigned int>(std::floor(line_gap_length/(line_gap_length+line_length)*FreeImage_GetWidth(im))); x < FreeImage_GetWidth(im); x++)
+    fill_box(const double   w_,  const double h_,
+             const double   xr_, const double yr_,
+             const color4d &c_)
+        : w(w_), h(h_),
+          xr(xr_), yr(yr_),
+          c(c_)
+    {}
+
+    double width() const
     {
-        bits[FI_RGBA_RED]   = 255;
-        bits[FI_RGBA_GREEN] = 255;
-        bits[FI_RGBA_BLUE] =  255;
-        bits[FI_RGBA_ALPHA] = 255;
-        // jump to next pixel
-        bits += bytespp;
-    }
-}
-
-void set_solid_white(FIBITMAP *im, const int y, const int bytespp)
-{
-    BYTE *bits = FreeImage_GetScanLine(im, y);
-    for(unsigned int x = 0; x <  FreeImage_GetWidth(im); x++)
-    {
-        bits[FI_RGBA_RED]   = 255;
-        bits[FI_RGBA_GREEN] = 255;
-        bits[FI_RGBA_BLUE] =  255;
-        bits[FI_RGBA_ALPHA] = 255;
-        // jump to next pixel
-        bits += bytespp;
-    }
-}
-
-void set_solid_yellow(FIBITMAP *im, const int y, const int bytespp)
-{
-    BYTE *bits = FreeImage_GetScanLine(im, y);
-    for(unsigned int x = 0; x < FreeImage_GetWidth(im); x++)
-    {
-        bits[FI_RGBA_RED]   = 0xFF;
-        bits[FI_RGBA_GREEN] = 0xe7;
-        bits[FI_RGBA_BLUE] =  0x00;
-        bits[FI_RGBA_ALPHA] = 255;
-        // jump to next pixel
-        bits += bytespp;
-    }
-}
-
-FIBITMAP *create_lane_image(bool lshoulder, int llanes, int rlanes, bool rshoulder)
-{
-    const float total_length = (lshoulder + rshoulder)*shoulder_width
-                               + lane_width * (llanes + rlanes);
-
-    const int xres = static_cast<int>(std::ceil((line_gap_length+line_length)/line_length));
-    const int yres = static_cast<int>(std::ceil(total_length/line_sep_width));
-
-    FIBITMAP *im = FreeImage_Allocate(xres, yres, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
-    assert(im);
-    const int bytespp = FreeImage_GetLine(im) / FreeImage_GetWidth(im);
-
-    for(unsigned int y = 0; y < FreeImage_GetHeight(im); y++)
-    {
-        BYTE *bits = FreeImage_GetScanLine(im, y);
-        for(unsigned int x = 0; x < FreeImage_GetWidth(im); x++)
-        {
-            bits[FI_RGBA_ALPHA] = 255;
-            bits += bytespp;
-        }
+        return w;
     }
 
-    float current = 0.0f;
-    if(lshoulder)
+    double height() const
     {
-        current += (shoulder_width-line_width*0.5);
-        set_solid_white(im, current/total_length*FreeImage_GetHeight(im), bytespp);
-        current += line_width*0.5f;
+        return h;
     }
 
-    for(int i = llanes; i > 1; --i)
+    double xres() const
     {
-        current += (lane_width-line_width*0.5);
-        set_dashed(im, current/total_length*FreeImage_GetHeight(im), bytespp);
-        current += line_width*0.5f;
+        return xr;
     }
 
-    if(llanes > 0)
+    double yres() const
     {
-        current += (lane_width-line_width);
-        set_solid_yellow(im, current/total_length*FreeImage_GetHeight(im), bytespp);
-        current += line_width;
+        return yr;
     }
 
-    if(rlanes > 0)
+    void draw(cairo_t *cr) const
     {
-        current += line_width;
-        set_solid_yellow(im, current/total_length*FreeImage_GetHeight(im), bytespp);
-        current += lane_width - line_width;
+        cairo_set_source_rgba(cr, c[0], c[1], c[2], c[3]);
+        cairo_rectangle(cr, 0, 0.0, w, yr);
+        cairo_fill(cr);
     }
 
-    for(int i = 1; i < rlanes; ++i)
-    {
-        current -= line_width*0.5;
-        set_dashed(im, current/total_length*FreeImage_GetHeight(im), bytespp);
-        current += lane_width - line_width*0.5f;
-    }
-
-    if(rshoulder)
-    {
-        current -= line_width*0.5;
-        set_solid_white(im, current/total_length*FreeImage_GetHeight(im), bytespp);
-    }
-
-    im = FreeImage_Rescale(im, 5*FreeImage_GetWidth(im), 5*FreeImage_GetHeight(im), FILTER_BOX);
-
-    return im;
-}
-
-struct lane_tex
-{
-    typedef std::map<const int, const std::string> str_map;
-
-    lane_tex(const std::string &r) : root(r) {}
-
-    static const int max_lanes = 1024;
-    static void canon(bool &lshoulder, int &llanes, int &rlanes, bool &rshoulder)
-    {
-        if(lshoulder > rshoulder)
-            std::swap(lshoulder, rshoulder);
-        if(llanes > rlanes)
-            std::swap(llanes, rlanes);
-    }
-
-    static int hash_index(bool lshoulder, int llanes, int rlanes, bool rshoulder)
-    {
-        canon(lshoulder, llanes, rlanes, rshoulder);
-        return (llanes * 1024 + rlanes) * 1024 +  lshoulder *2 + rshoulder;
-    }
-
-    static std::string tex_string(bool lshoulder, int llanes, int rlanes, bool rshoulder)
-    {
-        canon(lshoulder, llanes, rlanes, rshoulder);
-        return boost::str(boost::format("ls%d-ll%d-rl%d-rs%d") % lshoulder % llanes % rlanes % rshoulder);
-    }
-
-    std::string tex_path(const std::string &s) const
-    {
-        return boost::str(boost::format("%s%s.png") % root % s);
-    }
-
-    const std::string write_tex(const bool lshoulder, const int llanes, const int rlanes, const bool rshoulder)
-    {
-        const int idx(hash_index(lshoulder, llanes, rlanes, rshoulder));
-        const str_map::iterator c(texes.find(idx));
-        if(c == texes.end())
-        {
-            FIBITMAP *im = create_lane_image(lshoulder, llanes, rlanes, rshoulder);
-            const std::string fi(tex_string(lshoulder, llanes, rlanes, rshoulder));
-            FreeImage_Save(FIF_PNG, im, tex_path(fi).c_str());
-            texes.insert(c, std::make_pair(idx, fi));
-            FreeImage_Unload(im);
-            return fi;
-        }
-        return c->second;
-    }
-
-    void write_mtl(std::ostream &o,
-                   const std::string &ts) const
-    {
-        o << boost::str(boost::format("newmtl %s\n"
-                                      "ns 96.078431\n"
-                                      "ka 0.0  0.0  0.0\n"
-                                      "kd 0.64 0.64 0.64\n"
-                                      "ks 0.5  0.5  0.5\n"
-                                      "ni 1.0\n"
-                                      "d  1.0\n"
-                                      "map_kd %s\n") % ts % tex_path(ts));
-    }
-
-    void write_mtllib(const std::string &fname) const
-    {
-        std::ofstream o(fname.c_str());
-
-        BOOST_FOREACH(const str_map::value_type &i, texes)
-        {
-            write_mtl(o, i.second);
-        }
-    }
-
-    std::map<const int, const std::string> texes;
-    std::string    root;
+    double  w, h;
+    double  xr, yr;
+    color4d c;
 };
 
+struct lane_maker
+{
+    void res_scale()
+    {
+        double total_w    = 0.0;
+        double min_x_feat = std::numeric_limits<double>::max();
+        double max_h      = 0.0;
+        double y_res      = 0.0;
+        BOOST_FOREACH(const fill_box &fb, boxes)
+        {
+            total_w    += fb.width();
+            min_x_feat  = std::min(min_x_feat, fb.xres());
+            max_h       = std::max(max_h, fb.height());
+            y_res       = std::max(y_res, fb.height()/fb.yres());
+        }
+
+        im_res = 100*vec2u(static_cast<unsigned int>(std::ceil(total_w/min_x_feat)),
+                           static_cast<unsigned int>(std::ceil(y_res)));
+        scale  = vec2d(total_w, max_h);
+    }
+
+    void draw(const std::string &fname) const
+    {
+        cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+                                                         im_res[0],
+                                                         im_res[1]);
+        cairo_t         *cr = cairo_create(cs);
+
+        cairo_set_source_rgba(cr, 0, 0, 0, 0);
+        cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+        cairo_paint(cr);
+
+        cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+        std::cout << scale << std::endl;
+        std::cout << im_res << std::endl;
+        cairo_scale(cr, im_res[0]/scale[0], im_res[1]/scale[1]);
+
+        BOOST_FOREACH(const fill_box &fb, boxes)
+        {
+            fb.draw(cr);
+            cairo_translate(cr, fb.width(), 0.0);
+        }
+
+        cairo_destroy(cr);
+        cairo_surface_write_to_png(cs, fname.c_str());
+        cairo_surface_destroy(cs);
+    }
+
+    vec2u                 im_res;
+    vec2d                 scale;
+    std::vector<fill_box> boxes;
+};
 #endif
