@@ -54,32 +54,23 @@ static void circle_frame(vec3f &pos, vec3f &tan, const float theta, const mat4x4
     tan[2] = t[2];
 }
 
-static vec3f triangle_angles(const vec3f &pt0, const vec3f &pt1, const vec3f &pt2)
+static int triangle_cmp(const vec3f *low[3], const vec3f *high[3])
 {
-    const vec3f v01(tvmet::normalize(pt1 - pt0));
-    const vec3f v02(tvmet::normalize(pt2 - pt0));
-    const vec3f v12(tvmet::normalize(pt2 - pt1));
+    vec3f lengths_low(distance2(*low[0],*low[1]),
+                      distance2(*low[0],*low[2]),
+                      distance2(*low[1],*low[2]));
 
-    const float d0 = std::max(-1.0f, std::min(1.0f, tvmet::dot(v01, v02)));
-    const float d1 = std::max(-1.0f, std::min(1.0f, tvmet::dot(-v01, v12)));
+    vec3f lengths_high(distance2(*high[0],*high[1]),
+                       distance2(*high[0],*high[2]),
+                       distance2(*high[1],*high[2]));
 
-    const float a0 = std::acos(d0);
-    const float a1 = std::acos(d1);
-    const float a2 = M_PI - (a0 + a1);
+    std::sort(lengths_low.begin(),  lengths_low.end());
+    std::sort(lengths_high.begin(), lengths_high.end());
 
-    assert(std::isfinite(a0));
-    assert(std::isfinite(a1));
-    assert(std::isfinite(a2));
-
-    return vec3f(a0, a1, a2);
-}
-
-static int triangle_cmp(const vec3f &low, const vec3f&high)
-{
-    // designed for smallest largest angle
+    // designed for smallest longest edge
     for(int i = 2; i > -1; --i)
     {
-        float diff = low[i] - high[i];
+        float diff = lengths_low[i] - lengths_high[i];
         if(std::abs(diff) < 1e-6)
             continue;
         else if(diff < 0.0)
@@ -149,20 +140,16 @@ void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
         }
         else
         {
-            vec3f angles_low (triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, low_cand_vrt->position));
-            vec3f angles_high(triangle_angles(vrts[base_low_idx].position, vrts[base_high_idx].position, high_cand_vrt->position));
-
-            std::sort(angles_low.begin(), angles_low.end());
-            std::sort(angles_high.begin(), angles_high.end());
-
-            int res = triangle_cmp(angles_low, angles_high);
-            last_pick = pick_vrt;
+            const vec3f *low[]  = { &(vrts[base_low_idx].position), &(vrts[base_high_idx].position), &(low_cand_vrt->position)};
+            const vec3f *high[] = { &(vrts[base_low_idx].position), &(vrts[base_high_idx].position), &(high_cand_vrt->position)};
+            int res             = triangle_cmp(low, high);
+            last_pick           = pick_vrt;
             if(res > 0)
-                pick_vrt = false;
+                pick_vrt        = false;
             else if(res < 0)
-                pick_vrt = true;
+                pick_vrt        = true;
             else
-                pick_vrt = !last_pick;
+                pick_vrt        = !last_pick;
         }
 
         if(pick_vrt)
@@ -914,7 +901,7 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
                          const vec2f &offsets, const float resolution,
                          const bool reverse_tex1) const
 {
-    size_t r1 = vrts.size();
+    const size_t r1 = vrts.size();
     extract_center(vrts, range, offsets[0], resolution);
 
     vec2f texcoord1(0.0f, 1.0f);
@@ -926,7 +913,7 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
         v.tex_coord[1] = texcoord1[0];
     }
 
-    size_t r2 = vrts.size();
+    const size_t r2 = vrts.size();
     extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
     BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r2), vrts.end()))
     {
