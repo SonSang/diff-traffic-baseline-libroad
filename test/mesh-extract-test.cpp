@@ -230,6 +230,42 @@ void obj_roads(std::ostream &os, hwm::network &net)
     }
 }
 
+struct oriented_membership
+{
+    oriented_membership(bool i, const hwm::lane::road_membership *m)
+        : incomingp(i), membership(m)
+    {}
+
+    bool                              incomingp;
+    const hwm::lane::road_membership* membership;
+};
+
+void obj_intersection(std::ostream &os, hwm::intersection &is)
+{
+    typedef std::map<const float, const oriented_membership> incident_members;
+    typedef std::map<const hwm::road*, incident_members> road_member_map;
+
+    road_member_map rmm;
+    BOOST_FOREACH(const hwm::lane *incl, is.incoming)
+    {
+        const hwm::lane::road_membership *rm = &(boost::prior(incl->road_memberships.end())->second);
+        const hwm::road *r = rm->parent_road;
+        road_member_map::iterator ent(rmm.find(r));
+        if(ent == rmm.end())
+            ent = rmm.insert(ent, std::make_pair(r, incident_members()));
+        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(true, rm)));
+    }
+    BOOST_FOREACH(const hwm::lane *outl, is.outgoing)
+    {
+        const hwm::lane::road_membership *rm = &(outl->road_memberships.begin()->second);
+        const hwm::road *r = rm->parent_road;
+        road_member_map::iterator ent(rmm.find(r));
+        if(ent == rmm.end())
+            ent = rmm.insert(ent, std::make_pair(r, incident_members()));
+        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(false, rm)));
+    }
+}
+
 int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
