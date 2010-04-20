@@ -58,7 +58,52 @@ struct road_rev_map
         const hwm::lane::road_membership *membership;
     };
 
-    typedef std::map<const float, const lane_entry>  lane_cont;
+    struct lane_cont : public std::map<const float, const lane_entry>
+    {
+        void write_texture(const std::string &texfile) const
+        {
+            lane_maker lm;
+            lm.add_xgap(0.25*lane_width);
+            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                       0,          line_length+line_gap_length,
+                                       color4d(1.0, 1.0, 1.0, 1.0)));
+
+            const_iterator i = begin();
+            const float orient0 = copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]);
+            while(i != end() && orient0 == copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]))
+            {
+                lm.add_xgap(lane_width);
+                const_iterator next = boost::next(i);
+                if(next != end() && orient0 == copysignf(1, next->second.membership->interval[0] - next->second.membership->interval[1]))
+                    lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                               0, line_length,
+                                               color4d(1.0, 1.0, 1.0, 1.0)));
+                i = next;
+            }
+            if(i != end() && !lm.boxes.empty())
+            {
+                lm.add_cbox(new double_box(line_width, line_sep_width,
+                                           line_length+line_gap_length, 0, line_length+line_gap_length,
+                                           color4d(1.0, 1.0, 0.0, 1.0)));
+            }
+            while(i != end())
+            {
+                lm.add_xgap(lane_width);
+                const_iterator next = boost::next(i);
+                if(next != end())
+                    lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                               0, line_length,
+                                               color4d(1.0, 1.0, 1.0, 1.0)));
+                i = next;
+            }
+            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                       0,          line_length+line_gap_length,
+                                       color4d(1.0, 1.0, 1.0, 1.0)));
+            lm.add_xgap(0.25*lane_width);
+
+            lm.draw(texfile);
+        }
+    };
     partition01<lane_cont>  lane_map;
     const hwm::road        *road;
 
@@ -180,52 +225,13 @@ int main(int argc, char *argv[])
             if(e.empty())
                 continue;
 
-            lane_maker lm;
-            lm.add_xgap(0.25*lane_width);
-            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                       0,          line_length+line_gap_length,
-                                       color4d(1.0, 1.0, 1.0, 1.0)));
-
-            road_rev_map::lane_cont::const_iterator i = e.begin();
-            const float orient0 = copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]);
-            while(i != e.end() && orient0 == copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]))
-            {
-                lm.add_xgap(lane_width);
-                road_rev_map::lane_cont::const_iterator next = boost::next(i);
-                if(next != e.end() && orient0 == copysignf(1, next->second.membership->interval[0] - next->second.membership->interval[1]))
-                    lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                               0, line_length,
-                                               color4d(1.0, 1.0, 1.0, 1.0)));
-                i = next;
-            }
-            if(i != e.end() && !lm.boxes.empty())
-            {
-                lm.add_cbox(new double_box(line_width, line_sep_width,
-                                           line_length+line_gap_length, 0, line_length+line_gap_length,
-                                           color4d(1.0, 1.0, 0.0, 1.0)));
-            }
-            while(i != e.end())
-            {
-                lm.add_xgap(lane_width);
-                road_rev_map::lane_cont::const_iterator next = boost::next(i);
-                if(next != e.end())
-                    lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                               0, line_length,
-                                               color4d(1.0, 1.0, 1.0, 1.0)));
-                i = next;
-            }
-            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                       0,          line_length+line_gap_length,
-                                       color4d(1.0, 1.0, 1.0, 1.0)));
-            lm.add_xgap(0.25*lane_width);
-
             std::vector<vertex> vrts;
             std::vector<vec3u>  fcs;
-            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width-0.25*lane_width, boost::prior(e.end())->first+0.5*lane_width+0.25*lane_width), 0.01, orient0 < 0.0f);
+            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width-0.25*lane_width, boost::prior(e.end())->first+0.5*lane_width+0.25*lane_width), 0.01, true);
 
             const std::string &oname(boost::str(boost::format("%s-%d") % r.id % re_c));
             const std::string &texfilename(boost::str(boost::format("tex/%s.png") % oname));
-            lm.draw(texfilename);
+            e.write_texture(texfilename);
             dump_obj(std::cout,
                      oname,
                      oname,
