@@ -103,7 +103,16 @@ struct road_rev_map
 
             lm.draw(texfile);
         }
+
+        void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval) const
+        {
+            const float left  = begin()            ->first-0.5f*lane_width-0.25f*lane_width;
+            const float right = boost::prior(end())->first+0.5f*lane_width+0.25f*lane_width;
+            const hwm::lane::road_membership &rm = *(begin()->second.membership);
+            rm.parent_road->rep.make_mesh(vrts, fcs, interval, vec2f(left, right), 0.01, true);
+        }
     };
+
     partition01<lane_cont>  lane_map;
     const hwm::road        *road;
 
@@ -227,7 +236,7 @@ int main(int argc, char *argv[])
 
             std::vector<vertex> vrts;
             std::vector<vec3u>  fcs;
-            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width-0.25*lane_width, boost::prior(e.end())->first+0.5*lane_width+0.25*lane_width), 0.01, true);
+            e.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current));
 
             const std::string &oname(boost::str(boost::format("%s-%d") % r.id % re_c));
             const std::string &texfilename(boost::str(boost::format("tex/%s.png") % oname));
