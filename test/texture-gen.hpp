@@ -59,6 +59,7 @@ struct xgap : public lane_op
 void aligned_rectangle(cairo_t *cr, double x, double y, double w, double h)
 {
     cairo_user_to_device(cr, &x, &y);
+    std::cout << "x " << x << " y " << y << std::endl;
     x = std::floor(x);
     y = std::floor(y);
     cairo_device_to_user(cr, &x, &y);
@@ -176,6 +177,14 @@ struct double_box : public center_box
 
 struct lane_maker
 {
+    ~lane_maker()
+    {
+        BOOST_FOREACH(lane_op *o, boxes)
+        {
+            delete o;
+        }
+    }
+
     void add_cbox(center_box *cb)
     {
         if(!boxes.empty())
@@ -214,15 +223,15 @@ struct lane_maker
         if(max_h == 0.0)
             max_h = 1.0;
 
-        im_res = vec2u(static_cast<unsigned int>(std::ceil(total_w/min_x_feat)),
-                       static_cast<unsigned int>(std::ceil(max_h/min_y_feat)));
+        im_res = 100*vec2u(static_cast<unsigned int>(std::ceil(total_w/min_x_feat)),
+                           static_cast<unsigned int>(std::ceil(max_h/min_y_feat)));
         scale  = vec2d(total_w, max_h);
     }
 
     void draw(const std::string &fname)
     {
         res_scale();
-
+        std::cout << im_res << std::endl;
         cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
                                                          im_res[0],
                                                          im_res[1]);
@@ -233,8 +242,6 @@ struct lane_maker
         cairo_paint(cr);
 
         cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-        std::cout << scale << std::endl;
-        std::cout << im_res << std::endl;
         cairo_scale(cr, im_res[0]/scale[0], im_res[1]/scale[1]);
 
         BOOST_FOREACH(const lane_op *lo, boxes)

@@ -29,6 +29,19 @@ void dump_obj(std::ostream      &out,
     }
 };
 
+void write_mtl(std::ostream &o,
+               const std::string &ts)
+{
+    o << boost::str(boost::format("newmtl %s\n"
+                                  "ns 96.078431\n"
+                                  "ka 0.0  0.0  0.0\n"
+                                  "kd 0.64 0.64 0.64\n"
+                                  "ks 0.5  0.5  0.5\n"
+                                  "ni 1.0\n"
+                                  "d  1.0\n"
+                                  "map_kd %s\n") % ts % ts);
+}
+
 struct road_rev_map
 {
     struct lane_entry
@@ -107,100 +120,111 @@ int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
 
-    lane_maker lm;
-    lm.add_xgap(2.5);
-    lm.add_cbox(new single_box(0.125,  12.0,
-                               0,       3.0,
-                               color4d(1.0, 1.0, 1.0, 1.0)));
-    lm.add_xgap(2.5);
-    lm.add_cbox(new double_box(0.125, 0.125,
-                               12.0,  0, 12.0,
-                               color4d(1.0, 1.0, 0.0, 1.0)));
-    lm.add_xgap(2.5);
+    if(argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
+        return 1;
+    }
+    hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
 
-    lm.draw("test.png");
+    net.build_intersections();
+    net.build_fictitious_lanes();
+    net.auto_scale_memberships();
+    net.center();
+    std::cerr << "HWM net loaded successfully" << std::endl;
 
-    // if(argc < 2)
-    // {
-    //     std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
-    //     return 1;
-    // }
-    // hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
+    try
+    {
+        net.check();
+        std::cerr << "HWM net checks out" << std::endl;
+    }
+    catch(std::runtime_error &e)
+    {
+        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
+        exit(1);
+    }
 
-    // net.build_intersections();
-    // net.build_fictitious_lanes();
-    // net.auto_scale_memberships();
-    // net.center();
-    // std::cerr << "HWM net loaded successfully" << std::endl;
+    strhash<road_rev_map>::type rrm;
 
-    // try
-    // {
-    //     net.check();
-    //     std::cerr << "HWM net checks out" << std::endl;
-    // }
-    // catch(std::runtime_error &e)
-    // {
-    //     std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
-    //     exit(1);
-    // }
+    BOOST_FOREACH(const hwm::road_pair &r, net.roads)
+    {
+        rrm[r.first] = road_rev_map(&(r.second));
+    }
 
-    // strhash<road_rev_map>::type rrm;
+    BOOST_FOREACH(const hwm::lane_pair &l, net.lanes)
+    {
+        BOOST_FOREACH(const hwm::lane::road_membership::intervals::entry &rm, l.second.road_memberships)
+        {
+            strhash<road_rev_map>::type::iterator rev_itr(rrm.find(rm.second.parent_road->id));
+            assert(rev_itr != rrm.end());
+            rev_itr->second.add_lane(&(l.second), &(rm.second));
+        }
+    }
 
-    // BOOST_FOREACH(const hwm::road_pair &r, net.roads)
-    // {
-    //     rrm[r.first] = road_rev_map(&(r.second));
-    // }
+    const std::string mtlname("road.mtl");
+    std::ofstream mtllib(mtlname.c_str());
 
-    // BOOST_FOREACH(const hwm::lane_pair &l, net.lanes)
-    // {
-    //     BOOST_FOREACH(const hwm::lane::road_membership::intervals::entry &rm, l.second.road_memberships)
-    //     {
-    //         strhash<road_rev_map>::type::iterator rev_itr(rrm.find(rm.second.parent_road->id));
-    //         assert(rev_itr != rrm.end());
-    //         rev_itr->second.add_lane(&(l.second), &(rm.second));
-    //     }
-    // }
+    std::cout << "mtllib " << mtlname << std::endl;
+    BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
+    {
+        const hwm::road &r = *(rrm_v.second.road);
 
-    // lane_tex ltb("/home/sewall/unc/traffic/libroad/test/tex/");
-    // std::cout << "mtllib road.mtl\n";
-    // BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
-    // {
-    //     const hwm::road &r = *(rrm_v.second.road);
+        size_t re_c = 0;
+        for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
+            current != rrm_v.second.lane_map.end();
+            ++current)
+        {
+            const road_rev_map::lane_cont &e = current->second;
 
-    //     size_t re_c = 0;
-    //     for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
-    //         current != rrm_v.second.lane_map.end();
-    //         ++current)
-    //     {
-    //         const road_rev_map::lane_cont &e = current->second;
+            if(e.empty())
+                continue;
 
-    //         if(e.empty())
-    //             continue;
+            lane_maker lm;
+            road_rev_map::lane_cont::const_iterator i = e.begin();
+            while(i != e.end() && (i->second.membership->interval[0] > i->second.membership->interval[1]))
+            {
+                lm.add_xgap(lane_width);
+                road_rev_map::lane_cont::const_iterator next = boost::next(i);
+                if(next != e.end() && (next->second.membership->interval[0] > next->second.membership->interval[1]))
+                    lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                               0, line_length,
+                                               color4d(1.0, 1.0, 1.0, 1.0)));
+                i = next;
+            }
+            if(i != e.end() && !lm.boxes.empty())
+            {
+                lm.add_cbox(new double_box(line_width, line_sep_width,
+                                           line_length+line_gap_length, 0, line_length,
+                                           color4d(1.0, 1.0, 0.0, 1.0)));
+            }
+            while(i != e.end())
+            {
+                lm.add_xgap(lane_width);
+                road_rev_map::lane_cont::const_iterator next = boost::next(i);
+                if(next != e.end())
+                    lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+                                               0, line_length,
+                                               color4d(1.0, 1.0, 1.0, 1.0)));
+                i = next;
+            }
 
-    //         size_t against = 0;
-    //         size_t with    = 0;
-    //         BOOST_FOREACH(const road_rev_map::lane_cont::value_type &le, e)
-    //         {
-    //             if(le.second.membership->interval[0] < le.second.membership->interval[1])
-    //                 ++with;
-    //             else
-    //                 ++against;
-    //         }
+            std::vector<vertex> vrts;
+            std::vector<vec3u>  fcs;
+            r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width, boost::prior(e.end())->first+0.5*lane_width), 0.01);
 
-    //         std::vector<vertex> vrts;
-    //         std::vector<vec3u>  fcs;
-    //         r.rep.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), vec2f(e.begin()->first-0.5f*lane_width, boost::prior(e.end())->first+0.5*lane_width), 0.01);
+            const std::string &oname(boost::str(boost::format("%s-%d") % r.id % re_c));
+            const std::string &texname(boost::str(boost::format("%s.png") % oname));
+            lm.draw(texname);
+            dump_obj(std::cout,
+                     oname,
+                     texname,
+                     vrts,
+                     fcs);
 
-    //         dump_obj(std::cout,
-    //                  boost::str(boost::format("%s-%d") % r.id % re_c),
-    //                  ltb.write_tex(false, against, with, false),
-    //                  vrts,
-    //                  fcs);
-    //         ++re_c;
-    //     }
-    // }
-
-    // ltb.write_mtllib("road.mtl");
+            write_mtl(mtllib, texname);
+            ++re_c;
+        }
+    }
 
     return 0;
 }
