@@ -3,7 +3,6 @@
 
 #include <fstream>
 #include <cairo.h>
-#include <FreeImage.h>
 
 static const float lane_width      = 2.5f;
 static const float shoulder_width  = 2.0f;

@@ -100,15 +100,11 @@ AS_IF([test x"$enable_visual" != xno -a x"$have_fltk" = xyes -a x"$have_glew" = 
 AM_CONDITIONAL(DO_VISUAL, test x"$visual_ok" = xyes)
 
 AS_IF([test x"$enable_images" != xno],
-      [PKG_CHECK_MODULES(FREEIMAGE, [FreeImage >= 3.10],
-                         [PKG_CHECK_MODULES([CAIRO], [cairo > 1.2],
-			                    [image_ok=yes],
-					    [AS_IF([test x"$enable_images" != xcheck],
-					     AC_MSG_FAILURE([--enable-images given but test for cairo failed!]))
-					     image_ok=no])],
-       		         [AS_IF([test x"$enable_images" != xcheck],
-      		                AC_MSG_FAILURE([--enable-images given but test for freeimage failed!]))
-                          image_ok=no])],
+      [PKG_CHECK_MODULES([CAIRO], [cairo > 1.2],
+      				  [image_ok=yes],
+				  [AS_IF([test x"$enable_images" != xcheck],
+				   AC_MSG_FAILURE([--enable-images given but test for cairo failed!]))
+				          	  image_ok=no])],
       [image_ok=no])
 
 AM_CONDITIONAL(DO_IMAGE, test x"$image_ok" = xyes)
@@ -177,8 +173,6 @@ fi
 if test x"$image_ok" = xyes; then
 echo "
   Building images: yes
-    FREEIMAGE_CFLAGS: $FREEIMAGE_CFLAGS
-    FREEIMAGE_LIBS..: $FREEIMAGE_LIBS
     CAIRO_CFLAGS....: $CAIRO_CFLAGS
     CAIRO_LIBS......: $CAIRO_LIBS"
 else
