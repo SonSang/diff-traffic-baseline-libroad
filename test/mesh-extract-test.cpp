@@ -215,8 +215,9 @@ void obj_roads(std::ostream &os, hwm::network &net)
             std::vector<vec3u>  fcs;
             e.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current));
 
-            const std::string &oname(boost::str(boost::format("%s-%d") % r.id % re_c));
-            const std::string &texfilename(boost::str(boost::format("tex/%s.png") % oname));
+            const std::string oname(boost::str(boost::format("%s-%d") % r.id % re_c));
+            const std::string texfilename(bf::path(bf::current_path() / "tex" / boost::str(boost::format("%s.png") % oname)).string());
+
             e.write_texture(texfilename);
             dump_obj(os,
                      oname,
