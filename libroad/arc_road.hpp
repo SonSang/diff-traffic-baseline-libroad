@@ -86,10 +86,12 @@ struct arc_road
 
 bool projection_intersect(vec3f &result,
                           const vec3f &o0, const vec3f &n0,
-                          const vec3f &o1, const vec3f &n1);
+                          const vec3f &o1, const vec3f &n1,
+                          const float min_t);
 
 std::vector<vec3f> from_tan_pairs(const vec3f &start_point,
                                   const vec3f &start_tan,
                                   const vec3f &end_point,
-                                  const vec3f &end_tan);
+                                  const vec3f &end_tan,
+                                  const float min_t);
 #endif

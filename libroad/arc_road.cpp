@@ -1202,7 +1202,8 @@ path arc_road::svg_poly_path(const vec2f &interval, const float offset) const
 
 bool projection_intersect(vec3f &result,
                           const vec3f &o0, const vec3f &n0,
-                          const vec3f &o1, const vec3f &n1)
+                          const vec3f &o1, const vec3f &n1,
+                          const float min_t)
 {
     vec3f od(o1 - o0);
     od[2] = 0.0f;
@@ -1211,7 +1212,7 @@ bool projection_intersect(vec3f &result,
             return false;
     const float t0 = (-n1[1]*od[0] + n1[0]*od[1])/denom;
     const float t1 = (-n0[1]*od[0] + n0[0]*od[1])/denom;
-    if(t0 >= 2.0f && t1 >= 2.0f)
+    if(t0 >= min_t && t1 >= min_t)
     {
         result = vec3f(o0 + n0*t0);
         result[2] = (o0[2] + o1[2])/2;
@@ -1224,7 +1225,8 @@ bool projection_intersect(vec3f &result,
 std::vector<vec3f> from_tan_pairs(const vec3f &start_point,
                                   const vec3f &start_tan,
                                   const vec3f &end_point,
-                                  const vec3f &end_tan)
+                                  const vec3f &end_tan,
+                                  const float min_t)
 {
 
     std::vector<vec3f> pts;
@@ -1233,7 +1235,9 @@ std::vector<vec3f> from_tan_pairs(const vec3f &start_point,
     vec3f middle;
     const bool okay(projection_intersect(middle,
                                          start_point, start_tan,
-                                         end_point,   end_tan));
+                                         end_point,   end_tan,
+                                         min_t));
+
     if(!okay)
     {
         pts.push_back(vec3f(start_point + start_tan*4));

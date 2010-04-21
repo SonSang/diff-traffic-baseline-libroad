@@ -77,8 +77,8 @@ namespace hwm
             new_road.rep.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
                                                                        start_tan,
                                                                        end_point,
-                                                                       end_tan));
-
+                                                                       end_tan,
+                                                                       2.0f));
             new_road.check();
 
             assert(!sp.fict_lane);

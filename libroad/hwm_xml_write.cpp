@@ -382,7 +382,8 @@ namespace hwm
                         ar.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
                                                                          start_tan,
                                                                          end_point,
-                                                                         end_tan));
+                                                                         end_tan,
+                                                                         2.0));
                         {
                             xmlpp::Element *path = arcgroup->add_child("path");
                             path->set_attribute("d", ar.svg_arc_path(vec2f(0.0, 1.0), 0.0).stringify()+"Z");
