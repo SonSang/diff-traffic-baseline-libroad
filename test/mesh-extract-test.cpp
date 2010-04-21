@@ -473,6 +473,7 @@ int main(int argc, char *argv[])
 
     if(!dir.empty())
        bf::create_directory(dir);
+    bf::remove_all(tex_dir);
     bf::create_directory(tex_dir);
 
     if(!dir.empty())
