@@ -13,24 +13,24 @@
     <road id="road1" name="E Franklin Street">
       <line_rep>
 	<points>
-	  -3.75 -25.0 0.0 0.0
-	  -3.75 -3.75 0.0 0.0
+	  -2.5 -26.25 0.0 0.0
+	  -2.5 -5.0   0.0 0.0
 	</points>
       </line_rep>
     </road>
     <road id="road2" name="N Columbia Street">
       <line_rep>
 	<points>
-	  0.0  0.0 0.0 0.0
-	  17.5 0.0 0.0 0.0
+	  2.5  0.0 0.0 0.0
+	  23.75 0.0 0.0 0.0
 	</points>
       </line_rep>
     </road>
     <road id="road3" name="W Franklin Street">
       <line_rep>
 	<points>
-	  -3.75 3.75 0.0 0.0
-	  -3.75 25.0 0.0 0.0
+	  -2.5 5 0.0 0.0
+	  -2.5 26.25 0.0 0.0
 	</points>
       </line_rep>
     </road>

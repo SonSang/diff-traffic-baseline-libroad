@@ -66,10 +66,10 @@ struct road_rev_map
         void write_texture(const std::string &texfile) const
         {
             lane_maker lm;
-            lm.add_xgap(0.25*lane_width);
-            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                       0,          line_length+line_gap_length,
-                                       color4d(1.0, 1.0, 1.0, 1.0)));
+            // lm.add_xgap(0.25*lane_width);
+            // lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+            //                            0,          line_length+line_gap_length,
+            //                            color4d(1.0, 1.0, 1.0, 1.0)));
 
             const_iterator i = begin();
             const float orient0 = copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]);
@@ -99,18 +99,18 @@ struct road_rev_map
                                                color4d(1.0, 1.0, 1.0, 1.0)));
                 i = next;
             }
-            lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                       0,          line_length+line_gap_length,
-                                       color4d(1.0, 1.0, 1.0, 1.0)));
-            lm.add_xgap(0.25*lane_width);
+            // lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
+            //                            0,          line_length+line_gap_length,
+            //                            color4d(1.0, 1.0, 1.0, 1.0)));
+            // lm.add_xgap(0.25*lane_width);
 
             lm.draw(texfile);
         }
 
         void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval) const
         {
-            const float left  = begin()            ->first-0.5f*lane_width-0.25f*lane_width;
-            const float right = boost::prior(end())->first+0.5f*lane_width+0.25f*lane_width;
+            const float left  = begin()            ->first-0.5f*lane_width/*-0.25f*lane_width*/;
+            const float right = boost::prior(end())->first+0.5f*lane_width/*+0.25f*lane_width*/;
             const hwm::lane::road_membership &rm = *(begin()->second.membership);
             rm.parent_road->rep.make_mesh(vrts, fcs, interval, vec2f(left, right), 0.01, true);
         }
@@ -232,15 +232,55 @@ void obj_roads(std::ostream &os, hwm::network &net)
 
 struct oriented_membership
 {
-    oriented_membership(bool i, const hwm::lane::road_membership *m)
-        : incomingp(i), membership(m)
+    oriented_membership(bool i, const hwm::lane *l, const hwm::lane::road_membership *m)
+        : incomingp(i), lane(l), membership(m)
     {}
 
     bool                              incomingp;
+    const hwm::lane*                  lane;
     const hwm::lane::road_membership* membership;
 };
 
-void obj_intersection(std::ostream &os, hwm::intersection &is)
+struct road_winding
+{
+    road_winding(const hwm::road *r, bool oa, float th)
+        : road(r), oriented_away(oa), theta(th)
+    {}
+
+    const hwm::road *road;
+    bool             oriented_away;
+    float            theta;
+};
+
+struct circle_sort
+{
+    bool operator()(const road_winding &l, const road_winding &r) const
+    {
+        return l.theta < r.theta;
+    }
+};
+
+void add_incident_lane_points(std::vector<vertex> &vrts, const oriented_membership &om, float sign)
+{
+    float param;
+    float offs = sign*lane_width/2;
+    if(om.incomingp)
+        param = 1.0f;
+    else
+        param = 0.0f;
+
+    {
+        const vec3f pt(om.lane->point(param, offs));
+        if(vrts.empty() || distance2(vrts.back().position, pt) > 1e-3)
+            vrts.push_back(vertex(pt, vec3f(0.0, 0.0, 1.0), vec2f(0.0, 0.0)));
+    }
+    {
+        const vec3f pt(om.lane->point(param, -offs));
+        vrts.push_back(vertex(pt, vec3f(0.0, 0.0, 1.0), vec2f(0.0, 0.0)));
+    }
+}
+
+void obj_intersection(std::ostream &os, const hwm::intersection &is)
 {
     typedef std::map<const float, const oriented_membership> incident_members;
     typedef std::map<const hwm::road*, incident_members> road_member_map;
@@ -253,7 +293,7 @@ void obj_intersection(std::ostream &os, hwm::intersection &is)
         road_member_map::iterator ent(rmm.find(r));
         if(ent == rmm.end())
             ent = rmm.insert(ent, std::make_pair(r, incident_members()));
-        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(true, rm)));
+        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(true, incl, rm)));
     }
     BOOST_FOREACH(const hwm::lane *outl, is.outgoing)
     {
@@ -262,8 +302,139 @@ void obj_intersection(std::ostream &os, hwm::intersection &is)
         road_member_map::iterator ent(rmm.find(r));
         if(ent == rmm.end())
             ent = rmm.insert(ent, std::make_pair(r, incident_members()));
-        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(false, rm)));
+        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(false, outl, rm)));
     }
+
+    std::vector<road_winding> rw_sort;
+    BOOST_FOREACH(const road_member_map::value_type &r, rmm)
+    {
+        bool oriented_away;
+        vec2f avg(0.0f);
+        BOOST_FOREACH(const incident_members::value_type &im, r.second)
+        {
+            const oriented_membership &om(im.second);
+            oriented_away = (om.incomingp && (om.membership->interval[0] > om.membership->interval[1])) ||
+                            (!om.incomingp && (om.membership->interval[0] < om.membership->interval[1]));
+            const vec3f pt(om.lane->point(om.incomingp ? 1.0f : 0.0) - is.center);
+            avg[0] += pt[0];
+            avg[1] += pt[1];
+        }
+
+        rw_sort.push_back(road_winding(r.first, oriented_away, std::fmod(std::atan2(avg[1], avg[0])+M_PI, 2*M_PI)));
+    }
+
+    std::sort(rw_sort.begin(), rw_sort.end(), circle_sort());
+    std::vector<vertex> vrts;
+    for(size_t i = 0; i < rw_sort.size(); ++i)
+    {
+        vec3f start_point;
+        vec3f start_tan;
+        {
+            const road_member_map::const_iterator  im0_itr = rmm.find(rw_sort[i].road);
+            const incident_members                &im0     = im0_itr->second;
+
+            const oriented_membership *first0;
+            float                      orientation0;
+            if(rw_sort[i].oriented_away)
+            {
+                orientation0 = -1.0;
+                first0 = &(boost::prior(im0.end())->second);
+                BOOST_FOREACH(const incident_members::value_type &im, im0)
+                {
+                    add_incident_lane_points(vrts, im.second, orientation0);
+                }
+            }
+            else
+            {
+                orientation0 = 1.0;
+                first0 = &(im0.begin()->second);
+                BOOST_REVERSE_FOREACH(const incident_members::value_type &im, im0)
+                {
+                    add_incident_lane_points(vrts, im.second, orientation0);
+                }
+            }
+
+            {
+                float param;
+                float tan_sign;
+                if(first0->incomingp)
+                {
+                    param    = 1.0f;
+                    tan_sign = 1.0f;
+                }
+                else
+                {
+                    param    =  0.0f;
+                    tan_sign = -1.0f;
+                }
+
+                const mat4x4f start(first0->lane->point_frame(param, -tan_sign*orientation0*lane_width/2));
+                for(int i = 0; i < 3; ++i)
+                {
+                    start_point[i] = start(i, 3);
+                    start_tan[i]   = tan_sign*start(i, 0);
+                }
+            }
+        }
+        vec3f end_point;
+        vec3f end_tan;
+        {
+            const road_member_map::const_iterator  im1_itr = rmm.find(rw_sort[(i+1)%rw_sort.size()].road);
+            const incident_members                &im1     = im1_itr->second;
+
+            const oriented_membership *last1;
+            float                      orientation1;
+            if(rw_sort[(i+1)%rw_sort.size()].oriented_away)
+            {
+                orientation1 = -1.0;
+                last1 = &(im1.begin()->second);
+            }
+            else
+            {
+                orientation1 = 1.0;
+                last1 = &(boost::prior(im1.end())->second);
+            }
+
+            {
+                float param;
+                float tan_sign;
+                if(last1->incomingp)
+                {
+                    param    = 1.0f;
+                    tan_sign = 1.0f;
+                }
+                else
+                {
+                    param    =  0.0f;
+                    tan_sign = -1.0f;
+                }
+
+                const mat4x4f end(last1->lane->point_frame(param, -tan_sign*orientation1*lane_width/2));
+                for(int i = 0; i < 3; ++i)
+                {
+                    end_point[i] = end(i, 3);
+                    end_tan[i]   = tan_sign*end(i, 0);
+                }
+            }
+        }
+
+        arc_road ar;
+        ar.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
+                                                         start_tan,
+                                                         end_point,
+                                                         end_tan,
+                                                         0.0f));
+
+        ar.extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+    }
+
+    vrts.push_back(vertex(is.center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+    unsigned int center = static_cast<unsigned int>(vrts.size()-1);
+    std::vector<vec3u> fcs;
+    for(unsigned int i = 0; i < center-1; ++i)
+        fcs.push_back(vec3u(center, i, (i+1) % center));
+
+    dump_obj(os, is.id, "none", vrts, fcs);
 }
 
 int main(int argc, char *argv[])
@@ -307,6 +478,11 @@ int main(int argc, char *argv[])
         bf::current_path(dir);
     std::ofstream out(full_out_path.filename().c_str());
     obj_roads(out, net);
+
+    BOOST_FOREACH(const hwm::intersection_pair &ip, net.intersections)
+    {
+        obj_intersection(out, ip.second);
+    }
 
     return 0;
 }
