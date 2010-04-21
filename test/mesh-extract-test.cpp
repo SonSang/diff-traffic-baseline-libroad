@@ -195,7 +195,6 @@ void obj_roads(std::ostream &os, hwm::network &net)
 
     const std::string mtlname("road.mtl");
     std::ofstream mtllib(mtlname.c_str());
-
     os << "mtllib " << mtlname << std::endl;
     BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
     {
@@ -340,19 +339,11 @@ void obj_intersection(std::ostream &os, const hwm::intersection &is)
             {
                 orientation0 = -1.0;
                 first0 = &(boost::prior(im0.end())->second);
-                BOOST_FOREACH(const incident_members::value_type &im, im0)
-                {
-                    add_incident_lane_points(vrts, im.second, orientation0);
-                }
             }
             else
             {
                 orientation0 = 1.0;
                 first0 = &(im0.begin()->second);
-                BOOST_REVERSE_FOREACH(const incident_members::value_type &im, im0)
-                {
-                    add_incident_lane_points(vrts, im.second, orientation0);
-                }
             }
 
             {
@@ -432,7 +423,7 @@ void obj_intersection(std::ostream &os, const hwm::intersection &is)
     vrts.push_back(vertex(is.center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
     unsigned int center = static_cast<unsigned int>(vrts.size()-1);
     std::vector<vec3u> fcs;
-    for(unsigned int i = 0; i < center-1; ++i)
+    for(unsigned int i = 0; i < center; ++i)
         fcs.push_back(vec3u(center, i, (i+1) % center));
 
     dump_obj(os, is.id, "none", vrts, fcs);
