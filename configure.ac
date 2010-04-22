@@ -100,11 +100,18 @@ AS_IF([test x"$enable_visual" != xno -a x"$have_fltk" = xyes -a x"$have_glew" = 
 AM_CONDITIONAL(DO_VISUAL, test x"$visual_ok" = xyes)
 
 AS_IF([test x"$enable_images" != xno],
-      [PKG_CHECK_MODULES([CAIRO], [cairo > 1.2],
-      				  [image_ok=yes],
-				  [AS_IF([test x"$enable_images" != xcheck],
-				   AC_MSG_FAILURE([--enable-images given but test for cairo failed!]))
-				          	  image_ok=no])],
+      [AC_CHECK_PROG(have_magickpp, Magick++-config, [yes], [no])
+       AS_IF([test x"$have_magickpp" = xyes],
+             [MAGICKPP_CXXFLAGS=`Magick++-config --cxxflags`
+              MAGICKPP_LDFLAGS=`Magick++-config --ldflags`
+              AC_SUBST([MAGICKPP_CXXFLAGS])
+              AC_SUBST([MAGICKPP_LDFLAGS])
+	      PKG_CHECK_MODULES([CAIRO], [cairo > 1.2],
+      	                        [image_ok=yes],
+                                [AS_IF([test x"$enable_images" != xcheck],
+	 		               AC_MSG_FAILURE([--enable-images given but test for cairo failed!]),
+				       [image_ok=yes])])],
+             [AC_MSG_FAILURE([--enable-images given but test for Magick++ failed!])])],
       [image_ok=no])
 
 AM_CONDITIONAL(DO_IMAGE, test x"$image_ok" = xyes)
@@ -173,8 +180,10 @@ fi
 if test x"$image_ok" = xyes; then
 echo "
   Building images: yes
-    CAIRO_CFLAGS....: $CAIRO_CFLAGS
-    CAIRO_LIBS......: $CAIRO_LIBS"
+    CAIRO_CFLAGS......: $CAIRO_CFLAGS
+    CAIRO_LIBS........: $CAIRO_LIBS
+    MAGICKPP_CXXFLAGS.: $MAGICKPP_CXXFLAGS
+    MAGICKPP_LDFLAGS..: $MAGICKPP_LDFLAGS"
 else
 echo "
   Building images: no"

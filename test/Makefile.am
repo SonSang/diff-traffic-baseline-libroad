@@ -43,12 +43,18 @@ osm_import_LDFLAGS  = $(LDFLAGS)
 osm_import_LDADD    = $(top_builddir)/libroad/libroad.la
 
 if DO_IMAGE
-noinst_PROGRAMS += mesh-extract-test
+noinst_PROGRAMS += mesh-extract-test displace-polylines
 
 mesh_extract_test_SOURCES = mesh-extract-test.cpp
 mesh_extract_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 mesh_extract_test_LDFLAGS  = $(CAIRO_LIBS) $(BOOST_FILESYSTEM_LIBS) $(LDFLAGS)
 mesh_extract_test_LDADD    = $(top_builddir)/libroad/libroad.la
+
+displace_polylines_SOURCES = displace-polylines.cpp
+displace_polylines_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+displace_polylines_LDFLAGS  = $(MAGICKPP_LDFLAGS) $(BOOST_FILESYSTEM_LIBS) $(LDFLAGS)
+displace_polylines_LDADD    = $(top_builddir)/libroad/libroad.la
+
 endif
 
 if DO_VISUAL
