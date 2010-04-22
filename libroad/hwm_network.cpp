@@ -420,13 +420,17 @@ namespace hwm
                 throw std::runtime_error("Failed to initialize arc_road in from_osm");
         }
 
-        BOOST_FOREACH(const strhash<size_t>::type::value_type &ndeg, node_degree)
+        typedef strhash<hwm::lane>::type::value_type hwm_l_pair;
+        BOOST_FOREACH(const hwm_l_pair& l, hnet.lanes)
         {
-            if(ndeg.second > 1)
-            {
-                assert(ndeg.first != "");
-                retrieve<intersection>(hnet.intersections, ndeg.first);
-            }
+            l.second.check();
+            assert(l.second.length() > 0);
+        }
+
+        BOOST_FOREACH(const strhash<osm::intersection>::type::value_type &isect,
+                      snet.intersections)
+        {
+            retrieve<intersection>(hnet.intersections, isect.first);
         }
 
         typedef std::pair<std::vector<lane*>, std::vector<lane*> > in_and_out;
@@ -574,7 +578,6 @@ namespace hwm
                 }
             }
 
-            //Add merging lanes TODO
             for(int lanect = 0; lanect < et.nolanes; ++lanect)
             {
                 if(lanect > 0)
@@ -583,7 +586,7 @@ namespace hwm
                     la.neighbor = newlanes[lanect-1];
                     la.neighbor_interval[0] = 0.0f;
                     la.neighbor_interval[1] = 1.0f;
-                    newlanes[lanect]->left.insert(0.0f, la);
+                    newlanes[lanect]->right.insert(0.0f, la);
                 }
                 if(lanect < et.nolanes - 1)
                 {
@@ -591,7 +594,7 @@ namespace hwm
                     la.neighbor = newlanes[lanect+1];
                     la.neighbor_interval[0] = 0.0f;
                     la.neighbor_interval[1] = 1.0f;
-                    newlanes[lanect]->right.insert(0.0f, la);
+                    newlanes[lanect]->left.insert(0.0f, la);
                 }
 
                 if (et.oneway == 0)
@@ -603,7 +606,7 @@ namespace hwm
                         la.neighbor = new_reverse_lanes[lanect-1];
                         la.neighbor_interval[0] = 0.0f;
                         la.neighbor_interval[1] = 1.0f;
-                        new_reverse_lanes[lanect]->left.insert(0.0f, la);
+                        new_reverse_lanes[lanect]->right.insert(0.0f, la);
                     }
                     if(lanect < et.nolanes - 1)
                     {
@@ -611,14 +614,26 @@ namespace hwm
                         la.neighbor = new_reverse_lanes[lanect+1];
                         la.neighbor_interval[0] = 0.0f;
                         la.neighbor_interval[1] = 1.0f;
-                        new_reverse_lanes[lanect]->right.insert(0.0f, la);
+                        new_reverse_lanes[lanect]->left.insert(0.0f, la);
                     }
                 }
+            }
+        }
+
+        BOOST_FOREACH(const osm::edge& e, snet.edges)
+        {
+            const osm::edge_type &et          = *(e.type);
+
+            typedef strhash<hwm::lane>::type::value_type hwm_l_pair;
+            BOOST_FOREACH(const hwm_l_pair& l, hnet.lanes)
+            {
+                l.second.check();
             }
 
             BOOST_FOREACH(const osm::edge::lane& l, e.additional_lanes)
             {
                 str id = boost::str(boost::format("%1%_%2%_%3%_%4%") % e.id % l.start_t % l.end_t % l.offset);
+                road                  *parent_road = &retrieve<road>(hnet.roads, e.id);
                 lane &new_lane = retrieve<lane>(hnet.lanes, id);
                 //Store road to lane pointers.
                 roads_to_lanes[e.id].first.push_back(&new_lane);
@@ -637,6 +652,7 @@ namespace hwm
                 rm.lane_position = position;
                 new_lane.road_memberships.insert(0.0, rm);
 
+                // lane &ramp_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % l.ramp_id % 0));
                 lane &ramp_lane = retrieve<lane>(hnet.lanes, boost::str(boost::format("%s_%02d") % l.ramp_id % 0));
 
                 //Create lane terminus so that ramp flows into extra lane.
@@ -670,17 +686,69 @@ namespace hwm
                 }
 
                 lane::adjacency la;
-                la.neighbor = newlanes[0];
+                lane* adjacent = 0;
+                float min_offset = std::numeric_limits<float>::max();
+                //Search forward lanes for the adjacent lane based on offset
+                BOOST_FOREACH(lane* neighbor, roads_to_lanes[e.id].first)
+                {
+                    //We want to find the closest adjacent lane, not one that would line up exactly.
+                    if (std::abs(neighbor->road_memberships.find(l.start_t)->second.lane_position - l.offset) == 0)
+                    {
+                        continue;
+                    }
+
+                    float pos_diff = std::abs(neighbor->road_memberships.find(l.start_t)->second.lane_position - l.offset);
+                    if (pos_diff < min_offset)
+                    {
+                        min_offset = pos_diff;
+                        adjacent = neighbor;
+                    }
+                }
+
+                // //Search reverse lanes for the adjacent lane based on offset
+                // BOOST_FOREACH(lane* neighbor, roads_to_lanes[e.id].second)
+                // {
+                //     float pos_diff = std::abs(neighbor->road_memberships.find(l.start_t)->second.lane_position - l.offset);
+                //     if (pos_diff < min_offset)
+                //     {
+                //         min_offset = pos_diff;
+                //         adjacent = neighbor;
+                //     }
+                // }
+                la.neighbor = adjacent;
                 la.neighbor_interval[0] = l.start_t;
                 la.neighbor_interval[1] = l.end_t;
                 new_lane.left.insert(0.0f, la);
+
+                if (adjacent->right.size() == 0)
+                {
+                    lane::adjacency nop;
+                    nop.neighbor = 0;
+                    adjacent->right.insert(0, nop);
+                }
+                lane::adjacency highway_start;
+                highway_start.neighbor = &new_lane;
+                highway_start.neighbor_interval[0] = 0;
+                highway_start.neighbor_interval[1] = 1;
+                adjacent->right.insert(l.start_t, highway_start);
+                lane::adjacency highway_end;
+                highway_end.neighbor = 0;
+                adjacent->right.insert(l.end_t, highway_end);
+
+                //TODO add adjacency to highway lane
+
+                typedef strhash<hwm::lane>::type::value_type hwm_l_pair;
+                BOOST_FOREACH(const hwm_l_pair& l, hnet.lanes)
+                {
+                    l.second.check();
+                }
             }
         }
 
-        typedef strhash<hwm::lane>::type::value_type hwm_l_pair;
         BOOST_FOREACH(const hwm_l_pair& l, hnet.lanes)
         {
             l.second.check();
+            assert(l.second.length() > 0);
         }
 
         float STATE_DURATION = 20;

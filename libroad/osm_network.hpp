@@ -65,6 +65,7 @@ namespace osm
         std::vector<node*> overpass_nodes;
         std::vector<lane>  additional_lanes;
 
+        void remove_duplicate_nodes();
         void reverse();
         float length() const;
     };
@@ -97,9 +98,12 @@ namespace osm
         //Error checking functions
         void node_degrees_and_edges_agree();
         void intersection_check();
-        void edges_including_rebuild();
+        void edges_check();
         void display_used_node_heights();
+        void list_edges();
 
+        void remove_duplicate_nodes();
+        void edges_including_rebuild();
         bool out_of_bounds(const vec3f &) const;
         void clip_roads_to_bounds();
         void create_ramps();
