@@ -144,10 +144,11 @@ int main(int argc, char *argv[])
     im.quantizeColorSpace(Magick::GRAYColorspace);
     im.quantize();
 
+    im.flip();
     im_heightfield ih(im, 0, 1);
 
     ih.origin = vec2f(0.0);
-    ih.spacing = vec2f(1.0/1023.0);
+    ih.spacing = vec2f(0.1);
 
     std::vector<vertex> vrts;
     std::vector<vec3u>  fcs;
