@@ -232,12 +232,12 @@ void obj_roads(std::ostream &os, hwm::network &net)
 
 struct road_winding
 {
-    road_winding(const hwm::road *r, float th)
-        : road(r), theta(th)
+    road_winding(const size_t rn, float th)
+        : road_num(rn), theta(th)
     {}
 
-    const hwm::road *road;
-    float            theta;
+    size_t road_num;
+    float  theta;
 };
 
 struct circle_sort
@@ -289,61 +289,86 @@ void gen_tan_points(offs_pt &low, offs_pt &high,
     }
 }
 
+typedef std::map<float, point_tan> incident_point_tans;
+
+struct road_store
+{
+    road_store(const hwm::road *r, const bool as)
+        : road(r), at_start(as)
+    {}
+
+    const hwm::road     *road;
+    bool                 at_start;
+    incident_point_tans  ipt;
+};
+
+struct road_is_cnt : public std::vector<road_store>
+{
+    road_store &find(const hwm::road *r, bool as)
+    {
+        BOOST_FOREACH(road_store &rw, *this)
+        {
+            if(rw.road == r && rw.at_start == as)
+                return rw;
+        }
+
+        push_back(road_store(r, as));
+        return back();
+    };
+};
+
 void obj_intersection(std::ostream &os, const hwm::intersection &is)
 {
-    typedef std::map<float,            point_tan>           incident_point_tans;
-    typedef std::map<const hwm::road*, incident_point_tans> road_member_map;
-
-    road_member_map rmm;
+    road_is_cnt ric;
     BOOST_FOREACH(const hwm::lane *incl, is.incoming)
     {
-        const hwm::lane::road_membership *rm = &(boost::prior(incl->road_memberships.end())->second);
-        const hwm::road                  *r  = rm->parent_road;
-        road_member_map::iterator         ent(rmm.find(r));
-        if(ent == rmm.end())
-            ent                              = rmm.insert(ent, std::make_pair(r, incident_point_tans()));
+        const hwm::lane::road_membership *rm       = &(boost::prior(incl->road_memberships.end())->second);
+        const hwm::road                  *r        = rm->parent_road;
+        const bool                        at_start = (rm->interval[0] > rm->interval[1]);
+        road_store                       &ent(ric.find(r, at_start));
 
         offs_pt low; offs_pt high;
         gen_tan_points(low, high, *incl, true);
 
-        const float oriented_sign = (rm->interval[0] > rm->interval[1]) ? 1.0 : -1.0;
+        const float oriented_sign = at_start ? 1.0 : -1.0;
 
         low.first  = oriented_sign*(low.first + rm->lane_position);
         high.first = oriented_sign*(high.first + rm->lane_position);
-        ent->second.insert(low);
-        ent->second.insert(high);
+        ent.ipt.insert(low);
+        ent.ipt.insert(high);
     }
 
     BOOST_FOREACH(const hwm::lane *outl, is.outgoing)
     {
-        const hwm::lane::road_membership *rm = &(outl->road_memberships.begin()->second);
-        const hwm::road                  *r  = rm->parent_road;
-        road_member_map::iterator         ent(rmm.find(r));
-        if(ent == rmm.end())
-            ent                              = rmm.insert(ent, std::make_pair(r, incident_point_tans()));
+        const hwm::lane::road_membership *rm       = &(outl->road_memberships.begin()->second);
+        const hwm::road                  *r        = rm->parent_road;
+        const bool                        at_start = (rm->interval[0] < rm->interval[1]);
+        road_store                       &ent(ric.find(r, at_start));
 
         offs_pt low; offs_pt high;
         gen_tan_points(low, high, *outl, false);
 
-        const float oriented_sign = (rm->interval[0] < rm->interval[1]) ? 1.0 : -1.0;
+        const float oriented_sign = at_start ? 1.0 : -1.0;
 
         low.first  = oriented_sign*(low.first + rm->lane_position);
         high.first = oriented_sign*(high.first + rm->lane_position);
-        ent->second.insert(low);
-        ent->second.insert(high);
+        ent.ipt.insert(low);
+        ent.ipt.insert(high);
     }
 
     std::vector<road_winding> rw_sort;
-    BOOST_FOREACH(const road_member_map::value_type &r, rmm)
+    for(size_t road_num = 0; road_num < ric.size(); ++road_num)
     {
+        const road_store &r = ric[road_num];
+
         vec2f avg(0.0f);
-        BOOST_FOREACH(const offs_pt &op, r.second)
+        BOOST_FOREACH(const offs_pt &op, r.ipt)
         {
             const vec3f svec(op.second.point - is.center);
             avg[0] += svec[0];
             avg[1] += svec[1];
         }
-        rw_sort.push_back(road_winding(r.first, std::fmod(std::atan2(avg[1], avg[0])+M_PI, 2*M_PI)));
+        rw_sort.push_back(road_winding(road_num, std::fmod(std::atan2(avg[1], avg[0])+M_PI, 2*M_PI)));
     }
 
     std::sort(rw_sort.begin(), rw_sort.end(), circle_sort());
@@ -351,19 +376,22 @@ void obj_intersection(std::ostream &os, const hwm::intersection &is)
     std::vector<vertex> vrts;
     for(size_t i = 0; i < rw_sort.size(); ++i)
     {
-        BOOST_FOREACH(const offs_pt &op, rmm[rw_sort[i].road])
+        BOOST_FOREACH(const offs_pt &op, ric[rw_sort[i].road_num].ipt)
         {
             vrts.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
         }
 
-    //     arc_road ar;
-    //     ar.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
-    //                                                      start_tan,
-    //                                                      end_point,
-    //                                                      end_tan,
-    //                                                      0.0f));
+        const point_tan &start= boost::prior(ric[rw_sort[i].road_num].ipt.end())->second;
+        const point_tan &end  = ric[rw_sort[(i+1)%rw_sort.size()].road_num].ipt.begin()->second;
 
-    //     ar.extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+        arc_road ar;
+        ar.initialize_from_polyline(0.0f, from_tan_pairs(start.point,
+                                                         start.tan,
+                                                         end.point,
+                                                         end.tan,
+                                                         0.0f));
+
+        ar.extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
     }
 
     vrts.push_back(vertex(is.center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
