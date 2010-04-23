@@ -230,25 +230,13 @@ void obj_roads(std::ostream &os, hwm::network &net)
     }
 }
 
-struct oriented_membership
-{
-    oriented_membership(bool i, const hwm::lane *l, const hwm::lane::road_membership *m)
-        : incomingp(i), lane(l), membership(m)
-    {}
-
-    bool                              incomingp;
-    const hwm::lane*                  lane;
-    const hwm::lane::road_membership* membership;
-};
-
 struct road_winding
 {
-    road_winding(const hwm::road *r, bool oa, float th)
-        : road(r), oriented_away(oa), theta(th)
+    road_winding(const hwm::road *r, float th)
+        : road(r), theta(th)
     {}
 
     const hwm::road *road;
-    bool             oriented_away;
     float            theta;
 };
 
@@ -260,164 +248,122 @@ struct circle_sort
     }
 };
 
-void add_incident_lane_points(std::vector<vertex> &vrts, const oriented_membership &om, float sign)
+struct point_tan
+{
+    vec3f point;
+    vec3f tan;
+};
+
+typedef std::pair<float, point_tan> offs_pt;
+
+void gen_tan_points(offs_pt &low, offs_pt &high,
+                    const hwm::lane &l, const bool incomingp)
 {
     float param;
-    float offs = sign*lane_width/2;
-    if(om.incomingp)
-        param = 1.0f;
-    else
-        param = 0.0f;
-
+    float tan_sign;
+    if(incomingp)
     {
-        const vec3f pt(om.lane->point(param, offs));
-        if(vrts.empty() || distance2(vrts.back().position, pt) > 1e-3)
-            vrts.push_back(vertex(pt, vec3f(0.0, 0.0, 1.0), vec2f(0.0, 0.0)));
+        param    = 1.0f;
+        tan_sign = 1.0f;
     }
+    else
     {
-        const vec3f pt(om.lane->point(param, -offs));
-        vrts.push_back(vertex(pt, vec3f(0.0, 0.0, 1.0), vec2f(0.0, 0.0)));
+        param    =  0.0f;
+        tan_sign = -1.0f;
+    }
+
+    low.first = -tan_sign*lane_width/2;
+    const mat4x4f low_mat(l.point_frame(param, low.first));
+    for(int i = 0; i < 3; ++i)
+    {
+        low.second.point[i] = low_mat(i, 3);
+        low.second.tan[i]   = tan_sign*low_mat(i, 0);
+    }
+
+    high.first = tan_sign*lane_width/2;
+    const mat4x4f high_mat(l.point_frame(param, high.first));
+    for(int i = 0; i < 3; ++i)
+    {
+        high.second.point[i] = high_mat(i, 3);
+        high.second.tan[i]   = tan_sign*high_mat(i, 0);
     }
 }
 
 void obj_intersection(std::ostream &os, const hwm::intersection &is)
 {
-    typedef std::map<const float, const oriented_membership> incident_members;
-    typedef std::map<const hwm::road*, incident_members> road_member_map;
+    typedef std::map<float,            point_tan>           incident_point_tans;
+    typedef std::map<const hwm::road*, incident_point_tans> road_member_map;
 
     road_member_map rmm;
     BOOST_FOREACH(const hwm::lane *incl, is.incoming)
     {
         const hwm::lane::road_membership *rm = &(boost::prior(incl->road_memberships.end())->second);
-        const hwm::road *r = rm->parent_road;
-        road_member_map::iterator ent(rmm.find(r));
+        const hwm::road                  *r  = rm->parent_road;
+        road_member_map::iterator         ent(rmm.find(r));
         if(ent == rmm.end())
-            ent = rmm.insert(ent, std::make_pair(r, incident_members()));
-        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(true, incl, rm)));
+            ent                              = rmm.insert(ent, std::make_pair(r, incident_point_tans()));
+
+        offs_pt low; offs_pt high;
+        gen_tan_points(low, high, *incl, true);
+
+        const float oriented_sign = (rm->interval[0] > rm->interval[1]) ? 1.0 : -1.0;
+
+        low.first  = oriented_sign*(low.first + rm->lane_position);
+        high.first = oriented_sign*(high.first + rm->lane_position);
+        ent->second.insert(low);
+        ent->second.insert(high);
     }
+
     BOOST_FOREACH(const hwm::lane *outl, is.outgoing)
     {
         const hwm::lane::road_membership *rm = &(outl->road_memberships.begin()->second);
-        const hwm::road *r = rm->parent_road;
-        road_member_map::iterator ent(rmm.find(r));
+        const hwm::road                  *r  = rm->parent_road;
+        road_member_map::iterator         ent(rmm.find(r));
         if(ent == rmm.end())
-            ent = rmm.insert(ent, std::make_pair(r, incident_members()));
-        ent->second.insert(std::make_pair(rm->lane_position, oriented_membership(false, outl, rm)));
+            ent                              = rmm.insert(ent, std::make_pair(r, incident_point_tans()));
+
+        offs_pt low; offs_pt high;
+        gen_tan_points(low, high, *outl, false);
+
+        const float oriented_sign = (rm->interval[0] < rm->interval[1]) ? 1.0 : -1.0;
+
+        low.first  = oriented_sign*(low.first + rm->lane_position);
+        high.first = oriented_sign*(high.first + rm->lane_position);
+        ent->second.insert(low);
+        ent->second.insert(high);
     }
 
     std::vector<road_winding> rw_sort;
     BOOST_FOREACH(const road_member_map::value_type &r, rmm)
     {
-        bool oriented_away;
         vec2f avg(0.0f);
-        BOOST_FOREACH(const incident_members::value_type &im, r.second)
+        BOOST_FOREACH(const offs_pt &op, r.second)
         {
-            const oriented_membership &om(im.second);
-            oriented_away = (om.incomingp && (om.membership->interval[0] > om.membership->interval[1])) ||
-                            (!om.incomingp && (om.membership->interval[0] < om.membership->interval[1]));
-            const vec3f pt(om.lane->point(om.incomingp ? 1.0f : 0.0) - is.center);
-            avg[0] += pt[0];
-            avg[1] += pt[1];
+            const vec3f svec(op.second.point - is.center);
+            avg[0] += svec[0];
+            avg[1] += svec[1];
         }
-
-        rw_sort.push_back(road_winding(r.first, oriented_away, std::fmod(std::atan2(avg[1], avg[0])+M_PI, 2*M_PI)));
+        rw_sort.push_back(road_winding(r.first, std::fmod(std::atan2(avg[1], avg[0])+M_PI, 2*M_PI)));
     }
 
     std::sort(rw_sort.begin(), rw_sort.end(), circle_sort());
+
     std::vector<vertex> vrts;
     for(size_t i = 0; i < rw_sort.size(); ++i)
     {
-        vec3f start_point;
-        vec3f start_tan;
+        BOOST_FOREACH(const offs_pt &op, rmm[rw_sort[i].road])
         {
-            const road_member_map::const_iterator  im0_itr = rmm.find(rw_sort[i].road);
-            const incident_members                &im0     = im0_itr->second;
-
-            const oriented_membership *first0;
-            float                      orientation0;
-            if(rw_sort[i].oriented_away)
-            {
-                orientation0 = -1.0;
-                first0 = &(boost::prior(im0.end())->second);
-            }
-            else
-            {
-                orientation0 = 1.0;
-                first0 = &(im0.begin()->second);
-            }
-
-            {
-                float param;
-                float tan_sign;
-                if(first0->incomingp)
-                {
-                    param    = 1.0f;
-                    tan_sign = 1.0f;
-                }
-                else
-                {
-                    param    =  0.0f;
-                    tan_sign = -1.0f;
-                }
-
-                const mat4x4f start(first0->lane->point_frame(param, -tan_sign*orientation0*lane_width/2));
-                for(int i = 0; i < 3; ++i)
-                {
-                    start_point[i] = start(i, 3);
-                    start_tan[i]   = tan_sign*start(i, 0);
-                }
-            }
-        }
-        vec3f end_point;
-        vec3f end_tan;
-        {
-            const road_member_map::const_iterator  im1_itr = rmm.find(rw_sort[(i+1)%rw_sort.size()].road);
-            const incident_members                &im1     = im1_itr->second;
-
-            const oriented_membership *last1;
-            float                      orientation1;
-            if(rw_sort[(i+1)%rw_sort.size()].oriented_away)
-            {
-                orientation1 = -1.0;
-                last1 = &(im1.begin()->second);
-            }
-            else
-            {
-                orientation1 = 1.0;
-                last1 = &(boost::prior(im1.end())->second);
-            }
-
-            {
-                float param;
-                float tan_sign;
-                if(last1->incomingp)
-                {
-                    param    = 1.0f;
-                    tan_sign = 1.0f;
-                }
-                else
-                {
-                    param    =  0.0f;
-                    tan_sign = -1.0f;
-                }
-
-                const mat4x4f end(last1->lane->point_frame(param, -tan_sign*orientation1*lane_width/2));
-                for(int i = 0; i < 3; ++i)
-                {
-                    end_point[i] = end(i, 3);
-                    end_tan[i]   = tan_sign*end(i, 0);
-                }
-            }
+            vrts.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
         }
 
-        arc_road ar;
-        ar.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
-                                                         start_tan,
-                                                         end_point,
-                                                         end_tan,
-                                                         0.0f));
+    //     arc_road ar;
+    //     ar.initialize_from_polyline(0.0f, from_tan_pairs(start_point,
+    //                                                      start_tan,
+    //                                                      end_point,
+    //                                                      end_tan,
+    //                                                      0.0f));
 
-        ar.extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+    //     ar.extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
     }
 
     vrts.push_back(vertex(is.center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
