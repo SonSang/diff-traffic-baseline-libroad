@@ -25,7 +25,7 @@ namespace osm
             id = boost::str(boost::format("%d") % rand());
             res = nodes.find(id);
         }
-        while(res == nodes.end());
+        while(res != nodes.end());
 
         res                     = nodes.insert(res, std::make_pair(id, node()));
         res->second.id          = id;

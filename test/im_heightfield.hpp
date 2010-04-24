@@ -102,7 +102,10 @@ struct im_heightfield
             }
 
             if(input == s.end())
+            {
                 s.swap(res);
+                return;
+            }
 
             (*input)->xy = vlookup((*input)->xy);
             to_add.push_back(*input);
