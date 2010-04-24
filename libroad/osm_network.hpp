@@ -92,6 +92,8 @@ namespace osm
         vec2d topleft;
         vec2d bottomright;
 
+        node *add_node(const vec3f &v, const bool is_overpass);
+
         //Error checking functions
         void node_degrees_and_edges_agree();
         void intersection_check();

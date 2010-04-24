@@ -2,6 +2,7 @@
 #define __IM_HEIGHTFIELD_HPP__
 
 #include "libroad/hwm_network.hpp"
+#include "libroad/osm_network.hpp"
 
 struct im_heightfield
 {
@@ -40,7 +41,7 @@ struct im_heightfield
 
     vec3f vlookup(const vec3f &xy) const
     {
-        return vec3f(xy[0], xy[1], lookup(vec2f(xy[0], xy[1])));
+        return vec3f(xy[0], xy[1], xy[2] + lookup(vec2f(xy[0], xy[1])));
     }
 
     std::vector<vec3f> displace_polyline(const std::vector<vec3f> &poly, const float fac_limit) const
@@ -69,6 +70,43 @@ struct im_heightfield
                 return res;
 
             to_add.push_back(vlookup(*input++));
+        }
+    }
+
+    void displace_shapes(osm::shape_t &s, const float fac_limit, osm::network &net) const
+    {
+        osm::shape_t                      res;
+        osm::shape_t           to_add;
+        osm::shape_t::iterator input(s.begin());
+
+        (*input)->xy = vlookup((*input)->xy);
+        res.push_back(*input);
+        ++input;
+
+        (*input)->xy = vlookup((*input)->xy);
+        to_add.push_back(*input);
+        ++input;
+
+        vec3f split;
+        while(true)
+        {
+            while(!to_add.empty())
+            {
+                while(max_diff(split, res.back()->xy, to_add.back()->xy, fac_limit))
+                {
+                    to_add.push_back(net.add_node(split, res.back()->is_overpass && to_add.back()->is_overpass));
+                }
+
+                res.push_back(to_add.back());
+                to_add.pop_back();
+            }
+
+            if(input == s.end())
+                s.swap(res);
+
+            (*input)->xy = vlookup((*input)->xy);
+            to_add.push_back(*input);
+            ++input;
         }
     }
 

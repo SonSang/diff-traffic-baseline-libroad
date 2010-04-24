@@ -16,6 +16,25 @@ namespace osm
     typedef std::pair<const str, node>         node_pair;
     typedef std::pair<const str, intersection> intr_pair;
 
+    node *network::add_node(const vec3f &v, const bool is_overpass)
+    {
+        str id;
+        strhash<node>::type::iterator res;
+        do
+        {
+            id = boost::str(boost::format("%d") % rand());
+            res = nodes.find(id);
+        }
+        while(res == nodes.end());
+
+        res                     = nodes.insert(res, std::make_pair(id, node()));
+        res->second.id          = id;
+        res->second.xy          = v;
+        res->second.is_overpass = is_overpass;
+
+        return &(res->second);
+    }
+
     bool network::out_of_bounds(const vec3f &pt) const
     {
         return !((pt[0] >= topleft[0] and pt[0] <= bottomright[0])

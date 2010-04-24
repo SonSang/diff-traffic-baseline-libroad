@@ -30,7 +30,7 @@ namespace osm
 
             for(int j = 0; j < static_cast<int>(e_nodes.size()); j++)
             {
-                glVertex2fv(e_nodes[j]->xy.data());
+                glVertex3fv(e_nodes[j]->xy.data());
             }
             glEnd();
 
@@ -42,7 +42,7 @@ namespace osm
         glBegin(GL_POINTS);
         BOOST_FOREACH(strhash<intersection>::type::value_type& i, intersections)
         {
-            glVertex2fv(nodes[i.second.id_from_node].xy.data());
+            glVertex3fv(nodes[i.second.id_from_node].xy.data());
         }
         glEnd();
 
