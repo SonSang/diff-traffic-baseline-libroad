@@ -10,13 +10,10 @@ namespace osm
 
     struct node
     {
-        typedef enum {priority, traffic_light, unknown} TYPES;
-
         node(){ is_overpass = false; ramp_merging_point = NULL;}
 
         str                id;
         vec3f              xy;
-        TYPES              type;
         std::vector<edge*> edges_including; //Currently not maintained
         bool               is_overpass;
         node*              ramp_merging_point;
@@ -131,38 +128,6 @@ namespace osm
     };
 
     network load_xml_network(const char *osm_file);
-}
-
-inline std::ostream &operator<<(std::ostream &o, const osm::node::TYPES &t)
-{
-    switch(t)
-    {
-    case osm::node::priority:
-        o << "priority";
-        break;
-    case osm::node::traffic_light:
-        o << "traffic_light";
-        break;
-    default:
-        o << "unknown_node_type";
-        break;
-    }
-    return o;
-}
-
-inline std::istream &operator>>(std::istream &i, osm::node::TYPES &t)
-{
-    str src;
-    i >> src;
-
-    if(src == "priority")
-        t = osm::node::priority;
-    else if(src == "traffic_light")
-        t = osm::node::traffic_light;
-    else
-        throw std::exception();
-
-    return i;
 }
 
 inline std::ostream &operator<<(std::ostream &o, const osm::edge::SPREAD &t)

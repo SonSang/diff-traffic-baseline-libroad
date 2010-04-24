@@ -12,15 +12,6 @@ namespace osm
         get_attribute(no.xy[0], reader, "lon");
         get_attribute(no.xy[1], reader, "lat");
         no.xy[2] = 0.0f;
-
-        try
-        {
-            get_attribute(no.type, reader, "type");
-        }
-        catch(missing_attribute &ma)
-        {
-            no.type = node::unknown;
-        }
     }
 
     static inline void xml_read(network &n, edge &e, xmlpp::TextReader &reader)
