@@ -16,6 +16,12 @@ struct vertex
     vec2f tex_coord;
 };
 
+void mesh_to_obj(std::ostream              &out,
+                 const std::string         &name,
+                 const std::string         &material_name,
+                 const std::vector<vertex> &verts,
+                 const std::vector<vec3u>  &faces);
+
 void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
                const vec2i &low_range, const vec2i &high_range);
 

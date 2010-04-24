@@ -166,34 +166,6 @@ struct im_heightfield
     float *pix;
 };
 
-void dump_obj(std::ostream      &out,
-              const std::string &name,
-              const std::string &material_name,
-              const std::vector<vertex> &verts,
-              const std::vector<vec3u>  &faces)
-{
-    out << "o " << name << "\n";
-    out << "usemtl " << material_name << "\n";
-    BOOST_FOREACH(const vertex &v, verts)
-    {
-        out << "v " << v.position[0] << " " << v.position[1] << " " << v.position[2]  << "\n"
-            << "vn " << v.normal[0] << " " << v.normal[1] << " " << v.normal[2]  << "\n"
-            << "vt " << v.tex_coord[0] << " " << v.tex_coord[1] << "\n";
-    }
-
-    const size_t nverts = verts.size();
-    BOOST_FOREACH(const vec3u &f, faces)
-    {
-        out << "f ";
-        BOOST_FOREACH(const unsigned int i, f)
-        {
-            const off_t idx = static_cast<off_t>(i) - nverts;
-            out << idx << "/" << idx << "/" << idx << " ";
-        }
-        out << "\n";
-    }
-};
-
 int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
@@ -219,7 +191,7 @@ int main(int argc, char *argv[])
     std::vector<vec3u>  fcs;
     ih.make_mesh(vrts, fcs);
     std::ofstream os("im.obj");
-    dump_obj(os, "test", "test", vrts, fcs);
+    mesh_to_obj(os, "test", "test", vrts, fcs);
 
     std::vector<vec3f> poly;
     poly.push_back(vec3f(0.0));
@@ -233,7 +205,7 @@ int main(int argc, char *argv[])
     ar.initialize_from_polyline(0.0f, poly);
     ar.make_mesh(vrts, fcs, vec2f(0, 1), vec2f(-0.1, 0.1), 0.01);
 
-    dump_obj(os, "poly", "poly", vrts, fcs);
+    mesh_to_obj(os, "poly", "poly", vrts, fcs);
 
     return 0;
 }

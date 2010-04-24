@@ -4,37 +4,9 @@
 
 namespace bf = boost::filesystem;
 
-void dump_obj(std::ostream      &out,
-              const std::string &name,
-              const std::string &material_name,
-              const std::vector<vertex> &verts,
-              const std::vector<vec3u>  &faces)
-{
-    out << "o " << name << "\n";
-    out << "usemtl " << material_name << "\n";
-    BOOST_FOREACH(const vertex &v, verts)
-    {
-        out << "v " << v.position[0] << " " << v.position[1] << " " << v.position[2]  << "\n"
-            << "vn " << v.normal[0] << " " << v.normal[1] << " " << v.normal[2]  << "\n"
-            << "vt " << v.tex_coord[0] << " " << v.tex_coord[1] << "\n";
-    }
-
-    const size_t nverts = verts.size();
-    BOOST_FOREACH(const vec3u &f, faces)
-    {
-        out << "f ";
-        BOOST_FOREACH(const unsigned int i, f)
-        {
-            const off_t idx = static_cast<off_t>(i) - nverts;
-            out << idx << "/" << idx << "/" << idx << " ";
-        }
-        out << "\n";
-    }
-};
-
-void write_mtl(std::ostream &o,
-               const std::string &ts_name,
-               const std::string &ts_file)
+void write_road_mtl(std::ostream      &o,
+                    const std::string &ts_name,
+                    const std::string &ts_file)
 {
     o << boost::str(boost::format("newmtl %s\n"
                                   "ns 96.078431\n"
@@ -218,13 +190,13 @@ void obj_roads(std::ostream &os, hwm::network &net)
             const std::string texfilename(bf::path(bf::current_path() / "tex" / boost::str(boost::format("%s.png") % oname)).string());
 
             e.write_texture(texfilename);
-            dump_obj(os,
-                     oname,
-                     oname,
-                     vrts,
-                     fcs);
+            mesh_to_obj(os,
+                        oname,
+                        oname,
+                        vrts,
+                        fcs);
 
-            write_mtl(mtllib, oname, texfilename);
+            write_road_mtl(mtllib, oname, texfilename);
             ++re_c;
         }
     }
@@ -400,7 +372,7 @@ void obj_intersection(std::ostream &os, const hwm::intersection &is)
     for(unsigned int i = 0; i < center; ++i)
         fcs.push_back(vec3u(center, i, (i+1) % center));
 
-    dump_obj(os, is.id, "none", vrts, fcs);
+    mesh_to_obj(os, is.id, "none", vrts, fcs);
 }
 
 int main(int argc, char *argv[])

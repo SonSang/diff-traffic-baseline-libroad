@@ -179,6 +179,34 @@ void make_mesh(std::vector<vec3u> &faces, const std::vector<vertex> &vrts,
     }
 }
 
+void mesh_to_obj(std::ostream              &out,
+                 const std::string         &name,
+                 const std::string         &material_name,
+                 const std::vector<vertex> &verts,
+                 const std::vector<vec3u>  &faces)
+{
+    out << "o " << name << "\n";
+    out << "usemtl " << material_name << "\n";
+    BOOST_FOREACH(const vertex &v, verts)
+    {
+        out << "v " << v.position[0]   << " " << v.position[1]  << " " << v.position[2] << "\n"
+            << "vn " << v.normal[0]    << " " << v.normal[1]    << " " << v.normal[2]   << "\n"
+            << "vt " << v.tex_coord[0] << " " << v.tex_coord[1] << "\n";
+    }
+
+    const size_t nverts = verts.size();
+    BOOST_FOREACH(const vec3u &f, faces)
+    {
+        out << "f ";
+        BOOST_FOREACH(const unsigned int i, f)
+        {
+            const off_t idx = static_cast<off_t>(i) - nverts;
+            out << idx << "/" << idx << "/" << idx << " ";
+        }
+        out << "\n";
+    }
+};
+
 static void alpha_assign(std::vector<float> &alphas, const std::vector<float> &seg_lengths, const std::vector<float> &factors, const size_t start, const size_t end)
 {
     // We have N_pts points
