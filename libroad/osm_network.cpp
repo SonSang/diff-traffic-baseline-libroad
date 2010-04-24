@@ -26,11 +26,11 @@ namespace osm
     void network::clip_roads_to_bounds()
     {
         //Remove any node that's outside the bounding box.
-        int j = 0;
+        size_t j = 0;
         while (j < edges.size())
         {
-            edge& e = edges[j];
-            int   i = 0;
+            edge&  e = edges[j];
+            size_t i = 0;
             while (i < e.shape.size())
                 if (out_of_bounds(e.shape[i]->xy))
                     e.shape.erase(e.shape.begin() + i);
@@ -292,7 +292,7 @@ namespace osm
             {
                 for (int b = 0; b < 2; b++)
                 {
-                    int i;
+                    size_t i;
                     if (b == 0)
                         i = 0;
                     else if (b == 1)
@@ -329,7 +329,7 @@ namespace osm
                             highway_shape.initialize_from_polyline(0.7, highway_shape.points_);
 
                             //Find index of intersection point
-                            int index = 0;
+                            size_t index = 0;
                             float epsilon = 1e-10;
                             for (index = 0;
                                  index < highway_shape.points_.size();
@@ -447,7 +447,7 @@ namespace osm
         {
             if (e.highway_class == "motorway")
             {
-                for(int i = 0; i < e.shape.size(); i++)
+                for(size_t i = 0; i < e.shape.size(); i++)
                 {
                     bool   ramp_node = false;
                     node*& n         = e.shape[i];
@@ -535,6 +535,11 @@ namespace osm
     }
 
     typedef std::pair<vec2f, vec2f> pair_of_isects;
+    static pair_of_isects circle_line_intersection(const vec2f &pt1,
+                                                   const vec2f &pt2,
+                                                   const vec2f &center,
+                                                   float r)  __attribute__ ((unused));
+
     static pair_of_isects circle_line_intersection(const vec2f &pt1,
                                                    const vec2f &pt2,
                                                    const vec2f &center,
@@ -853,7 +858,7 @@ namespace osm
         std::vector<node*> new_node_list;
         str last_id = shape[0]->id;
         new_node_list.push_back(shape[0]);
-        for(int i = 1; i < shape.size(); i++)
+        for(size_t i = 1; i < shape.size(); i++)
         {
             if (shape[i]->id != last_id)
             {
@@ -862,10 +867,8 @@ namespace osm
             }
         }
         shape.clear();
-        for(int i = 0; i < new_node_list.size(); i++)
-        {
+        for(size_t i = 0; i < new_node_list.size(); i++)
             shape.push_back(new_node_list[i]);
-        }
     }
 
     void edge::reverse()
@@ -954,9 +957,9 @@ namespace osm
             }
         }
 
-        for(int i = 0; i < edges_to_delete.size(); i++)
+        for(size_t i = 0; i < edges_to_delete.size(); i++)
         {
-            for(int j = 0; j < edges.size(); j++)
+            for(size_t j = 0; j < edges.size(); j++)
             {
                 if (edges[j].id == edges_to_delete[i])
                 {
