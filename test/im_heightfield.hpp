@@ -128,7 +128,7 @@ struct im_heightfield
         const float inv_len = 1.0f/len;
         const vec3f nvec(dvec*inv_len);
 
-        const float dt       = 0.5*std::min(spacing[0], spacing[1])*inv_len;
+        const float dt       = 0.5*std::min(spacing[0], spacing[1]);
         float       best_fac = fac_limit;
         bool        best_set = false;
         for(float t = dt; t < len; t += dt)
