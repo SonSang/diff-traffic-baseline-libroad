@@ -303,7 +303,7 @@ public:
                         if(Fl::event_state() & FL_CTRL)
                             noise_scale *= length(sub<0,2>::vector(inters)-ih->origin)/length(lastpick-ih->origin);
                         else
-                            sub<0,2>::vector(noise_origin) += diff/noise_scale;
+                            sub<0,2>::vector(noise_origin) += diff/(ih->spacing[0]*noise_scale);
                         retex();
 
                         lastpick = sub<0,2>::vector(inters);
