@@ -65,6 +65,7 @@ namespace sumo
         get_attribute(no.id,    reader, "id");
         get_attribute(no.xy[0], reader, "x");
         get_attribute(no.xy[1], reader, "y");
+        no.xy[2] = 0.0f;
 
         try
         {

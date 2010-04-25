@@ -205,6 +205,7 @@ namespace osm
                 n->id = str(node_id.str());
                 n->xy[0] = i*dw;
                 n->xy[1] = j*dh;
+                n->xy[2] = 0.0;
 
                 node_grid[i][j] = n;
 
@@ -598,7 +599,7 @@ namespace osm
                 {
                     //TODO What if road ends before ramp radius is reached? Could continue to traverse connecting roads, but that could produce odd effects.
 
-                    n->xy[2] = overpass_height;
+                    n->xy[2] += overpass_height;
 
             //         vec2f n_2d(n->xy[0], n->xy[1]);
 
@@ -788,6 +789,7 @@ namespace osm
                 e.shape[new_start]->id    = e.shape[0]->id;
                 e.shape[new_start]->xy[0] = e.shape[new_start + 1]->xy[0] - start_seg[0];
                 e.shape[new_start]->xy[1] = e.shape[new_start + 1]->xy[1] - start_seg[1];
+                e.shape[new_start]->xy[2] = e.shape[new_start + 1]->xy[2];
 
                 if (new_start != 0)
                     e.shape.erase(e.shape.begin(), e.shape.begin() + new_start);
@@ -826,6 +828,7 @@ namespace osm
                 e.shape[new_end]->id     = e.shape[e.shape.size() - 1]->id;
                 e.shape[new_end]->xy[0]  = e.shape[new_end - 1]->xy[0] + end_seg[0];
                 e.shape[new_end]->xy[1]  = e.shape[new_end - 1]->xy[1] + end_seg[1];
+                e.shape[new_end]->xy[2]  = e.shape[new_end - 1]->xy[2];
 
                 if (new_end != static_cast<int>(e.shape.size()) - 1)
                     e.shape.erase(e.shape.begin() + new_end + 1, e.shape.end());
