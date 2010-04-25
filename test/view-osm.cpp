@@ -7,6 +7,7 @@
 #include <FL/glu.h>
 #include "FL/glut.h"
 #include "arcball.hpp"
+#include "geometric.hpp"
 #include "im_heightfield.hpp"
 
 #include "libroad/osm_network.hpp"
@@ -17,15 +18,14 @@ class fltkview : public Fl_Gl_Window
 public:
     fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
                                                           zoom(2.0),
+                                                          lastmouse(0),
+                                                          lastpick(0),
                                                           net(0),
                                                           ih(0),
                                                           glew_state(GLEW_OK+1),
                                                           tex_(0),
                                                           meshlist(0)
     {
-        lastmouse[0] = 0.0f;
-        lastmouse[1] = 0.0f;
-
         this->resizable(this);
     }
 
@@ -76,7 +76,7 @@ public:
             glViewport(0, 0, w(), h());
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 1.0f, 500.0f);
+            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 30.0f, 50000.0f);
 
             glMatrixMode(GL_MODELVIEW);
             glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -103,7 +103,7 @@ public:
                     glNewList(meshlist, GL_COMPILE);
                     std::vector<vertex> vrts;
                     std::vector<vec3u> faces;
-                    ih->make_mesh(vrts, faces);
+                    ih->make_mesh(vrts, faces, false);
                     glBegin(GL_TRIANGLES);
                     BOOST_FOREACH(const vec3u &face, faces)
                     {
@@ -135,8 +135,11 @@ public:
             glBindTexture (GL_TEXTURE_2D, tex_);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+            glPushMatrix();
+            glTranslatef(ih->origin[0], ih->origin[1], ih->zbase);
+            glScalef(ih->spacing[0], ih->spacing[1], ih->zscale);
             glCallList(meshlist);
+            glPopMatrix();
 
             // glPushMatrix();
             // glTranslatef(ih->origin[0], ih->origin[1], ih->zbase);
@@ -158,12 +161,24 @@ public:
 
         if(net)
         {
+            glTranslatef(0.0, 0.0, 0.01f);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             net->draw_network();
         }
 
         glFlush();
         glFinish();
+    }
+
+    void reproject_net()
+    {
+        if(net && ih)
+        {
+            BOOST_FOREACH(osm::edge &e, net->edges)
+            {
+                ih->displace_shapes(e.shape, 30.0, 0.2, *net);
+            }
+        }
     }
 
     int handle(int event)
@@ -178,7 +193,18 @@ public:
                 float fy = -(2.0f*y/(h()-1) - 1.0f);
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
-                    nav.get_click(fx, fy);
+                    if(Fl::event_state() & FL_SHIFT && ih)
+                    {
+                        vec3f origin;
+                        vec3f dir;
+                        pick_ray(origin, dir, x, y, w(), h());
+                        const vec3f inters(ray_plane_intersection(origin, dir, vec3f(0.0, 0.0, 1.0), ih->zbase));
+                        lastpick = sub<0,2>::vector(inters);
+                    }
+                    else
+                    {
+                        nav.get_click(fx, fy);
+                    }
                 }
                 else if(Fl::event_button() == FL_RIGHT_MOUSE)
                 {
@@ -200,7 +226,27 @@ public:
                 float fy = -(2.0f*y/(h()-1)-1.0f);
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
-                    nav.get_click(fx, fy, 1.0f, true);
+                    if(Fl::event_state() & FL_SHIFT && ih)
+                    {
+                        vec3f       origin;
+                        vec3f       dir;
+                        pick_ray(origin, dir, x, y, w(), h());
+                        const vec3f inters(ray_plane_intersection(origin, dir, vec3f(0.0, 0.0, 1.0), ih->zbase));
+
+                        const vec2f diff(sub<0,2>::vector(inters) - lastpick);
+
+                        if(Fl::event_state() & FL_CTRL)
+                            ih->spacing *= length(sub<0,2>::vector(inters)-ih->origin)/length(lastpick-ih->origin);
+                        else
+                            sub<0,2>::vector(ih->origin) += diff;
+
+                        lastpick                      = sub<0,2>::vector(inters);
+                        reproject_net();
+                    }
+                    else
+                    {
+                        nav.get_click(fx, fy, 1.0f, true);
+                    }
                 }
                 else if(Fl::event_button() == FL_RIGHT_MOUSE)
                 {
@@ -233,6 +279,7 @@ public:
         case FL_KEYBOARD:
             switch(Fl::event_key())
             {
+
             default:
                 break;
             }
@@ -249,7 +296,9 @@ public:
 
     arcball nav;
     float zoom;
-    float lastmouse[2];
+    vec2f lastmouse;
+
+    vec2f lastpick;
 
     osm::network   *net;
     im_heightfield *ih;
@@ -293,14 +342,9 @@ int main(int argc, char *argv[])
     float *pix = new float[dim[0]*dim[1]];
     im.write(0, 0, dim[1], dim[0], "R", Magick::FloatPixel, pix);
 
-    im_heightfield ih(pix, dim, 0, 4);
-    ih.origin  = vec2f(-50.0);
-    ih.spacing = vec2f(1);
-
-    BOOST_FOREACH(osm::edge &e, net.edges)
-    {
-        ih.displace_shapes(e.shape, 108.0, 0.4, net);
-    }
+    im_heightfield ih(pix, dim, 0, 1000);
+    ih.origin  = vec2f(-200.0);
+    ih.spacing = vec2f(10);
 
     // net.create_ramps();
     // net.remove_small_roads(50);
