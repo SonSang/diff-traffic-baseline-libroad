@@ -28,9 +28,9 @@ public:
                                                           tex_(0),
                                                           meshlist(0),
                                                           do_height(0),
-                                                          noise_scale(1),
-                                                          noise_origin(0),
-                                                          octaves(10),
+                                                          noise_scale(10.0),
+                                                          noise_origin(0.0),
+                                                          octaves(3),
                                                           power(1.0)
     {
         this->resizable(this);
@@ -52,7 +52,6 @@ public:
         if(!glIsTexture(tex_))
         {
             glGenTextures(1, &tex_);
-            glEnable(GL_TEXTURE_2D);
             glBindTexture (GL_TEXTURE_2D, tex_);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
             // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -61,9 +60,7 @@ public:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
             retex();
-            glDisable(GL_TEXTURE_2D);
         }
     }
 
@@ -554,8 +551,8 @@ int main(int argc, char *argv[])
     }
 
     im_heightfield ih(pix, dim, 0, 10);
-    ih.origin  = vec2f(0);
-    ih.spacing = vec2f(0.1);
+    ih.origin  = vec2f(-50);
+    ih.spacing = vec2f(1.0);
 
     if(std::strcmp(argv[1], "--") == 0)
     {
