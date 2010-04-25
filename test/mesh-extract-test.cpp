@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    network_to_obj(argv[2], net);
+    hwm::network_to_obj(argv[2], net);
 
     return 0;
 }
