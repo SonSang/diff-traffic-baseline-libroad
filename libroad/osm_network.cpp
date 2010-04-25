@@ -710,7 +710,8 @@ namespace osm
         double tmp_offset = 10;
         BOOST_FOREACH(const osm::intr_pair &ip, intersections)
         {
-            const intersection& i = ip.second;
+            const intersection&  i = ip.second;
+            const node          &intersection_node(nodes[i.id_from_node]);
 
             BOOST_FOREACH(edge* edge_p, i.edges_starting_here)
             {
@@ -789,7 +790,7 @@ namespace osm
                 e.shape[new_start]->id    = e.shape[0]->id;
                 e.shape[new_start]->xy[0] = e.shape[new_start + 1]->xy[0] - start_seg[0];
                 e.shape[new_start]->xy[1] = e.shape[new_start + 1]->xy[1] - start_seg[1];
-                e.shape[new_start]->xy[2] = e.shape[new_start + 1]->xy[2];
+                e.shape[new_start]->xy[2] = intersection_node.xy[2];
 
                 if (new_start != 0)
                     e.shape.erase(e.shape.begin(), e.shape.begin() + new_start);
@@ -828,7 +829,7 @@ namespace osm
                 e.shape[new_end]->id     = e.shape[e.shape.size() - 1]->id;
                 e.shape[new_end]->xy[0]  = e.shape[new_end - 1]->xy[0] + end_seg[0];
                 e.shape[new_end]->xy[1]  = e.shape[new_end - 1]->xy[1] + end_seg[1];
-                e.shape[new_end]->xy[2]  = e.shape[new_end - 1]->xy[2];
+                e.shape[new_end]->xy[2]  = intersection_node.xy[2];
 
                 if (new_end != static_cast<int>(e.shape.size()) - 1)
                     e.shape.erase(e.shape.begin() + new_end + 1, e.shape.end());
