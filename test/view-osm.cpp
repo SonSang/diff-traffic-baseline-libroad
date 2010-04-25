@@ -342,10 +342,11 @@ public:
             {
             case '1':
                 {
-                    ih->dim /= 2;
+                    ih->dim     /= 2;
                     ih->spacing *= 2;
+                    noise_scale /= 2;
                     delete[] ih->pix;
-                    ih->pix = new float[ih->dim[0]*ih->dim[1]];
+                    ih->pix      = new float[ih->dim[0]*ih->dim[1]];
                     retex();
                     if(do_height)
                         gen_h_list();
@@ -353,10 +354,11 @@ public:
                 break;
             case '2':
                 {
-                    ih->dim *= 2;
+                    ih->dim     *= 2;
                     ih->spacing /= 2;
+                    noise_scale *= 2;
                     delete[] ih->pix;
-                    ih->pix = new float[ih->dim[0]*ih->dim[1]];
+                    ih->pix      = new float[ih->dim[0]*ih->dim[1]];
                     retex();
                     if(do_height)
                         gen_h_list();
