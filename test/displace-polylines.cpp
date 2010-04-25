@@ -42,7 +42,8 @@ int main(int argc, char *argv[])
     poly.push_back(vec3f(0.0));
     poly.push_back(vec3f(0.0, 5.0, 0.0));
     poly.push_back(vec3f(10.0));
-    poly = ih.displace_polyline(poly, 0.1);
+
+    poly = ih.displace_polyline(poly, 0.1, 0.01);
 
     delete[] pix;
 

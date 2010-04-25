@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 
     BOOST_FOREACH(osm::edge &e, net.edges)
     {
-        ih.displace_shapes(e.shape, 10.0, net);
+        ih.displace_shapes(e.shape, 108.0, 0.4, net);
     }
 
     // net.create_ramps();

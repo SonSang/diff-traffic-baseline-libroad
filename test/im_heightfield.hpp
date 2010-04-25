@@ -52,7 +52,7 @@ struct im_heightfield
         return vec3f(xy[0], xy[1], xy[2] + lookup(vec2f(xy[0], xy[1])));
     }
 
-    std::vector<vec3f> displace_polyline(const std::vector<vec3f> &poly, const float fac_limit) const
+    std::vector<vec3f> displace_polyline(const std::vector<vec3f> &poly, const float min_length, const float fac_limit) const
     {
         std::vector<vec3f>                 res;
         std::vector<vec3f>                 to_add;
@@ -66,7 +66,7 @@ struct im_heightfield
         {
             while(!to_add.empty())
             {
-                while(max_diff(split, res.back(), to_add.back(), fac_limit))
+                while(max_diff(split, res.back(), to_add.back(), min_length, fac_limit))
                 {
                     to_add.push_back(split);
                 }
@@ -81,9 +81,9 @@ struct im_heightfield
         }
     }
 
-    void displace_shapes(osm::shape_t &s, const float fac_limit, osm::network &net) const
+    void displace_shapes(osm::shape_t &s, const float min_length, const float fac_limit, osm::network &net) const
     {
-        osm::shape_t                      res;
+        osm::shape_t           res;
         osm::shape_t           to_add;
         osm::shape_t::iterator input(s.begin());
 
@@ -100,7 +100,7 @@ struct im_heightfield
         {
             while(!to_add.empty())
             {
-                while(max_diff(split, res.back()->xy, to_add.back()->xy, fac_limit))
+                while(max_diff(split, res.back()->xy, to_add.back()->xy, min_length, fac_limit))
                 {
                     to_add.push_back(net.add_node(split, res.back()->is_overpass && to_add.back()->is_overpass));
                 }
@@ -121,17 +121,19 @@ struct im_heightfield
         }
     }
 
-    bool max_diff(vec3f &best, const vec3f &v0, const vec3f &v1, const float fac_limit) const
+    bool max_diff(vec3f &best, const vec3f &v0, const vec3f &v1, const float min_length, const float fac_limit) const
     {
         const vec3f dvec(v1-v0);
         const float len(length(dvec));
+        if(len <= 2*min_length)
+            return false;
         const float inv_len = 1.0f/len;
         const vec3f nvec(dvec*inv_len);
 
         const float dt       = 0.5*std::min(spacing[0], spacing[1]);
         float       best_fac = fac_limit;
         bool        best_set = false;
-        for(float t = dt; t < len; t += dt)
+        for(float t = std::max(dt, min_length); t < len-min_length; t += dt)
         {
             const vec3f mid(v0 + nvec*t);
             const vec3f cand(vlookup(mid));
