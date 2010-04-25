@@ -22,6 +22,7 @@ const char *libroad_package_string();
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/static_assert.hpp>
 
 #include <glibmm/ustring.h>
 
@@ -97,6 +98,49 @@ inline float planar_distance(const vec3f &pt1, const vec3f &pt2)
 {
     const vec2f diff(pt2[0] - pt1[0], pt2[1] - pt1[1]);
     return std::sqrt(tvmet::dot(diff, diff));
+}
+
+template <int B, int E>
+struct sub
+{
+    BOOST_STATIC_ASSERT(B >= 0);
+    enum { RESDIM = E - B};
+
+    template <typename T>
+    static inline tvmet::Vector<typename T::value_type, RESDIM> &vector(T &src)
+    {
+        BOOST_STATIC_ASSERT(E <= T::Size);
+        return *reinterpret_cast<tvmet::Vector<typename T::value_type, RESDIM>*>(src.data()+B);
+    }
+
+    template <typename T>
+    static inline const tvmet::Vector<typename T::value_type, RESDIM> &vector(const T &src)
+    {
+        BOOST_STATIC_ASSERT(E <= T::Size);
+        return *reinterpret_cast<const tvmet::Vector<typename T::value_type, RESDIM>*>(src.data()+B);
+    }
+};
+
+template <typename T, int MAXDIM, int DIM>
+inline tvmet::Vector<T, MAXDIM> basis()
+{
+    BOOST_STATIC_ASSERT(DIM < MAXDIM);
+    tvmet::Vector<T, MAXDIM> res;
+    sub<0, DIM>::vector(res)        = 0;
+    res[DIM]                        = 1;
+    sub<DIM+1, MAXDIM>::vector(res) = 0;
+    return res;
+}
+
+template <typename T, int DIM>
+inline T basis()
+{
+    BOOST_STATIC_ASSERT(DIM < T::Size);
+    T res;
+    sub<0, DIM>::vector(res)         = 0;
+    res[DIM]                         = 1;
+    sub<DIM+1, T::Size>::vector(res) = 0;
+    return res;
 }
 
 inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filename)
