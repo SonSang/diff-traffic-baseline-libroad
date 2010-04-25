@@ -20,15 +20,23 @@ struct im_heightfield
 
         const vec2f remainder(local-base);
 
-        if(base[0] < 0)        base[0] = 0;
-        if(base[1] < 0)        base[1] = 0;
-        if(base[0] > dim[0]-1) base[0] = dim[0]-1;
-        if(base[1] > dim[1]-1) base[1] = dim[1]-1;
+        if(base[0] < 0)         base[0]  = 0;
+        if(base[1] < 0)         base[1]  = 0;
+        if(base[0] > dim[0]-1)  base[0]  = dim[0]-1;
+        if(base[1] > dim[1]-1)  base[1]  = dim[1]-1;
 
-        const float sw(pix[base[0]     + base[1]*dim[0]]);
-        const float se(pix[base[0] + 1 + base[1]*dim[0]]);
-        const float ne(pix[base[0] + 1 + (base[1]+1)*dim[0]]);
-        const float nw(pix[base[0]     + (base[1]+1)*dim[0]]);
+        vec2i top_c(base + 1);
+        if(top_c[0] > dim[0]-1) top_c[0] = dim[0]-1;
+        if(top_c[1] > dim[1]-1) top_c[1] = dim[1]-1;
+
+        assert(base[0]  +  base[1]*dim[0] < dim[0]*dim[1]);
+        assert(top_c[0] +  base[1]*dim[0] < dim[0]*dim[1]);
+        assert(top_c[0] +  top_c[1]*dim[0] < dim[0]*dim[1]);
+        assert(base[0]  +  top_c[1]*dim[0] < dim[0]*dim[1]);
+        const float sw(pix[base[0]  +  base[1]*dim[0]]);
+        const float se(pix[top_c[0] +  base[1]*dim[0]]);
+        const float ne(pix[top_c[0] + top_c[1]*dim[0]]);
+        const float nw(pix[base[0]  + top_c[1]*dim[0]]);
 
         return zbase + zscale*((sw*(1-remainder[0]) + se*remainder[0])*(1-remainder[1]) +
                                (nw*(1-remainder[0]) + ne*remainder[0])*remainder[1]);
