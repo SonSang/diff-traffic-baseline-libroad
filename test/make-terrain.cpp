@@ -335,11 +335,18 @@ public:
             case 'w':
                 if(ih)
                 {
+                    std::cerr << "Image: dim " << ih->dim << std::endl
+                              << "origin     " << ih->origin << std::endl
+                              << "spacing    " << ih->spacing << std::endl
+                              << "zbase      " << ih->zbase << std::endl
+                              << "zscale     " << ih->zscale << std::endl;
+
                     Magick::Image im;
                     im.read(ih->dim[0], ih->dim[1], "R", Magick::FloatPixel, ih->pix);
                     im.colorSpace(Magick::GRAYColorspace);
                     im.quantize();
                     im.write(iname);
+                    std::cerr << "wrote " << iname << std::endl;
                 }
                 break;
             case 'd':
