@@ -13,6 +13,8 @@
 #include "libroad/osm_network.hpp"
 #include "libroad/hwm_network.hpp"
 
+#include <fstream>
+
 class fltkview : public Fl_Gl_Window
 {
 public:
@@ -279,7 +281,62 @@ public:
         case FL_KEYBOARD:
             switch(Fl::event_key())
             {
+            case 'd':
+                if(net)
+                {
+                    net->create_ramps();
+                    net->remove_small_roads(50);
+                    net->create_intersections();
+                    net->populate_edge_hash_from_edges();
 
+                    hwm::network hnet(hwm::from_osm("test", 0.5f, 2.5, *net));
+                    hnet.build_intersections();
+                    hnet.build_fictitious_lanes();
+                    hnet.auto_scale_memberships();
+
+                    try
+                    {
+                        hnet.check();
+                        std::cerr << "HWM net checks out" << std::endl;
+                    }
+                    catch(std::runtime_error &e)
+                    {
+                        std::cerr << "HWM net doesn't check out: " << e.what() << std::endl;
+                        exit(1);
+                    }
+                    hnet.xml_write("default.xml.gz");
+                    std::cerr << "Wrote default.xml.gz" << std::endl;
+                    if(ih)
+                    {
+                        std::cerr << "Image: dim " << ih->dim << std::endl
+                                  << "origin     " << ih->origin << std::endl
+                                  << "spacing    " << ih->spacing << std::endl
+                                  << "zbase      " << ih->zbase << std::endl
+                                  << "zscale     " << ih->zscale << std::endl;
+
+                        std::vector<vertex> vrts;
+                        std::vector<vec3u>  fcs;
+                        ih->make_mesh(vrts, fcs);
+                        std::ofstream os("default.obj");
+                        mesh_to_obj(os, "image", "terrain", vrts, fcs);
+                        std::cerr << "Wrote default.obj" << std::endl;
+                    }
+                }
+                break;
+            case '9':
+                if(ih)
+                {
+                    ih->zscale *= 0.5;
+                    reproject_net();
+                }
+                break;
+            case '0':
+                if(ih)
+                {
+                    ih->zscale *= 2;
+                    reproject_net();
+                }
+                break;
             default:
                 break;
             }
@@ -342,14 +399,9 @@ int main(int argc, char *argv[])
     float *pix = new float[dim[0]*dim[1]];
     im.write(0, 0, dim[1], dim[0], "R", Magick::FloatPixel, pix);
 
-    im_heightfield ih(pix, dim, 0, 1000);
+    im_heightfield ih(pix, dim, 0, 10);
     ih.origin  = vec2f(-200.0);
     ih.spacing = vec2f(10);
-
-    // net.create_ramps();
-    // net.remove_small_roads(50);
-    // net.create_intersections();
-    // net.populate_edge_hash_from_edges();
 
     fltkview mv(0, 0, 500, 500, "fltk View");
     mv.net = &net;
