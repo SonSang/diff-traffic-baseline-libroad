@@ -1,6 +1,6 @@
 noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import
 
-EXTRA_DIST = arcball.hpp texture-gen.hpp im_heightfield.hpp
+EXTRA_DIST = arcball.hpp texture-gen.hpp im_heightfield.hpp geometric.hpp
 
 road_test_SOURCES  = road-test.cpp
 road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
