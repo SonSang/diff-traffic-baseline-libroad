@@ -168,7 +168,7 @@ struct im_heightfield
             for(int i = 0; i < dim[0]; ++i)
             {
                 const vec3f &current(vrts[i+j*dim[0]].position);
-                vec3f xback, yback, xnext, ynext;
+                vec3f xback(0), yback(0), xnext(0), ynext(0);
 
                 if(i > 0)        xback = vec3f(vrts[i-1+ j   *dim[0]].position - current);
                 if(j > 0)        yback = vec3f(vrts[i  +(j-1)*dim[0]].position - current);
