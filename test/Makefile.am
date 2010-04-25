@@ -75,16 +75,11 @@ micro_LDFLAGS  = $(LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
 micro_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
 
 if DO_IMAGE
-noinst_PROGRAMS += view-osm make-terrain
+noinst_PROGRAMS += view-osm
 
 view_osm_SOURCES  = view-osm.cpp
 view_osm_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 view_osm_LDFLAGS  = $(LDFLAGS) $(MAGICKPP_LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
 view_osm_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
-
-make_terrain_SOURCES  = make-terrain.cpp
-make_terrain_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-make_terrain_LDFLAGS  = $(LDFLAGS) $(MAGICKPP_LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS)
-make_terrain_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad.la
 endif
 endif

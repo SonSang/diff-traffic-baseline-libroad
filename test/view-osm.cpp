@@ -26,7 +26,12 @@ public:
                                                           ih(0),
                                                           glew_state(GLEW_OK+1),
                                                           tex_(0),
-                                                          meshlist(0)
+                                                          meshlist(0),
+                                                          do_height(0),
+                                                          noise_scale(1),
+                                                          noise_origin(0),
+                                                          octaves(10),
+                                                          power(1.0)
     {
         this->resizable(this);
     }
@@ -57,17 +62,63 @@ public:
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-            glTexImage2D (GL_TEXTURE_2D,
-                          0,
-                          1,
-                          ih->dim[0],
-                          ih->dim[1],
-                          0,
-                          GL_LUMINANCE,
-                          GL_FLOAT,
-                          ih->pix);
-
+            retex();
             glDisable(GL_TEXTURE_2D);
+        }
+    }
+
+    void gen_h_list()
+    {
+        std::cerr << "Generating heightfield... ";
+        std::cerr.flush();
+
+        if(meshlist)
+            glDeleteLists(meshlist, 1);
+
+        meshlist = glGenLists(1);
+
+        glPushMatrix();
+        glLoadIdentity();
+        glNewList(meshlist, GL_COMPILE);
+        std::vector<vertex> vrts;
+        std::vector<vec3u> faces;
+        ih->make_mesh(vrts, faces, false);
+        glBegin(GL_TRIANGLES);
+        BOOST_FOREACH(const vec3u &face, faces)
+        {
+            BOOST_FOREACH(const unsigned int idx, face)
+            {
+                glTexCoord2fv(vrts[idx].tex_coord.data());
+                glVertex3fv(vrts[idx].position.data());
+            }
+        }
+        glEnd();
+        glEndList();
+        glPopMatrix();
+
+        std::cerr << "Done. " << std::endl;
+    }
+
+    void retex()
+    {
+        if(!const_image)
+            ih->set_turbulence(vec2f(-noise_origin), 1.0f/noise_scale, 0, octaves, power);
+
+        glTexImage2D (GL_TEXTURE_2D,
+                      0,
+                      1,
+                      ih->dim[0],
+                      ih->dim[1],
+                      0,
+                      GL_LUMINANCE,
+                      GL_FLOAT,
+                      ih->pix);
+
+        if(do_height)
+        {
+            gen_h_list();
+            if(net)
+                reproject_net();
         }
     }
 
@@ -94,32 +145,7 @@ public:
                 init_glew();
 
             if(ih)
-            {
                 init_textures();
-
-                if(!meshlist)
-                {
-                    meshlist = glGenLists(1);
-                    glPushMatrix();
-                    glLoadIdentity();
-                    glNewList(meshlist, GL_COMPILE);
-                    std::vector<vertex> vrts;
-                    std::vector<vec3u> faces;
-                    ih->make_mesh(vrts, faces, false);
-                    glBegin(GL_TRIANGLES);
-                    BOOST_FOREACH(const vec3u &face, faces)
-                    {
-                        BOOST_FOREACH(const unsigned int idx, face)
-                        {
-                            glTexCoord2fv(vrts[idx].tex_coord.data());
-                            glVertex3fv(vrts[idx].position.data());
-                        }
-                    }
-                    glEnd();
-                    glEndList();
-                    glPopMatrix();
-                }
-            }
         }
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -140,23 +166,24 @@ public:
             glPushMatrix();
             glTranslatef(ih->origin[0], ih->origin[1], ih->zbase);
             glScalef(ih->spacing[0], ih->spacing[1], ih->zscale);
-            glCallList(meshlist);
-            glPopMatrix();
 
-            // glPushMatrix();
-            // glTranslatef(ih->origin[0], ih->origin[1], ih->zbase);
-            // glScalef(ih->spacing[0]*ih->dim[0], ih->spacing[1]*ih->dim[1], 1.0);
-            // glBegin(GL_QUADS);
-            // glTexCoord2f(0.0, 0.0);
-            // glVertex2f(0.0, 0.0);
-            // glTexCoord2f(1.0, 0.0);
-            // glVertex2f(1.0, 0.0);
-            // glTexCoord2f(1.0, 1.0);
-            // glVertex2f(1.0, 1.0);
-            // glTexCoord2f(0.0, 1.0);
-            // glVertex2f(0.0, 1.0);
-            // glEnd();
-            // glPopMatrix();
+            if(do_height)
+                glCallList(meshlist);
+            else
+            {
+                glScalef(ih->dim[0], ih->dim[1], 1);
+                glBegin(GL_QUADS);
+                glTexCoord2f(0.0, 0.0);
+                glVertex2f(0.0, 0.0);
+                glTexCoord2f(1.0, 0.0);
+                glVertex2f(1.0, 0.0);
+                glTexCoord2f(1.0, 1.0);
+                glVertex2f(1.0, 1.0);
+                glTexCoord2f(0.0, 1.0);
+                glVertex2f(0.0, 1.0);
+                glEnd();
+            }
+            glPopMatrix();
 
             glDisable(GL_TEXTURE_2D);
         }
@@ -174,12 +201,15 @@ public:
 
     void reproject_net()
     {
-        if(net && ih)
+        if(net && ih && do_height)
         {
+            std::cerr << "Projecting on to heightfield... ";
+            std::cerr.flush();
             BOOST_FOREACH(osm::edge &e, net->edges)
             {
                 ih->displace_shapes(e.shape, 30.0, 0.2, *net);
             }
+            std::cerr << " Done. " << std::endl;
         }
     }
 
@@ -210,6 +240,14 @@ public:
                 }
                 else if(Fl::event_button() == FL_RIGHT_MOUSE)
                 {
+                    if(Fl::event_state() & FL_SHIFT && ih)
+                    {
+                        vec3f origin;
+                        vec3f dir;
+                        pick_ray(origin, dir, x, y, w(), h());
+                        const vec3f inters(ray_plane_intersection(origin, dir, vec3f(0.0, 0.0, 1.0), ih->zbase));
+                        lastpick = sub<0,2>::vector(inters);
+                    }
                 }
                 else if(Fl::event_button() == FL_MIDDLE_MOUSE)
                 {
@@ -243,7 +281,8 @@ public:
                             sub<0,2>::vector(ih->origin) += diff;
 
                         lastpick                      = sub<0,2>::vector(inters);
-                        reproject_net();
+                        if(do_height)
+                            reproject_net();
                     }
                     else
                     {
@@ -252,15 +291,35 @@ public:
                 }
                 else if(Fl::event_button() == FL_RIGHT_MOUSE)
                 {
-                    float scale = std::pow(2.0f, zoom-1.0f);
+                    if(Fl::event_state() & FL_SHIFT && ih)
+                    {
+                        vec3f       origin;
+                        vec3f       dir;
+                        pick_ray(origin, dir, x, y, w(), h());
+                        const vec3f inters(ray_plane_intersection(origin, dir, vec3f(0.0, 0.0, 1.0), ih->zbase));
 
-                    double update[3] = {
-                        (fx-lastmouse[0])*scale,
-                        (fy-lastmouse[1])*scale,
-                        0.0f
-                    };
+                        const vec2f diff(sub<0,2>::vector(inters) - lastpick);
 
-                    nav.translate(update);
+                        if(Fl::event_state() & FL_CTRL)
+                            noise_scale *= length(sub<0,2>::vector(inters)-ih->origin)/length(lastpick-ih->origin);
+                        else
+                            sub<0,2>::vector(noise_origin) += diff/noise_scale;
+                        retex();
+
+                        lastpick = sub<0,2>::vector(inters);
+                    }
+                    else
+                    {
+                        float scale = std::pow(2.0f, zoom-1.0f);
+
+                        double update[3] = {
+                            (fx-lastmouse[0])*scale,
+                            (fy-lastmouse[1])*scale,
+                            0.0f
+                        };
+
+                        nav.translate(update);
+                    }
                 }
                 else if(Fl::event_button() == FL_MIDDLE_MOUSE)
                 {
@@ -281,6 +340,55 @@ public:
         case FL_KEYBOARD:
             switch(Fl::event_key())
             {
+            case '1':
+                {
+                    ih->dim /= 2;
+                    ih->spacing *= 2;
+                    delete[] ih->pix;
+                    ih->pix = new float[ih->dim[0]*ih->dim[1]];
+                    retex();
+                    if(do_height)
+                        gen_h_list();
+                }
+                break;
+            case '2':
+                {
+                    ih->dim *= 2;
+                    ih->spacing /= 2;
+                    delete[] ih->pix;
+                    ih->pix = new float[ih->dim[0]*ih->dim[1]];
+                    retex();
+                    if(do_height)
+                        gen_h_list();
+                }
+                break;
+            case 'h':
+                {
+                    do_height = !do_height;
+                    if(do_height)
+                    {
+                        gen_h_list();
+                        reproject_net();
+                    }
+                }
+                break;
+            case 'w':
+                if(ih)
+                {
+                    std::cerr << "Image: dim " << ih->dim << std::endl
+                              << "origin     " << ih->origin << std::endl
+                              << "spacing    " << ih->spacing << std::endl
+                              << "zbase      " << ih->zbase << std::endl
+                              << "zscale     " << ih->zscale << std::endl;
+
+                    Magick::Image im;
+                    im.read(ih->dim[0], ih->dim[1], "R", Magick::FloatPixel, ih->pix);
+                    im.colorSpace(Magick::GRAYColorspace);
+                    im.quantize();
+                    im.write("default.tiff");
+                    std::cerr << "wrote default.tiff" << std::endl;
+                }
+                break;
             case 'd':
                 if(net)
                 {
@@ -306,35 +414,67 @@ public:
                     }
                     hnet.xml_write("default.xml.gz");
                     std::cerr << "Wrote default.xml.gz" << std::endl;
-                    if(ih)
-                    {
-                        std::cerr << "Image: dim " << ih->dim << std::endl
-                                  << "origin     " << ih->origin << std::endl
-                                  << "spacing    " << ih->spacing << std::endl
-                                  << "zbase      " << ih->zbase << std::endl
-                                  << "zscale     " << ih->zscale << std::endl;
+                }
+                if(ih)
+                {
+                    std::cerr << "Image: dim " << ih->dim << std::endl
+                              << "origin     " << ih->origin << std::endl
+                              << "spacing    " << ih->spacing << std::endl
+                              << "zbase      " << ih->zbase << std::endl
+                              << "zscale     " << ih->zscale << std::endl;
 
-                        std::vector<vertex> vrts;
-                        std::vector<vec3u>  fcs;
-                        ih->make_mesh(vrts, fcs);
-                        std::ofstream os("default.obj");
-                        mesh_to_obj(os, "image", "terrain", vrts, fcs);
-                        std::cerr << "Wrote default.obj" << std::endl;
-                    }
+                    std::vector<vertex> vrts;
+                    std::vector<vec3u>  fcs;
+                    ih->make_mesh(vrts, fcs);
+                    std::ofstream os("default.smf");
+                    mesh_to_smf(os, vrts, fcs);
+                        std::cerr << "Wrote default.smf" << std::endl;
                 }
                 break;
             case '9':
                 if(ih)
                 {
                     ih->zscale *= 0.5;
-                    reproject_net();
+                    if(do_height)
+                        reproject_net();
                 }
                 break;
             case '0':
                 if(ih)
                 {
                     ih->zscale *= 2;
-                    reproject_net();
+                    if(do_height)
+                        reproject_net();
+                }
+                break;
+            case 'o':
+                if(ih)
+                {
+                    --octaves;
+                    if(octaves < 1)
+                        octaves = 1;
+                    retex();
+                }
+                break;
+            case 'p':
+                if(ih)
+                {
+                    ++octaves;
+                    retex();
+                }
+                break;
+            case ';':
+                if(ih)
+                {
+                    power -= 0.1;
+                    retex();
+                }
+                break;
+            case '\'':
+                if(ih)
+                {
+                    power += 0.1;
+                    retex();
                 }
                 break;
             default:
@@ -363,55 +503,95 @@ public:
     GLuint glew_state;
     GLuint tex_;
     GLuint meshlist;
+    bool   do_height;
+    bool   const_image;
+
+    float       noise_scale;
+    vec2f       noise_origin;
+    int         octaves;
+    float       power;
 };
+
 int main(int argc, char *argv[])
 {
     std::cerr << libroad_package_string() << std::endl;
-    if(argc < 3)
+    if(argc != 3 && argc != 5)
     {
-        std::cerr << "Usage: " << argv[0] << " <input osm> <input image>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <input osm or --> <input image or --> [width] [height]" << std::endl;
         return 1;
     }
 
-    //Load from file
-    osm::network net(osm::load_xml_network(argv[1]));
-    net.populate_edges_from_hash();
-    net.remove_duplicate_nodes();
-    net.compute_node_degrees();
-    net.clip_roads_to_bounds();
-    net.compute_edge_types();
-    net.compute_node_degrees();
-    net.scale_and_translate();
-    net.split_into_road_segments();
-    net.remove_highway_intersections();
-    net.compute_node_heights();
-    net.join_logical_roads();
+    float *pix;
+    vec2i  dim;
+    bool   const_image;
+    if(std::strcmp(argv[2], "--") == 0)
+    {
+        if(argc != 5)
+        {
+            std::cerr << "Usage: " << argv[0] << " <input osm or --> <input image or --> [width] [height]" << std::endl;
 
-    Magick::Image im(argv[2]);
+            return 1;
+        }
 
-    im.quantizeColorSpace(Magick::GRAYColorspace);
-    im.quantize();
+        const_image = false;
+        dim         = vec2f(atoi(argv[3]), atoi(argv[4]));
+        pix         = new float[dim[0]*dim[1]];
+    }
+    else
+    {
+        Magick::Image im(argv[2]);
+        im.quantizeColorSpace(Magick::GRAYColorspace);
+        im.quantize();
+        im.flip();
 
-    im.flip();
+        dim = vec2i(im.columns(), im.rows());
 
-    vec2i dim(im.columns(), im.rows());
-
-    float *pix = new float[dim[0]*dim[1]];
-    im.write(0, 0, dim[1], dim[0], "R", Magick::FloatPixel, pix);
+        const_image = true;
+        pix         = new float[dim[0]*dim[1]];
+        im.write(0, 0, dim[1], dim[0], "R", Magick::FloatPixel, pix);
+    }
 
     im_heightfield ih(pix, dim, 0, 10);
-    ih.origin  = vec2f(-200.0);
-    ih.spacing = vec2f(10);
+    ih.origin  = vec2f(0);
+    ih.spacing = vec2f(0.1);
 
-    fltkview mv(0, 0, 500, 500, "fltk View");
-    mv.net = &net;
-    mv.ih  = &ih;
+    if(std::strcmp(argv[1], "--") == 0)
+    {
+        fltkview mv(0, 0, 500, 500, "fltk View");
+        mv.net         = 0;
+        mv.ih          = &ih;
+        mv.const_image = const_image;
+        mv.take_focus();
+        Fl::visual(FL_DOUBLE|FL_DEPTH);
 
-    mv.take_focus();
-    Fl::visual(FL_DOUBLE|FL_DEPTH);
+        mv.show(1, argv);
+        return Fl::run();
+    }
+    else
+    {
+        //Load from file
+        osm::network net(osm::load_xml_network(argv[1]));
+        net.populate_edges_from_hash();
+        net.remove_duplicate_nodes();
+        net.compute_node_degrees();
+        net.clip_roads_to_bounds();
+        net.compute_edge_types();
+        net.compute_node_degrees();
+        net.scale_and_translate();
+        net.split_into_road_segments();
+        net.remove_highway_intersections();
+        net.compute_node_heights();
+        net.join_logical_roads();
 
-    mv.show(1, argv);
-    return Fl::run();
+        fltkview mv(0, 0, 500, 500, "fltk View");
+        mv.net         = &net;
+        mv.ih          = &ih;
+        mv.const_image = const_image;
 
-    delete[] pix;
+        mv.take_focus();
+        Fl::visual(FL_DOUBLE|FL_DEPTH);
+
+        mv.show(1, argv);
+        return Fl::run();
+    }
 }
