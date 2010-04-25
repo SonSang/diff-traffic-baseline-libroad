@@ -49,7 +49,7 @@ struct im_heightfield
 
     vec3f vlookup(const vec3f &xy) const
     {
-        return vec3f(xy[0], xy[1], xy[2] + lookup(vec2f(xy[0], xy[1])));
+        return vec3f(xy[0], xy[1], lookup(vec2f(xy[0], xy[1])));
     }
 
     std::vector<vec3f> displace_polyline(const std::vector<vec3f> &poly, const float min_length, const float fac_limit) const
@@ -136,7 +136,7 @@ struct im_heightfield
         for(float t = std::max(dt, min_length); t < len-min_length; t += dt)
         {
             const vec3f mid(v0 + nvec*t);
-            const vec3f cand(vlookup(mid));
+            const vec3f cand(vlookup(vec2f(mid[0], mid[1])));
             float       cand_fac(std::abs(cand[2] - mid[2])*inv_len);
             if(cand_fac > best_fac)
             {
