@@ -149,7 +149,7 @@ struct road_rev_map
     }
 };
 
-void obj_roads(std::ostream &os, hwm::network &net)
+void obj_roads(std::ostream &os, const hwm::network &net)
 {
     strhash<road_rev_map>::type rrm;
 
@@ -376,5 +376,28 @@ void obj_intersection(std::ostream &os, const hwm::intersection &is)
         fcs.push_back(vec3u(center, i, (i+1) % center));
 
     mesh_to_obj(os, is.id, "none", vrts, fcs);
+}
+
+void network_to_obj(const char *path, const hwm::network &net)
+{
+    bf::path full_out_path(path);
+
+    bf::path dir(full_out_path.parent_path());
+    bf::path tex_dir(full_out_path.parent_path() / "tex");
+
+    if(!dir.empty())
+       bf::create_directory(dir);
+    bf::remove_all(tex_dir);
+    bf::create_directory(tex_dir);
+
+    if(!dir.empty())
+        bf::current_path(dir);
+    std::ofstream out(full_out_path.filename().c_str());
+    obj_roads(out, net);
+
+    BOOST_FOREACH(const hwm::intersection_pair &ip, net.intersections)
+    {
+        obj_intersection(out, ip.second);
+    }
 }
 #endif
