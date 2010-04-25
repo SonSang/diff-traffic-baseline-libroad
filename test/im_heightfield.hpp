@@ -16,8 +16,8 @@ struct im_heightfield
     {
         for(int j = 0; j < dim[1]; ++j)
             for(int i = 0; i < dim[0]; ++i)
-                pix[i + j * dim[0]] = cog::noise((i*spacing[0]+origin[0])*scale+origin_offs[0],
-                                                 (j*spacing[1]+origin[1])*scale+origin_offs[1],
+                pix[i + j * dim[0]] = cog::noise(i*scale+origin_offs[0],
+                                                 j*scale+origin_offs[1],
                                                  z);
         normalize();
     }
@@ -26,8 +26,8 @@ struct im_heightfield
     {
         for(int j = 0; j < dim[1]; ++j)
             for(int i = 0; i < dim[0]; ++i)
-                pix[i + j * dim[0]] = cog::turbulence((i*spacing[0]+origin[0])*scale+origin_offs[0],
-                                                      (j*spacing[1]+origin[1])*scale+origin_offs[1],
+                pix[i + j * dim[0]] = cog::turbulence(i*scale+origin_offs[0],
+                                                      j*scale+origin_offs[1],
                                                       z, N);
         normalize();
         power(pow);
