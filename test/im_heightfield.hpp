@@ -1,14 +1,62 @@
 #ifndef __IM_HEIGHTFIELD_HPP__
 #define __IM_HEIGHTFIELD_HPP__
 
+#include "functions.hpp"
+
 #include "libroad/hwm_network.hpp"
 #include "libroad/osm_network.hpp"
 
 struct im_heightfield
 {
-    im_heightfield(const float *p, const vec2i &d, float zb, float zs)
+    im_heightfield(float *p, const vec2i &d, float zb, float zs)
         : pix(p), dim(d), zbase(zb), zscale(zs)
     {}
+
+    void set_noise(const vec2f &origin_offs, const float scale, const float z)
+    {
+        for(int j = 0; j < dim[1]; ++j)
+            for(int i = 0; i < dim[0]; ++i)
+                pix[i + j * dim[0]] = cog::noise((i*spacing[0]+origin[0])*scale+origin_offs[0],
+                                                 (j*spacing[1]+origin[1])*scale+origin_offs[1],
+                                                 z);
+        normalize();
+    }
+
+    void set_turbulence(const vec2f &origin_offs, const float scale, const float z, int N, float pow)
+    {
+        for(int j = 0; j < dim[1]; ++j)
+            for(int i = 0; i < dim[0]; ++i)
+                pix[i + j * dim[0]] = cog::turbulence((i*spacing[0]+origin[0])*scale+origin_offs[0],
+                                                      (j*spacing[1]+origin[1])*scale+origin_offs[1],
+                                                      z, N);
+        normalize();
+        power(pow);
+    }
+
+    void normalize()
+    {
+        float min = pix[0];
+        float max = pix[0];
+        for(int j = 0; j < dim[1]; ++j)
+            for(int i = 0; i < dim[0]; ++i)
+            {
+                min = std::min(pix[i + j * dim[0]], min);
+                max = std::max(pix[i + j * dim[0]], max);
+            }
+        const float scale = 1.0/(max-min);
+        for(int j = 0; j < dim[1]; ++j)
+            for(int i = 0; i < dim[0]; ++i)
+                pix[i + j * dim[0]] = (pix[i + j * dim[0]]-min)*scale;
+    }
+
+    void power(const float pow)
+    {
+        for(int j = 0; j < dim[1]; ++j)
+            for(int i = 0; i < dim[0]; ++i)
+            {
+                pix[i + j * dim[0]] = std::pow(pix[i + j * dim[0]], pow);
+            }
+    }
 
     float lookup(const vec2f &xy) const
     {
@@ -206,8 +254,8 @@ struct im_heightfield
         }
     }
 
-    const float *pix;
-    vec2i        dim;
+    float *pix;
+    vec2i  dim;
 
     float zbase;
     float zscale;
