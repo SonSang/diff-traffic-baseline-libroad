@@ -6,14 +6,15 @@
 #include <FL/gl.h>
 #include <FL/glu.h>
 #include "FL/glut.h"
+#include <fstream>
+
 #include "arcball.hpp"
 #include "geometric.hpp"
 #include "im_heightfield.hpp"
 
 #include "libroad/osm_network.hpp"
 #include "libroad/hwm_network.hpp"
-
-#include <fstream>
+#include "hwm-net-mesh.hpp"
 
 class fltkview : public Fl_Gl_Window
 {
@@ -413,6 +414,8 @@ public:
                     }
                     hnet.xml_write("default.xml.gz");
                     std::cerr << "Wrote default.xml.gz" << std::endl;
+                    hwm::network_to_obj("default/default.obj", hnet);
+                    std::cerr << "Wrote default/default.obj" << std::endl;
                 }
                 if(ih)
                 {
