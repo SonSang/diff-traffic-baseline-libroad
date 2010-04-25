@@ -148,15 +148,14 @@ struct im_heightfield
         return best_set;
     };
 
-    void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces) const
+    void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces, bool scale=true) const
     {
         for(int j = 0; j < dim[1]; ++j)
         {
             for(int i = 0; i < dim[0]; ++i)
             {
-                const vec3f pos(i*spacing[0] + origin[0],
-                                j*spacing[1] + origin[1],
-                                zbase + zscale*pix[i + j * dim[0]]);
+                const vec3f pos(i, j,
+                                pix[i + j * dim[0]]);
 
                 const vec2f uv(i/static_cast<float>(dim[0]-1),
                                j/static_cast<float>(dim[1]-1));
@@ -164,6 +163,17 @@ struct im_heightfield
                 vrts.push_back(vertex(pos, vec3f(0), uv));
             }
         }
+
+        if(scale)
+            for(int j = 0; j < dim[1]; ++j)
+            {
+                for(int i = 0; i < dim[0]; ++i)
+                {
+                    vec2f &v2d = sub<0,2>::vector(vrts[i + j * dim[0]].position);
+                    v2d = v2d*spacing + origin;
+                    vrts[i + j * dim[0]].position[2] = zbase + zscale*vrts[i + j * dim[0]].position[2];
+                }
+            }
 
         for(int j = 0; j < dim[1]; ++j)
         {
