@@ -14,7 +14,7 @@
 
 #include "libroad/osm_network.hpp"
 #include "libroad/hwm_network.hpp"
-#include "hwm-net-mesh.hpp"
+#include "hwm_net_mesh.hpp"
 
 class fltkview : public Fl_Gl_Window
 {

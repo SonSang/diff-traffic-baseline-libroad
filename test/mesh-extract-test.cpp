@@ -1,4 +1,4 @@
-#include "hwm-net-mesh.hpp"
+#include "hwm_net_mesh.hpp"
 
 int main(int argc, char *argv[])
 {

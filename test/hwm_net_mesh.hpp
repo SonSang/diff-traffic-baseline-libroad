@@ -2,7 +2,7 @@
 #define __HWM_NET_MESH_HPP__
 
 #include "libroad/hwm_network.hpp"
-#include "texture-gen.hpp"
+#include "texture_gen.hpp"
 #include "boost/filesystem.hpp"
 
 namespace bf = boost::filesystem;
