@@ -392,6 +392,8 @@ namespace hwm
         bf::remove_all(tex_dir);
         bf::create_directory(tex_dir);
 
+        const bf::path now(bf::current_path());
+
         if(!dir.empty())
             bf::current_path(dir);
         std::ofstream out(full_out_path.filename().c_str());
@@ -401,6 +403,8 @@ namespace hwm
         {
             obj_intersection(out, ip.second);
         }
+
+        bf::current_path(now);
     }
 }
 #endif
