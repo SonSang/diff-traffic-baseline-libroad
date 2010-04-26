@@ -24,6 +24,18 @@ namespace hwm
                                       "map_kd %s\n") % ts_name % ts_file);
     }
 
+    void write_intersection_mtl(std::ostream      &o,
+                                const std::string &ts_name)
+    {
+        o << boost::str(boost::format("newmtl %s\n"
+                                      "ns 96.078431\n"
+                                      "ka 0.0  0.0  0.0\n"
+                                      "kd 0.0 0.0 0.0\n"
+                                      "ks 0.5  0.5  0.5\n"
+                                      "ni 1.0\n"
+                                      "d  1.0\n") % ts_name);
+    }
+
     struct tex_db : public std::map<const std::string, size_t>
     {
         typedef std::map<const std::string, size_t> base_t;
@@ -216,6 +228,8 @@ namespace hwm
         const bf::path texbase(bf::path(bf::current_path() / "tex"));
 
         std::ofstream mtllib(mtlname.c_str());
+        write_intersection_mtl(mtllib, "intersection");
+
         os << "mtllib " << mtlname << std::endl;
 
         tex_db tdb(mtllib, texbase);
@@ -422,7 +436,7 @@ namespace hwm
         for(unsigned int i = 0; i < center; ++i)
             fcs.push_back(vec3u(center, i, (i+1) % center));
 
-        mesh_to_obj(os, is.id, "none", vrts, fcs);
+        mesh_to_obj(os, is.id, "intersection", vrts, fcs);
     }
 
     void network_to_obj(const char *path, const hwm::network &net)
