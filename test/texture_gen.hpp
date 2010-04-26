@@ -15,6 +15,7 @@ typedef tvmet::Vector<double, 4> color4d;
 
 struct lane_op
 {
+    virtual std::string rep() const      = 0;
     virtual double width() const         = 0;
     virtual double xres() const          = 0;
     virtual double height() const        = 0;
@@ -27,6 +28,11 @@ struct xgap : public lane_op
     xgap(double  w_)
         : w(w_)
     {}
+
+    virtual std::string rep() const
+    {
+        return boost::str(boost::format("xg%f") % w);
+    }
 
     virtual double width() const
     {
@@ -74,6 +80,7 @@ void aligned_rectangle(cairo_t *cr, double x, double y, double w, double h)
 
 struct center_box : public lane_op
 {
+    virtual std::string rep() const      = 0;
     virtual double width() const         = 0;
     virtual double xres() const          = 0;
     virtual double height() const        = 0;
@@ -89,6 +96,11 @@ struct single_box : public center_box
                              ybase(ybase_), ylen(ylen_),
                              c(c_)
     {}
+
+    virtual std::string rep() const
+    {
+        return boost::str(boost::format("sb%f-%f-%f-%f-%f-%f-%f-%f") % w % h % ybase % ylen % c[0] % c[1] % c[2] % c[3]);
+    }
 
     virtual double width() const
     {
@@ -133,6 +145,11 @@ struct double_box : public center_box
                              ybase(ybase_), ylen(ylen_),
                              c(c_)
     {}
+
+    virtual std::string rep() const
+    {
+        return boost::str(boost::format("db%f-%f-%f-%f-%f-%f-%f-%f-%f") % bw % sep % h % ybase % ylen % c[0] % c[1] % c[2] % c[3]);
+    }
 
     virtual double width() const
     {
@@ -250,6 +267,16 @@ struct lane_maker
         cairo_destroy(cr);
         cairo_surface_write_to_png(cs, fname.c_str());
         cairo_surface_destroy(cs);
+    }
+
+    std::string make_string() const
+    {
+        std::string res;
+        BOOST_FOREACH(const lane_op *lo, boxes)
+        {
+            res += lo->rep() + "!";
+        }
+        return res;
     }
 
     vec2u                 im_res;

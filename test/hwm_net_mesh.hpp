@@ -4,6 +4,7 @@
 #include "libroad/hwm_network.hpp"
 #include "texture_gen.hpp"
 #include "boost/filesystem.hpp"
+#include <iostream>
 
 namespace bf = boost::filesystem;
 
@@ -23,6 +24,46 @@ namespace hwm
                                       "map_kd %s\n") % ts_name % ts_file);
     }
 
+    struct tex_db : public std::map<const std::string, size_t>
+    {
+        typedef std::map<const std::string, size_t> base_t;
+
+        tex_db(std::ostream &ml, const bf::path &bp)
+            : mtllib(ml), base_path(bp), image_count(0)
+        {}
+
+        const bf::path get_filename(size_t idx)
+        {
+            return bf::path(base_path / boost::str(boost::format("%s.png") % get_matname(idx)));
+        }
+
+        const std::string get_matname(size_t idx)
+        {
+            return boost::str(boost::format("%06d") % idx);
+        }
+
+        const std::string do_tex(lane_maker &lm)
+        {
+            const std::string rep_str(lm.make_string());
+
+            base_t::iterator lookup(find(rep_str));
+            if(lookup == end())
+            {
+                const std::string fname(get_filename(image_count).string());
+                lm.draw(fname);
+                lookup = insert(lookup, std::make_pair(rep_str, image_count));
+                write_road_mtl(mtllib, get_matname(lookup->second), fname);
+                ++image_count;
+            }
+
+            return get_matname(lookup->second);
+        };
+
+        std::ostream   &mtllib;
+        const bf::path  base_path;
+        size_t          image_count;
+    };
+
     struct road_rev_map
     {
         struct lane_entry
@@ -40,7 +81,7 @@ namespace hwm
 
         struct lane_cont : public std::map<const float, const lane_entry>
         {
-            void write_texture(const std::string &texfile) const
+            const std::string write_texture(tex_db &tdb) const
             {
                 lane_maker lm;
                 // lm.add_xgap(0.25*lane_width);
@@ -81,7 +122,7 @@ namespace hwm
                 //                            color4d(1.0, 1.0, 1.0, 1.0)));
                 // lm.add_xgap(0.25*lane_width);
 
-                lm.draw(texfile);
+                return tdb.do_tex(lm);
             }
 
             void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval) const
@@ -171,8 +212,14 @@ namespace hwm
         }
 
         const std::string mtlname("road.mtl");
+
+        const bf::path texbase(bf::path(bf::current_path() / "tex"));
+
         std::ofstream mtllib(mtlname.c_str());
         os << "mtllib " << mtlname << std::endl;
+
+        tex_db tdb(mtllib, texbase);
+
         BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
         {
             const hwm::road &r = *(rrm_v.second.road);
@@ -192,16 +239,14 @@ namespace hwm
                 e.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current));
 
                 const std::string oname(boost::str(boost::format("%s-%d") % r.id % re_c));
-                const std::string texfilename(bf::path(bf::current_path() / "tex" / boost::str(boost::format("%s.png") % oname)).string());
 
-                e.write_texture(texfilename);
+                const std::string texname(e.write_texture(tdb));
                 mesh_to_obj(os,
                             oname,
-                            oname,
+                            texname,
                             vrts,
                             fcs);
 
-                write_road_mtl(mtllib, oname, texfilename);
                 ++re_c;
             }
         }
