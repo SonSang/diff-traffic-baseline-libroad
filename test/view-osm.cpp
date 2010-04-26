@@ -205,7 +205,7 @@ public:
             std::cerr.flush();
             BOOST_FOREACH(osm::edge &e, net->edges)
             {
-                ih->displace_shapes(e.shape, 30.0, 0.2, *net);
+                ih->displace_shapes(e.shape, 5.0, 0.1, *net);
             }
             std::cerr << " Done. " << std::endl;
         }
