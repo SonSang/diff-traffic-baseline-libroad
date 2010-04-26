@@ -456,6 +456,7 @@ namespace hwm
         if(!dir.empty())
             bf::current_path(dir);
         std::ofstream out(full_out_path.filename().c_str());
+        out << "s 1\n";
         obj_roads(out, net);
 
         BOOST_FOREACH(const hwm::intersection_pair &ip, net.intersections)
