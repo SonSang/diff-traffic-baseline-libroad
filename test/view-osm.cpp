@@ -340,7 +340,7 @@ public:
             {
             case '1':
                 {
-                    ih->dim     /= 2;
+                    ih->dim      = (ih->dim-1)/2 + 1;
                     ih->spacing *= 2;
                     noise_scale /= 2;
                     delete[] ih->pix;
@@ -352,7 +352,7 @@ public:
                 break;
             case '2':
                 {
-                    ih->dim     *= 2;
+                    ih->dim      = (ih->dim-1)*2 + 1;
                     ih->spacing /= 2;
                     noise_scale *= 2;
                     delete[] ih->pix;
@@ -387,6 +387,11 @@ public:
                     im.quantize();
                     im.write("default.tiff");
                     std::cerr << "wrote default.tiff" << std::endl;
+                    const std::string raw_name(boost::str(boost::format("default-%d.raw") % ih->dim[0]));
+                    if(ih->dump_raw(raw_name))
+                        std::cerr << "wrote " << raw_name << std::endl;
+                    else
+                        std::cerr << "couldn't write " << raw_name << std::endl;
                 }
                 break;
             case 'd':

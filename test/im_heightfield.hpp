@@ -5,6 +5,7 @@
 
 #include "libroad/hwm_network.hpp"
 #include "libroad/osm_network.hpp"
+#include <fstream>
 
 struct im_heightfield
 {
@@ -32,6 +33,29 @@ struct im_heightfield
         normalize();
         power(pow);
     }
+
+    bool dump_raw(const std::string &filename) const
+    {
+        if(dim[0] != dim[1] || ((dim[0] - 1) & (dim[0] - 2) ))
+            return false;
+
+        unsigned short       *z   = new unsigned short[dim[0]*dim[1]];
+        const unsigned short  max = static_cast<unsigned short>(-1);
+        for(int j = 0; j < dim[1]; ++j)
+            for(int i = 0; i < dim[0]; ++i)
+            {
+                if(pix[i + j * dim[0]] > 1.0)
+                    z[i + j*dim[0]] = max;
+                else if(pix[i + j * dim[0]] < 0.0)
+                    z[i + j*dim[0]] = 0;
+                else
+                    z[i + j*dim[0]] = static_cast<unsigned short>(pix[i + j * dim[0]]*max);
+            }
+        std::ofstream of(filename.c_str(), std::ios::binary);
+        of.write(reinterpret_cast<const char*>(z),
+                 static_cast<std::streamsize>(sizeof(unsigned short)*dim[0]*dim[1]));
+        return true;
+    };
 
     void normalize()
     {
