@@ -1,4 +1,4 @@
-#include "hwm_net_mesh.hpp"
+#include "libroad/hwm_network.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
     net.build_intersections();
     net.build_fictitious_lanes();
     net.auto_scale_memberships();
-    net.center();
     std::cerr << "HWM net loaded successfully" << std::endl;
 
     try
@@ -28,7 +27,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    hwm::network_to_obj(argv[2], net);
+    hwm::network_aux net_aux(net);
+    net_aux.network_obj(argv[2]);
 
     return 0;
 }

@@ -14,7 +14,6 @@
 
 #include "libroad/osm_network.hpp"
 #include "libroad/hwm_network.hpp"
-#include "hwm_net_mesh.hpp"
 
 class fltkview : public Fl_Gl_Window
 {
@@ -127,7 +126,7 @@ public:
             glViewport(0, 0, w(), h());
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 30.0f, 50000.0f);
+            gluPerspective(45.0f, (GLfloat)w()/(GLfloat)h(), 100.0f, 500000.0f);
 
             glMatrixMode(GL_MODELVIEW);
             glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -421,7 +420,8 @@ public:
                     }
                     hnet.xml_write("default.xml.gz");
                     std::cerr << "Wrote default.xml.gz" << std::endl;
-                    hwm::network_to_obj("default/default.obj", hnet);
+                    hwm::network_aux neta(hnet);
+                    neta.network_obj("default/default.obj");
                     std::cerr << "Wrote default/default.obj" << std::endl;
                 }
                 if(ih)
@@ -562,9 +562,9 @@ int main(int argc, char *argv[])
         im.write(0, 0, dim[1], dim[0], "R", Magick::FloatPixel, pix);
     }
 
-    im_heightfield ih(pix, dim, 0, 10);
-    ih.origin  = vec2f(-50);
-    ih.spacing = vec2f(1.0);
+    im_heightfield ih(pix, dim, 0, 2560);
+    ih.origin  = vec2f(-19269.5, -18832.1);//vec2f(-50);
+    ih.spacing = vec2f(75.2784);
 
     if(std::strcmp(argv[1], "--") == 0)
     {

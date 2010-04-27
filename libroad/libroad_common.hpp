@@ -3,10 +3,15 @@
 
 const char *libroad_package_string();
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <vector>
 #include <map>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 
 #include <tr1/functional>
 #include <tr1/unordered_map>
@@ -23,6 +28,7 @@ const char *libroad_package_string();
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/filesystem.hpp>
 
 #include <glibmm/ustring.h>
 
@@ -33,6 +39,8 @@ const char *libroad_package_string();
 using std::tr1::hash;
 
 typedef Glib::ustring str;
+
+namespace bf = boost::filesystem;
 
 namespace std
 {

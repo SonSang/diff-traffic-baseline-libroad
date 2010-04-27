@@ -8,6 +8,7 @@
 #include "svg_helper.hpp"
 #include "sumo_network.hpp"
 #include "osm_network.hpp"
+#include "hwm_texture_gen.hpp"
 
 namespace hwm
 {
@@ -294,6 +295,71 @@ namespace hwm
         lane_map         lanes;
         intersection_map intersections;
     };
+
+    struct network_aux
+    {
+        struct road_rev_map
+        {
+            struct lane_entry
+            {
+                lane_entry();
+                lane_entry(const lane* l, const lane::road_membership *rm);
+
+                const hwm::lane                  *lane;
+                const hwm::lane::road_membership *membership;
+            };
+
+            struct lane_cont : public std::map<const float, const lane_entry>
+            {
+#if HAVE_CAIRO
+                const std::string write_texture(tex_db &tdb) const;
+#endif
+
+                void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval, const float lane_width) const;
+            };
+
+            road_rev_map();
+            road_rev_map(const road *r);
+
+            void add_lane(const lane *r, const lane::road_membership *rm);
+            void print() const;
+
+            partition01<lane_cont>  lane_map;
+            const hwm::road        *road;
+        };
+
+        struct point_tan
+        {
+            vec3f point;
+            vec3f tan;
+        };
+
+        typedef std::map<float, point_tan>  incident_point_tans;
+
+        struct road_store
+        {
+            road_store(const hwm::road *r, const bool as);
+
+            const hwm::road     *road;
+            bool                 at_start;
+            incident_point_tans  ipt;
+        };
+
+        struct road_is_cnt : public std::vector<road_store>
+        {
+            road_store &find(const hwm::road *r, bool as);
+        };
+
+        network_aux(const network &n);
+
+        void road_objs(std::ostream &os) const;
+
+        void intersection_obj(std::ostream &os, const hwm::intersection &is) const;
+        void network_obj(const std::string &path) const;
+
+        strhash<road_rev_map>::type  rrm;
+        const network               &net;
+   };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void    write_xml_network(const network &n, const char *filename);
