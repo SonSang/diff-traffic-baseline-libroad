@@ -142,7 +142,7 @@ namespace hwm
                 const float left  = begin()            ->first-0.5f*lane_width/*-0.25f*lane_width*/;
                 const float right = boost::prior(end())->first+0.5f*lane_width/*+0.25f*lane_width*/;
                 const hwm::lane::road_membership &rm = *(begin()->second.membership);
-                rm.parent_road->rep.make_mesh(vrts, fcs, interval, vec2f(left, right), 0.01, true);
+                rm.parent_road->rep.make_mesh(vrts, fcs, interval, vec2f(left, right), 0.001, true);
             }
         };
 

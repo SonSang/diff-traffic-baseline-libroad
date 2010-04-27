@@ -185,6 +185,9 @@ void mesh_to_obj(std::ostream              &out,
                  const std::vector<vertex> &verts,
                  const std::vector<vec3u>  &faces)
 {
+    out.setf(std::ios::fixed,std::ios::floatfield);
+    out.precision(10);
+
     out << "o " << name << "\n";
     out << "usemtl " << material_name << "\n";
     BOOST_FOREACH(const vertex &v, verts)
@@ -211,6 +214,8 @@ void mesh_to_smf(std::ostream              &out,
                  const std::vector<vertex> &verts,
                  const std::vector<vec3u>  &faces)
 {
+    out.setf(std::ios::fixed,std::ios::floatfield);
+    out.precision(10);
     BOOST_FOREACH(const vertex &v, verts)
     {
         out << "v " << v.position[0]   << " " << v.position[1]  << " " << v.position[2] << "\n";
@@ -831,8 +836,8 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 {
     const float resolution2 = resolution*resolution;
 
-    size_t input_start = result.size();
-    const float len   = length(offset);
+    size_t      input_start = result.size();
+    const float len         = length(offset);
 
     vec2f range(in_range);
     bool reversed = range[0] > range[1];
@@ -879,7 +884,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         const vertex start_vertex(vertex(vec3f(pos + left*offset + tan*start_local*feature_size(start_feature, offset)),
                                          real_up,
                                          vec2f(lerp(start_local, frange[0], frange[1]), 0.0f)));
-        assert(lerp(start_local, frange[0]/len, frange[1]/len) >= 0.0f);
+        //        assert(lerp(start_local, frange[0]/len, frange[1]/len) >= 0.0f);
 
         if(result.empty() || distance2(start_vertex.position, result.back().position) >= resolution2)
             result.push_back(start_vertex);
@@ -930,7 +935,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         const vertex end_vertex(vertex(vec3f(pos + left*offset + tan*end_local*feature_size(end_feature, offset)),
                                        real_up,
                                        vec2f(lerp(end_local, frange[0], frange[1]), 0.0f)));
-        assert(lerp(end_local, frange[0], frange[1]) >= 0.0f);
+        //        assert(lerp(end_local, frange[0], frange[1]) >= 0.0f);
 
         if(result.empty() || distance2(end_vertex.position, result.back().position) >= resolution2)
             result.push_back(end_vertex);

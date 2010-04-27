@@ -375,6 +375,8 @@ public:
             case 'w':
                 if(ih)
                 {
+                    std::cerr.setf(std::ios::fixed,std::ios::floatfield);
+                    std::cerr.precision(10);
                     std::cerr << "Image: dim " << ih->dim << std::endl
                               << "origin     " << ih->origin << std::endl
                               << "spacing    " << ih->spacing << std::endl
@@ -424,6 +426,8 @@ public:
                 }
                 if(ih)
                 {
+                    std::cerr.setf(std::ios::fixed,std::ios::floatfield);
+                    std::cerr.precision(10);
                     std::cerr << "Image: dim " << ih->dim << std::endl
                               << "origin     " << ih->origin << std::endl
                               << "spacing    " << ih->spacing << std::endl
