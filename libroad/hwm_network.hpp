@@ -350,15 +350,26 @@ namespace hwm
             road_store &find(const hwm::road *r, bool as);
         };
 
+        struct intersection_geometry
+        {
+            intersection_geometry();
+            intersection_geometry(const hwm::intersection *is);
+
+            void intersection_obj(std::ostream &os) const;
+
+            road_is_cnt              ric;
+            std::vector<arc_road>    connecting_arcs;
+            const hwm::intersection *is;
+        };
+
         network_aux(const network &n);
 
         void road_objs(std::ostream &os) const;
-
-        void intersection_obj(std::ostream &os, const hwm::intersection &is) const;
         void network_obj(const std::string &path) const;
 
-        strhash<road_rev_map>::type  rrm;
-        const network               &net;
+        strhash<road_rev_map>::type           rrm;
+        strhash<intersection_geometry>::type  intersection_geoms;
+        const network                        &net;
    };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));

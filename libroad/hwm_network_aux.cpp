@@ -90,6 +90,11 @@ namespace hwm
                 rev_itr->second.add_lane(&(l.second), &(rm.second));
             }
         }
+
+        BOOST_FOREACH(const intersection_pair &i, n.intersections)
+        {
+            intersection_geoms[i.first] = intersection_geometry(&(i.second));
+        }
     }
 
     static void write_intersection_mtl(std::ostream      &o,
@@ -221,10 +226,14 @@ namespace hwm
         return back();
     }
 
-    void network_aux::intersection_obj(std::ostream &os, const hwm::intersection &is) const
+    network_aux::intersection_geometry::intersection_geometry()
+        : is(0)
+    {}
+
+    network_aux::intersection_geometry::intersection_geometry(const hwm::intersection *in_is)
+        : is(in_is)
     {
-        road_is_cnt ric;
-        BOOST_FOREACH(const hwm::lane *incl, is.incoming)
+        BOOST_FOREACH(const hwm::lane *incl, is->incoming)
         {
             const hwm::lane::road_membership *rm       = &(boost::prior(incl->road_memberships.end())->second);
             const hwm::road                  *r        = rm->parent_road;
@@ -241,7 +250,7 @@ namespace hwm
             ent.ipt.insert(high);
         }
 
-        BOOST_FOREACH(const hwm::lane *outl, is.outgoing)
+        BOOST_FOREACH(const hwm::lane *outl, is->outgoing)
         {
             const hwm::lane::road_membership *rm       = &(outl->road_memberships.begin()->second);
             const hwm::road                  *r        = rm->parent_road;
@@ -252,9 +261,8 @@ namespace hwm
             gen_tan_points(low, high, *outl, false);
 
             const float oriented_sign = at_start ? 1.0 : -1.0;
-
-            low.first  = oriented_sign*(low.first + rm->lane_position);
-            high.first = oriented_sign*(high.first + rm->lane_position);
+            low.first                 = oriented_sign*(low.first + rm->lane_position);
+            high.first                = oriented_sign*(high.first + rm->lane_position);
             ent.ipt.insert(low);
             ent.ipt.insert(high);
         }
@@ -267,7 +275,7 @@ namespace hwm
             vec2f avg(0.0f);
             BOOST_FOREACH(const offs_pt &op, r.ipt)
             {
-                const vec3f svec(op.second.point - is.center);
+                const vec3f svec(op.second.point - is->center);
                 avg[0] += svec[0];
                 avg[1] += svec[1];
             }
@@ -275,35 +283,53 @@ namespace hwm
         }
 
         std::sort(rw_sort.begin(), rw_sort.end(), circle_sort());
-
-        std::vector<vertex> vrts;
-        for(size_t i = 0; i < rw_sort.size(); ++i)
         {
-            BOOST_FOREACH(const offs_pt &op, ric[rw_sort[i].road_num].ipt)
+            road_is_cnt temp;
+            temp.reserve(rw_sort.size());
+            BOOST_FOREACH(const road_winding &rw, rw_sort)
+            {
+                temp.push_back(ric[rw.road_num]);
+            }
+            ric.swap(temp);
+        }
+
+        for(size_t i = 0; i < ric.size(); ++i)
+        {
+            const road_store &rs      = ric[i];
+            const road_store &rs_next = ric[(i+1)%ric.size()];
+            const point_tan  &start   = boost::prior(rs.ipt.end())->second;
+            const point_tan  &end     = rs_next.ipt.begin()->second;
+
+            connecting_arcs.push_back(arc_road());
+            connecting_arcs.back().initialize_from_polyline(0.0f, from_tan_pairs(start.point,
+                                                                                 start.tan,
+                                                                                 end.point,
+                                                                                 end.tan,
+                                                                                 0.0f));
+        }
+    }
+
+    void network_aux::intersection_geometry::intersection_obj(std::ostream &os) const
+    {
+        std::vector<vertex> vrts;
+        for(size_t i = 0; i < ric.size(); ++i)
+        {
+            const road_store &rs = ric[i];
+            BOOST_FOREACH(const offs_pt &op, rs.ipt)
             {
                 vrts.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
             }
 
-            const point_tan &start = boost::prior(ric[rw_sort[i].road_num].ipt.end())->second;
-            const point_tan &end   = ric[rw_sort[(i+1)%rw_sort.size()].road_num].ipt.begin()->second;
-
-            arc_road ar;
-            ar.initialize_from_polyline(0.0f, from_tan_pairs(start.point,
-                                                             start.tan,
-                                                             end.point,
-                                                             end.tan,
-                                                             0.0f));
-
-            ar.extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+            connecting_arcs[i].extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
         }
 
-        vrts.push_back(vertex(is.center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+        vrts.push_back(vertex(is->center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
         const unsigned int center(static_cast<unsigned int>(vrts.size()-1));
         std::vector<vec3u> fcs;
         for(unsigned int i = 0; i < center; ++i)
             fcs.push_back(vec3u(center, i, (i+1) % center));
 
-        mesh_to_obj(os, is.id, "intersection", vrts, fcs);
+        mesh_to_obj(os, is->id, "intersection_mtl", vrts, fcs);
     }
 
     void network_aux::network_obj(const std::string &path) const
@@ -325,9 +351,10 @@ namespace hwm
         out << "s 1\n";
         road_objs(out);
 
-        BOOST_FOREACH(const hwm::intersection_pair &ip, net.intersections)
+        typedef strhash<intersection_geometry>::type::value_type ig_pair;
+        BOOST_FOREACH(const ig_pair &ig, intersection_geoms)
         {
-            intersection_obj(out, ip.second);
+            ig.second.intersection_obj(out);
         }
 
         bf::current_path(now);
