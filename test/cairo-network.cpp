@@ -45,19 +45,26 @@ public:
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         }
-        retex();
+        tex_low  = view_low;
+        tex_high = view_high;
+        retex(vec2i(w(), h()));
     }
 
-    void retex()
+    void retex(const vec2i &im_res)
     {
-        vec2i im_res(w(), h());
-        vec2f dv(high-low);
+        vec2f dv(tex_high-tex_low);
 
         const float view_aspect  = static_cast<float>(im_res[0])/im_res[1];
         const float scene_aspect = dv[0]/dv[1];
 
         float scale;
         vec2f tr;
+
+        if(std::abs(view_aspect - scene_aspect) > 1e-4)
+        {
+            std::cerr << "Aspects in retex seem off" << std::endl;
+        }
+
         if(view_aspect > scene_aspect)
             scale = im_res[1]/dv[1];
         else
@@ -68,7 +75,7 @@ public:
                                                          im_res[0],
                                                          im_res[1]);
         cairo_t         *cr = cairo_create(cs);
-        cairo_set_source_rgba(cr, 0, 0, 0, 1.0);
+        cairo_set_source_rgba(cr, 0.5, 0, 0, 1.0);
         cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
         cairo_paint(cr);
 
@@ -82,8 +89,8 @@ public:
                     scale);
 
         cairo_translate(cr,
-                       -low[0],
-                       -low[1]);
+                       -tex_low[0],
+                       -tex_low[1]);
 
         cairo_set_line_width(cr, 0.5);
         netaux->cairo_roads(cr);
@@ -108,11 +115,6 @@ public:
         if (!valid())
         {
             glViewport(0, 0, w(), h());
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-            gluOrtho2D(0, 1, 0, 1);
-
-            glMatrixMode(GL_MODELVIEW);
             glClearColor(0.0, 0.0, 0.0, 0.0);
 
             if(GLEW_OK != glew_state)
@@ -123,6 +125,11 @@ public:
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluOrtho2D(view_low[0], view_high[1], view_low[1], view_high[1]);
+
+        glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
         glEnable(GL_TEXTURE_2D);
@@ -133,13 +140,13 @@ public:
 
         glBegin(GL_QUADS);
         glTexCoord2f(0.0, 0.0);
-        glVertex2f(0.0, 0.0);
+        glVertex2fv(tex_low.data());
         glTexCoord2f(1.0, 0.0);
-        glVertex2f(1.0, 0.0);
+        glVertex2f(tex_high[0], tex_low[1]);
         glTexCoord2f(1.0, 1.0);
-        glVertex2f(1.0, 1.0);
+        glVertex2fv(tex_high.data());
         glTexCoord2f(0.0, 1.0);
-        glVertex2f(0.0, 1.0);
+        glVertex2f(tex_low[0], tex_high[1]);
         glEnd();
         glPopMatrix();
 
@@ -169,15 +176,15 @@ public:
             {
                 const vec2i xy(Fl::event_x(),
                                Fl::event_y());
-                const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
+                const vec2f fxy( static_cast<float>(xy[0]/(w()-1)),
                                  static_cast<float>(-xy[1])/(h()-1));
                 std::cout << fxy << std::endl;
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
-                    low      -= fxy - lastpick;
-                    high     -= fxy - lastpick;
-                    lastpick  = fxy;
-                    retex();
+                    view_low  -= fxy - lastpick;
+                    view_high -= fxy - lastpick;
+                    lastpick   = fxy;
+                    // retex();
                     redraw();
                 }
                 lastmouse = fxy;
@@ -185,16 +192,25 @@ public:
             take_focus();
             return 1;
         case FL_KEYBOARD:
+            switch(Fl::event_key())
+            {
+            case ' ':
+                tex_low  = view_low;
+                tex_high = view_high;
+                retex(vec2i(w(), h()));
+                redraw();
+                break;
+            }
             return 1;
         case FL_MOUSEWHEEL:
             {
-                const int    x   = Fl::event_dx();
-                const int    y   = Fl::event_dy();
-                const float  fy  = copysign(0.1, y);
-                vec2f        dv(high-low);
-                high            += dv * fy;
-                low             -= dv * fy;
-                retex();
+                const int   x   = Fl::event_dx();
+                const int   y   = Fl::event_dy();
+                const float fy  = copysign(0.1, y);
+                vec2f       dv(view_high-view_low);
+                view_high      += dv * fy;
+                view_low       -= dv * fy;
+                // retex();
                 redraw();
             }
             take_focus();
@@ -210,8 +226,10 @@ public:
 
     hwm::network     *net;
     hwm::network_aux *netaux;
-    vec2f             low;
-    vec2f             high;
+    vec2f             view_low;
+    vec2f             view_high;
+    vec2f             tex_low;
+    vec2f             tex_high;
 
     GLuint glew_state;
     GLuint tex_;
@@ -253,8 +271,8 @@ int main(int argc, char *argv[])
     vec3f low(FLT_MAX);
     vec3f high(-FLT_MAX);
     net.bounding_box(low, high);
-    mv.low  = sub<0,2>::vector(low);
-    mv.high = sub<0,2>::vector(high);
+    mv.view_low  = sub<0,2>::vector(low);
+    mv.view_high = sub<0,2>::vector(high);
 
     mv.take_focus();
     Fl::visual(FL_DOUBLE|FL_DEPTH);
