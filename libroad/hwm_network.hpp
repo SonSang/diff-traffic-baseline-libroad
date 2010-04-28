@@ -316,7 +316,7 @@ namespace hwm
             {
 #if HAVE_CAIRO
                 const std::string write_texture(tex_db &tdb) const;
-                void cairo_draw(cairo_t *c, const vec2f &interval, const float lane_width, bool low_side) const;
+                void cairo_draw(cairo_t *c, const vec2f &interval, const float lane_width, bool low_side, bool start_new) const;
 #endif
 
                 void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval, const float lane_width) const;
@@ -364,7 +364,7 @@ namespace hwm
             intersection_geometry(const hwm::intersection *is);
 
 #if HAVE_CAIRO
-            void cairo_draw(cairo_t *c) const;
+            void cairo_draw(cairo_t *c, bool closed) const;
 #endif
 
             void intersection_obj(std::ostream &os) const;

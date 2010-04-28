@@ -106,6 +106,8 @@ struct line_segment : public path_element
     {
         if(start)
             cairo_move_to(c, points[0][0], points[0][1]);
+        else
+            cairo_line_to(c, points[0][0], points[0][1]);
         cairo_line_to(c, points[1][0], points[1][1]);
     }
 #endif

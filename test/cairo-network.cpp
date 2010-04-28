@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    vec2i im_res(2000, 2000);
+    vec2i im_res(10000, 10000);
     cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
                                                      im_res[0],
                                                      im_res[1]);
@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
     cairo_destroy(cr);
     cairo_surface_write_to_png(cs, "test2d.png");
     cairo_surface_destroy(cs);
-
 
     return 0;
 }

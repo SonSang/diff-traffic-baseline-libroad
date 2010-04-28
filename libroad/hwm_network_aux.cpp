@@ -11,14 +11,14 @@ namespace hwm
     {
     }
 
-    void network_aux::road_rev_map::lane_cont::cairo_draw(cairo_t *c , const vec2f &interval, const float lane_widith, bool low_side) const
+    void network_aux::road_rev_map::lane_cont::cairo_draw(cairo_t *c , const vec2f &interval, const float lane_widith, bool low_side, bool start_new) const
     {
         const float                  left  = begin()            ->first-0.5f*lane_width;
         const float                  right = boost::prior(end())->first+0.5f*lane_width;
         const lane::road_membership &rm    = *(begin()->second.membership);
 
         const float offset = low_side ? left : right;
-        rm.parent_road->rep.svg_arc_path_center(interval, offset).cairo_draw(c);
+        rm.parent_road->rep.svg_arc_path_center(interval, offset).cairo_draw(c, start_new);
     }
 
     void network_aux::road_rev_map::lane_cont::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval, const float lane_width) const
@@ -120,33 +120,52 @@ namespace hwm
     }
 
 #if HAVE_CAIRO
+    static void cairo_road(cairo_t *c, const network_aux::road_rev_map &rrm, const float lane_width, const bool closed)
+    {
+        cairo_new_path(c);
+        for(partition01<network_aux::road_rev_map::lane_cont>::const_iterator current = rrm.lane_map.begin();
+            current != rrm.lane_map.end();
+            ++current)
+        {
+            const network_aux::road_rev_map::lane_cont &e = current->second;
+            if(e.empty())
+                continue;
+            e.cairo_draw(c, rrm.lane_map.containing_interval(current), lane_width, false, !closed);
+        }
+
+        for(partition01<network_aux::road_rev_map::lane_cont>::const_reverse_iterator current = rrm.lane_map.rbegin();
+            current != rrm.lane_map.rend();
+            ++current)
+        {
+            const network_aux::road_rev_map::lane_cont &e = current->second;
+            if(e.empty())
+                continue;
+            const vec2f cw(rrm.lane_map.containing_interval(current));
+            e.cairo_draw(c, vec2f(cw[1], cw[0]), lane_width, true, !closed);
+        }
+        if(closed)
+            cairo_close_path(c);
+    }
+
     void network_aux::cairo_roads(cairo_t *c) const
     {
         BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
         {
-            const hwm::road &r = *(rrm_v.second.road);
-            for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
-                current != rrm_v.second.lane_map.end();
-                ++current)
-            {
-                const road_rev_map::lane_cont &e = current->second;
-                if(e.empty())
-                    continue;
-                e.cairo_draw(c, rrm_v.second.lane_map.containing_interval(current), net.lane_width, false);
-            }
+            cairo_road(c, rrm_v.second, net.lane_width, true);
+            cairo_set_source_rgba(c, 237.0/255, 234.0/255, 186.0/255, 1.0);
+            cairo_fill(c);
+            cairo_road(c, rrm_v.second, net.lane_width, false);
+            cairo_set_source_rgba(c, 135.0/255, 103.0/255, 61.0/255, 1.0);
+            cairo_stroke(c);
+        }
 
-            for(partition01<road_rev_map::lane_cont>::const_reverse_iterator current = rrm_v.second.lane_map.rbegin();
-                current != rrm_v.second.lane_map.rend();
-                ++current)
-            {
-                const road_rev_map::lane_cont &e = current->second;
-
-                if(e.empty())
-                    continue;
-
-                vec2f ci(rrm_v.second.lane_map.containing_interval(current));
-                e.cairo_draw(c, ci, net.lane_width, true);
-            }
+        BOOST_FOREACH(const strhash<intersection_geometry>::type::value_type &is_v, intersection_geoms)
+        {
+            is_v.second.cairo_draw(c, true);
+            cairo_set_source_rgba(c, 237.0/255, 234.0/255, 186.0/255, 1.0);
+            cairo_fill(c);
+            is_v.second.cairo_draw(c, false);
+            cairo_set_source_rgba(c, 135.0/255, 103.0/255, 61.0/255, 1.0);
             cairo_stroke(c);
         }
     }
@@ -350,6 +369,17 @@ namespace hwm
                                                                                  end.tan,
                                                                                  0.0f));
         }
+    }
+
+    void network_aux::intersection_geometry::cairo_draw(cairo_t *c, bool closed) const
+    {
+        cairo_new_path(c);
+        BOOST_FOREACH(const arc_road &ar, connecting_arcs)
+        {
+            ar.svg_arc_path(vec2f(0, 1), 0.0f).cairo_draw(c, !closed);
+        }
+        if(closed)
+            cairo_close_path(c);
     }
 
     void network_aux::intersection_geometry::intersection_obj(std::ostream &os) const
