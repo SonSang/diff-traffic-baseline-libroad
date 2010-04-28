@@ -13,6 +13,7 @@ libroad_la_SOURCES  = polyline_road.cpp \
 		      hwm_xml_read.cpp \
 		      hwm_xml_write.cpp \
 		      hwm_network_aux.cpp \
+		      svg_helper.cpp \
 		      libroad_common.cpp
 pkginclude_HEADERS  = partition01.hpp \
 		      road_rep.hpp \
