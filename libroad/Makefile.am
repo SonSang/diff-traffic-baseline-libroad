@@ -28,7 +28,7 @@ pkginclude_HEADERS  = partition01.hpp \
 		      hwm_texture_gen.hpp
 
 libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
-libroad_la_LDFLAGS  = -static $(BOOST_IOSTREAMS_LDFLAGS) $(BOOST_FILESYSTEM_LIBS)
+libroad_la_LDFLAGS  = -static $(CAIRO_LIBS) $(BOOST_IOSTREAMS_LDFLAGS) $(BOOST_FILESYSTEM_LIBS)
 libroad_la_LIBADD   = $(GLIBMM_LIBS) $(LIBXMLPP_LIBS)  $(BOOST_IOSTREAMS_LIBS) $(LDFLAGS)
 
 if DO_VISUAL
@@ -48,6 +48,6 @@ lib_LTLIBRARIES += libroad_image.la
 libroad_image_la_SOURCES  = hwm_texture_gen.cpp
 
 libroad_image_la_CPPFLAGS = $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
-libroad_image_la_LDFLAGS  = -static $(CAIRO_LIBS) $(BOOST_IOSTREAMS_LDFLAGS) $(BOOST_FILESYSTEM_LIBS)
+libroad_image_la_LDFLAGS  = -static $(BOOST_IOSTREAMS_LDFLAGS) $(BOOST_FILESYSTEM_LIBS)
 libroad_image_la_LIBADD   = $(GLIBMM_LIBS) $(LIBXMLPP_LIBS) $(BOOST_IOSTREAMS_LIBS) $(LDFLAGS)
 endif

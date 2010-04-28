@@ -11,6 +11,16 @@ namespace hwm
     {
     }
 
+    void network_aux::road_rev_map::lane_cont::cairo_draw(cairo_t *c , const vec2f &interval, const float lane_widith, bool low_side) const
+    {
+        const float                  left  = begin()            ->first-0.5f*lane_width;
+        const float                  right = boost::prior(end())->first+0.5f*lane_width;
+        const lane::road_membership &rm    = *(begin()->second.membership);
+
+        const float offset = low_side ? left : right;
+        rm.parent_road->rep.svg_arc_path_center(interval, offset).cairo_draw(c);
+    }
+
     void network_aux::road_rev_map::lane_cont::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval, const float lane_width) const
     {
         const float                  left  = begin()            ->first-0.5f*lane_width;
@@ -108,6 +118,39 @@ namespace hwm
                                       "ni 1.0\n"
                                       "d  1.0\n") % ts_name);
     }
+
+#if HAVE_CAIRO
+    void network_aux::cairo_roads(cairo_t *c) const
+    {
+        BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
+        {
+            const hwm::road &r = *(rrm_v.second.road);
+            for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
+                current != rrm_v.second.lane_map.end();
+                ++current)
+            {
+                const road_rev_map::lane_cont &e = current->second;
+                if(e.empty())
+                    continue;
+                e.cairo_draw(c, rrm_v.second.lane_map.containing_interval(current), net.lane_width, false);
+            }
+
+            for(partition01<road_rev_map::lane_cont>::const_reverse_iterator current = rrm_v.second.lane_map.rbegin();
+                current != rrm_v.second.lane_map.rend();
+                ++current)
+            {
+                const road_rev_map::lane_cont &e = current->second;
+
+                if(e.empty())
+                    continue;
+
+                vec2f ci(rrm_v.second.lane_map.containing_interval(current));
+                e.cairo_draw(c, ci, net.lane_width, true);
+            }
+            cairo_stroke(c);
+        }
+    }
+#endif
 
     void network_aux::road_objs(std::ostream &os) const
     {

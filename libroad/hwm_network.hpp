@@ -9,6 +9,9 @@
 #include "sumo_network.hpp"
 #include "osm_network.hpp"
 #include "hwm_texture_gen.hpp"
+#if HAVE_CAIRO
+#include <cairo.h>
+#endif
 
 namespace hwm
 {
@@ -313,6 +316,7 @@ namespace hwm
             {
 #if HAVE_CAIRO
                 const std::string write_texture(tex_db &tdb) const;
+                void cairo_draw(cairo_t *c, const vec2f &interval, const float lane_width, bool low_side) const;
 #endif
 
                 void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval, const float lane_width) const;
@@ -320,6 +324,10 @@ namespace hwm
 
             road_rev_map();
             road_rev_map(const road *r);
+
+#if HAVE_CAIRO
+            void cairo_draw(cairo_t *c, float lane_width) const;
+#endif
 
             void add_lane(const lane *r, const lane::road_membership *rm);
             void print() const;
@@ -355,6 +363,10 @@ namespace hwm
             intersection_geometry();
             intersection_geometry(const hwm::intersection *is);
 
+#if HAVE_CAIRO
+            void cairo_draw(cairo_t *c) const;
+#endif
+
             void intersection_obj(std::ostream &os) const;
 
             road_is_cnt              ric;
@@ -364,13 +376,17 @@ namespace hwm
 
         network_aux(const network &n);
 
+#if HAVE_CAIRO
+        void cairo_roads(cairo_t *c) const;
+#endif
+
         void road_objs(std::ostream &os) const;
         void network_obj(const std::string &path) const;
 
         strhash<road_rev_map>::type           rrm;
         strhash<intersection_geometry>::type  intersection_geoms;
         const network                        &net;
-   };
+    };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));
     void    write_xml_network(const network &n, const char *filename);

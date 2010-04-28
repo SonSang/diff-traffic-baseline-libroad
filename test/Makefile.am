@@ -43,7 +43,7 @@ osm_import_LDFLAGS  = $(LDFLAGS)
 osm_import_LDADD    = $(top_builddir)/libroad/libroad.la
 
 if DO_IMAGE
-noinst_PROGRAMS += mesh-extract-test displace-polylines
+noinst_PROGRAMS += mesh-extract-test displace-polylines cairo-network
 
 mesh_extract_test_SOURCES = mesh-extract-test.cpp
 mesh_extract_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
@@ -54,6 +54,11 @@ displace_polylines_SOURCES = displace-polylines.cpp
 displace_polylines_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 displace_polylines_LDFLAGS  = $(MAGICKPP_LDFLAGS) $(BOOST_FILESYSTEM_LIBS) $(LDFLAGS)
 displace_polylines_LDADD    = $(top_builddir)/libroad/libroad.la $(top_builddir)/libroad/libroad_image.la
+
+cairo_network_SOURCES  = cairo-network.cpp
+cairo_network_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+cairo_network_LDFLAGS  = $(CAIRO_LIBS) $(MAGICKPP_LDFLAGS) $(BOOST_FILESYSTEM_LIBS) $(LDFLAGS)
+cairo_network_LDADD    = $(top_builddir)/libroad/libroad.la $(top_builddir)/libroad/libroad_image.la
 endif
 
 if DO_VISUAL
