@@ -246,6 +246,8 @@ struct path
 
     void cairo_draw(cairo_t *ct, const bool new_path=true) const
     {
+        if(elements.empty())
+            return;
         std::vector<path_element*>::const_iterator c = elements.begin();
         (*c)->cairo_draw(ct, new_path);
         ++c;
@@ -256,6 +258,9 @@ struct path
     str stringify() const
     {
         str res;
+        if(elements.empty())
+            return res;
+
         std::vector<path_element*>::const_iterator c = elements.begin();
         res.append((*c)->stringify(true));
         ++c;
