@@ -1,4 +1,221 @@
+#include <GL/glew.h>
+#include <FL/Fl.H>
+#include <FL/Fl_Gl_Window.H>
+#include <FL/Fl_Menu_Button.H>
+#include <FL/gl.h>
+#include <FL/glu.h>
+#include <FL/glut.h>
 #include "libroad/hwm_network.hpp"
+#include "geometric.hpp"
+
+class fltkview : public Fl_Gl_Window
+{
+public:
+    fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
+                                                          lastmouse(0),
+                                                          lastpick(0),
+                                                          net(0),
+                                                          netaux(0),
+                                                          glew_state(GLEW_OK+1),
+                                                          tex_(0)
+    {
+        this->resizable(this);
+    }
+
+    void init_glew()
+    {
+        glew_state = glewInit();
+        if (GLEW_OK != glew_state)
+        {
+            /* Problem: glewInit failed, something is seriously wrong. */
+            std::cerr << "Error: " << glewGetErrorString(glew_state)  << std::endl;
+        }
+        std::cerr << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+    }
+
+    void init_textures()
+    {
+        if(!glIsTexture(tex_))
+        {
+            glGenTextures(1, &tex_);
+            glBindTexture (GL_TEXTURE_2D, tex_);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        }
+        retex();
+    }
+
+    void retex()
+    {
+        vec2i im_res(w(), h());
+        vec2f dv(high-low);
+
+        const float view_aspect  = static_cast<float>(im_res[0])/im_res[1];
+        const float scene_aspect = dv[0]/dv[1];
+
+        float scale;
+        vec2f tr;
+        if(view_aspect > scene_aspect)
+            scale = im_res[1]/dv[1];
+        else
+            scale = im_res[0]/dv[0];
+
+        tr = vec2f((im_res[0] - dv[0]*scale)/2, (im_res[1] - dv[1]*scale)/2);
+        cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+                                                         im_res[0],
+                                                         im_res[1]);
+        cairo_t         *cr = cairo_create(cs);
+        cairo_set_source_rgba(cr, 0, 0, 0, 1.0);
+        cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+        cairo_paint(cr);
+
+        cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
+        cairo_translate(cr,
+                        tr[0],
+                        tr[1]);
+        cairo_scale(cr,
+                    scale,
+                    scale);
+
+        cairo_translate(cr,
+                       -low[0],
+                       -low[1]);
+
+        cairo_set_line_width(cr, 0.5);
+        netaux->cairo_roads(cr);
+
+        cairo_destroy(cr);
+
+        glTexImage2D (GL_TEXTURE_2D,
+                      0,
+                      GL_RGBA,
+                      im_res[0],
+                      im_res[1],
+                      0,
+                      GL_BGRA,
+                      GL_UNSIGNED_BYTE,
+                      cairo_image_surface_get_data(cs));
+
+        cairo_surface_destroy(cs);
+    }
+
+    void draw()
+    {
+        if (!valid())
+        {
+            glViewport(0, 0, w(), h());
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            gluOrtho2D(0, 1, 0, 1);
+
+            glMatrixMode(GL_MODELVIEW);
+            glClearColor(0.0, 0.0, 0.0, 0.0);
+
+            if(GLEW_OK != glew_state)
+                init_glew();
+
+            init_textures();
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+        glLoadIdentity();
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture (GL_TEXTURE_2D, tex_);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPushMatrix();
+
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0);
+        glVertex2f(0.0, 0.0);
+        glTexCoord2f(1.0, 0.0);
+        glVertex2f(1.0, 0.0);
+        glTexCoord2f(1.0, 1.0);
+        glVertex2f(1.0, 1.0);
+        glTexCoord2f(0.0, 1.0);
+        glVertex2f(0.0, 1.0);
+        glEnd();
+        glPopMatrix();
+
+        glDisable(GL_TEXTURE_2D);
+
+        glFlush();
+        glFinish();
+    }
+
+    int handle(int event)
+    {
+        switch(event)
+        {
+        case FL_PUSH:
+            {
+                const vec2i xy(Fl::event_x(),
+                               Fl::event_y());
+                const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
+                                 static_cast<float>(-xy[1])/(h()-1));
+                if(Fl::event_button() == FL_LEFT_MOUSE)
+                    lastpick  = fxy;
+                lastmouse = fxy;
+            }
+            take_focus();
+            return 1;
+        case FL_DRAG:
+            {
+                const vec2i xy(Fl::event_x(),
+                               Fl::event_y());
+                const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
+                                 static_cast<float>(-xy[1])/(h()-1));
+                std::cout << fxy << std::endl;
+                if(Fl::event_button() == FL_LEFT_MOUSE)
+                {
+                    low      -= fxy - lastpick;
+                    high     -= fxy - lastpick;
+                    lastpick  = fxy;
+                    retex();
+                    redraw();
+                }
+                lastmouse = fxy;
+            }
+            take_focus();
+            return 1;
+        case FL_KEYBOARD:
+            return 1;
+        case FL_MOUSEWHEEL:
+            {
+                const int    x   = Fl::event_dx();
+                const int    y   = Fl::event_dy();
+                const float  fy  = copysign(0.1, y);
+                vec2f        dv(high-low);
+                high            += dv * fy;
+                low             -= dv * fy;
+                retex();
+                redraw();
+            }
+            take_focus();
+            return 1;
+        default:
+            // pass other events to the base class...
+            return Fl_Gl_Window::handle(event);
+        }
+    }
+
+    vec2f lastmouse;
+    vec2f lastpick;
+
+    hwm::network     *net;
+    hwm::network_aux *netaux;
+    vec2f             low;
+    vec2f             high;
+
+    GLuint glew_state;
+    GLuint tex_;
+};
 
 int main(int argc, char *argv[])
 {
@@ -27,50 +244,21 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    vec2i im_res(10000, 10000);
-    cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
-                                                     im_res[0],
-                                                     im_res[1]);
-    cairo_t         *cr = cairo_create(cs);
+    hwm::network_aux neta(net);
 
-    cairo_set_source_rgba(cr, 0, 0, 0, 1.0);
-    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-    cairo_paint(cr);
+    fltkview mv(0, 0, 500, 500, "fltk View");
+    mv.net    = &net;
+    mv.netaux = &neta;
 
-    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     vec3f low(FLT_MAX);
     vec3f high(-FLT_MAX);
     net.bounding_box(low, high);
-    vec3f dv(high-low);
-    low  -= dv*0.1;
-    high += dv*0.1;
-    dv   *= 1.2;
+    mv.low  = sub<0,2>::vector(low);
+    mv.high = sub<0,2>::vector(high);
 
-    const float view_aspect  = static_cast<float>(im_res[0])/im_res[1];
-    const float scene_aspect = dv[0]/dv[1];
+    mv.take_focus();
+    Fl::visual(FL_DOUBLE|FL_DEPTH);
 
-    float scale;
-    if(view_aspect > scene_aspect)
-        scale = im_res[1]/dv[1];
-    else
-        scale = im_res[0]/dv[0];
-
-    cairo_scale(cr,
-                scale,
-                -scale);
-    cairo_translate(cr,
-                    -low[0],
-                    low[1]);
-
-    cairo_set_line_width(cr, 0.5);
-    cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
-
-    hwm::network_aux neta(net);
-    neta.cairo_roads(cr);
-
-    cairo_destroy(cr);
-    cairo_surface_write_to_png(cs, "test2d.png");
-    cairo_surface_destroy(cs);
-
-    return 0;
+    mv.show(1, argv);
+    return Fl::run();
 }
