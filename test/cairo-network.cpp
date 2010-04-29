@@ -44,6 +44,11 @@ static void cscale_to_box(vec2f &low, vec2f &high,
     high = center + dv/2;
 }
 
+static vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high, const vec2i &window)
+{
+    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
+}
+
 class fltkview : public Fl_Gl_Window
 {
 public:
@@ -256,6 +261,10 @@ public:
                                  1-static_cast<float>(xy[1])/(h()-1));
                 lastpick  = fxy;
                 lastmouse = fxy;
+
+                vec2f lo, hi;
+                cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
+                std::cout << "World point: " << world_point(vec2i(xy[0], h()-xy[0]), lo, hi, vec2i(w(), h())) << std::endl;
             }
             take_focus();
             return 1;
@@ -265,7 +274,7 @@ public:
                                Fl::event_y());
                 const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
                                  1-static_cast<float>(xy[1])/(h()-1));
-                if(Fl::event_button() == FL_LEFT_MOUSE)
+                if(Fl::event_button() == FL_MIDDLE_MOUSE)
                 {
                     vec2f fac;
                     if(w() > h())
@@ -306,9 +315,11 @@ public:
             return 1;
         case FL_MOUSEWHEEL:
             {
-                const int   x   = Fl::event_dx();
-                const int   y   = Fl::event_dy();
-                const float fy  = copysign(0.5, y);
+                const vec2i xy(Fl::event_x(),
+                               Fl::event_y());
+                const vec2i dxy(Fl::event_dx(),
+                                Fl::event_dy());
+                const float fy = copysign(0.5, dxy[1]);
 
                 if(Fl::event_state() & FL_SHIFT)
                 {
@@ -363,7 +374,7 @@ int main(int argc, char *argv[])
     net.build_intersections();
     net.build_fictitious_lanes();
     net.auto_scale_memberships();
-    net.center();
+    //    net.center();
     std::cerr << "HWM net loaded successfully" << std::endl;
 
     try
