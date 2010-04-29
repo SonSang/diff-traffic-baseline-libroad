@@ -19,9 +19,9 @@ static void box_to_cscale(vec2f &center, float &scale,
     const float scene_aspect = dv[0]/dv[1];
 
     if(view_aspect > scene_aspect)
-        scale = window[1]/dv[1];
+        scale = dv[0];
     else
-        scale = window[0]/dv[0];
+        scale = dv[1];
 }
 
 static void cscale_to_box(vec2f &low, vec2f &high,
@@ -31,16 +31,16 @@ static void cscale_to_box(vec2f &low, vec2f &high,
     vec2f dv;
     if(window[0] > window[1])
     {
-        dv[0] =  window[0]/(2*scale)*window[0]/(4*window[1]);
-        dv[1] =  window[1]/(2*scale);
+        dv[0] =  scale*window[0]/window[1];
+        dv[1] =  scale;
     }
     else
     {
-        dv[0] =  window[0]/(2*scale);
-        dv[1] =  window[1]/(2*scale)*window[1]/(4*window[0]);
+        dv[0] =  scale;
+        dv[1] =  scale*window[1]/window[0];
     }
-    low  = center - dv;
-    high = center + dv;
+    low  = center - dv/2;
+    high = center + dv/2;
 }
 
 class fltkview : public Fl_Gl_Window
@@ -80,8 +80,8 @@ public:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            retex(center, scale, vec2i(w(), h()));
         }
-        retex(center, scale, vec2i(w(), h()));
     }
 
     void retex(const vec2f &my_center, const float my_scale, const vec2i &im_res)
@@ -101,12 +101,22 @@ public:
                         im_res[1]/2);
 
         cairo_scale(cr,
-                    my_scale,
-                    my_scale);
+                    im_res[0]/my_scale,
+                    im_res[1]/my_scale);
+
+
+        if(im_res[0] > im_res[1])
+            cairo_scale(cr,
+                        static_cast<float>(im_res[1])/im_res[0],
+                        1.0);
+        else
+            cairo_scale(cr,
+                        1.0,
+                        static_cast<float>(im_res[0])/im_res[1]);
 
         cairo_translate(cr,
-                        my_center[0],
-                        my_center[1]);
+                        -my_center[0],
+                        -my_center[1]);
 
         cairo_set_line_width(cr, 0.5);
         netaux->cairo_roads(cr);
@@ -126,11 +136,6 @@ public:
         cairo_surface_destroy(cs);
 
         cscale_to_box(tex_low, tex_high, my_center, my_scale, im_res);
-        std::cout << "tex low: " << tex_low
-                  << " tex high: " << tex_high
-                  << " center: " << my_center
-                  << " scale: " << my_scale
-                  << " res: " << im_res << std::endl;
     }
 
     void draw()
@@ -152,7 +157,7 @@ public:
         glLoadIdentity();
 
         vec2f lo, hi;
-        cscale_to_box(lo, hi, center, scale, vec2i( w(), h()));
+        cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
         gluOrtho2D(lo[0], hi[0], lo[1], hi[1]);
 
         glMatrixMode(GL_MODELVIEW);
@@ -191,7 +196,7 @@ public:
                 const vec2i xy(Fl::event_x(),
                                Fl::event_y());
                 const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
-                                 static_cast<float>(-xy[1])/(h()-1));
+                                 1-static_cast<float>(xy[1])/(h()-1));
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                     lastpick  = fxy;
                 lastmouse = fxy;
@@ -203,19 +208,18 @@ public:
                 const vec2i xy(Fl::event_x(),
                                Fl::event_y());
                 const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
-                                 static_cast<float>(-xy[1])/(h()-1));
+                                 1-static_cast<float>(xy[1])/(h()-1));
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
+                    vec2f fac;
+                    if(w() > h())
+                        fac = vec2f(static_cast<float>(w())/h(), 1.0);
+                    else
+                        fac = vec2f(1.0, static_cast<float>(h())/w());
 
-                    vec2f lo, hi;
-                    cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
-                    lo += (fxy - lastpick)*w();
-                    hi += (fxy - lastpick)*h();
-                    box_to_cscale(center, scale, lo, hi, vec2i(w(), h()));
-
+                    const vec2f dvec((fxy - lastpick)*fac*scale);
+                    center   -= dvec;
                     lastpick  = fxy;
-
-                    // retex();
                     redraw();
                 }
                 lastmouse = fxy;
@@ -226,8 +230,6 @@ public:
             switch(Fl::event_key())
             {
             case ' ':
-                // tex_low  = view_low;
-                // tex_high = view_high;
                 retex(center, scale, vec2i(w(), h()));
                 redraw();
                 break;
@@ -237,9 +239,8 @@ public:
             {
                 const int   x   = Fl::event_dx();
                 const int   y   = Fl::event_dy();
-                const float fy  = copysign(0.1, y);
+                const float fy  = copysign(0.5, y);
                 scale          *= std::pow(2.0, fy);
-                // retex();
                 redraw();
             }
             take_focus();
