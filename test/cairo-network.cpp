@@ -8,6 +8,41 @@
 #include "libroad/hwm_network.hpp"
 #include "geometric.hpp"
 
+static void box_to_cscale(vec2f &center, float &scale,
+                          const vec2f &low, const vec2f &high,
+                          const vec2i &window)
+{
+    center = vec2f(low+high)/2;
+
+    const vec2f dv(high-low);
+    const float view_aspect  = static_cast<float>(window[0])/window[1];
+    const float scene_aspect = dv[0]/dv[1];
+
+    if(view_aspect > scene_aspect)
+        scale = window[1]/dv[1];
+    else
+        scale = window[0]/dv[0];
+}
+
+static void cscale_to_box(vec2f &low, vec2f &high,
+                          const vec2f &center, const float &scale,
+                          const vec2i &window)
+{
+    vec2f dv;
+    if(window[0] > window[1])
+    {
+        dv[0] =  window[0]/(2*scale)*window[0]/(4*window[1]);
+        dv[1] =  window[1]/(2*scale);
+    }
+    else
+    {
+        dv[0] =  window[0]/(2*scale);
+        dv[1] =  window[1]/(2*scale)*window[1]/(4*window[0]);
+    }
+    low  = center - dv;
+    high = center + dv;
+}
+
 class fltkview : public Fl_Gl_Window
 {
 public:
@@ -40,37 +75,17 @@ public:
             glGenTextures(1, &tex_);
             glBindTexture (GL_TEXTURE_2D, tex_);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         }
-        tex_low  = view_low;
-        tex_high = view_high;
-        retex(vec2i(w(), h()));
+        retex(center, scale, vec2i(w(), h()));
     }
 
-    void retex(const vec2i &im_res)
+    void retex(const vec2f &my_center, const float my_scale, const vec2i &im_res)
     {
-        vec2f dv(tex_high-tex_low);
-
-        const float view_aspect  = static_cast<float>(im_res[0])/im_res[1];
-        const float scene_aspect = dv[0]/dv[1];
-
-        float scale;
-        vec2f tr;
-
-        if(std::abs(view_aspect - scene_aspect) > 1e-4)
-        {
-            std::cerr << "Aspects in retex seem off" << std::endl;
-        }
-
-        if(view_aspect > scene_aspect)
-            scale = im_res[1]/dv[1];
-        else
-            scale = im_res[0]/dv[0];
-
-        tr = vec2f((im_res[0] - dv[0]*scale)/2, (im_res[1] - dv[1]*scale)/2);
         cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
                                                          im_res[0],
                                                          im_res[1]);
@@ -82,15 +97,16 @@ public:
         cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
         cairo_translate(cr,
-                        tr[0],
-                        tr[1]);
+                        im_res[0]/2,
+                        im_res[1]/2);
+
         cairo_scale(cr,
-                    scale,
-                    scale);
+                    my_scale,
+                    my_scale);
 
         cairo_translate(cr,
-                       -tex_low[0],
-                       -tex_low[1]);
+                        my_center[0],
+                        my_center[1]);
 
         cairo_set_line_width(cr, 0.5);
         netaux->cairo_roads(cr);
@@ -108,6 +124,13 @@ public:
                       cairo_image_surface_get_data(cs));
 
         cairo_surface_destroy(cs);
+
+        cscale_to_box(tex_low, tex_high, my_center, my_scale, im_res);
+        std::cout << "tex low: " << tex_low
+                  << " tex high: " << tex_high
+                  << " center: " << my_center
+                  << " scale: " << my_scale
+                  << " res: " << im_res << std::endl;
     }
 
     void draw()
@@ -127,7 +150,10 @@ public:
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        gluOrtho2D(view_low[0], view_high[1], view_low[1], view_high[1]);
+
+        vec2f lo, hi;
+        cscale_to_box(lo, hi, center, scale, vec2i( w(), h()));
+        gluOrtho2D(lo[0], hi[0], lo[1], hi[1]);
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -176,14 +202,19 @@ public:
             {
                 const vec2i xy(Fl::event_x(),
                                Fl::event_y());
-                const vec2f fxy( static_cast<float>(xy[0]/(w()-1)),
+                const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
                                  static_cast<float>(-xy[1])/(h()-1));
-                std::cout << fxy << std::endl;
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
-                    view_low  -= fxy - lastpick;
-                    view_high -= fxy - lastpick;
-                    lastpick   = fxy;
+
+                    vec2f lo, hi;
+                    cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
+                    lo += (fxy - lastpick)*w();
+                    hi += (fxy - lastpick)*h();
+                    box_to_cscale(center, scale, lo, hi, vec2i(w(), h()));
+
+                    lastpick  = fxy;
+
                     // retex();
                     redraw();
                 }
@@ -195,9 +226,9 @@ public:
             switch(Fl::event_key())
             {
             case ' ':
-                tex_low  = view_low;
-                tex_high = view_high;
-                retex(vec2i(w(), h()));
+                // tex_low  = view_low;
+                // tex_high = view_high;
+                retex(center, scale, vec2i(w(), h()));
                 redraw();
                 break;
             }
@@ -207,9 +238,7 @@ public:
                 const int   x   = Fl::event_dx();
                 const int   y   = Fl::event_dy();
                 const float fy  = copysign(0.1, y);
-                vec2f       dv(view_high-view_low);
-                view_high      += dv * fy;
-                view_low       -= dv * fy;
+                scale          *= std::pow(2.0, fy);
                 // retex();
                 redraw();
             }
@@ -226,10 +255,10 @@ public:
 
     hwm::network     *net;
     hwm::network_aux *netaux;
-    vec2f             view_low;
-    vec2f             view_high;
     vec2f             tex_low;
     vec2f             tex_high;
+    vec2f             center;
+    float             scale;
 
     GLuint glew_state;
     GLuint tex_;
@@ -271,8 +300,8 @@ int main(int argc, char *argv[])
     vec3f low(FLT_MAX);
     vec3f high(-FLT_MAX);
     net.bounding_box(low, high);
-    mv.view_low  = sub<0,2>::vector(low);
-    mv.view_high = sub<0,2>::vector(high);
+    std::cout << low << " " << high << std::endl;
+    box_to_cscale(mv.center, mv.scale, sub<0,2>::vector(low), sub<0,2>::vector(high), vec2i(500,500));
 
     mv.take_focus();
     Fl::visual(FL_DOUBLE|FL_DEPTH);
