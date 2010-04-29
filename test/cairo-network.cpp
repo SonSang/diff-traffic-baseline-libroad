@@ -1,3 +1,4 @@
+#include <Magick++.h>
 #include <GL/glew.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
@@ -52,7 +53,12 @@ public:
                                                           net(0),
                                                           netaux(0),
                                                           glew_state(GLEW_OK+1),
-                                                          tex_(0)
+                                                          road_tex_(0),
+                                                          background_tex_(0),
+                                                          back_image(0),
+                                                          back_image_center(0),
+                                                          back_image_scale(1),
+                                                          back_image_yscale(1)
     {
         this->resizable(this);
     }
@@ -70,10 +76,10 @@ public:
 
     void init_textures()
     {
-        if(!glIsTexture(tex_))
+        if(!glIsTexture(road_tex_))
         {
-            glGenTextures(1, &tex_);
-            glBindTexture (GL_TEXTURE_2D, tex_);
+            glGenTextures(1, &road_tex_);
+            glBindTexture (GL_TEXTURE_2D, road_tex_);
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -81,6 +87,33 @@ public:
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
             retex(center, scale, vec2i(w(), h()));
+        }
+        if(back_image && !glIsTexture(background_tex_))
+        {
+            glGenTextures(1, &background_tex_);
+            glBindTexture (GL_TEXTURE_2D, background_tex_);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+            Magick::Image im(*back_image);
+            im.flip();
+            back_image_dim = vec2i(im.columns(), im.rows());
+            unsigned char *pix = new unsigned char[back_image_dim[0]*back_image_dim[1]*4];
+            im.write(0, 0, back_image_dim[0], back_image_dim[1], "RGBA", Magick::CharPixel, pix);
+            glTexImage2D (GL_TEXTURE_2D,
+                          0,
+                          GL_RGBA,
+                          back_image_dim[0],
+                          back_image_dim[1],
+                          0,
+                          GL_RGBA,
+                          GL_UNSIGNED_BYTE,
+                          pix);
+            delete[] pix;
         }
     }
 
@@ -90,7 +123,7 @@ public:
                                                          im_res[0],
                                                          im_res[1]);
         cairo_t         *cr = cairo_create(cs);
-        cairo_set_source_rgba(cr, 0.5, 0, 0, 1.0);
+        cairo_set_source_rgba(cr, 0.0, 0, 0, 0.0);
         cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
         cairo_paint(cr);
 
@@ -149,9 +182,11 @@ public:
                 init_glew();
 
             init_textures();
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
 
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -162,11 +197,33 @@ public:
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         glEnable(GL_TEXTURE_2D);
-        glBindTexture (GL_TEXTURE_2D, tex_);
+        if(back_image)
+        {
+            glBindTexture (GL_TEXTURE_2D, background_tex_);
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glPushMatrix();
+            glTranslatef(-back_image_center[0], -back_image_center[1], 0);
+            glScalef    (back_image_scale, back_image_yscale*back_image_scale,   1);
+
+            glTranslatef(-back_image_dim[0]/2, -back_image_dim[1]/2, 0);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 0.0);
+            glVertex2i(0, 0);
+            glTexCoord2f(1.0, 0.0);
+            glVertex2i(back_image_dim[0], 0);
+            glTexCoord2f(1.0, 1.0);
+            glVertex2iv(back_image_dim.data());
+            glTexCoord2f(0.0, 1.0);
+            glVertex2i(0, back_image_dim[1]);
+            glEnd();
+            glPopMatrix();
+        }
+
+        glBindTexture (GL_TEXTURE_2D, road_tex_);
+
         glPushMatrix();
 
         glBegin(GL_QUADS);
@@ -197,8 +254,7 @@ public:
                                Fl::event_y());
                 const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
                                  1-static_cast<float>(xy[1])/(h()-1));
-                if(Fl::event_button() == FL_LEFT_MOUSE)
-                    lastpick  = fxy;
+                lastpick  = fxy;
                 lastmouse = fxy;
             }
             take_focus();
@@ -222,6 +278,19 @@ public:
                     lastpick  = fxy;
                     redraw();
                 }
+                else if(Fl::event_button() == FL_RIGHT_MOUSE)
+                {
+                    vec2f fac;
+                    if(w() > h())
+                        fac = vec2f(static_cast<float>(w())/h(), 1.0);
+                    else
+                        fac = vec2f(1.0, static_cast<float>(h())/w());
+
+                    const vec2f dvec((fxy - lastpick)*fac*scale);
+                    back_image_center -= dvec;
+                    lastpick           = fxy;
+                    redraw();
+                }
                 lastmouse = fxy;
             }
             take_focus();
@@ -240,7 +309,17 @@ public:
                 const int   x   = Fl::event_dx();
                 const int   y   = Fl::event_dy();
                 const float fy  = copysign(0.5, y);
-                scale          *= std::pow(2.0, fy);
+
+                if(Fl::event_state() & FL_SHIFT)
+                {
+                    if(Fl::event_state() & FL_CTRL)
+                        back_image_yscale *= std::pow(2.0, 0.1*fy);
+                    else
+                        back_image_scale  *= std::pow(2.0, 0.5*fy);
+                }
+                else
+                    scale *= std::pow(2.0, fy);
+
                 redraw();
             }
             take_focus();
@@ -261,8 +340,14 @@ public:
     vec2f             center;
     float             scale;
 
-    GLuint glew_state;
-    GLuint tex_;
+    GLuint   glew_state;
+    GLuint   road_tex_;
+    GLuint   background_tex_;
+    char   **back_image;
+    vec2i    back_image_dim;
+    vec2f    back_image_center;
+    float    back_image_scale;
+    float    back_image_yscale;
 };
 
 int main(int argc, char *argv[])
@@ -270,7 +355,7 @@ int main(int argc, char *argv[])
     std::cout << libroad_package_string() << std::endl;
     if(argc < 2)
     {
-        std::cerr << "Usage: " << argv[0] << " <input network>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <input network> [background image]" << std::endl;
         return 1;
     }
     hwm::network net(hwm::load_xml_network(argv[1], vec3f(1.0, 1.0, 1.0f)));
@@ -295,8 +380,10 @@ int main(int argc, char *argv[])
     hwm::network_aux neta(net);
 
     fltkview mv(0, 0, 500, 500, "fltk View");
-    mv.net    = &net;
-    mv.netaux = &neta;
+    mv.net            = &net;
+    mv.netaux         = &neta;
+    if(argc == 3)
+        mv.back_image = argv+2;
 
     vec3f low(FLT_MAX);
     vec3f high(-FLT_MAX);
