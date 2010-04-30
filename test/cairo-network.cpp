@@ -46,7 +46,10 @@ static void cscale_to_box(vec2f &low, vec2f &high,
 
 static vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high, const vec2i &window)
 {
-    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
+    vec2f unit(static_cast<float>(input[0])/(window[0]-1), static_cast<float>(input[1])/(window[1]-1));
+    vec2f scaled(unit*(high-low));
+    return vec2f(scaled + low);
+    //    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
 }
 
 class fltkview : public Fl_Gl_Window
