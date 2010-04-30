@@ -46,10 +46,7 @@ static void cscale_to_box(vec2f &low, vec2f &high,
 
 static vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high, const vec2i &window)
 {
-    vec2f unit(static_cast<float>(input[0])/(window[0]-1), static_cast<float>(input[1])/(window[1]-1));
-    vec2f scaled(unit*(high-low));
-    return vec2f(scaled + low);
-    //    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
+    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
 }
 
 class fltkview : public Fl_Gl_Window
@@ -267,7 +264,6 @@ public:
 
                 vec2f lo, hi;
                 cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
-                std::cout << "World point: " << world_point(vec2i(xy[0], h()-xy[0]), lo, hi, vec2i(w(), h())) << std::endl;
             }
             take_focus();
             return 1;
