@@ -44,16 +44,34 @@ static void cscale_to_box(vec2f &low, vec2f &high,
     high = center + dv/2;
 }
 
+static vec2f world_point(const vec2i &input, const vec2f &center, const float &scale, const vec2i &window)
+{
+    vec2f lo, hi;
+    cscale_to_box(lo, hi, center, scale, window);
+    std::cout << "lo " << lo << " hi " << hi << std::endl;
+    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(hi-lo) + lo);
+}
+
 static vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high, const vec2i &window)
 {
     return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
 }
 
+struct rectangle
+{
+    rectangle() {};
+    rectangle(const vec2f &lo, const vec2f &hi)
+        : low(lo), high(hi)
+    {}
+
+    vec2f low;
+    vec2f high;
+};
+
 class fltkview : public Fl_Gl_Window
 {
 public:
     fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
-                                                          lastmouse(0),
                                                           lastpick(0),
                                                           net(0),
                                                           netaux(0),
@@ -63,7 +81,9 @@ public:
                                                           back_image(0),
                                                           back_image_center(0),
                                                           back_image_scale(1),
-                                                          back_image_yscale(1)
+                                                          back_image_yscale(1),
+                                                          overlay_tex_(0),
+                                                          drawing(false)
     {
         this->resizable(this);
     }
@@ -91,7 +111,7 @@ public:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-            retex(center, scale, vec2i(w(), h()));
+            retex_roads(center, scale, vec2i(w(), h()));
         }
         if(back_image && !glIsTexture(background_tex_))
         {
@@ -120,9 +140,21 @@ public:
                           pix);
             delete[] pix;
         }
+        if(!glIsTexture(overlay_tex_))
+        {
+            glGenTextures(1, &overlay_tex_);
+            glBindTexture (GL_TEXTURE_2D, overlay_tex_);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            retex_overlay(center, scale, vec2i(w(), h()));
+        }
     }
 
-    void retex(const vec2f &my_center, const float my_scale, const vec2i &im_res)
+    void retex_roads(const vec2f &my_center, const float my_scale, const vec2i &im_res)
     {
         cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
                                                          im_res[0],
@@ -161,6 +193,7 @@ public:
 
         cairo_destroy(cr);
 
+        glBindTexture (GL_TEXTURE_2D, road_tex_);
         glTexImage2D (GL_TEXTURE_2D,
                       0,
                       GL_RGBA,
@@ -174,6 +207,90 @@ public:
         cairo_surface_destroy(cs);
 
         cscale_to_box(tex_low, tex_high, my_center, my_scale, im_res);
+    }
+
+    void retex_overlay(const vec2f &my_center, const float my_scale, const vec2i &im_res)
+    {
+        cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+                                                         im_res[0],
+                                                         im_res[1]);
+        cairo_t         *cr = cairo_create(cs);
+        cairo_set_source_rgba(cr, 0.0, 0, 0, 0.0);
+        cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+        cairo_paint(cr);
+
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+
+        cairo_translate(cr,
+                        im_res[0]/2,
+                        im_res[1]/2);
+
+        cairo_scale(cr,
+                    im_res[0]/my_scale,
+                    im_res[1]/my_scale);
+
+
+        if(im_res[0] > im_res[1])
+            cairo_scale(cr,
+                        static_cast<float>(im_res[1])/im_res[0],
+                        1.0);
+        else
+            cairo_scale(cr,
+                        1.0,
+                        static_cast<float>(im_res[0])/im_res[1]);
+
+        cairo_translate(cr,
+                        -my_center[0],
+                        -my_center[1]);
+
+        cairo_matrix_t cmat;
+        cairo_get_matrix(cr, &cmat);
+
+        BOOST_FOREACH(const rectangle &r, rectangles)
+        {
+            cairo_set_matrix(cr, &cmat);
+
+            cairo_rectangle(cr, r.low[0], r.low[1], r.high[0]-r.low[0], r.high[1]-r.low[1]);
+            cairo_set_source_rgba(cr, 67/255.0, 127/255.0, 195/255.0, 0.5);
+            cairo_fill_preserve(cr);
+            cairo_set_source_rgba(cr, 17/255.0, 129/255.0, 255/255.0, 0.7);
+            cairo_identity_matrix(cr);
+            cairo_set_line_width(cr, 2.0);
+            cairo_stroke(cr);
+        }
+
+        if(drawing)
+        {
+            const vec2f low(std::min(first_point[0], second_point[0]),
+                            std::min(first_point[1], second_point[1]));
+            const vec2f high(std::max(first_point[0], second_point[0]),
+                             std::max(first_point[1], second_point[1]));
+
+            cairo_set_matrix(cr, &cmat);
+            cairo_rectangle(cr, low[0], low[1], high[0]-low[0], high[1]-low[1]);
+            cairo_set_source_rgba(cr, 67/255.0, 127/255.0, 195/255.0, 0.5);
+            cairo_fill_preserve(cr);
+            cairo_set_source_rgba(cr, 17/255.0, 129/255.0, 255/255.0, 0.7);
+            cairo_identity_matrix(cr);
+            cairo_set_line_width(cr, 2.0);
+            cairo_stroke(cr);
+        }
+
+        cairo_destroy(cr);
+
+        glBindTexture(GL_TEXTURE_2D, overlay_tex_);
+        glTexImage2D (GL_TEXTURE_2D,
+                      0,
+                      GL_RGBA,
+                      im_res[0],
+                      im_res[1],
+                      0,
+                      GL_BGRA,
+                      GL_UNSIGNED_BYTE,
+                      cairo_image_surface_get_data(cs));
+
+        cairo_surface_destroy(cs);
     }
 
     void draw()
@@ -230,7 +347,6 @@ public:
         glBindTexture (GL_TEXTURE_2D, road_tex_);
 
         glPushMatrix();
-
         glBegin(GL_QUADS);
         glTexCoord2f(0.0, 0.0);
         glVertex2fv(tex_low.data());
@@ -240,6 +356,21 @@ public:
         glVertex2fv(tex_high.data());
         glTexCoord2f(0.0, 1.0);
         glVertex2f(tex_low[0], tex_high[1]);
+        glEnd();
+        glPopMatrix();
+
+        glBindTexture (GL_TEXTURE_2D, overlay_tex_);
+        retex_overlay(center, scale, vec2i(w(), h()));
+        glPushMatrix();
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 0.0);
+        glVertex2fv(lo.data());
+        glTexCoord2f(1.0, 0.0);
+        glVertex2f(hi[0], lo[1]);
+        glTexCoord2f(1.0, 1.0);
+        glVertex2fv(hi.data());
+        glTexCoord2f(0.0, 1.0);
+        glVertex2f(lo[0], hi[1]);
         glEnd();
         glPopMatrix();
 
@@ -257,49 +388,57 @@ public:
             {
                 const vec2i xy(Fl::event_x(),
                                Fl::event_y());
-                const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
-                                 1-static_cast<float>(xy[1])/(h()-1));
-                lastpick  = fxy;
-                lastmouse = fxy;
+                const vec2f world(world_point(vec2i(xy[0], h()-xy[1]), center, scale, vec2i(w(), h())));
 
-                vec2f lo, hi;
-                cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
+                if(Fl::event_button() == FL_LEFT_MOUSE)
+                    first_point = world;
+
+                lastpick = world;
             }
             take_focus();
+            return 1;
+        case FL_RELEASE:
+            {
+                if(Fl::event_button() == FL_LEFT_MOUSE)
+                {
+                    if(drawing)
+                    {
+                        rectangles.push_back(rectangle());
+                        rectangles.back().low[0]  = std::min(first_point[0], second_point[0]);
+                        rectangles.back().low[1]  = std::min(first_point[1], second_point[1]);
+                        rectangles.back().high[0] = std::max(first_point[0], second_point[0]);
+                        rectangles.back().high[1] = std::max(first_point[1], second_point[1]);
+                        drawing = false;
+                        redraw();
+                    }
+                }
+            }
             return 1;
         case FL_DRAG:
             {
                 const vec2i xy(Fl::event_x(),
                                Fl::event_y());
-                const vec2f fxy( static_cast<float>(xy[0])/(w()-1),
-                                 1-static_cast<float>(xy[1])/(h()-1));
-                if(Fl::event_button() == FL_MIDDLE_MOUSE)
+                const vec2f world(world_point(vec2i(xy[0], h()-xy[1]), center, scale, vec2i(w(), h())));
+                vec2f dvec(0);
+                if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
-                    vec2f fac;
-                    if(w() > h())
-                        fac = vec2f(static_cast<float>(w())/h(), 1.0);
-                    else
-                        fac = vec2f(1.0, static_cast<float>(h())/w());
-
-                    const vec2f dvec((fxy - lastpick)*fac*scale);
-                    center   -= dvec;
-                    lastpick  = fxy;
+                    drawing      = true;
+                    second_point = world;
+                    redraw();
+                }
+                else if(Fl::event_button() == FL_MIDDLE_MOUSE)
+                {
+                    dvec = vec2f(world - lastpick);
+                    center -= dvec;
                     redraw();
                 }
                 else if(Fl::event_button() == FL_RIGHT_MOUSE)
                 {
-                    vec2f fac;
-                    if(w() > h())
-                        fac = vec2f(static_cast<float>(w())/h(), 1.0);
-                    else
-                        fac = vec2f(1.0, static_cast<float>(h())/w());
-
-                    const vec2f dvec((fxy - lastpick)*fac*scale);
+                    dvec = vec2f(world - lastpick);
                     back_image_center -= dvec;
-                    lastpick           = fxy;
                     redraw();
                 }
-                lastmouse = fxy;
+                lastpick = world-dvec;
             }
             take_focus();
             return 1;
@@ -307,7 +446,7 @@ public:
             switch(Fl::event_key())
             {
             case ' ':
-                retex(center, scale, vec2i(w(), h()));
+                retex_roads(center, scale, vec2i(w(), h()));
                 redraw();
                 break;
             }
@@ -340,7 +479,6 @@ public:
         }
     }
 
-    vec2f lastmouse;
     vec2f lastpick;
 
     hwm::network     *net;
@@ -358,6 +496,13 @@ public:
     vec2f    back_image_center;
     float    back_image_scale;
     float    back_image_yscale;
+
+    GLuint                 overlay_tex_;
+
+    std::vector<rectangle> rectangles;
+    bool                   drawing;
+    vec2f                  first_point;
+    vec2f                  second_point;
 };
 
 int main(int argc, char *argv[])

@@ -149,11 +149,13 @@ namespace hwm
 
     void network_aux::cairo_roads(cairo_t *c) const
     {
+        cairo_set_line_cap(c, CAIRO_LINE_CAP_SQUARE);
         BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
         {
             cairo_road(c, rrm_v.second, net.lane_width, true);
             cairo_set_source_rgba(c, 237.0/255, 234.0/255, 186.0/255, 1.0);
-            cairo_fill(c);
+            cairo_fill_preserve(c);
+            cairo_stroke(c);
             cairo_road(c, rrm_v.second, net.lane_width, false);
             cairo_set_source_rgba(c, 135.0/255, 103.0/255, 61.0/255, 1.0);
             cairo_stroke(c);
