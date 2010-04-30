@@ -9,6 +9,7 @@
 #include "sumo_network.hpp"
 #include "osm_network.hpp"
 #include "hwm_texture_gen.hpp"
+#include "rtree.hpp"
 #if HAVE_CAIRO
 #include <cairo.h>
 #endif
@@ -264,6 +265,29 @@ namespace hwm
     typedef lane_map::value_type         lane_pair;
     typedef intersection_map::value_type intersection_pair;
 
+    struct road_spatial
+    {
+        struct entry
+        {
+            entry();
+            entry(road *in_r, int f);
+
+            void bounding_box(rtree2d::aabb &rect) const;
+            road *r;
+            int   feature;
+        };
+
+        road_spatial();
+        ~road_spatial();
+
+        void build(road_map &roads);
+
+        std::vector<entry> query(const rtree2d::aabb &rect) const;
+
+        rtree2d            *tree;
+        std::vector<entry>  items;
+    };
+
     struct network
     {
         static const int SVG_ROADS=1, SVG_LANES=4, SVG_ARCS=8, SVG_CIRCLES=16;
@@ -286,6 +310,7 @@ namespace hwm
         void auto_scale_memberships();
 
         void center(bool z=false);
+        void build_spatial();
 
         void translate(const vec3f &o);
 
@@ -297,6 +322,8 @@ namespace hwm
         road_map         roads;
         lane_map         lanes;
         intersection_map intersections;
+
+        road_spatial road_space;
     };
 
     struct network_aux

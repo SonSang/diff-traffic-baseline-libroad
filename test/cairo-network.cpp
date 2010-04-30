@@ -48,7 +48,6 @@ static vec2f world_point(const vec2i &input, const vec2f &center, const float &s
 {
     vec2f lo, hi;
     cscale_to_box(lo, hi, center, scale, window);
-    std::cout << "lo " << lo << " hi " << hi << std::endl;
     return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(hi-lo) + lo);
 }
 
@@ -277,6 +276,20 @@ public:
             cairo_stroke(cr);
         }
 
+        BOOST_FOREACH(const hwm::road_spatial::entry &e, query_results)
+        {
+            cairo_set_matrix(cr, &cmat);
+            vec2f low, high;
+            e.r->rep.bound_feature2d(low, high, e.feature);
+            cairo_rectangle(cr, low[0], low[1], high[0]-low[0], high[1]-low[1]);
+            cairo_set_source_rgba(cr, 195/255.0, 127/255.0, 67/255.0, 0.5);
+            cairo_fill_preserve(cr);
+            cairo_set_source_rgba(cr, 255/255.0, 129/255.0, 2517/255.0, 0.7);
+            cairo_identity_matrix(cr);
+            cairo_set_line_width(cr, 2.0);
+            cairo_stroke(cr);
+        }
+
         cairo_destroy(cr);
 
         glBindTexture(GL_TEXTURE_2D, overlay_tex_);
@@ -403,12 +416,17 @@ public:
                 {
                     if(drawing)
                     {
+                        rectangles.clear();
                         rectangles.push_back(rectangle());
                         rectangles.back().low[0]  = std::min(first_point[0], second_point[0]);
                         rectangles.back().low[1]  = std::min(first_point[1], second_point[1]);
                         rectangles.back().high[0] = std::max(first_point[0], second_point[0]);
                         rectangles.back().high[1] = std::max(first_point[1], second_point[1]);
                         drawing = false;
+
+                        rtree2d::aabb r(rectangles.back().low[0], rectangles.back().high[0],
+                                        rectangles.back().low[1], rectangles.back().high[1]);
+                        query_results = net->road_space.query(r);
                         redraw();
                     }
                 }
@@ -499,10 +517,11 @@ public:
 
     GLuint                 overlay_tex_;
 
-    std::vector<rectangle> rectangles;
-    bool                   drawing;
-    vec2f                  first_point;
-    vec2f                  second_point;
+    std::vector<rectangle>                rectangles;
+    bool                                  drawing;
+    vec2f                                 first_point;
+    vec2f                                 second_point;
+    std::vector<hwm::road_spatial::entry> query_results;
 };
 
 int main(int argc, char *argv[])
@@ -518,7 +537,8 @@ int main(int argc, char *argv[])
     net.build_intersections();
     net.build_fictitious_lanes();
     net.auto_scale_memberships();
-    //    net.center();
+    net.center();
+    net.build_spatial();
     std::cerr << "HWM net loaded successfully" << std::endl;
 
     try
@@ -543,7 +563,6 @@ int main(int argc, char *argv[])
     vec3f low(FLT_MAX);
     vec3f high(-FLT_MAX);
     net.bounding_box(low, high);
-    std::cout << low << " " << high << std::endl;
     box_to_cscale(mv.center, mv.scale, sub<0,2>::vector(low), sub<0,2>::vector(high), vec2i(500,500));
 
     mv.take_focus();

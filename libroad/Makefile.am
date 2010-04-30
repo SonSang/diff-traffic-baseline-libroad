@@ -13,6 +13,7 @@ libroad_la_SOURCES  = polyline_road.cpp \
 		      hwm_xml_read.cpp \
 		      hwm_xml_write.cpp \
 		      hwm_network_aux.cpp \
+		      hwm_network_spatial.cpp \
 		      svg_helper.cpp \
 		      libroad_common.cpp
 pkginclude_HEADERS  = partition01.hpp \
@@ -26,7 +27,10 @@ pkginclude_HEADERS  = partition01.hpp \
 		      libroad_common.hpp \
 		      svg_helper.hpp \
 		      hwm_draw.hpp \
-		      hwm_texture_gen.hpp
+		      hwm_texture_gen.hpp \
+		      rtree.hpp \
+                      rtree-impl.hpp \
+                      hilbert.hpp
 
 libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
 libroad_la_LDFLAGS  = -static $(CAIRO_LIBS) $(BOOST_IOSTREAMS_LDFLAGS) $(BOOST_FILESYSTEM_LIBS)
