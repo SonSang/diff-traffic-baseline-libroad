@@ -9,53 +9,6 @@
 #include "libroad/hwm_network.hpp"
 #include "geometric.hpp"
 
-static void box_to_cscale(vec2f &center, float &scale,
-                          const vec2f &low, const vec2f &high,
-                          const vec2i &window)
-{
-    center = vec2f(low+high)/2;
-
-    const vec2f dv(high-low);
-    const float view_aspect  = static_cast<float>(window[0])/window[1];
-    const float scene_aspect = dv[0]/dv[1];
-
-    if(view_aspect > scene_aspect)
-        scale = dv[0];
-    else
-        scale = dv[1];
-}
-
-static void cscale_to_box(vec2f &low, vec2f &high,
-                          const vec2f &center, const float &scale,
-                          const vec2i &window)
-{
-    vec2f dv;
-    if(window[0] > window[1])
-    {
-        dv[0] =  scale*window[0]/window[1];
-        dv[1] =  scale;
-    }
-    else
-    {
-        dv[0] =  scale;
-        dv[1] =  scale*window[1]/window[0];
-    }
-    low  = center - dv/2;
-    high = center + dv/2;
-}
-
-static vec2f world_point(const vec2i &input, const vec2f &center, const float &scale, const vec2i &window)
-{
-    vec2f lo, hi;
-    cscale_to_box(lo, hi, center, scale, window);
-    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(hi-lo) + lo);
-}
-
-static vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high, const vec2i &window)
-{
-    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
-}
-
 struct rectangle
 {
     rectangle() {};

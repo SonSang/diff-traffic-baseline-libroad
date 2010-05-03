@@ -9,59 +9,27 @@
 #include "libroad/hwm_network.hpp"
 #include "../../test/geometric.hpp"
 
-static void box_to_cscale(vec2f &center, float &scale,
-                          const vec2f &low, const vec2f &high,
-                          const vec2i &window)
-{
-    center = vec2f(low+high)/2;
-
-    const vec2f dv(high-low);
-    const float view_aspect  = static_cast<float>(window[0])/window[1];
-    const float scene_aspect = dv[0]/dv[1];
-
-    if(view_aspect > scene_aspect)
-        scale = dv[0];
-    else
-        scale = dv[1];
-}
-
-static void cscale_to_box(vec2f &low, vec2f &high,
-                          const vec2f &center, const float &scale,
-                          const vec2i &window)
-{
-    vec2f dv;
-    if(window[0] > window[1])
-    {
-        dv[0] =  scale*window[0]/window[1];
-        dv[1] =  scale;
-    }
-    else
-    {
-        dv[0] =  scale;
-        dv[1] =  scale*window[1]/window[0];
-    }
-    low  = center - dv/2;
-    high = center + dv/2;
-}
-
-static vec2f world_point(const vec2i &input, const vec2f &center, const float &scale, const vec2i &window)
-{
-    vec2f lo, hi;
-    cscale_to_box(lo, hi, center, scale, window);
-    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(hi-lo) + lo);
-}
-
-static vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high, const vec2i &window)
-{
-    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
-}
-
 struct circle_partition
 {
-    void insert(float f)
+    void insert(float f, bool inside)
     {
-        divisions.insert(std::make_pair(f, false));
+        divisions.insert(std::make_pair(f, inside));
     };
+
+    void back_up(std::map<float,bool>::iterator &it)
+    {
+        if(it == divisions.begin())
+            it = divisions.end();
+        --it;
+    }
+
+    void advance(std::map<float,bool>::iterator &it)
+    {
+        ++it;
+        if(it == divisions.end())
+            it = divisions.begin();
+    }
+
     std::map<float,bool> divisions;
 };
 
@@ -74,8 +42,14 @@ struct circle
         return theta > 0 ? theta : 2*M_PI + theta;
     }
 
+    bool inside(const vec3f &p) const
+    {
+        return length2(p-center) < radius*radius;
+    }
+
     float radius;
     vec3f center;
+    vec2f range;
 };
 
 struct ray
@@ -152,35 +126,46 @@ struct simple_polygon : std::vector<vec3f>
     {
         return ray((*this)[e], (*this)[(e+1)%size()]);
     }
+
+    bool contains_circle(const circle &c) const
+    {
+        const bool first_inside(c.inside((*this)[0]));
+        for(size_t i = 1; i < size(); ++i)
+        {
+            if(c.inside((*this)[i]) != first_inside)
+                return true;
+        }
+        return false;
+    }
 };
 
 circle_partition chop_circle(const simple_polygon &p, const circle &c)
 {
-    std::cout << c.center << std::endl;
     circle_partition res;
     bool             looking_for_single = false;
     float            last_single;
     for(int i = 0; i < static_cast<int>(p.size()); ++i)
     {
-        const ray r(p.line(i));
-        vec2f     crossings;
-        const int crossing_no(r.intersect(crossings, c));
+        const bool p_inside(c.inside(p[i]));
+        const ray  r(p.line(i));
+        vec2f      crossings;
+        const int  crossing_no(r.intersect(crossings, c));
         if(crossing_no == 2)
         {
             vec2f param(c.arc(r.point(crossings[0])),
                         c.arc(r.point(crossings[1])));
             if(param[0] > param[0])
                 std::swap(param[0], param[1]);
-            res.insert(param[0]);
-            res.insert(param[1]);
+            res.insert(param[0], p_inside);
+            res.insert(param[1], !p_inside);
         }
         else if(crossing_no == 1)
         {
             float this_param(c.arc(r.point(crossings[0])));
             if(looking_for_single)
             {
-                res.insert(last_single);
-                res.insert(this_param);
+                res.insert(last_single, !p_inside);
+                res.insert(this_param, p_inside);
             }
             else
             {
@@ -191,6 +176,21 @@ circle_partition chop_circle(const simple_polygon &p, const circle &c)
     }
 
     return res;
+}
+
+static void draw_arc(cairo_t *cr, const circle &c, const vec2f &range, bool inside, const cairo_matrix_t *cmat)
+{
+    cairo_set_matrix(cr, cmat);
+    if(inside)
+        cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 1.0);
+    else
+        cairo_set_source_rgba(cr, 0.0, 0.0, 1.0, 1.0);
+    cairo_set_matrix(cr, cmat);
+    cairo_arc(cr, c.center[0], c.center[1], c.radius,
+              range[0], range[1]);
+    cairo_identity_matrix(cr);
+    cairo_set_line_width(cr, 2.0);
+    cairo_stroke(cr);
 }
 
 class fltkview : public Fl_Gl_Window
@@ -277,49 +277,51 @@ public:
             cairo_set_matrix(cr, &cmat);
             cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
             cairo_move_to(cr, sp->front()[0], sp->front()[1]);
-            for(int i = 1; i < sp->size(); ++i)
+            for(int i = 1; i < static_cast<int>(sp->size()); ++i)
                 cairo_line_to(cr, (*sp)[i][0], (*sp)[i][1]);
             cairo_line_to(cr, (*sp)[0][0], (*sp)[0][1]);
             cairo_identity_matrix(cr);
             cairo_set_line_width(cr, 2.0);
             cairo_stroke(cr);
         }
-        if(c)
-        {
-            cairo_set_matrix(cr, &cmat);
-            cairo_set_source_rgba(cr, 0.0, 1.0, 1.0, 1.0);
-            cairo_arc(cr, c->center[0], c->center[1],
-                      c->radius, 0, 2*M_PI);
-            cairo_identity_matrix(cr);
-            cairo_set_line_width(cr, 10.0);
-            cairo_stroke(cr);
-        }
 
         if(cp)
         {
+            cairo_identity_matrix(cr);
+            cairo_set_line_width(cr, 2.0);
+            cairo_set_matrix(cr, &cmat);
+
             assert(c);
-            bool which = false;
-            for(std::map<float, bool>::iterator current = cp->divisions.begin();
-                current != cp->divisions.end();
-                ++current)
+            if(cp->divisions.empty())
+                draw_arc(cr, *c, c->range, sp->contains_circle(*c), &cmat);
+            else
             {
-                std::map<float, bool>::const_iterator next = boost::next(current);
-                if(next == cp->divisions.end())
-                    next = cp->divisions.begin();
-
-                cairo_set_matrix(cr, &cmat);
-                if(which)
-                    cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 1.0);
+                std::map<float, bool>::iterator start(cp->divisions.upper_bound(c->range[0]));
+                std::map<float, bool>::iterator end  (cp->divisions.upper_bound(c->range[1]));
+                if(start == end)
+                {
+                    cp->back_up(start);
+                    draw_arc(cr, *c, c->range, start->second, &cmat);
+                }
                 else
-                    cairo_set_source_rgba(cr, 0.0, 0.0, 1.0, 1.0);
-
-                which = !which;
-
-                cairo_arc(cr, c->center[0], c->center[1],
-                          c->radius, current->first, next->first);
-                cairo_identity_matrix(cr);
-                cairo_set_line_width(cr, 2.0);
-                cairo_stroke(cr);
+                {
+                    cp->back_up(start);
+                    cp->back_up(end);
+                    {
+                        std::map<float, bool>::iterator next(start);
+                        cp->advance(next);
+                        draw_arc(cr, *c, vec2f(c->range[0], next->first), start->second, &cmat);
+                    }
+                    std::map<float, bool>::iterator current = start;
+                    cp->advance(current);
+                    for(; current != end; cp->advance(current))
+                    {
+                        std::map<float, bool>::iterator next(current);
+                        cp->advance(next);
+                        draw_arc(cr, *c, vec2f(current->first, next->first), current->second, &cmat);
+                    }
+                    draw_arc(cr, *c, vec2f(end->first, c->range[1]), end->second, &cmat);
+                }
             }
         }
 
@@ -427,6 +429,7 @@ public:
                     if(c)
                     {
                         sub<0,2>::vector(c->center) += dvec;
+                        std::cout << c->center << std::endl;
                         if(cp)
                             *cp = circle_partition(chop_circle(*sp, *c));
                     }
@@ -452,7 +455,17 @@ public:
                                 Fl::event_dy());
                 const float fy = copysign(0.5, dxy[1]);
 
-                scale *= std::pow(2.0, fy);
+                if(Fl::event_state() & FL_SHIFT)
+                {
+                    if(c)
+                    {
+                        c->radius *= std::pow(2.0, fy);
+                        if(cp)
+                            *cp = circle_partition(chop_circle(*sp, *c));
+                    }
+                }
+                else
+                    scale *= std::pow(2.0, fy);
 
                 redraw();
             }
@@ -480,16 +493,16 @@ int main(int argc, char *argv[])
     simple_polygon sp;
     sp.push_back(vec3f(-2.0,  2.0, 0.0));
     sp.push_back(vec3f(-2.0, -2.0, 0.0));
-    sp.push_back(vec3f( 2.0, 0.0, 0.0));
-    // sp.push_back(vec3f(-1.0, -2.0, 0.0));
-    // sp.push_back(vec3f( 0.0, -4.0, 0.0));
-    // sp.push_back(vec3f( 1.0, -2.0, 0.0));
-    // sp.push_back(vec3f( 2.0, -2.0, 0.0));
-    // sp.push_back(vec3f( 2.0,  2.0, 0.0));
+    sp.push_back(vec3f(-1.0, -2.0, 0.0));
+    sp.push_back(vec3f( 0.0, -4.0, 0.0));
+    sp.push_back(vec3f( 1.0, -2.0, 0.0));
+    sp.push_back(vec3f( 2.0, -2.0, 0.0));
+    sp.push_back(vec3f( 2.0,  2.0, 0.0));
 
     circle c;
-    c.center = vec3f(3.92927, -0.117802, 0);
+    c.center = vec3f(3.78271, -0.27487, 0);
     c.radius = 6.0;
+    c.range  = vec2f(3*M_PI/2, M_PI/2);
 
     fltkview mv(0, 0, 500, 500, "fltk View");
 
