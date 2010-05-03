@@ -2,4 +2,4 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = GIT-VERSION-GEN version
 
-SUBDIRS = libroad test
+SUBDIRS = libroad test etc

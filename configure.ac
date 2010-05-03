@@ -148,7 +148,9 @@ AC_CHECK_FUNCS([floor memset pow sqrt strdup])
 
 AC_CONFIG_FILES([Makefile \
                  libroad/Makefile \
-		 test/Makefile
+		 test/Makefile \
+		 etc/Makefile \
+		 etc/arc-chop/Makefile
 		])
 AC_OUTPUT
 
