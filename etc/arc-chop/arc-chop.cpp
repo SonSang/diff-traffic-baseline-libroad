@@ -127,15 +127,39 @@ struct simple_polygon : std::vector<vec3f>
         return ray((*this)[e], (*this)[(e+1)%size()]);
     }
 
-    bool contains_circle(const circle &c) const
+    bool contained_by_circle(const circle &c) const
     {
-        const bool first_inside(c.inside((*this)[0]));
-        for(size_t i = 1; i < size(); ++i)
+        BOOST_FOREACH(const vec3f &v, (*this))
         {
-            if(c.inside((*this)[i]) != first_inside)
-                return true;
+            if(!c.inside(v))
+                return false;
         }
-        return false;
+        return true;
+    }
+
+    // x = my + b
+    // x = dx/dy * y + b
+    // x_0 = dx/dy * y0 + b
+    // b = (x0-dx/dy*y0)
+    bool point_in_polygon(const vec2f &p) const
+    {
+        bool inside = false;
+        for(int i = 0; i < static_cast<int>(size()); ++i)
+        {
+            const vec2f &l0 = sub<0,2>::vector((*this)[i]);
+            const vec2f &l1 = sub<0,2>::vector((*this)[(i+1)%static_cast<int>(size())]);
+            if((l0[1] - p[1])*(l1[1] - p[1]) < 0)
+            {
+                const float m = (l0[0]-l1[0])/(l0[1]-l1[1]);
+                const float b = l0[0] - m*l0[1];
+                const float x = m*p[1] + b;
+                assert(l1[0] == m*l1[1] + b);
+                if(x >= p[0])
+                    continue;
+                inside = !inside;
+            }
+        }
+        return inside;
     }
 };
 
@@ -287,40 +311,21 @@ public:
 
         if(cp)
         {
-            cairo_identity_matrix(cr);
-            cairo_set_line_width(cr, 2.0);
-            cairo_set_matrix(cr, &cmat);
-
             assert(c);
             if(cp->divisions.empty())
-                draw_arc(cr, *c, c->range, sp->contains_circle(*c), &cmat);
+            {
+                const bool center_in_poly(sp->point_in_polygon(sub<0,2>::vector(c->center)));
+                const bool poly_in_circle(sp->contained_by_circle(*c));
+                draw_arc(cr, *c, vec2f(0, 2*M_PI), center_in_poly && !poly_in_circle, &cmat);
+            }
             else
             {
-                std::map<float, bool>::iterator start(cp->divisions.upper_bound(c->range[0]));
-                std::map<float, bool>::iterator end  (cp->divisions.upper_bound(c->range[1]));
-                if(start == end)
+                std::map<float, bool>::iterator current = cp->divisions.begin();
+                for(; current != cp->divisions.end(); ++current)
                 {
-                    cp->back_up(start);
-                    draw_arc(cr, *c, c->range, start->second, &cmat);
-                }
-                else
-                {
-                    cp->back_up(start);
-                    cp->back_up(end);
-                    {
-                        std::map<float, bool>::iterator next(start);
-                        cp->advance(next);
-                        draw_arc(cr, *c, vec2f(c->range[0], next->first), start->second, &cmat);
-                    }
-                    std::map<float, bool>::iterator current = start;
-                    cp->advance(current);
-                    for(; current != end; cp->advance(current))
-                    {
-                        std::map<float, bool>::iterator next(current);
-                        cp->advance(next);
-                        draw_arc(cr, *c, vec2f(current->first, next->first), current->second, &cmat);
-                    }
-                    draw_arc(cr, *c, vec2f(end->first, c->range[1]), end->second, &cmat);
+                    std::map<float, bool>::iterator next(current);
+                    cp->advance(next);
+                    draw_arc(cr, *c, vec2f(current->first, next->first), current->second, &cmat);
                 }
             }
         }
@@ -494,7 +499,7 @@ int main(int argc, char *argv[])
     sp.push_back(vec3f(-2.0,  2.0, 0.0));
     sp.push_back(vec3f(-2.0, -2.0, 0.0));
     sp.push_back(vec3f(-1.0, -2.0, 0.0));
-    sp.push_back(vec3f( 0.0, -4.0, 0.0));
+    sp.push_back(vec3f( 0.0,  0.0, 0.0));
     sp.push_back(vec3f( 1.0, -2.0, 0.0));
     sp.push_back(vec3f( 2.0, -2.0, 0.0));
     sp.push_back(vec3f( 2.0,  2.0, 0.0));
@@ -504,6 +509,8 @@ int main(int argc, char *argv[])
     c.radius = 6.0;
     c.range  = vec2f(3*M_PI/2, M_PI/2);
 
+    circle_partition cp(chop_circle(sp, c));
+
     fltkview mv(0, 0, 500, 500, "fltk View");
 
     box_to_cscale(mv.center, mv.scale,
@@ -512,7 +519,7 @@ int main(int argc, char *argv[])
 
     mv.sp = &sp;
     mv.c  = &c;
-    mv.cp = new circle_partition(chop_circle(sp, c));
+    mv.cp = &cp;
     mv.take_focus();
     Fl::visual(FL_DOUBLE|FL_DEPTH);
 
