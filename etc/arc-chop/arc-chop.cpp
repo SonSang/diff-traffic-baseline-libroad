@@ -141,24 +141,37 @@ struct circle
 {
     float arc(const vec3f &p) const
     {
-        const vec3f dir(p - center);
+        const vec3f dir(p - center());
         const float theta(std::atan2(dir[1], dir[0]));
         return theta > 0 ? theta : 2*M_PI + theta;
     }
 
     vec3f point(const float theta) const
     {
-        return vec3f(center + radius*vec3f(std::cos(theta), std::sin(theta), 0.0));
+        return vec3f(center() + radius*vec3f(std::cos(theta), std::sin(theta), 0.0));
     }
 
     bool inside(const vec3f &p) const
     {
-        return length2(p-center) < radius*radius;
+        return length2(p-center()) < radius*radius;
     }
 
-    float radius;
-    vec3f center;
-    vec2f range;
+    vec3f center() const
+    {
+        return vec3f(frame(0, 3),
+                     frame(1, 3),
+                     frame(2, 3));
+    }
+
+    void center(const vec3f &c)
+    {
+        for(int i = 0; i < 3; ++i)
+            frame(i, 3) = c[i];
+    }
+
+    mat4x4f frame;
+    float   radius;
+    vec2f   range;
 };
 
 aabb aabb_from_arc(const circle &c, const vec2f &r)
@@ -208,7 +221,7 @@ struct ray
     // a = 1, b = 2*d*(o-c)  c = (o-c)^2 - r^2
     int intersect(vec2f &res, const circle &circ) const
     {
-        const vec3f co(origin-circ.center);
+        const vec3f co(origin-circ.center());
         const float a   = 1;
         const float b   = 2*tvmet::dot(dir, co);
         const float c   = tvmet::dot(co, co) - circ.radius*circ.radius;
@@ -333,7 +346,7 @@ std::vector<interval> chop_circle(const simple_polygon &p, const circle &c)
     std::vector<interval> ires;
     if(res.divisions.empty())
     {
-        const bool center_in_poly(p.point_in_polygon(sub<0,2>::vector(c.center)));
+        const bool center_in_poly(p.point_in_polygon(sub<0,2>::vector(c.center())));
         const bool poly_in_circle(p.contained_by_circle(c));
         ires.push_back(interval(c.range, center_in_poly && !poly_in_circle));
         return ires;
@@ -361,7 +374,7 @@ static void draw_arc(cairo_t *cr, const circle &c, const vec2f &range, bool insi
     else
         cairo_set_source_rgba(cr, 0.0, 0.0, 1.0, 1.0);
     cairo_set_matrix(cr, cmat);
-    cairo_arc(cr, c.center[0], c.center[1], c.radius,
+    cairo_arc(cr, c.center()[0], c.center()[1], c.radius,
               range[0], range[1]);
     cairo_identity_matrix(cr);
     cairo_set_line_width(cr, 2.0);
@@ -580,7 +593,9 @@ public:
                     dvec = vec2f(world - lastpick);
                     if(c)
                     {
-                        sub<0,2>::vector(c->center) += dvec;
+                        vec3f cent(c->center());
+                        sub<0,2>::vector(cent) += dvec;
+                        c->center(cent);
                         if(cpi)
                             *cpi = chop_circle(*sp, *c);
                     }
@@ -651,7 +666,8 @@ int main(int argc, char *argv[])
     sp.push_back(vec3f( 2.0,  2.0, 0.0));
 
     circle c;
-    c.center = vec3f(3.78271, -0.27487, 0);
+    c.frame = tvmet::identity<float, 4, 4>();
+    c.center(vec3f(3.78271, -0.27487, 0));
     c.radius = 2.0;
     c.range  = vec2f(M_PI, M_PI/2);
 
