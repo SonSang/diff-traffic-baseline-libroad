@@ -49,8 +49,7 @@ static std::vector<vec2f> interval_overlap(const vec2f &a, const vec2f &b)
     if(a[0] > a[1])
     {
         a_pairs.push_back(vec2f(0, a[1]));
-        a_pairs.push_back(vec2f(a[0], a[1]+2*M_PI));
-        a_pairs.push_back(vec2f(vec2f(a[0], 2*M_PI) + 2*M_PI));
+        a_pairs.push_back(vec2f(a[0], 2*M_PI));
     }
     else
         a_pairs.push_back(a);
@@ -58,8 +57,7 @@ static std::vector<vec2f> interval_overlap(const vec2f &a, const vec2f &b)
     if(b[0] > b[1])
     {
         b_pairs.push_back(vec2f(0, b[1]));
-        b_pairs.push_back(vec2f(b[0], b[1]+2*M_PI));
-        b_pairs.push_back(vec2f(vec2f(b[0], 2*M_PI) + 2*M_PI));
+        b_pairs.push_back(vec2f(b[0], 2*M_PI));
     }
     else
         b_pairs.push_back(b);
@@ -76,7 +74,26 @@ static std::vector<vec2f> interval_overlap(const vec2f &a, const vec2f &b)
                     cand[0] -= 2*M_PI;
                 while(cand[1] >= 2*M_PI)
                     cand[1] -= 2*M_PI;
-                res.push_back(cand);
+                bool merge = true;
+                BOOST_FOREACH(vec2f &v, res)
+                {
+                    if(std::abs(v[1] - cand[0]) < 1e-5)
+                    {
+                        merge = false;
+                        v[1] = cand[1];
+                        break;
+                    }
+                    else if(std::abs(v[0] - cand[1]) < 1e-5)
+                    {
+                        merge = false;
+                        v[0] = cand[0];
+                        break;
+                    }
+                    else
+                        merge = true;
+                }
+                if(merge)
+                    res.push_back(cand);
             }
         }
     }
@@ -593,7 +610,7 @@ int main(int argc, char *argv[])
     // return Fl::run();
 
     std::vector<vec2f> mo = interval_overlap(vec2f(4.3, 0.9),
-                                             vec2f(5.2, 0.8));
+                                             vec2f(0.4, 6.0));
 
     BOOST_FOREACH(const vec2f &i, mo)
     {
