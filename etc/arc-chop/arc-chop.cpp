@@ -112,6 +112,31 @@ struct interval
     bool  inside;
 };
 
+struct aabb
+{
+    aabb() : low(std::numeric_limits<float>::max()), high(-std::numeric_limits<float>::max())
+    {}
+
+    aabb(const vec2f &l, const vec2f &h)
+        : low(l), high(h)
+    {}
+
+    void enclose_point(const vec2f &p)
+    {
+        if(p[0] < low[0])
+            low[0] = p[0];
+        if(p[1] < low[1])
+            low[1] = p[1];
+        if(p[0] > high[0])
+            high[0] = p[0];
+        if(p[1] > high[1])
+            high[1] = p[1];
+    }
+
+    vec2f low;
+    vec2f high;
+};
+
 struct circle
 {
     float arc(const vec3f &p) const
@@ -119,6 +144,11 @@ struct circle
         const vec3f dir(p - center);
         const float theta(std::atan2(dir[1], dir[0]));
         return theta > 0 ? theta : 2*M_PI + theta;
+    }
+
+    vec3f point(const float theta) const
+    {
+        return vec3f(center + radius*vec3f(std::cos(theta), std::sin(theta), 0.0));
     }
 
     bool inside(const vec3f &p) const
@@ -130,6 +160,28 @@ struct circle
     vec3f center;
     vec2f range;
 };
+
+aabb aabb_from_arc(const circle &c, const vec2f &r)
+{
+    aabb box;
+    vec2f circle_range(r);
+    if(circle_range[1] < circle_range[0])
+        circle_range[1] += 2*M_PI;
+
+    float theta = circle_range[0];
+    const vec2f pt(sub<0,2>::vector(c.point(theta)));
+    box.enclose_point(pt);
+    theta = theta - std::fmod(theta, static_cast<float>(M_PI/2.0)) + M_PI/2;
+    while(theta < circle_range[1])
+    {
+        const vec2f pt(sub<0,2>::vector(c.point(theta)));
+        box.enclose_point(pt);
+        theta += M_PI/2;
+    }
+    box.enclose_point(sub<0,2>::vector(c.point(circle_range[1])));
+
+    return box;
+}
 
 struct ray
 {
@@ -414,6 +466,14 @@ public:
             BOOST_FOREACH(const interval &i, *cpi)
             {
                 draw_arc(cr, *c, i.range, i.inside, &cmat);
+
+                const aabb box(aabb_from_arc(*c, i.range));
+                cairo_set_matrix(cr, &cmat);
+                cairo_rectangle(cr, box.low[0], box.low[1], box.high[0]-box.low[0], box.high[1]-box.low[1]);
+                cairo_identity_matrix(cr);
+                cairo_set_line_width(cr, 2.0);
+                cairo_set_source_rgba(cr, 0.4, 0.8, 0.4, 1.0);
+                cairo_stroke(cr);
             }
         }
 
