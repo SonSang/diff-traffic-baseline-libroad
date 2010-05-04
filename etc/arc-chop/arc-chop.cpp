@@ -33,6 +33,68 @@ struct circle_partition
     std::map<float,bool> divisions;
 };
 
+static vec2f interval_intersection(const vec2f &a, const vec2f &b)
+{
+    return vec2f(std::max(a[0], b[0]), std::min(a[1], b[1]));
+}
+
+static bool interval_okay(const vec2f &a)
+{
+    return a[0] < a[1];
+}
+
+static std::vector<vec2f> interval_overlap(const vec2f &a, const vec2f &b)
+{
+    std::vector<vec2f> a_pairs;
+    if(a[0] > a[1])
+    {
+        a_pairs.push_back(vec2f(0, a[1]));
+        a_pairs.push_back(vec2f(a[0], a[1]+2*M_PI));
+        a_pairs.push_back(vec2f(vec2f(a[0], 2*M_PI) + 2*M_PI));
+    }
+    else
+        a_pairs.push_back(a);
+    std::vector<vec2f> b_pairs;
+    if(b[0] > b[1])
+    {
+        b_pairs.push_back(vec2f(0, b[1]));
+        b_pairs.push_back(vec2f(b[0], b[1]+2*M_PI));
+        b_pairs.push_back(vec2f(vec2f(b[0], 2*M_PI) + 2*M_PI));
+    }
+    else
+        b_pairs.push_back(b);
+
+    std::vector<vec2f> res;
+    BOOST_FOREACH(const vec2f &ap, a_pairs)
+    {
+        BOOST_FOREACH(const vec2f &bp, b_pairs)
+        {
+            vec2f cand(interval_intersection(ap, bp));
+            if(interval_okay(cand))
+            {
+                while(cand[0] >= 2*M_PI)
+                    cand[0] -= 2*M_PI;
+                while(cand[1] >= 2*M_PI)
+                    cand[1] -= 2*M_PI;
+                res.push_back(cand);
+            }
+        }
+    }
+
+    return res;
+}
+
+struct interval
+{
+    interval() {}
+    interval(const vec2f &r, bool i)
+        : range(r), inside(i)
+    {}
+
+    vec2f range;
+    bool  inside;
+};
+
 struct circle
 {
     float arc(const vec3f &p) const
@@ -163,7 +225,7 @@ struct simple_polygon : std::vector<vec3f>
     }
 };
 
-circle_partition chop_circle(const simple_polygon &p, const circle &c)
+std::vector<interval> chop_circle(const simple_polygon &p, const circle &c)
 {
     circle_partition res;
     bool             looking_for_single = false;
@@ -199,7 +261,23 @@ circle_partition chop_circle(const simple_polygon &p, const circle &c)
         }
     }
 
-    return res;
+    std::vector<interval> ires;
+    if(res.divisions.empty())
+    {
+        const bool center_in_poly(p.point_in_polygon(sub<0,2>::vector(c.center)));
+        const bool poly_in_circle(p.contained_by_circle(c));
+        ires.push_back(interval(c.range, center_in_poly && !poly_in_circle));
+        return ires;
+    }
+
+    std::map<float, bool>::iterator current = res.divisions.begin();
+    for(; current != res.divisions.end(); ++current)
+    {
+        std::map<float, bool>::iterator next(current);
+        res.advance(next);
+        vec2f cand_range(current->first, next->first);
+    }
+    return ires;
 }
 
 static void draw_arc(cairo_t *cr, const circle &c, const vec2f &range, bool inside, const cairo_matrix_t *cmat)
@@ -226,7 +304,7 @@ public:
                                                           overlay_tex_(0),
                                                           sp(0),
                                                           c(0),
-                                                          cp(0)
+                                                          cpi(0)
     {
         this->resizable(this);
     }
@@ -309,24 +387,12 @@ public:
             cairo_stroke(cr);
         }
 
-        if(cp)
+        if(cpi)
         {
             assert(c);
-            if(cp->divisions.empty())
+            BOOST_FOREACH(const interval &i, *cpi)
             {
-                const bool center_in_poly(sp->point_in_polygon(sub<0,2>::vector(c->center)));
-                const bool poly_in_circle(sp->contained_by_circle(*c));
-                draw_arc(cr, *c, vec2f(0, 2*M_PI), center_in_poly && !poly_in_circle, &cmat);
-            }
-            else
-            {
-                std::map<float, bool>::iterator current = cp->divisions.begin();
-                for(; current != cp->divisions.end(); ++current)
-                {
-                    std::map<float, bool>::iterator next(current);
-                    cp->advance(next);
-                    draw_arc(cr, *c, vec2f(current->first, next->first), current->second, &cmat);
-                }
+                draw_arc(cr, *c, i.range, i.inside, &cmat);
             }
         }
 
@@ -435,8 +501,8 @@ public:
                     {
                         sub<0,2>::vector(c->center) += dvec;
                         std::cout << c->center << std::endl;
-                        if(cp)
-                            *cp = circle_partition(chop_circle(*sp, *c));
+                        if(cpi)
+                            *cpi = chop_circle(*sp, *c);
                     }
                     redraw();
                     lastpick = world;
@@ -465,8 +531,8 @@ public:
                     if(c)
                     {
                         c->radius *= std::pow(2.0, fy);
-                        if(cp)
-                            *cp = circle_partition(chop_circle(*sp, *c));
+                        if(cpi)
+                            *cpi = chop_circle(*sp, *c);
                     }
                 }
                 else
@@ -488,42 +554,50 @@ public:
     GLuint glew_state;
     GLuint overlay_tex_;
 
-    simple_polygon   *sp;
-    circle           *c;
-    circle_partition *cp;
+    simple_polygon        *sp;
+    circle                *c;
+    std::vector<interval> *cpi;
 };
 
 int main(int argc, char *argv[])
 {
-    simple_polygon sp;
-    sp.push_back(vec3f(-2.0,  2.0, 0.0));
-    sp.push_back(vec3f(-2.0, -2.0, 0.0));
-    sp.push_back(vec3f(-1.0, -2.0, 0.0));
-    sp.push_back(vec3f( 0.0,  0.0, 0.0));
-    sp.push_back(vec3f( 1.0, -2.0, 0.0));
-    sp.push_back(vec3f( 2.0, -2.0, 0.0));
-    sp.push_back(vec3f( 2.0,  2.0, 0.0));
+    // simple_polygon sp;
+    // sp.push_back(vec3f(-2.0,  2.0, 0.0));
+    // sp.push_back(vec3f(-2.0, -2.0, 0.0));
+    // sp.push_back(vec3f(-1.0, -2.0, 0.0));
+    // sp.push_back(vec3f( 0.0,  0.0, 0.0));
+    // sp.push_back(vec3f( 1.0, -2.0, 0.0));
+    // sp.push_back(vec3f( 2.0, -2.0, 0.0));
+    // sp.push_back(vec3f( 2.0,  2.0, 0.0));
 
-    circle c;
-    c.center = vec3f(3.78271, -0.27487, 0);
-    c.radius = 6.0;
-    c.range  = vec2f(3*M_PI/2, M_PI/2);
+    // circle c;
+    // c.center = vec3f(3.78271, -0.27487, 0);
+    // c.radius = 6.0;
+    // c.range  = vec2f(3*M_PI/2, M_PI/2);
 
-    circle_partition cp(chop_circle(sp, c));
+    // std::vector<interval> cpi(chop_circle(sp, c));
 
-    fltkview mv(0, 0, 500, 500, "fltk View");
+    // fltkview mv(0, 0, 500, 500, "fltk View");
 
-    box_to_cscale(mv.center, mv.scale,
-                  vec2f(-10, -10), vec2f(10, 10),
-                  vec2i(500, 500));
+    // box_to_cscale(mv.center, mv.scale,
+    //               vec2f(-10, -10), vec2f(10, 10),
+    //               vec2i(500, 500));
 
-    mv.sp = &sp;
-    mv.c  = &c;
-    mv.cp = &cp;
-    mv.take_focus();
-    Fl::visual(FL_DOUBLE|FL_DEPTH);
+    // mv.sp = &sp;
+    // mv.c  = &c;
+    // mv.cpi = &cpi;
+    // mv.take_focus();
+    // Fl::visual(FL_DOUBLE|FL_DEPTH);
 
-    mv.show(1, argv);
-    return Fl::run();
+    // mv.show(1, argv);
+    // return Fl::run();
+
+    std::vector<vec2f> mo = interval_overlap(vec2f(4.3, 0.9),
+                                             vec2f(5.2, 0.8));
+
+    BOOST_FOREACH(const vec2f &i, mo)
+    {
+        std::cout << i << std::endl;
+    }
 }
 
