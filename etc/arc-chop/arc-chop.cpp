@@ -9,6 +9,12 @@
 #include "libroad/hwm_network.hpp"
 #include "../../test/geometric.hpp"
 
+template <typename M, typename V>
+inline V transform(const M &mat, const V &v)
+{
+    return sub<0, 3>::vector(vec4f(mat*vec4f(v[0], v[1], v[2], 1.0)));
+}
+
 struct circle_partition
 {
     void insert(float f, bool inside)
@@ -141,19 +147,22 @@ struct circle
 {
     float arc(const vec3f &p) const
     {
-        const vec3f dir(p - center());
+        const vec3f dir(transform(inverse_frame(), p));
+        assert(dir[2] == 0);
         const float theta(std::atan2(dir[1], dir[0]));
         return theta > 0 ? theta : 2*M_PI + theta;
     }
 
     vec3f point(const float theta) const
     {
-        return vec3f(center() + radius*vec3f(std::cos(theta), std::sin(theta), 0.0));
+        return vec3f(transform(frame, vec3f(radius*std::cos(theta), radius*std::sin(theta), 0.0)));
     }
 
     bool inside(const vec3f &p) const
     {
-        return length2(p-center()) < radius*radius;
+        const vec3f dir(transform(inverse_frame(), p));
+        assert(dir[2] == 0);
+        return length2(dir) < radius*radius;
     }
 
     vec3f center() const
@@ -167,6 +176,15 @@ struct circle
     {
         for(int i = 0; i < 3; ++i)
             frame(i, 3) = c[i];
+    }
+
+    mat4x4f inverse_frame() const
+    {
+        mat4x4f d0(frame);
+        mat4x4f res(tvmet::identity<float, 4, 4>());
+
+        rm_invert(d0.data(), res.data());
+        return res;
     }
 
     mat4x4f frame;
@@ -262,6 +280,17 @@ struct ray
     vec3f dir;
     float len;
 };
+
+//line is pt + t * n
+//plane is x*n + d = 0
+//intersection is (pt + t*n)*n + d = 0
+// pt*n + t*n*n + d = 0
+// t = -(d + pt*n)/n*n
+static vec3f project_to_plane(const vec3f &pt, const vec3f &n, const float &d)
+{
+    const float t = -(d + tvmet::dot(pt, n))/length2(n);
+    return vec3f(pt + t*n);
+}
 
 // assuming clockwise ordering
 struct simple_polygon : std::vector<vec3f>
@@ -669,6 +698,7 @@ int main(int argc, char *argv[])
     c.frame = tvmet::identity<float, 4, 4>();
     c.center(vec3f(3.78271, -0.27487, 0));
     c.radius = 2.0;
+
     c.range  = vec2f(M_PI, M_PI/2);
 
     std::vector<interval> cpi(chop_circle(sp, c));

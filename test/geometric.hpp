@@ -5,9 +5,10 @@
 #include <GL/gl.h>
 #include "libroad/libroad_common.hpp"
 
-inline bool rm_invert(double A[16], double Ainv[16])
+template <typename T>
+inline bool rm_invert(T A[16], T Ainv[16])
 {
-    double swap_space[4];
+    T swap_space[4];
 
     for(int i = 0; i < 4; ++i)
     {
@@ -19,16 +20,16 @@ inline bool rm_invert(double A[16], double Ainv[16])
             return false;
         if(i != maxi)
         {
-            std::memcpy(swap_space,       &(A[4*maxi+ 0]), sizeof(double)*4);
-            std::memcpy(&(A[4*maxi + 0]), &(A[4*i   + 0]), sizeof(double)*4);
-            std::memcpy(&(A[4*i + 0]),    swap_space,      sizeof(double)*4);
+            std::memcpy(swap_space,       &(A[4*maxi+ 0]), sizeof(T)*4);
+            std::memcpy(&(A[4*maxi + 0]), &(A[4*i   + 0]), sizeof(T)*4);
+            std::memcpy(&(A[4*i + 0]),    swap_space,      sizeof(T)*4);
 
-            std::memcpy(swap_space,          &(Ainv[4*maxi + 0]), sizeof(double)*4);
-            std::memcpy(&(Ainv[4*maxi + 0]), &(Ainv[4*i    + 0]), sizeof(double)*4);
-            std::memcpy(&(Ainv[4*i    + 0]), swap_space,          sizeof(double)*4);
+            std::memcpy(swap_space,          &(Ainv[4*maxi + 0]), sizeof(T)*4);
+            std::memcpy(&(Ainv[4*maxi + 0]), &(Ainv[4*i    + 0]), sizeof(T)*4);
+            std::memcpy(&(Ainv[4*i    + 0]), swap_space,          sizeof(T)*4);
         }
 
-        const double iinv = 1.0f/A[4*i + i];
+        const T iinv = 1.0f/A[4*i + i];
         A[4*i + i] = 1.0f;
         for(int j = i+1; j < 4; ++j)
             A[4*i + j] *= iinv;
@@ -38,7 +39,7 @@ inline bool rm_invert(double A[16], double Ainv[16])
         for(int j = 0; j < 4; ++j)
             if(A[4*j + i] != 0.0f && i != j)
             {
-                double temp = A[4*j + i];
+                T temp = A[4*j + i];
                 A[4*j + i] = 0.0f;
                 for(int k = i+1; k < 4; ++k)
                     A[4*j + k] -= A[4*i + k]*temp;
