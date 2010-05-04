@@ -80,19 +80,19 @@ static std::vector<vec2f> interval_overlap(const vec2f &a, const vec2f &b)
                     cand[0] -= 2*M_PI;
                 while(cand[1] >= 2*M_PI)
                     cand[1] -= 2*M_PI;
-                bool merge = true;
+                bool merge   = true;
                 BOOST_FOREACH(vec2f &v, res)
                 {
                     if(std::abs(v[1] - cand[0]) < 1e-5)
                     {
                         merge = false;
-                        v[1] = cand[1];
+                        v[1]  = cand[1];
                         break;
                     }
                     else if(std::abs(v[0] - cand[1]) < 1e-5)
                     {
                         merge = false;
-                        v[0] = cand[0];
+                        v[0]  = cand[0];
                         break;
                     }
                     else
@@ -395,7 +395,7 @@ std::vector<interval> chop_circle(const simple_polygon &p, const circle &c)
     return ires;
 }
 
-static void draw_arc(cairo_t *cr, const circle &c, const vec2f &range, bool inside, const cairo_matrix_t *cmat)
+static void cairo_draw_arc(cairo_t *cr, const circle &c, const vec2f &range, bool inside, const cairo_matrix_t *cmat)
 {
     cairo_set_matrix(cr, cmat);
     if(inside)
@@ -408,6 +408,34 @@ static void draw_arc(cairo_t *cr, const circle &c, const vec2f &range, bool insi
     cairo_identity_matrix(cr);
     cairo_set_line_width(cr, 2.0);
     cairo_stroke(cr);
+}
+
+static void gl_draw_arc(const circle &c, const vec2f &range, bool inside)
+{
+    if(inside)
+        glColor4f(1.0, 0.0, 0.0, 1.0);
+    else
+        glColor4f(0.0, 0.0, 1.0, 1.0);
+    glBegin(GL_LINE_STRIP);
+    const int N = 100;
+    vec2f draw_range(range);
+    if(draw_range[1] < draw_range[0])
+        draw_range[1] += 2*M_PI;
+    for(int i = 0; i < N; ++i)
+    {
+        const float theta = draw_range[0] + (draw_range[1]-draw_range[0])*i/static_cast<float>(N-1);
+        glVertex3fv(c.point(theta).data());
+    }
+    glEnd();
+
+    const aabb box(aabb_from_arc(c, range));
+    glColor3f(0.4, 0.8, 0.4);
+    glBegin(GL_QUADS);
+    glVertex2f(box.low[0], box.low[1]);
+    glVertex2f(box.high[0], box.low[1]);
+    glVertex2f(box.high[0], box.high[1]);
+    glVertex2f(box.low[0], box.high[1]);
+    glEnd();
 }
 
 class fltkview : public Fl_Gl_Window
@@ -507,7 +535,7 @@ public:
             assert(c);
             BOOST_FOREACH(const interval &i, *cpi)
             {
-                draw_arc(cr, *c, i.range, i.inside, &cmat);
+                cairo_draw_arc(cr, *c, i.range, i.inside, &cmat);
 
                 const aabb box(aabb_from_arc(*c, i.range));
                 cairo_set_matrix(cr, &cmat);
@@ -563,24 +591,27 @@ public:
         glLoadIdentity();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        glEnable(GL_TEXTURE_2D);
+        if(cpi)
+        {
+            assert(c);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            BOOST_FOREACH(const interval &i, *cpi)
+            {
+                gl_draw_arc(*c, i.range, i.inside);
+            }
+        }
 
-        glBindTexture (GL_TEXTURE_2D, overlay_tex_);
-        retex_overlay(center, scale, vec2i(w(), h()));
-        glPushMatrix();
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0, 0.0);
-        glVertex2fv(lo.data());
-        glTexCoord2f(1.0, 0.0);
-        glVertex2f(hi[0], lo[1]);
-        glTexCoord2f(1.0, 1.0);
-        glVertex2fv(hi.data());
-        glTexCoord2f(0.0, 1.0);
-        glVertex2f(lo[0], hi[1]);
-        glEnd();
-        glPopMatrix();
-
-        glDisable(GL_TEXTURE_2D);
+        if(sp)
+        {
+            glColor3f(1.0, 1.0, 1.0);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glBegin(GL_LINE_LOOP);
+            BOOST_FOREACH(const vec3f &p, *sp)
+            {
+                glVertex3fv(p.data());
+            }
+            glEnd();
+        }
 
         glFlush();
         glFinish();
