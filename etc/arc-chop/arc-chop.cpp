@@ -293,6 +293,10 @@ std::vector<interval> chop_circle(const simple_polygon &p, const circle &c)
         std::map<float, bool>::iterator next(current);
         res.advance(next);
         vec2f cand_range(current->first, next->first);
+        BOOST_FOREACH(const vec2f &v, interval_overlap(cand_range, c.range))
+        {
+            ires.push_back(interval(v, current->second));
+        }
     }
     return ires;
 }
@@ -517,7 +521,6 @@ public:
                     if(c)
                     {
                         sub<0,2>::vector(c->center) += dvec;
-                        std::cout << c->center << std::endl;
                         if(cpi)
                             *cpi = chop_circle(*sp, *c);
                     }
@@ -578,43 +581,35 @@ public:
 
 int main(int argc, char *argv[])
 {
-    // simple_polygon sp;
-    // sp.push_back(vec3f(-2.0,  2.0, 0.0));
-    // sp.push_back(vec3f(-2.0, -2.0, 0.0));
-    // sp.push_back(vec3f(-1.0, -2.0, 0.0));
-    // sp.push_back(vec3f( 0.0,  0.0, 0.0));
-    // sp.push_back(vec3f( 1.0, -2.0, 0.0));
-    // sp.push_back(vec3f( 2.0, -2.0, 0.0));
-    // sp.push_back(vec3f( 2.0,  2.0, 0.0));
+    simple_polygon sp;
+    sp.push_back(vec3f(-2.0,  2.0, 0.0));
+    sp.push_back(vec3f(-2.0, -2.0, 0.0));
+    sp.push_back(vec3f(-1.0, -2.0, 0.0));
+    sp.push_back(vec3f( 0.0,  0.0, 0.0));
+    sp.push_back(vec3f( 1.0, -2.0, 0.0));
+    sp.push_back(vec3f( 2.0, -2.0, 0.0));
+    sp.push_back(vec3f( 2.0,  2.0, 0.0));
 
-    // circle c;
-    // c.center = vec3f(3.78271, -0.27487, 0);
-    // c.radius = 6.0;
-    // c.range  = vec2f(3*M_PI/2, M_PI/2);
+    circle c;
+    c.center = vec3f(3.78271, -0.27487, 0);
+    c.radius = 2.0;
+    c.range  = vec2f(M_PI, M_PI/2);
 
-    // std::vector<interval> cpi(chop_circle(sp, c));
+    std::vector<interval> cpi(chop_circle(sp, c));
 
-    // fltkview mv(0, 0, 500, 500, "fltk View");
+    fltkview mv(0, 0, 500, 500, "fltk View");
 
-    // box_to_cscale(mv.center, mv.scale,
-    //               vec2f(-10, -10), vec2f(10, 10),
-    //               vec2i(500, 500));
+    box_to_cscale(mv.center, mv.scale,
+                  vec2f(-10, -10), vec2f(10, 10),
+                  vec2i(500, 500));
 
-    // mv.sp = &sp;
-    // mv.c  = &c;
-    // mv.cpi = &cpi;
-    // mv.take_focus();
-    // Fl::visual(FL_DOUBLE|FL_DEPTH);
+    mv.sp = &sp;
+    mv.c  = &c;
+    mv.cpi = &cpi;
+    mv.take_focus();
+    Fl::visual(FL_DOUBLE|FL_DEPTH);
 
-    // mv.show(1, argv);
-    // return Fl::run();
-
-    std::vector<vec2f> mo = interval_overlap(vec2f(4.3, 0.9),
-                                             vec2f(0.4, 6.0));
-
-    BOOST_FOREACH(const vec2f &i, mo)
-    {
-        std::cout << i << std::endl;
-    }
+    mv.show(1, argv);
+    return Fl::run();
 }
 
