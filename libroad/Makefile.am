@@ -30,7 +30,8 @@ pkginclude_HEADERS  = partition01.hpp \
 		      hwm_texture_gen.hpp \
 		      rtree.hpp \
                       rtree-impl.hpp \
-                      hilbert.hpp
+                      hilbert.hpp \
+	              geometric.hpp
 
 libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)
 libroad_la_LDFLAGS  = -static $(CAIRO_LIBS) $(BOOST_IOSTREAMS_LDFLAGS) $(BOOST_FILESYSTEM_LIBS)

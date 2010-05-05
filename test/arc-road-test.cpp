@@ -6,7 +6,8 @@
 #include <FL/glu.h>
 #include "FL/glut.h"
 #include "arcball.hpp"
-#include "geometric.hpp"
+#include "libroad/geometric.hpp"
+#include "visual_geometric.hpp"
 #include "libroad/arc_road.hpp"
 #include "libroad/hwm_draw.hpp"
 

@@ -9,7 +9,8 @@
 #include <fstream>
 
 #include "arcball.hpp"
-#include "geometric.hpp"
+#include "libroad/geometric.hpp"
+#include "visual_geometric.hpp"
 #include "im_heightfield.hpp"
 
 #include "libroad/osm_network.hpp"

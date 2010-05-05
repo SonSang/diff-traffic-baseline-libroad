@@ -7,7 +7,8 @@
 #include <FL/glu.h>
 #include <FL/glut.h>
 #include "libroad/hwm_network.hpp"
-#include "geometric.hpp"
+#include "libroad/geometric.hpp"
+#include "visual_geometric.hpp"
 
 class fltkview : public Fl_Gl_Window
 {
@@ -225,7 +226,7 @@ public:
             cairo_rectangle(cr, rect.bounds[0][0], rect.bounds[0][1], rect.bounds[1][0]-rect.bounds[0][0], rect.bounds[1][1]-rect.bounds[0][1]);
             cairo_set_source_rgba(cr, 195/255.0, 127/255.0, 67/255.0, 0.5);
             cairo_fill_preserve(cr);
-            cairo_set_source_rgba(cr, 255/255.0, 129/255.0, 2517/255.0, 0.7);
+            cairo_set_source_rgba(cr, 255/255.0, 129/255.0, 217/255.0, 0.7);
             cairo_identity_matrix(cr);
             cairo_set_line_width(cr, 2.0);
             cairo_stroke(cr);
