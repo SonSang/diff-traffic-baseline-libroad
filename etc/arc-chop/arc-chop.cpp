@@ -21,12 +21,6 @@ static mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)
     return res;
 }
 
-template <typename M, typename V>
-inline V transform(const M &mat, const V &v)
-{
-    return sub<0, 3>::vector(vec4f(mat*vec4f(v[0], v[1], v[2], 1.0)));
-}
-
 struct circle_partition
 {
     void insert(float f, bool inside)

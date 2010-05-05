@@ -9,17 +9,6 @@
 #include "libroad/hwm_network.hpp"
 #include "geometric.hpp"
 
-struct rectangle
-{
-    rectangle() {};
-    rectangle(const vec2f &lo, const vec2f &hi)
-        : low(lo), high(hi)
-    {}
-
-    vec2f low;
-    vec2f high;
-};
-
 class fltkview : public Fl_Gl_Window
 {
 public:
@@ -199,11 +188,11 @@ public:
         cairo_matrix_t cmat;
         cairo_get_matrix(cr, &cmat);
 
-        BOOST_FOREACH(const rectangle &r, rectangles)
+        BOOST_FOREACH(const aabb2d &r, rectangles)
         {
             cairo_set_matrix(cr, &cmat);
 
-            cairo_rectangle(cr, r.low[0], r.low[1], r.high[0]-r.low[0], r.high[1]-r.low[1]);
+            cairo_rectangle(cr, r.bounds[0][0], r.bounds[1][0], r.bounds[1][0]-r.bounds[0][0], r.bounds[1][1]-r.bounds[0][1]);
             cairo_set_source_rgba(cr, 67/255.0, 127/255.0, 195/255.0, 0.5);
             cairo_fill_preserve(cr);
             cairo_set_source_rgba(cr, 17/255.0, 129/255.0, 255/255.0, 0.7);
@@ -369,16 +358,11 @@ public:
                     if(drawing)
                     {
                         rectangles.clear();
-                        rectangles.push_back(rectangle());
-                        rectangles.back().low[0]  = std::min(first_point[0], second_point[0]);
-                        rectangles.back().low[1]  = std::min(first_point[1], second_point[1]);
-                        rectangles.back().high[0] = std::max(first_point[0], second_point[0]);
-                        rectangles.back().high[1] = std::max(first_point[1], second_point[1]);
+                        rectangles.push_back(aabb2d());
+                        rectangles.back().enclose_point(first_point[0], first_point[1]);
+                        rectangles.back().enclose_point(second_point[0], second_point[1]);
                         drawing = false;
-
-                        rtree2d::aabb r(rectangles.back().low[0], rectangles.back().high[0],
-                                        rectangles.back().low[1], rectangles.back().high[1]);
-                        query_results = net->road_space.query(r);
+                        query_results = net->road_space.query(rectangles.back());
                         redraw();
                     }
                 }
@@ -469,7 +453,7 @@ public:
 
     GLuint                 overlay_tex_;
 
-    std::vector<rectangle>                rectangles;
+    std::vector<aabb2d>                   rectangles;
     bool                                  drawing;
     vec2f                                 first_point;
     vec2f                                 second_point;

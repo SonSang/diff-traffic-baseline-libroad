@@ -151,6 +151,12 @@ inline T basis()
     return res;
 }
 
+template <typename M, typename V>
+inline V transform(const M &mat, const V &v)
+{
+    return sub<0, 3>::vector(vec4f(mat*vec4f(v[0], v[1], v[2], 1.0)));
+}
+
 inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filename)
 {
     boost::iostreams::filtering_ostream *out_stream = new boost::iostreams::filtering_ostream();

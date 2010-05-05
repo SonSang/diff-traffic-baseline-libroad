@@ -23,14 +23,15 @@ static float fraction_offset2(const vec3f &p0, const vec3f &p1, const vec3f &c)
     return cdist2/pdist2;
 }
 
-static mat3x3f axis_angle_matrix(const float theta, const vec3f &axis)
+static mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)
 {
     const float c = std::cos(theta);
     const float s = std::sin(theta);
-    mat3x3f res;
-    res = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c, axis[0]*axis[1]*(1.0-c) -  axis[2]*s,  axis[0]*axis[2]*(1.0-c) +  axis[1]*s,
-          axis[0]*axis[1]*(1.0-c) +  axis[2]*s, axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c,  axis[1]*axis[2]*(1.0-c) -  axis[0]*s,
-          axis[0]*axis[2]*(1.0-c) -  axis[1]*s, axis[1]*axis[2]*(1.0-c) +  axis[0]*s,  axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c;
+    mat4x4f res;
+    res = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c, axis[0]*axis[1]*(1.0-c) -  axis[2]*s,  axis[0]*axis[2]*(1.0-c) +  axis[1]*s, 0,
+          axis[0]*axis[1]*(1.0-c) +  axis[2]*s, axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c,  axis[1]*axis[2]*(1.0-c) -  axis[0]*s, 0,
+          axis[0]*axis[2]*(1.0-c) -  axis[1]*s, axis[1]*axis[2]*(1.0-c) +  axis[0]*s,  axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c, 0,
+          0, 0, 0, 1;
     return res;
 }
 
@@ -512,9 +513,9 @@ bool arc_road::initialize(const std::vector<float> &alphas, std::vector<float> &
         assert(std::isfinite(radius));
 
         const vec3f   laxis(tvmet::normalize(tvmet::cross(normals_[i+1], normals_[i])));
-        const mat3x3f rot_pi2(axis_angle_matrix(M_PI_2, laxis));
-        const vec3f   rm(rot_pi2*-normals_[i]);
-        const vec3f   rp(tvmet::trans(rot_pi2)*normals_[i+1]);
+        const mat4x4f rot_pi2(axis_angle_matrix(M_PI_2, laxis));
+        const vec3f   rm(transform(rot_pi2,vec3f(-normals_[i])));
+        const vec3f   rp(transform(tvmet::trans(rot_pi2), normals_[i+1]));
         const vec3f   up(tvmet::cross(laxis,rm));
         const vec3f   tf(alpha * normals_[i+1] + radius*rp + points_[i+1]);
 
@@ -732,8 +733,31 @@ aabb2d arc_road::bound_feature2d(size_t f) const
     }
     else
     {
-        for(int i = 0; i < 3; ++i)
-            res.enclose_point(points_[f/2+i][0], points_[f/2+i][1]);
+        vec3f tan;
+        //        vec3f v,
+        // circle_frame(v, tan, 0, frames_[f/2], radii_[f/2]);
+        // v -= center(f/2+1);
+        // const vec3f up(frames_[f/2](0, 2), frames_[f/2](1, 2), frames_[f/2](2, 2));
+        // const float x_rot      = std::atan2(up[1], up[2]);
+        // v                      = transform(axis_angle_matrix(-x_rot, vec3f(1.0, 0.0, 0.0)), v);
+        // const float y_rot      = std::atan2(up[0], up[2]);
+        // v                      = transform(axis_angle_matrix(-y_rot, vec3f(0.0, 1.0, 0.0)), v);
+        // const float theta_bias = std::atan2(v[1], v[0]);
+        const float theta_bias = 0.0f;
+
+        float theta = 0.0;
+        vec3f pos;
+        circle_frame(pos, tan, theta, frames_[f/2], radii_[f/2]);
+        res.enclose_point(pos[0], pos[1]);
+        theta = theta - std::fmod(theta, static_cast<float>(M_PI/2.0)) + M_PI/2 - theta_bias;
+        while(theta < arcs_[f/2])
+        {
+            circle_frame(pos, tan, theta, frames_[f/2], radii_[f/2]);
+            res.enclose_point(pos[0], pos[1]);
+            theta += M_PI/2;
+        }
+        circle_frame(pos, tan, arcs_[f/2], frames_[f/2], radii_[f/2]);
+        res.enclose_point(pos[0], pos[1]);
     }
     return res;
 }
