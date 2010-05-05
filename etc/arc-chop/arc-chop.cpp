@@ -9,6 +9,18 @@
 #include "libroad/hwm_network.hpp"
 #include "../../test/geometric.hpp"
 
+static mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)
+{
+    const float c = std::cos(theta);
+    const float s = std::sin(theta);
+    mat4x4f res;
+    res = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c, axis[0]*axis[1]*(1.0-c) -  axis[2]*s,  axis[0]*axis[2]*(1.0-c) +  axis[1]*s, 0,
+          axis[0]*axis[1]*(1.0-c) +  axis[2]*s, axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c,  axis[1]*axis[2]*(1.0-c) -  axis[0]*s, 0,
+          axis[0]*axis[2]*(1.0-c) -  axis[1]*s, axis[1]*axis[2]*(1.0-c) +  axis[0]*s,  axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c, 0,
+          0, 0, 0, 1;
+    return res;
+}
+
 template <typename M, typename V>
 inline V transform(const M &mat, const V &v)
 {
@@ -145,10 +157,18 @@ struct aabb
 
 struct circle
 {
+    void plane(vec3f &n, float &d) const
+    {
+        n = vec3f(frame(0, 2),
+                  frame(1, 2),
+                  frame(2, 2));
+        d = -tvmet::dot(n, center());
+    }
+
     float arc(const vec3f &p) const
     {
-        const vec3f dir(transform(inverse_frame(), p));
-        assert(dir[2] == 0);
+        const vec3f dir(p);
+        assert(std::abs(dir[2]) < 1e-6);
         const float theta(std::atan2(dir[1], dir[0]));
         return theta > 0 ? theta : 2*M_PI + theta;
     }
@@ -160,8 +180,8 @@ struct circle
 
     bool inside(const vec3f &p) const
     {
-        const vec3f dir(transform(inverse_frame(), p));
-        assert(dir[2] == 0);
+        const vec3f dir(p);
+        assert(std::abs(dir[2]) < 1e-6);
         return length2(dir) < radius*radius;
     }
 
@@ -194,6 +214,14 @@ struct circle
 
 aabb aabb_from_arc(const circle &c, const vec2f &r)
 {
+    vec3f       v(c.point(0)-c.center());
+    const vec3f up(c.frame(0, 2), c.frame(1, 2), c.frame(2, 2));
+    const float x_rot      = std::atan2(up[1], up[2]);
+    v                      = transform(axis_angle_matrix(-x_rot, vec3f(1.0, 0.0, 0.0)), v);
+    const float y_rot      = std::atan2(up[0], up[2]);
+    v                      = transform(axis_angle_matrix(-y_rot, vec3f(0.0, 1.0, 0.0)), v);
+    const float theta_bias = std::atan2(v[1], v[0]);
+
     aabb box;
     vec2f circle_range(r);
     if(circle_range[1] < circle_range[0])
@@ -202,7 +230,7 @@ aabb aabb_from_arc(const circle &c, const vec2f &r)
     float theta = circle_range[0];
     const vec2f pt(sub<0,2>::vector(c.point(theta)));
     box.enclose_point(pt);
-    theta = theta - std::fmod(theta, static_cast<float>(M_PI/2.0)) + M_PI/2;
+    theta = theta - std::fmod(theta, static_cast<float>(M_PI/2.0)) + M_PI/2 - theta_bias;
     while(theta < circle_range[1])
     {
         const vec2f pt(sub<0,2>::vector(c.point(theta)));
@@ -210,7 +238,6 @@ aabb aabb_from_arc(const circle &c, const vec2f &r)
         theta += M_PI/2;
     }
     box.enclose_point(sub<0,2>::vector(c.point(circle_range[1])));
-
     return box;
 }
 
@@ -239,7 +266,7 @@ struct ray
     // a = 1, b = 2*d*(o-c)  c = (o-c)^2 - r^2
     int intersect(vec2f &res, const circle &circ) const
     {
-        const vec3f co(origin-circ.center());
+        const vec3f co(origin);//-circ.center());
         const float a   = 1;
         const float b   = 2*tvmet::dot(dir, co);
         const float c   = tvmet::dot(co, co) - circ.radius*circ.radius;
@@ -292,12 +319,44 @@ static vec3f project_to_plane(const vec3f &pt, const vec3f &n, const float &d)
     return vec3f(pt + t*n);
 }
 
+//plane is x*n + d = 0
+// x is (pt[0), pt[1], ?)
+// x = (d - (pt[0]*n[0] + pt[1]*n[1]))/n[2]
+static vec3f z_project_to_plane(const vec3f &pt, const vec3f &n, const float &d)
+{
+    return vec3f(pt[0], pt[1], (-d - tvmet::dot(sub<0,2>::vector(n), sub<0,2>::vector(pt)))/n[2]);
+}
+
 // assuming clockwise ordering
 struct simple_polygon : std::vector<vec3f>
 {
     ray line(int e) const
     {
         return ray((*this)[e], (*this)[(e+1)%size()]);
+    }
+
+    void project_to_plane(const vec3f &n, const float d)
+    {
+        BOOST_FOREACH(vec3f &pt, (*this))
+        {
+            pt = ::project_to_plane(pt, n, d);
+        }
+    }
+
+    void z_project_to_plane(const vec3f &n, const float d)
+    {
+        BOOST_FOREACH(vec3f &pt, (*this))
+        {
+            pt = ::z_project_to_plane(pt, n, d);
+        }
+    }
+
+    void transform(const mat4x4f &m)
+    {
+        BOOST_FOREACH(vec3f &pt, (*this))
+        {
+            pt = ::transform(m, pt);
+        }
     }
 
     bool contained_by_circle(const circle &c) const
@@ -326,7 +385,11 @@ struct simple_polygon : std::vector<vec3f>
                 const float m = (l0[0]-l1[0])/(l0[1]-l1[1]);
                 const float b = l0[0] - m*l0[1];
                 const float x = m*p[1] + b;
-                assert(l1[0] == m*l1[1] + b);
+                if(!(std::abs(l1[0] - (m*l1[1] + b)) < 1e-5))
+                {
+                    std::cout << l1[0] - (m*l1[1] + b) << std::endl;
+                    assert(0);
+                }
                 if(x >= p[0])
                     continue;
                 inside = !inside;
@@ -444,10 +507,8 @@ public:
     fltkview(int x, int y, int w, int h, const char *l) : Fl_Gl_Window(x, y, w, h, l),
                                                           lastpick(0),
                                                           glew_state(GLEW_OK+1),
-                                                          overlay_tex_(0),
                                                           sp(0),
-                                                          c(0),
-                                                          cpi(0)
+                                                          c(0)
     {
         this->resizable(this);
     }
@@ -463,106 +524,6 @@ public:
         std::cerr << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
     }
 
-    void init_textures()
-    {
-        if(!glIsTexture(overlay_tex_))
-        {
-            glGenTextures(1, &overlay_tex_);
-            glBindTexture (GL_TEXTURE_2D, overlay_tex_);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-            retex_overlay(center, scale, vec2i(w(), h()));
-        }
-    }
-
-    void retex_overlay(const vec2f &my_center, const float my_scale, const vec2i &im_res)
-    {
-        cairo_surface_t *cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
-                                                         im_res[0],
-                                                         im_res[1]);
-        cairo_t         *cr = cairo_create(cs);
-        cairo_set_source_rgba(cr, 0.0, 0, 0, 0.0);
-        cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-        cairo_paint(cr);
-
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-
-        cairo_translate(cr,
-                        im_res[0]/2,
-                        im_res[1]/2);
-
-        cairo_scale(cr,
-                    im_res[0]/my_scale,
-                    im_res[1]/my_scale);
-
-
-        if(im_res[0] > im_res[1])
-            cairo_scale(cr,
-                        static_cast<float>(im_res[1])/im_res[0],
-                        1.0);
-        else
-            cairo_scale(cr,
-                        1.0,
-                        static_cast<float>(im_res[0])/im_res[1]);
-
-        cairo_translate(cr,
-                        -my_center[0],
-                        -my_center[1]);
-
-        cairo_matrix_t cmat;
-        cairo_get_matrix(cr, &cmat);
-
-        cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-        if(sp)
-        {
-            cairo_set_matrix(cr, &cmat);
-            cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 1.0);
-            cairo_move_to(cr, sp->front()[0], sp->front()[1]);
-            for(int i = 1; i < static_cast<int>(sp->size()); ++i)
-                cairo_line_to(cr, (*sp)[i][0], (*sp)[i][1]);
-            cairo_line_to(cr, (*sp)[0][0], (*sp)[0][1]);
-            cairo_identity_matrix(cr);
-            cairo_set_line_width(cr, 2.0);
-            cairo_stroke(cr);
-        }
-
-        if(cpi)
-        {
-            assert(c);
-            BOOST_FOREACH(const interval &i, *cpi)
-            {
-                cairo_draw_arc(cr, *c, i.range, i.inside, &cmat);
-
-                const aabb box(aabb_from_arc(*c, i.range));
-                cairo_set_matrix(cr, &cmat);
-                cairo_rectangle(cr, box.low[0], box.low[1], box.high[0]-box.low[0], box.high[1]-box.low[1]);
-                cairo_identity_matrix(cr);
-                cairo_set_line_width(cr, 2.0);
-                cairo_set_source_rgba(cr, 0.4, 0.8, 0.4, 1.0);
-                cairo_stroke(cr);
-            }
-        }
-
-        cairo_destroy(cr);
-
-        glBindTexture(GL_TEXTURE_2D, overlay_tex_);
-        glTexImage2D (GL_TEXTURE_2D,
-                      0,
-                      GL_RGBA,
-                      im_res[0],
-                      im_res[1],
-                      0,
-                      GL_BGRA,
-                      GL_UNSIGNED_BYTE,
-                      cairo_image_surface_get_data(cs));
-
-        cairo_surface_destroy(cs);
-    }
-
     void draw()
     {
         if (!valid())
@@ -573,7 +534,6 @@ public:
             if(GLEW_OK != glew_state)
                 init_glew();
 
-            init_textures();
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
@@ -585,17 +545,26 @@ public:
 
         vec2f lo, hi;
         cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
-        gluOrtho2D(lo[0], hi[0], lo[1], hi[1]);
+        glOrtho(lo[0], hi[0], lo[1], hi[1], -100, 100);
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        if(cpi)
+        if(c)
         {
-            assert(c);
+            vec3f n;
+            float d;
+            c->plane(n, d);
+
+            simple_polygon sp_copy(*sp);
+            sp_copy.z_project_to_plane(n, d);
+            sp_copy.transform(c->inverse_frame());
+
+            std::vector<interval> cpi(chop_circle(sp_copy, *c));
+
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            BOOST_FOREACH(const interval &i, *cpi)
+            BOOST_FOREACH(const interval &i, cpi)
             {
                 gl_draw_arc(*c, i.range, i.inside);
             }
@@ -603,10 +572,19 @@ public:
 
         if(sp)
         {
+            assert(c);
+            vec3f n;
+            float d;
+            c->plane(n, d);
+
+            simple_polygon sp_copy(*sp);
+            sp_copy.z_project_to_plane(n, d);
+            // sp_copy.transform(c->inverse_frame());
+
             glColor3f(1.0, 1.0, 1.0);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glBegin(GL_LINE_LOOP);
-            BOOST_FOREACH(const vec3f &p, *sp)
+            BOOST_FOREACH(const vec3f &p, sp_copy)
             {
                 glVertex3fv(p.data());
             }
@@ -656,8 +634,6 @@ public:
                         vec3f cent(c->center());
                         sub<0,2>::vector(cent) += dvec;
                         c->center(cent);
-                        if(cpi)
-                            *cpi = chop_circle(*sp, *c);
                     }
                     redraw();
                     lastpick = world;
@@ -684,11 +660,7 @@ public:
                 if(Fl::event_state() & FL_SHIFT)
                 {
                     if(c)
-                    {
                         c->radius *= std::pow(2.0, fy);
-                        if(cpi)
-                            *cpi = chop_circle(*sp, *c);
-                    }
                 }
                 else
                     scale *= std::pow(2.0, fy);
@@ -707,11 +679,9 @@ public:
     vec2f  center;
     float  scale;
     GLuint glew_state;
-    GLuint overlay_tex_;
 
     simple_polygon        *sp;
     circle                *c;
-    std::vector<interval> *cpi;
 };
 
 int main(int argc, char *argv[])
@@ -726,13 +696,11 @@ int main(int argc, char *argv[])
     sp.push_back(vec3f( 2.0,  2.0, 0.0));
 
     circle c;
-    c.frame = tvmet::identity<float, 4, 4>();
-    c.center(vec3f(3.78271, -0.27487, 0));
+    c.frame = axis_angle_matrix(M_PI/4, vec3f(0, 1, 0))*axis_angle_matrix(M_PI/4, vec3f(0, 0, 1));
+    c.center(vec3f(0));
     c.radius = 2.0;
 
     c.range  = vec2f(M_PI, M_PI/2);
-
-    std::vector<interval> cpi(chop_circle(sp, c));
 
     fltkview mv(0, 0, 500, 500, "fltk View");
 
@@ -742,7 +710,6 @@ int main(int argc, char *argv[])
 
     mv.sp = &sp;
     mv.c  = &c;
-    mv.cpi = &cpi;
     mv.take_focus();
     Fl::visual(FL_DOUBLE|FL_DEPTH);
 
