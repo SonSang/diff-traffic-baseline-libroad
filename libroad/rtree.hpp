@@ -32,6 +32,7 @@ struct rtree
         aabb   funion(const aabb &o) const;
         bool   overlap(const aabb &o) const;
         void   center(real_t c[DIMENSION]) const;
+        void   enclose_point(real_t x, real_t y);
 
         real_t bounds[2][DIMENSION];
     };
@@ -128,6 +129,7 @@ struct rtree
 };
 
 typedef rtree<float, 2, 85, 170> rtree2d;
+typedef rtree2d::aabb            aabb2d;
 
 template <typename REAL_T, int D, int MIN, int MAX>
 struct static_rtree

@@ -232,9 +232,8 @@ public:
         BOOST_FOREACH(const hwm::road_spatial::entry &e, query_results)
         {
             cairo_set_matrix(cr, &cmat);
-            vec2f low, high;
-            e.r->rep.bound_feature2d(low, high, e.feature);
-            cairo_rectangle(cr, low[0], low[1], high[0]-low[0], high[1]-low[1]);
+            const aabb2d rect(e.r->rep.bound_feature2d(e.feature));
+            cairo_rectangle(cr, rect.bounds[0][0], rect.bounds[0][1], rect.bounds[1][0]-rect.bounds[0][0], rect.bounds[1][1]-rect.bounds[0][1]);
             cairo_set_source_rgba(cr, 195/255.0, 127/255.0, 67/255.0, 0.5);
             cairo_fill_preserve(cr);
             cairo_set_source_rgba(cr, 255/255.0, 129/255.0, 2517/255.0, 0.7);

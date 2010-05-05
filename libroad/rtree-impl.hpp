@@ -10,6 +10,11 @@
 template <typename REAL_T, int D, int MIN, int MAX>
 rtree<REAL_T, D, MIN, MAX>::aabb::aabb()
 {
+    for(int i = 0; i < DIMENSION; ++i)
+    {
+        bounds[0][i] =  std::numeric_limits<real_t>::max();
+        bounds[1][i] = -std::numeric_limits<real_t>::max();
+    }
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
@@ -62,6 +67,20 @@ void rtree<REAL_T, D, MIN, MAX>::aabb::center(real_t c[DIMENSION]) const
 {
     for(int i = 0; i < DIMENSION; ++i)
         c[i] = (bounds[0][i] + bounds[1][i])/2;
+}
+
+template <typename REAL_T, int D, int MIN, int MAX>
+void rtree<REAL_T, D, MIN, MAX>::aabb::enclose_point(const real_t x, const real_t y)
+{
+    BOOST_STATIC_ASSERT(DIMENSION == 2);
+    if(x < bounds[0][0])
+        bounds[0][0] = x;
+    if(y < bounds[0][1])
+        bounds[0][1] = y;
+    if(x > bounds[1][0])
+        bounds[1][0] = x;
+    if(y > bounds[1][1])
+        bounds[1][1] = y;
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>

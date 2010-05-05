@@ -722,32 +722,20 @@ float arc_road::length_at_feature(const size_t i, const float p, const float off
     return feature_base(i, offset) + p*feature_size(i, offset);
 }
 
-void arc_road::bound_feature2d(vec2f &low, vec2f &high, size_t f) const
+aabb2d arc_road::bound_feature2d(size_t f) const
 {
+    aabb2d res;
     if(!(f & 1))
     {
-        vec2f x(points_[f/2][0], points_[f/2+1][0]);
-        vec2f y(points_[f/2][1], points_[f/2+1][1]);
-        std::sort(x.begin(), x.end());
-        std::sort(y.begin(), y.end());
-        low[0] = x[0];
-        high[0] = x[1];
-
-        low[1] = y[0];
-        high[1] = y[1];
+        for(int i = 0; i < 2; ++i)
+            res.enclose_point(points_[f/2+i][0], points_[f/2+i][1]);
     }
     else
     {
-        vec3f x(points_[f/2][0], points_[f/2+1][0], points_[f/2+2][0]);
-        vec3f y(points_[f/2][1], points_[f/2+1][1], points_[f/2+2][1]);
-        std::sort(x.begin(), x.end());
-        std::sort(y.begin(), y.end());
-        low[0] = x[0];
-        high[0] = x[2];
-
-        low[1] = y[0];
-        high[1] = y[2];
+        for(int i = 0; i < 3; ++i)
+            res.enclose_point(points_[f/2+i][0], points_[f/2+i][1]);
     }
+    return res;
 }
 
 void arc_road::extract_arc(std::vector<vertex> &result, const size_t i, const vec2f &i_range, const float offset, const float refine_threshold, const vec3f &up) const

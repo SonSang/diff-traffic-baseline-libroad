@@ -282,7 +282,7 @@ namespace hwm
 
         void build(road_map &roads);
 
-        std::vector<entry> query(const rtree2d::aabb &rect) const;
+        std::vector<entry> query(const aabb2d &rect) const;
 
         rtree2d            *tree;
         std::vector<entry>  items;

@@ -36,14 +36,7 @@ namespace hwm
             const arc_road &ar = rp.second.rep;
             for(size_t f = 0; f < 2*ar.frames_.size() + 1; ++f)
             {
-                vec2f low, high;
-                ar.bound_feature2d(low, high, f);
-
-                rtree2d::aabb rect;
-                rect.bounds[0][0] = low[0];
-                rect.bounds[1][0] = high[0];
-                rect.bounds[0][1] = low[1];
-                rect.bounds[1][1] = high[1];
+                const aabb2d rect(ar.bound_feature2d(f));
 
                 leaves.push_back(rtree2d::entry(rect, items.size()));
                 items.push_back(entry(&(rp.second), f));
@@ -53,7 +46,7 @@ namespace hwm
         tree = rtree2d::hilbert_rtree(leaves);
     }
 
-    std::vector<road_spatial::entry> road_spatial::query(const rtree2d::aabb &rect) const
+    std::vector<road_spatial::entry> road_spatial::query(const aabb2d &rect) const
     {
         std::vector<entry> res;
         if(tree)
