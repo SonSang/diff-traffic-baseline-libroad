@@ -195,3 +195,7 @@ else
 echo "
   Building images: no"
 fi
+echo "
+  C++ Compiler...: $CXX $CXXFLAGS $CPPFLAGS
+  Linker.........: $LD $LDFLAGS $LIBS
+"
