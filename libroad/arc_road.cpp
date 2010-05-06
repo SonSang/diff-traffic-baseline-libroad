@@ -23,18 +23,6 @@ static float fraction_offset2(const vec3f &p0, const vec3f &p1, const vec3f &c)
     return cdist2/pdist2;
 }
 
-static mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)
-{
-    const float c = std::cos(theta);
-    const float s = std::sin(theta);
-    mat4x4f res;
-    res = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c, axis[0]*axis[1]*(1.0-c) -  axis[2]*s,  axis[0]*axis[2]*(1.0-c) +  axis[1]*s, 0,
-          axis[0]*axis[1]*(1.0-c) +  axis[2]*s, axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c,  axis[1]*axis[2]*(1.0-c) -  axis[0]*s, 0,
-          axis[0]*axis[2]*(1.0-c) -  axis[1]*s, axis[1]*axis[2]*(1.0-c) +  axis[0]*s,  axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c, 0,
-          0, 0, 0, 1;
-    return res;
-}
-
 static float cot_theta(const vec3f &nb, const vec3f &nf)
 {
     float d = tvmet::dot(nb, nf);

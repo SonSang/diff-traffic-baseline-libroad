@@ -126,4 +126,16 @@ inline vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high
 {
     return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
 }
+
+inline mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)
+{
+    const float c = std::cos(theta);
+    const float s = std::sin(theta);
+    mat4x4f res;
+    res = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c, axis[0]*axis[1]*(1.0-c) -  axis[2]*s,  axis[0]*axis[2]*(1.0-c) +  axis[1]*s, 0,
+          axis[0]*axis[1]*(1.0-c) +  axis[2]*s, axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c,  axis[1]*axis[2]*(1.0-c) -  axis[0]*s, 0,
+          axis[0]*axis[2]*(1.0-c) -  axis[1]*s, axis[1]*axis[2]*(1.0-c) +  axis[0]*s,  axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c, 0,
+          0, 0, 0, 1;
+    return res;
+}
 #endif

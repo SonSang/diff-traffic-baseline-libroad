@@ -7,19 +7,7 @@
 #include <FL/glu.h>
 #include <FL/glut.h>
 #include "libroad/hwm_network.hpp"
-#include "../../test/geometric.hpp"
-
-static mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)
-{
-    const float c = std::cos(theta);
-    const float s = std::sin(theta);
-    mat4x4f res;
-    res = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c, axis[0]*axis[1]*(1.0-c) -  axis[2]*s,  axis[0]*axis[2]*(1.0-c) +  axis[1]*s, 0,
-          axis[0]*axis[1]*(1.0-c) +  axis[2]*s, axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c,  axis[1]*axis[2]*(1.0-c) -  axis[0]*s, 0,
-          axis[0]*axis[2]*(1.0-c) -  axis[1]*s, axis[1]*axis[2]*(1.0-c) +  axis[0]*s,  axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c, 0,
-          0, 0, 0, 1;
-    return res;
-}
+#include "libroad/geometric.hpp"
 
 struct circle_partition
 {
@@ -124,31 +112,6 @@ struct interval
     bool  inside;
 };
 
-struct aabb
-{
-    aabb() : low(std::numeric_limits<float>::max()), high(-std::numeric_limits<float>::max())
-    {}
-
-    aabb(const vec2f &l, const vec2f &h)
-        : low(l), high(h)
-    {}
-
-    void enclose_point(const vec2f &p)
-    {
-        if(p[0] < low[0])
-            low[0] = p[0];
-        if(p[1] < low[1])
-            low[1] = p[1];
-        if(p[0] > high[0])
-            high[0] = p[0];
-        if(p[1] > high[1])
-            high[1] = p[1];
-    }
-
-    vec2f low;
-    vec2f high;
-};
-
 struct circle
 {
     void plane(vec3f &n, float &d) const
@@ -206,7 +169,7 @@ struct circle
     vec2f   range;
 };
 
-aabb aabb_from_arc(const circle &c, const vec2f &r)
+aabb2d aabb_from_arc(const circle &c, const vec2f &r)
 {
     vec3f       v(c.point(0)-c.center());
     const vec3f up(c.frame(0, 2), c.frame(1, 2), c.frame(2, 2));
@@ -216,22 +179,23 @@ aabb aabb_from_arc(const circle &c, const vec2f &r)
     v                      = transform(axis_angle_matrix(-y_rot, vec3f(0.0, 1.0, 0.0)), v);
     const float theta_bias = std::atan2(v[1], v[0]);
 
-    aabb box;
+    aabb2d box;
     vec2f circle_range(r);
     if(circle_range[1] < circle_range[0])
         circle_range[1] += 2*M_PI;
 
     float theta = circle_range[0];
     const vec2f pt(sub<0,2>::vector(c.point(theta)));
-    box.enclose_point(pt);
+    box.enclose_point(pt[0], pt[1]);
     theta = theta - std::fmod(theta, static_cast<float>(M_PI/2.0)) + M_PI/2 - theta_bias;
     while(theta < circle_range[1])
     {
         const vec2f pt(sub<0,2>::vector(c.point(theta)));
-        box.enclose_point(pt);
+        box.enclose_point(pt[0], pt[1]);
         theta += M_PI/2;
     }
-    box.enclose_point(sub<0,2>::vector(c.point(circle_range[1])));
+    const vec2f ptend(sub<0,2>::vector(c.point(circle_range[1])));
+    box.enclose_point(ptend[0], ptend[1]);
     return box;
 }
 
@@ -485,13 +449,13 @@ static void gl_draw_arc(const circle &c, const vec2f &range, bool inside)
     }
     glEnd();
 
-    const aabb box(aabb_from_arc(c, range));
+    const aabb2d box(aabb_from_arc(c, range));
     glColor3f(0.4, 0.8, 0.4);
     glBegin(GL_QUADS);
-    glVertex2f(box.low[0], box.low[1]);
-    glVertex2f(box.high[0], box.low[1]);
-    glVertex2f(box.high[0], box.high[1]);
-    glVertex2f(box.low[0], box.high[1]);
+    glVertex2f(box.bounds[0][0], box.bounds[0][1]);
+    glVertex2f(box.bounds[1][0], box.bounds[0][1]);
+    glVertex2f(box.bounds[1][0], box.bounds[1][1]);
+    glVertex2f(box.bounds[0][0], box.bounds[1][1]);
     glEnd();
 }
 

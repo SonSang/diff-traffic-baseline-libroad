@@ -5,6 +5,7 @@
 #include "svg_helper.hpp"
 #include "polyline_road.hpp"
 #include "rtree.hpp"
+#include "geometric.hpp"
 
 struct vertex
 {
