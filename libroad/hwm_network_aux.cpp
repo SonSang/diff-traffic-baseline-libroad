@@ -83,7 +83,7 @@ namespace hwm
         }
     }
 
-    network_aux::network_aux(const network &n)
+    network_aux::network_aux(network &n)
         : net(n)
     {
         BOOST_FOREACH(const road_pair &r, net.roads)
@@ -105,6 +105,8 @@ namespace hwm
         {
             intersection_geoms[i.first] = intersection_geometry(&(i.second));
         }
+
+        build_spatial();
     }
 
     static void write_intersection_mtl(std::ostream      &o,

@@ -2,9 +2,9 @@
 
 namespace hwm
 {
-    void network::build_spatial()
+    void network_aux::build_spatial()
     {
-        road_space.build(roads);
+        road_space.build(net.roads);
     }
 
     road_spatial::entry::entry() : r(0), feature(0)

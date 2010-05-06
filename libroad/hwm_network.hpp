@@ -265,29 +265,6 @@ namespace hwm
     typedef lane_map::value_type         lane_pair;
     typedef intersection_map::value_type intersection_pair;
 
-    struct road_spatial
-    {
-        struct entry
-        {
-            entry();
-            entry(road *in_r, int f);
-
-            void bounding_box(rtree2d::aabb &rect) const;
-            road *r;
-            int   feature;
-        };
-
-        road_spatial();
-        ~road_spatial();
-
-        void build(road_map &roads);
-
-        std::vector<entry> query(const aabb2d &rect) const;
-
-        rtree2d            *tree;
-        std::vector<entry>  items;
-    };
-
     struct network
     {
         static const int SVG_ROADS=1, SVG_LANES=4, SVG_ARCS=8, SVG_CIRCLES=16;
@@ -310,7 +287,6 @@ namespace hwm
         void auto_scale_memberships();
 
         void center(bool z=false);
-        void build_spatial();
 
         void translate(const vec3f &o);
 
@@ -322,8 +298,29 @@ namespace hwm
         road_map         roads;
         lane_map         lanes;
         intersection_map intersections;
+    };
 
-        road_spatial road_space;
+    struct road_spatial
+    {
+        struct entry
+        {
+            entry();
+            entry(road *in_r, int f);
+
+            void bounding_box(rtree2d::aabb &rect) const;
+            road *r;
+            int   feature;
+        };
+
+        road_spatial();
+        ~road_spatial();
+
+        void build(road_map &roads);
+
+        std::vector<entry> query(const aabb2d &rect) const;
+
+        rtree2d            *tree;
+        std::vector<entry>  items;
     };
 
     struct network_aux
@@ -401,7 +398,7 @@ namespace hwm
             const hwm::intersection *is;
         };
 
-        network_aux(const network &n);
+        network_aux(network &n);
 
 #if HAVE_CAIRO
         void cairo_roads(cairo_t *c) const;
@@ -410,9 +407,12 @@ namespace hwm
         void road_objs(std::ostream &os) const;
         void network_obj(const std::string &path) const;
 
+        void build_spatial();
+
         strhash<road_rev_map>::type           rrm;
         strhash<intersection_geometry>::type  intersection_geoms;
-        const network                        &net;
+        network                              &net;
+        road_spatial                          road_space;
     };
 
     network load_xml_network(const char *filename, const vec3f &scale=vec3f(1.0f, 1.0f, 1.0f));

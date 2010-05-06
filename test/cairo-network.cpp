@@ -362,7 +362,7 @@ public:
                         rectangles.back().enclose_point(first_point[0], first_point[1]);
                         rectangles.back().enclose_point(second_point[0], second_point[1]);
                         drawing = false;
-                        query_results = net->road_space.query(rectangles.back());
+                        query_results = netaux->road_space.query(rectangles.back());
                         redraw();
                     }
                 }
@@ -474,7 +474,6 @@ int main(int argc, char *argv[])
     net.build_fictitious_lanes();
     net.auto_scale_memberships();
     net.center();
-    net.build_spatial();
     std::cerr << "HWM net loaded successfully" << std::endl;
 
     try
