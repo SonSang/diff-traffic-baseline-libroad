@@ -29,6 +29,14 @@ namespace hwm
         rm.parent_road->rep.make_mesh(vrts, fcs, interval, vec2f(left, right), 0.005, true);
     }
 
+    aabb2d network_aux::road_rev_map::lane_cont::planar_bounding_box(const float lane_width, const vec2f &interval) const
+    {
+        const arc_road &ar(begin()->second.membership->parent_road->rep);
+        const aabb2d low(ar.planar_bounding_box(begin()->first-lane_width/2, interval));
+        const aabb2d high(ar.planar_bounding_box(boost::prior(end())->first+lane_width/2, interval));
+        return low.funion(high);
+    }
+
     network_aux::road_rev_map::road_rev_map()
     {
         lane_map.insert(0.0f, lane_cont());

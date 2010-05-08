@@ -4,49 +4,49 @@ namespace hwm
 {
     void network_aux::build_spatial()
     {
-        road_space.build(net.roads);
+        road_space.build(net.lane_width, rrm);
     }
 
-    road_spatial::entry::entry() : r(0), feature(0)
+    network_aux::road_spatial::entry::entry() : lc(0)
     {
     }
 
-    road_spatial::entry::entry(road *in_r, int in_f) : r(in_r), feature(in_f)
+    network_aux::road_spatial::entry::entry(network_aux::road_rev_map::lane_cont *in_lc, const aabb2d &in_rect) : lc(in_lc), rect(in_rect)
     {
     }
 
-    road_spatial::road_spatial() : tree(0)
+    network_aux::road_spatial::road_spatial() : tree(0)
     {
     }
 
-    road_spatial::~road_spatial()
+    network_aux::road_spatial::~road_spatial()
     {
         if(tree)
             delete tree;
     }
 
-    void road_spatial::build(road_map &roads)
+    void network_aux::road_spatial::build(float lane_width, strhash<network_aux::road_rev_map>::type &roads)
     {
         if(tree)
             delete tree;
 
         std::vector<rtree2d::entry> leaves;
-        BOOST_FOREACH(road_pair &rp, roads)
+        typedef strhash<road_rev_map>::type::value_type rrm_pair;
+        BOOST_FOREACH(rrm_pair &rp, roads)
         {
-            const arc_road &ar = rp.second.rep;
-            for(size_t f = 0; f < 2*ar.frames_.size() + 1; ++f)
+            for(partition01<road_rev_map::lane_cont>::iterator current = rp.second.lane_map.begin(); current != rp.second.lane_map.end(); ++current)
             {
-                const aabb2d rect(ar.bound_feature2d(f));
-
+                const vec2f interval(rp.second.lane_map.containing_interval(current));
+                const aabb2d rect(current->second.planar_bounding_box(lane_width, interval));
                 leaves.push_back(rtree2d::entry(rect, items.size()));
-                items.push_back(entry(&(rp.second), f));
+                items.push_back(entry(&(current->second), rect));
             }
         }
 
         tree = rtree2d::hilbert_rtree(leaves);
     }
 
-    std::vector<road_spatial::entry> road_spatial::query(const aabb2d &rect) const
+    std::vector<network_aux::road_spatial::entry> network_aux::road_spatial::query(const aabb2d &rect) const
     {
         std::vector<entry> res;
         if(tree)

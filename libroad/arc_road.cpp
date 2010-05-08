@@ -711,13 +711,16 @@ float arc_road::length_at_feature(const size_t i, const float p, const float off
     return feature_base(i, offset) + p*feature_size(i, offset);
 }
 
-aabb2d arc_road::bound_feature2d(size_t f) const
+aabb2d arc_road::bound_feature2d(const float offset, const vec2f &interval, const size_t f) const
 {
+    const vec3f up(0, 0, 1);
     aabb2d res;
     if(!(f & 1))
     {
-        for(int i = 0; i < 2; ++i)
-            res.enclose_point(points_[f/2+i][0], points_[f/2+i][1]);
+        const vec2f pt0(sub<0,2>::vector(point(length_at_feature(f, interval[0], offset)/length(offset), offset)));
+        res.enclose_point(pt0[0], pt0[1]);
+        const vec2f pt1(sub<0,2>::vector(point(length_at_feature(f, interval[1], offset)/length(offset), offset)));
+        res.enclose_point(pt1[0], pt1[1]);
     }
     else
     {
@@ -733,20 +736,50 @@ aabb2d arc_road::bound_feature2d(size_t f) const
         // const float theta_bias = std::atan2(v[1], v[0]);
         const float theta_bias = 0.0f;
 
-        float theta = 0.0;
+        float theta = arcs_[f/2]*interval[0];
         vec3f pos;
         circle_frame(pos, tan, theta, frames_[f/2], radii_[f/2]);
+        vec3f left(tvmet::normalize(tvmet::cross(up, tan)));
+        pos = pos + left*offset;
         res.enclose_point(pos[0], pos[1]);
         theta = theta - std::fmod(theta, static_cast<float>(M_PI/2.0)) + M_PI/2 - theta_bias;
-        while(theta < arcs_[f/2])
+        while(theta < arcs_[f/2]*interval[1])
         {
             circle_frame(pos, tan, theta, frames_[f/2], radii_[f/2]);
+            left = tvmet::normalize(tvmet::cross(up, tan));
+            pos = pos + left*offset;
             res.enclose_point(pos[0], pos[1]);
             theta += M_PI/2;
         }
-        circle_frame(pos, tan, arcs_[f/2], frames_[f/2], radii_[f/2]);
+        circle_frame(pos, tan, arcs_[f/2]*interval[1], frames_[f/2], radii_[f/2]);
+        left = tvmet::normalize(tvmet::cross(up, tan));
+        pos = pos + left*offset;
         res.enclose_point(pos[0], pos[1]);
     }
+    return res;
+}
+
+aabb2d arc_road::planar_bounding_box(const float offset, const vec2f &in_range) const
+{
+    vec2f range(in_range);
+    bool reversed = range[0] > range[1];
+    if(reversed)
+        std::swap(range[0], range[1]);
+
+    float        start_local;
+    const size_t start_feature = locate_scale(range[0], offset, start_local);
+
+    float        end_local;
+    const size_t end_feature   = locate_scale(range[1], offset, end_local);
+
+    if(start_feature == end_feature)
+        return bound_feature2d(offset, vec2f(start_local, end_local), start_feature);
+
+    aabb2d res(bound_feature2d(offset, vec2f(start_local, 1.0), start_feature));
+    for(size_t c = start_feature+1; c < end_feature; ++c)
+        res = res.funion(bound_feature2d(offset, vec2f(0, 1), c));
+    res = res.funion(bound_feature2d(offset, vec2f(0, end_local), end_feature));
+
     return res;
 }
 

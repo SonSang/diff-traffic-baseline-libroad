@@ -300,29 +300,6 @@ namespace hwm
         intersection_map intersections;
     };
 
-    struct road_spatial
-    {
-        struct entry
-        {
-            entry();
-            entry(road *in_r, int f);
-
-            void bounding_box(rtree2d::aabb &rect) const;
-            road *r;
-            int   feature;
-        };
-
-        road_spatial();
-        ~road_spatial();
-
-        void build(road_map &roads);
-
-        std::vector<entry> query(const aabb2d &rect) const;
-
-        rtree2d            *tree;
-        std::vector<entry>  items;
-    };
-
     struct network_aux
     {
         struct road_rev_map
@@ -344,6 +321,8 @@ namespace hwm
 #endif
 
                 void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval, const float lane_width) const;
+
+                aabb2d planar_bounding_box(float lane_width, const vec2f &interval) const;
             };
 
             road_rev_map();
@@ -396,6 +375,28 @@ namespace hwm
             road_is_cnt              ric;
             std::vector<arc_road>    connecting_arcs;
             const hwm::intersection *is;
+        };
+
+        struct road_spatial
+        {
+            struct entry
+            {
+                entry();
+                entry(road_rev_map::lane_cont *r, const aabb2d &rect);
+
+                road_rev_map::lane_cont *lc;
+                aabb2d                   rect;
+            };
+
+            road_spatial();
+            ~road_spatial();
+
+            void build(float lane_width, strhash<road_rev_map>::type &roads);
+
+            std::vector<entry> query(const aabb2d &rect) const;
+
+            rtree2d            *tree;
+            std::vector<entry>  items;
         };
 
         network_aux(network &n);

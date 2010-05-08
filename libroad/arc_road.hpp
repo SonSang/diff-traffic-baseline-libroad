@@ -44,7 +44,9 @@ struct arc_road
 
     float  parameter_map(float t, float offset) const;
     float  length_at_feature(size_t i, float p, float offset) const;
-    aabb2d bound_feature2d(size_t i) const;
+    aabb2d bound_feature2d(float offset, const vec2f &interval, size_t i) const;
+
+    aabb2d planar_bounding_box(float offset, const vec2f &interval) const;
 
     void extract_arc   (std::vector<vertex> &result, const size_t i, const vec2f &in_range, const float offset, const float resolution, const vec3f &up) const;
 
