@@ -917,6 +917,9 @@ namespace osm
                     edge* e = np.second.edges_including[0];
                     edge* o = np.second.edges_including[1];
 
+                    if (o == e)
+                        continue;
+
                     if ((nodes[o->to].id == nodes[e->from].id) and (o->to == np.first))
                     {
                         std::swap(o, e);
