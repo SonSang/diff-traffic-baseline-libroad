@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
     onet.join_logical_roads();
     onet.create_ramps();
     onet.remove_small_roads(50);
+    onet.join_logical_roads();
     onet.create_intersections();
     onet.populate_edge_hash_from_edges();
 
