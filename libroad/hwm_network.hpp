@@ -307,13 +307,13 @@ namespace hwm
             struct lane_entry
             {
                 lane_entry();
-                lane_entry(const lane* l, const lane::road_membership *rm);
+                lane_entry(hwm::lane *l, hwm::lane::road_membership *rm);
 
-                const hwm::lane                  *lane;
-                const hwm::lane::road_membership *membership;
+                hwm::lane                  *lane;
+                hwm::lane::road_membership *membership;
             };
 
-            struct lane_cont : public std::map<const float, const lane_entry>
+            struct lane_cont : public std::map<const float, lane_entry>
             {
 #if HAVE_CAIRO
                 const std::string write_texture(tex_db &tdb) const;
@@ -332,7 +332,7 @@ namespace hwm
             void cairo_draw(cairo_t *c, float lane_width) const;
 #endif
 
-            void add_lane(const lane *r, const lane::road_membership *rm);
+            void add_lane(lane *r, lane::road_membership *rm);
             void print() const;
 
             partition01<lane_cont>  lane_map;

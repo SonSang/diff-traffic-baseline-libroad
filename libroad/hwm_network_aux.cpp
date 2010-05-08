@@ -6,7 +6,7 @@ namespace hwm
     {
     }
 
-    network_aux::road_rev_map::lane_entry::lane_entry(const hwm::lane* l, const lane::road_membership *rm) :
+    network_aux::road_rev_map::lane_entry::lane_entry(hwm::lane* l, lane::road_membership *rm) :
         lane(l), membership(rm)
     {
     }
@@ -47,7 +47,7 @@ namespace hwm
         lane_map.insert(0.0f, lane_cont());
     }
 
-    void network_aux::road_rev_map::add_lane(const hwm::lane *r, const lane::road_membership *rm)
+    void network_aux::road_rev_map::add_lane(hwm::lane *r, lane::road_membership *rm)
     {
         vec2f      interval(rm->interval);
         lane_entry le(r, rm);
@@ -99,9 +99,9 @@ namespace hwm
             rrm[r.first] = road_rev_map(&(r.second));
         }
 
-        BOOST_FOREACH(const lane_pair &l, net.lanes)
+        BOOST_FOREACH(lane_pair &l, net.lanes)
         {
-            BOOST_FOREACH(const lane::road_membership::intervals::entry &rm, l.second.road_memberships)
+            BOOST_FOREACH(lane::road_membership::intervals::entry &rm, l.second.road_memberships)
             {
                 strhash<road_rev_map>::type::iterator rev_itr(rrm.find(rm.second.parent_road->id));
                 assert(rev_itr != rrm.end());
