@@ -7,6 +7,42 @@ namespace hwm
         return std::sqrt(radius*g*static_friction);
     }
 
+    network::serial_state::serial_state()
+    {
+    }
+
+    network::serial_state::serial_state(const network &n)
+    {
+        lane_states.reserve(n.lanes.size());
+        BOOST_FOREACH(const lane_pair &lp, n.lanes)
+        {
+            lane_states.push_back(lp.second.serial());
+        }
+        intersection_states.reserve(n.intersections.size());
+        BOOST_FOREACH(const intersection_pair &ip, n.intersections)
+        {
+            intersection_states.push_back(ip.second.serial());
+        }
+    }
+
+    void network::serial_state::apply(network &n) const
+    {
+        size_t i = 0;
+        BOOST_FOREACH(lane_pair &lp, n.lanes)
+        {
+            assert(i < lane_states.size());
+            lane_states[i].apply(lp.second);
+            ++i;
+        }
+        i = 0;
+        BOOST_FOREACH(intersection_pair &ip, n.intersections)
+        {
+            assert(i < intersection_states.size());
+            intersection_states[i].apply(ip.second);
+            ++i;
+        }
+    }
+
     network::network(const network &n)
     {
         copy(n);
@@ -220,6 +256,11 @@ namespace hwm
         {
             lp.second.auto_scale_memberships();
         }
+    }
+
+    network::serial_state network::serial() const
+    {
+        return serial_state(*this);
     }
 
     void network::center(const bool z)

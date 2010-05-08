@@ -43,11 +43,17 @@ namespace hwm
         lane();
         lane(const lane &l);
 
-        ~lane()
+        ~lane();
+
+        struct serial_state
         {
-            delete start;
-            delete end;
-        }
+            serial_state();
+            serial_state(const lane &l);
+
+            void apply(lane &l) const;
+
+            bool active;
+        };
 
         struct terminus
         {
@@ -140,6 +146,8 @@ namespace hwm
         mat3x3f frame      (float t,                    const vec3f &up=vec3f(0, 0, 1)) const;
         mat4x4f point_frame(float t, float offset=0.0f, const vec3f &up=vec3f(0, 0, 1)) const;
 
+        serial_state serial() const;
+
         lane *left_adjacency(float &param)  const;
         lane *right_adjacency(float &param) const;
 
@@ -173,6 +181,18 @@ namespace hwm
     {
         intersection() : locked(false), current_state(0), state_time(0)
         {}
+
+        struct serial_state
+        {
+            serial_state();
+            serial_state(const intersection &i);
+
+            void apply(intersection &i) const;
+
+            bool  locked;
+            int   current_state;
+            float state_time;
+        };
 
         struct state
         {
@@ -242,6 +262,8 @@ namespace hwm
         lane *downstream_lane(int incoming_ref) const;
         lane *  upstream_lane(int outgoing_ref) const;
 
+        serial_state serial() const;
+
         void advance_state();
         void lock();
         void unlock();
@@ -269,6 +291,17 @@ namespace hwm
     {
         static const int SVG_ROADS=1, SVG_LANES=4, SVG_ARCS=8, SVG_CIRCLES=16;
 
+        struct serial_state
+        {
+            serial_state();
+            serial_state(const network &n);
+
+            void apply(network &n) const;
+
+            std::vector<lane::serial_state>         lane_states;
+            std::vector<intersection::serial_state> intersection_states;
+        };
+
         network() {};
         network(const network &n);
 
@@ -286,10 +319,10 @@ namespace hwm
         void build_fictitious_lanes();
         void auto_scale_memberships();
 
-        void center(bool z=false);
+        serial_state serial() const;
 
-        void translate(const vec3f &o);
-
+        void center      (bool z=false);
+        void translate   (const vec3f &o);
         void bounding_box(vec3f &low, vec3f &high) const;
 
         str              name;

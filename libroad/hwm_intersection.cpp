@@ -2,6 +2,24 @@
 
 namespace hwm
 {
+    intersection::serial_state::serial_state()
+    {
+    }
+
+    intersection::serial_state::serial_state(const intersection &i)
+        : locked(i.locked),
+          current_state(i.current_state),
+          state_time(i.state_time)
+    {
+    }
+
+    void intersection::serial_state::apply(intersection &i) const
+    {
+        i.locked        = locked;
+        i.current_state = current_state;
+        i.state_time    = state_time;
+    }
+
     void intersection::state::state_pair::check(const intersection &parent) const
     {
         if(!fict_lane)
@@ -333,6 +351,11 @@ namespace hwm
         state::state_pair_out::const_iterator result = out_pairs.find(outgoing_ref);
 
         return (locked || result == out_pairs.end()) ? 0 : result->fict_lane;
+    }
+
+    intersection::serial_state intersection::serial() const
+    {
+        return serial_state(*this);
     }
 
     void intersection::advance_state()

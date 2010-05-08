@@ -17,6 +17,26 @@ namespace hwm
         end   = l.end   ? l.end->clone()   : 0;
     }
 
+    lane::~lane()
+    {
+        delete start;
+        delete end;
+    }
+
+    lane::serial_state::serial_state()
+    {
+    }
+
+    lane::serial_state::serial_state(const lane &l)
+        : active(l.active)
+    {
+    }
+
+    void lane::serial_state::apply(lane &l) const
+    {
+        l.active = active;
+    }
+
     void lane::terminus::update_pointers(network &n)
     {
     }
@@ -355,6 +375,11 @@ namespace hwm
         float local;
         road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
         return rmici->second.point_frame(local, offset, up);
+    }
+
+    lane::serial_state lane::serial() const
+    {
+        return serial_state(*this);
     }
 
     lane *lane::left_adjacency(float &param) const
