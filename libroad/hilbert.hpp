@@ -50,12 +50,12 @@ struct hilbert
 
     static size_t order(const float x, const float y)
     {
-        return order_num(std::floor(x*((1L << 24)-1)), std::floor(y*((1L << 24)-1)), 24);
+        return order_num(std::floor(x*((1LL << 24)-1)), std::floor(y*((1LL << 24)-1)), 24);
     }
 
     static double order_norm(const float x, const float y)
     {
-        return order_num(std::floor(x*((1L << 24)-1)), std::floor(y*((1L << 24)-1)), 24)/static_cast<double>((1L << (2*24)) -1);
+        return order_num(std::floor(x*((1LL << 24)-1)), std::floor(y*((1LL << 24)-1)), 24)/static_cast<double>((1LL << (2*24)) -1);
     }
 
     static size_t order_num(size_t x, size_t y, const size_t n)
@@ -63,9 +63,9 @@ struct hilbert
         if(x == 0 && y == 0)
             return 0;
 
-        size_t z = 0;
+        size_t z    = 0;
         size_t rmin = static_cast<size_t>(std::floor(std::log(static_cast<double>(std::max(x, y)))/M_LN2l)) + 1;
-        size_t w = 1L << (rmin - 1);
+        size_t w    = 1LL << (rmin - 1);
         if((rmin & 1) != (n & 1))
             std::swap(x, y);
 
@@ -75,7 +75,7 @@ struct hilbert
             z = 4*z + r;
             h_update(x, y, r, w);
             --rmin;
-            w >>= 1L;
+            w >>= 1LL;
         }
         return z;
     }
@@ -89,17 +89,17 @@ struct hilbert
             return;
         }
         size_t rmin = static_cast<size_t>(std::floor(std::log(static_cast<double>(std::max(x, y)))/M_LN2l)) + 1;
-        size_t w = 1L << (rmin - 1);
+        size_t w = 1LL << (rmin - 1);
         if((rmin & 1) != (n & 1))
             std::swap(x, y);
 
         while(rmin > 0)
         {
             const size_t r = quadrant(x, y, w);
-            z[nchars++] = r;
+            z[nchars++]    = r;
             h_update(x, y, r, w);
             --rmin;
-            w >>= 1L;
+            w            >>= 1LL;
         }
     }
 };

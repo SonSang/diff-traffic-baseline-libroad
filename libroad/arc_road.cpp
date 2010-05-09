@@ -895,10 +895,8 @@ static void rescale_tex_coords(const std::vector<vertex>::iterator &start, const
 
 void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, const float offset, const float resolution, const vec3f &up, const float tex_offset) const
 {
-    const float resolution2 = resolution*resolution;
-
-    size_t      input_start = result.size();
-    const float len         = length(offset);
+    const float  resolution2 = resolution*resolution;
+    const size_t input_start = result.size();
 
     vec2f range(in_range);
     bool reversed = range[0] > range[1];
