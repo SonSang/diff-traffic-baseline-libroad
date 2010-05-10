@@ -10,6 +10,7 @@
 #include "osm_network.hpp"
 #include "hwm_texture_gen.hpp"
 #include "rtree.hpp"
+#include "im_heightfield.hpp"
 #if HAVE_CAIRO
 #include <cairo.h>
 #endif
@@ -413,7 +414,7 @@ namespace hwm
             void cairo_draw(cairo_t *c, bool closed) const;
 #endif
 
-            void intersection_obj(std::ostream &os) const;
+            void intersection_obj(std::ostream &os, const im_heightfield *ih=0) const;
 
             road_is_cnt              ric;
             std::vector<arc_road>    connecting_arcs;
@@ -448,8 +449,8 @@ namespace hwm
         void cairo_roads(cairo_t *c) const;
 #endif
 
-        void road_objs(std::ostream &os) const;
-        void network_obj(const std::string &path) const;
+        void road_objs(std::ostream &os, const im_heightfield *ih=0) const;
+        void network_obj(const std::string &path, const im_heightfield *ih=0) const;
 
         void build_spatial();
 

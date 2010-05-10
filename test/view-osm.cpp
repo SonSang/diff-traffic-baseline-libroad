@@ -422,7 +422,7 @@ public:
                     hnet.xml_write("default.xml.gz");
                     std::cerr << "Wrote default.xml.gz" << std::endl;
                     hwm::network_aux neta(hnet);
-                    neta.network_obj("default/default.obj");
+                    neta.network_obj("default/default.obj", ih);
                     std::cerr << "Wrote default/default.obj" << std::endl;
                 }
                 if(ih)
@@ -440,7 +440,7 @@ public:
                     ih->make_mesh(vrts, fcs);
                     std::ofstream os("default.smf");
                     mesh_to_smf(os, vrts, fcs);
-                        std::cerr << "Wrote default.smf" << std::endl;
+                    std::cerr << "Wrote default.smf" << std::endl;
                 }
                 break;
             case '9':

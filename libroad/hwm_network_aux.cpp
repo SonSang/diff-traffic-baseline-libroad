@@ -183,7 +183,7 @@ namespace hwm
     }
 #endif
 
-    void network_aux::road_objs(std::ostream &os) const
+    void network_aux::road_objs(std::ostream &os, const im_heightfield *ih) const
     {
         const std::string mtlname("road.mtl");
 
@@ -213,6 +213,8 @@ namespace hwm
                 std::vector<vertex> vrts;
                 std::vector<vec3u>  fcs;
                 e.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), net.lane_width);
+                if(ih)
+                    ih->project_vertices(vrts);
 
                 const std::string oname(boost::str(boost::format("%s-%d") % r.id % re_c));
 
@@ -403,7 +405,7 @@ namespace hwm
             cairo_close_path(c);
     }
 
-    void network_aux::intersection_geometry::intersection_obj(std::ostream &os) const
+    void network_aux::intersection_geometry::intersection_obj(std::ostream &os, const im_heightfield *ih) const
     {
         std::vector<vertex> vrts;
         for(size_t i = 0; i < ric.size(); ++i)
@@ -423,10 +425,13 @@ namespace hwm
         for(unsigned int i = 0; i < center; ++i)
             fcs.push_back(vec3u(center, i, (i+1) % center));
 
+        if(ih)
+            ih->project_vertices(vrts);
+
         mesh_to_obj(os, is->id, "intersection_mtl", vrts, fcs);
     }
 
-    void network_aux::network_obj(const std::string &path) const
+    void network_aux::network_obj(const std::string &path, const im_heightfield *ih) const
     {
         bf::path full_out_path(path);
         bf::path dir(full_out_path.parent_path());
@@ -443,12 +448,12 @@ namespace hwm
             bf::current_path(dir);
         std::ofstream out(full_out_path.filename().c_str());
         out << "s 1\n";
-        road_objs(out);
+        road_objs(out, ih);
 
         typedef strhash<intersection_geometry>::type::value_type ig_pair;
         BOOST_FOREACH(const ig_pair &ig, intersection_geoms)
         {
-            ig.second.intersection_obj(out);
+            ig.second.intersection_obj(out, ih);
         }
 
         bf::current_path(now);

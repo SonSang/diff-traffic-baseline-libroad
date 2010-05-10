@@ -3,6 +3,8 @@
 
 #include "functions.hpp"
 
+struct im_heightfield;
+
 #include "libroad/hwm_network.hpp"
 #include "libroad/osm_network.hpp"
 #include <fstream>
@@ -150,6 +152,14 @@ struct im_heightfield
                 return res;
 
             to_add.push_back(vlookup(*input++));
+        }
+    }
+
+    void project_vertices(std::vector<vertex> &vrts) const
+    {
+        BOOST_FOREACH(vertex &v, vrts)
+        {
+            v.position = vlookup(v.position);
         }
     }
 
