@@ -393,31 +393,17 @@ namespace osm
                             //Move the next to last (or second) point to make the ramp tangent to the highway.
                             if (i == 0)
                             {
-                                // for(int i = 0; i < e.shape.size(); i++)
-                                //     std::cout << e.shape[i]->id << " ";
-                                // std::cout << std::endl;
                                 vec3f tan(col(highway_shape.frame(t, offset, false), 0));
                                 e.shape.insert(e.shape.begin() + 1, new node);
                                 e.shape[i + 1]->id = str(boost::lexical_cast<std::string>(rand()));
                                 e.shape[i + 1]->xy = len*tan + pt;
-                                // for(int i = 0; i < e.shape.size(); i++)
-                                //     std::cout << e.shape[i]->id << " ";
-                                // std::cout << std::endl;
-
                             }
                             else if (i + 1 == e.shape.size())
                              {
-                                // for(int i = 0; i < e.shape.size(); i++)
-                                //     std::cout << e.shape[i]->id << " ";
-                                // std::cout << std::endl;
-
                                 vec3f tan(col(highway_shape.frame(t, offset, true), 0));
                                 e.shape.insert(e.shape.begin() + i, new node);
                                 e.shape[i]->id = str(boost::lexical_cast<std::string>(rand()));
                                 e.shape[i]->xy = len*tan + pt;
-                                // for(int i = 0; i < e.shape.size(); i++)
-                                //     std::cout << e.shape[i]->id << " ";
-                                // std::cout << std::endl;
                             }
                             else
                             {
@@ -672,6 +658,19 @@ namespace osm
         }
     }
 
+    namespace create_intersections
+    {
+        struct Edge_Offset
+        {
+            float offset;
+            vec2f approach_vector;
+            int num_of_lanes;
+            float angle;
+            osm::edge* parent_edge;
+            static bool clockwise(const Edge_Offset& a, const Edge_Offset& b){return a.angle < b.angle;}
+        };
+    };
+
     void network::create_intersections()
     {
         compute_node_degrees();
@@ -708,60 +707,140 @@ namespace osm
 
         //Pull back roads to make room for intersections.
         //TODO use geometric method to create exact intersection geometry.
-        double tmp_offset = 10;
         BOOST_FOREACH(const osm::intr_pair &ip, intersections)
         {
             const intersection&  i = ip.second;
             const node          &intersection_node(nodes[i.id_from_node]);
 
+            std::map<edge*, create_intersections::Edge_Offset*> edges_to_offsets;
+            std::vector<create_intersections::Edge_Offset> edge_offsets;
+
+            //
+            // Create a vector of edge offsets and a map of edges to their offsets
+            //
+            BOOST_FOREACH(edge* an_edge, i.edges_starting_here)
+            {
+                create_intersections::Edge_Offset an_edge_offset;
+
+                //Compute the vector
+                vec2f vec(an_edge->shape[1]->xy[0] - an_edge->shape[0]->xy[0],
+                          an_edge->shape[1]->xy[1] - an_edge->shape[0]->xy[1]);
+                vec                            *= 1.0/tvmet::norm2(vec);
+                assert(!isnan(vec[0]));
+                assert(!isnan(vec[1]));
+
+
+                an_edge_offset.approach_vector  = vec;
+
+                //Record the number of lanes
+                an_edge_offset.num_of_lanes = an_edge->type->nolanes;
+
+                //Calculate the angle
+                float x = an_edge_offset.approach_vector[0];
+                float y = an_edge_offset.approach_vector[1];
+                an_edge_offset.angle = atan2(y, x);
+
+                //Initialize the offset to -inf (essentially)
+                an_edge_offset.offset = -1*std::numeric_limits<float>::max();
+
+                //Record the edge used to create this structure
+                an_edge_offset.parent_edge = an_edge;
+
+                //Save the edge offset
+                edge_offsets.push_back(an_edge_offset);
+            }
+
+            BOOST_FOREACH(edge* an_edge, i.edges_ending_here)
+            {
+                create_intersections::Edge_Offset an_edge_offset;
+
+                //Compute the vector
+                size_t last = an_edge->shape.size() - 1;
+                size_t penultimate = an_edge->shape.size() - 2;
+                vec2f vec(an_edge->shape[penultimate]->xy[0] - an_edge->shape[last]->xy[0],
+                          an_edge->shape[penultimate]->xy[1] - an_edge->shape[last]->xy[1]);
+                assert(!isnan(vec[0]));
+                assert(!isnan(vec[1]));
+                vec                            *= 1.0/tvmet::norm2(vec);
+
+                an_edge_offset.approach_vector  = vec;
+
+                //Calculate the angle
+                float x = an_edge_offset.approach_vector[0];
+                float y = an_edge_offset.approach_vector[1];
+                an_edge_offset.angle = atan2(y, x);
+
+                //Initialize the offset to -inf
+                an_edge_offset.offset = -1*std::numeric_limits<float>::max();
+
+                //Record the number of lanes
+                an_edge_offset.num_of_lanes = an_edge->type->nolanes;
+
+                //Record the edge used to create this structure
+                an_edge_offset.parent_edge = an_edge;
+
+                edge_offsets.push_back(an_edge_offset);
+            }
+
+            sort(edge_offsets.begin(), edge_offsets.end(), create_intersections::Edge_Offset::clockwise);
+
+            assert(edge_offsets.size() > 1);
+            const float lane_width = 2.5;
+            const float min_radius = 5;
+            for (int i = 0; i < edge_offsets.size(); i++)
+            {
+                int clockwise_neighbor = (i == edge_offsets.size() - 1? 0 : i + 1);
+
+                int no_lanes = std::max(edge_offsets[i].num_of_lanes, edge_offsets[clockwise_neighbor].num_of_lanes);
+
+                float intersection_min = no_lanes * lane_width;
+
+                vec2f clockwise_perp_a;
+                clockwise_perp_a[0]  = -edge_offsets[i].approach_vector[1];
+                clockwise_perp_a[1]  = edge_offsets[i].approach_vector[0];
+                clockwise_perp_a    *= (no_lanes*lane_width + min_radius);
+
+                vec2f cclockwise_perp_b;
+                cclockwise_perp_b[0]  = edge_offsets[clockwise_neighbor].approach_vector[1];
+                cclockwise_perp_b[1]  = -edge_offsets[clockwise_neighbor].approach_vector[0];
+                cclockwise_perp_b    *= (no_lanes*lane_width + min_radius);
+
+                vec2f sum(clockwise_perp_a - cclockwise_perp_b);
+                float len = norm2(sum);
+                float theta = edge_offsets[clockwise_neighbor].angle - edge_offsets[i].angle;
+
+                if (theta < 0){
+                    theta += 2*M_PI;
+                }
+
+                float offset = len / (2.0f * sin(theta / 2.0f));
+
+                if (offset > edge_offsets[i].offset)
+                {
+                    //Store the max of the offset and a minimum intersection
+                    edge_offsets[i].offset = std::max(offset, intersection_min);
+                }
+                if (offset > edge_offsets[clockwise_neighbor].offset)
+                {
+                    //Store the max of the offset and a minimum intersection
+                    edge_offsets[clockwise_neighbor].offset = std::max(offset, intersection_min);
+                }
+            }
+
+
+            BOOST_FOREACH(create_intersections::Edge_Offset& an_offset, edge_offsets)
+            {
+                edges_to_offsets[an_offset.parent_edge] = &an_offset;
+            }
+
+            //Pull back roads
             BOOST_FOREACH(edge* edge_p, i.edges_starting_here)
             {
                 edge& e = (*edge_p);
 
-                //TODO Put the min angle calculations in a seperate function
-                // vec3f alpha(e.shape[1]->xy[0] - e.shape[0]->xy[0],
-                //                               e.shape[1]->xy[1] - e.shape[0]->xy[1],
-                //                               0.0f);
-                // alpha *= 1.0/tvmet::norm2(alpha);
+                float offset = edges_to_offsets[edge_p]->offset;
 
-                // double min_angle = std::numeric_limits<double>::infinity();
-                // BOOST_FOREACH(edge* other_edge_p, i.edges_starting_here)
-                // {
-                //     edge& f = (*other_edge_p);
-
-                //     if (e.id == f.id)
-                //         continue;
-
-                //     vec3f beta(f.shape[1]->xy[0] - f.shape[0]->xy[0],
-                //                                  f.shape[1]->xy[1] - f.shape[0]->xy[1],
-                //                                  0.0f);
-                //     beta *= 1.0/tvmet::norm2(beta);
-
-                //     float angle = acos(dot(alpha, beta));
-
-                //     if (angle < min_angle)
-                //     {
-                //         min_angle = angle;
-                //     }
-                // }
-
-                // BOOST_FOREACH(edge* other_edge_p, i.edges_ending_here)
-                // {
-                //     edge& f = (*other_edge_p);
-
-                //     vec3f beta;
-                //     beta = f.shape[f.shape.size() - 2]->xy;
-                //     beta -= f.shape[f.shape.size() - 1]->xy;
-
-                //     beta *= 1.0/tvmet::norm2(beta);
-
-                //     float angle = acos(dot(alpha, beta));
-
-                //     if (angle < min_angle)
-                //     {
-                //         min_angle = angle;
-                //     }
-                // }
+                assert(!isnan(offset));
 
                 double len_thus_far = 0;
                 double _len         = 0;
@@ -774,7 +853,7 @@ namespace osm
                     new_start++;
                     _len                          = planar_distance(e.shape[new_start + 1]->xy, e.shape[new_start]->xy);
                 }
-                while (len_thus_far + _len<= tmp_offset); //TODO degenerate case when equal.
+                while (len_thus_far + _len<= offset); //TODO degenerate case when equal.
 
                 //Update node degree count.
                 for (int i = 1; i <= new_start; i++)
@@ -784,7 +863,7 @@ namespace osm
                 vec3f start_seg(e.shape[new_start + 1]->xy - e.shape[new_start]->xy);
                 start_seg[2] = 0.0f;
                 const double len = length(start_seg);
-                double factor = (len - (tmp_offset - len_thus_far))/len;
+                double factor = (len - (offset - len_thus_far))/len;
                 start_seg *= factor;
 
                 e.shape[new_start]        = new node(*e.shape[new_start]);
@@ -793,6 +872,11 @@ namespace osm
                 e.shape[new_start]->xy[1] = e.shape[new_start + 1]->xy[1] - start_seg[1];
                 e.shape[new_start]->xy[2] = intersection_node.xy[2];
 
+                assert(!isnan(e.shape[new_start]->xy[0]));
+                assert(!isnan(e.shape[new_start]->xy[1]));
+                assert(!isnan(e.shape[new_start]->xy[2]));
+
+
                 if (new_start != 0)
                     e.shape.erase(e.shape.begin(), e.shape.begin() + new_start);
             }
@@ -800,6 +884,8 @@ namespace osm
             BOOST_FOREACH(edge* edge_p, i.edges_ending_here)
             {
                 edge& e = (*edge_p);
+
+                float offset = edges_to_offsets[edge_p]->offset;
 
                 double len_thus_far = 0;
                 double _len         = 0;
@@ -811,7 +897,7 @@ namespace osm
                     new_end--;
                     _len          = planar_distance(e.shape[new_end]->xy, e.shape[new_end-1]->xy);
                 }
-                while(len_thus_far + _len <= tmp_offset);
+                while(len_thus_far + _len <= offset);
 
                 //Update node degree count
                 //Don't change count for the last node, as we use its id.
@@ -823,7 +909,7 @@ namespace osm
                 end_seg -=  e.shape[new_end - 1]->xy;
 
                 const double len = planar_distance(e.shape[new_end]->xy, e.shape[new_end - 1]->xy);
-                double factor = (len - (tmp_offset - len_thus_far))/len;
+                double factor = (len - (offset - len_thus_far))/len;
 
                 end_seg                 *= factor;
                 e.shape[new_end]         = new node(*e.shape[new_end]);
@@ -831,6 +917,10 @@ namespace osm
                 e.shape[new_end]->xy[0]  = e.shape[new_end - 1]->xy[0] + end_seg[0];
                 e.shape[new_end]->xy[1]  = e.shape[new_end - 1]->xy[1] + end_seg[1];
                 e.shape[new_end]->xy[2]  = intersection_node.xy[2];
+
+                assert(!isnan(e.shape[new_end]->xy[0]));
+                assert(!isnan(e.shape[new_end]->xy[1]));
+                assert(!isnan(e.shape[new_end]->xy[2]));
 
                 if (new_end != static_cast<int>(e.shape.size()) - 1)
                     e.shape.erase(e.shape.begin() + new_end + 1, e.shape.end());
@@ -881,13 +971,18 @@ namespace osm
     {
         std::vector<node*> new_node_list;
         str last_id = shape[0]->id;
+        vec3f last_vec = shape[0]->xy;
         new_node_list.push_back(shape[0]);
         for(size_t i = 1; i < shape.size(); i++)
         {
-            if (shape[i]->id != last_id)
+            if ((shape[i]->id != last_id)
+                and ((shape[i]->xy[0] != last_vec[0])
+                     or
+                     (shape[i]->xy[1] != last_vec[1])))
             {
                 new_node_list.push_back(shape[i]);
                 last_id = shape[i]->id;
+                last_vec = shape[i]->xy;
             }
         }
         shape.clear();

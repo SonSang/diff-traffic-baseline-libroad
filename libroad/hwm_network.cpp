@@ -669,6 +669,7 @@ namespace hwm
             BOOST_FOREACH(const hwm_l_pair& l, hnet.lanes)
             {
                 l.second.check();
+                assert(l.second.length() > 0);
             }
 
             BOOST_FOREACH(const osm::edge::lane& l, e.additional_lanes)
