@@ -301,7 +301,7 @@ namespace osm
     }
 
 
-    void network::create_ramps()
+    void network::create_ramps(const float lane_width)
     {
         edges_including_rebuild();
 
@@ -372,7 +372,7 @@ namespace osm
                             float nolanes = 2;
 
                             //TODO use lane width value, not constant
-                            float offset = (2.5)*(lanect + -((nolanes - 1)/2.0));
+                            float offset = lane_width*(lanect + -((nolanes - 1)/2.0));
 
                             ///length up to feature i
                             ///+ 1/2 length of feature i

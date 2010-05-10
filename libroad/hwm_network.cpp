@@ -508,7 +508,7 @@ namespace hwm
                     rm.parent_road = parent_road;
                     rm.interval[0] = 0.0f;
                     rm.interval[1] = 1.0f;
-                    rm.lane_position = (2.5)*(-0.5 + -1*(lanect));
+                    rm.lane_position = lane_width*(-0.5 + -1*(lanect));
 
                     new_lane.road_memberships.insert(0.0, rm);
 
@@ -546,7 +546,7 @@ namespace hwm
                     rm_rev.parent_road = parent_road;
                     rm_rev.interval[0] = 1.0f;
                     rm_rev.interval[1] = 0.0f;
-                    rm_rev.lane_position = (2.5)*(0.5 + (lanect));;
+                    rm_rev.lane_position = lane_width*(0.5 + (lanect));;
 
                     new_reverse_lane.road_memberships.insert(0.0, rm_rev);
                     //Create intersections only if one has not been assigned.
@@ -588,7 +588,7 @@ namespace hwm
 
                     //TODO use lane width value, not constant
 
-                    float position = (2.5)*(lanect + -((et.nolanes - 1)/2.0));
+                    float position = lane_width*(lanect + -((et.nolanes - 1)/2.0));
                     //Units possibly in half lane widths...
 
                     rm.lane_position = position;

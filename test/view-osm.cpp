@@ -399,7 +399,7 @@ public:
             case 'd':
                 if(net)
                 {
-                    net->create_ramps();
+                    net->create_ramps(2.5);
                     net->remove_small_roads(50);
                     net->create_intersections();
                     net->populate_edge_hash_from_edges();

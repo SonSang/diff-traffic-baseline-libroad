@@ -16,6 +16,16 @@
 
 namespace hwm
 {
+    struct road_metrics
+    {
+        float lane_width;
+        float shoulder_width;
+        float line_width;
+        float line_sep_width;
+        float line_length;
+        float line_gap_length;
+    };
+
     static const float tire_static_friction = 0.7f;
 
     float maximum_cornering_speed(float radius, float g, float static_friction);
@@ -349,7 +359,7 @@ namespace hwm
             struct lane_cont : public std::map<const float, lane_entry>
             {
 #if HAVE_CAIRO
-                const std::string write_texture(tex_db &tdb) const;
+                const std::string write_texture(tex_db &tdb, const road_metrics &lm) const;
                 void cairo_draw(cairo_t *c, const vec2f &interval, const float lane_width, bool low_side, bool start_new) const;
 #endif
 
@@ -397,7 +407,7 @@ namespace hwm
         struct intersection_geometry
         {
             intersection_geometry();
-            intersection_geometry(const hwm::intersection *is);
+            intersection_geometry(const hwm::intersection *is, const float lane_width);
 
 #if HAVE_CAIRO
             void cairo_draw(cairo_t *c, bool closed) const;

@@ -6,13 +6,6 @@
 
 namespace hwm
 {
-    static const float lane_width      = 2.5f;
-    static const float shoulder_width  = 2.0f;
-    static const float line_width      = 0.125;
-    static const float line_sep_width  = 0.125;
-    static const float line_length     = 3.0f;
-    static const float line_gap_length = 9.0f;
-
     typedef tvmet::Vector<double, 4> color4d;
 
     struct lane_op

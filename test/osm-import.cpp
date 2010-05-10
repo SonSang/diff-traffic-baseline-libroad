@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     onet.remove_highway_intersections();
     onet.compute_node_heights();
     onet.join_logical_roads();
-    onet.create_ramps();
+    onet.create_ramps(2.5);
     onet.remove_small_roads(50);
     onet.join_logical_roads();
     onet.create_intersections();

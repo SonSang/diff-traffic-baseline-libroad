@@ -244,7 +244,7 @@ namespace hwm
         return res;
     }
 
-    const std::string network_aux::road_rev_map::lane_cont::write_texture(tex_db &tdb) const
+    const std::string network_aux::road_rev_map::lane_cont::write_texture(tex_db &tdb, const road_metrics &rm) const
     {
         lane_maker lm;
         // lm.add_xgap(0.25*lane_width);
@@ -256,27 +256,27 @@ namespace hwm
         const float orient0 = copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]);
         while(i != end() && orient0 == copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]))
         {
-            lm.add_xgap(lane_width);
+            lm.add_xgap(rm.lane_width);
             const_iterator next = boost::next(i);
             if(next != end() && orient0 == copysignf(1, next->second.membership->interval[0] - next->second.membership->interval[1]))
-                lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                           0, line_length,
+                lm.add_cbox(new single_box(rm.line_width, rm.line_length+rm.line_gap_length,
+                                           0, rm.line_length,
                                            color4d(1.0, 1.0, 1.0, 1.0)));
             i = next;
         }
         if(i != end() && !lm.boxes.empty())
         {
-            lm.add_cbox(new double_box(line_width, line_sep_width,
-                                       line_length+line_gap_length, 0, line_length+line_gap_length,
+            lm.add_cbox(new double_box(rm.line_width, rm.line_sep_width,
+                                       rm.line_length+rm.line_gap_length, 0, rm.line_length+rm.line_gap_length,
                                        color4d(1.0, 1.0, 0.0, 1.0)));
         }
         while(i != end())
         {
-            lm.add_xgap(lane_width);
+            lm.add_xgap(rm.lane_width);
             const_iterator next = boost::next(i);
             if(next != end())
-                lm.add_cbox(new single_box(line_width, line_length+line_gap_length,
-                                           0, line_length,
+                lm.add_cbox(new single_box(rm.line_width, rm.line_length+rm.line_gap_length,
+                                           0, rm.line_length,
                                            color4d(1.0, 1.0, 1.0, 1.0)));
             i = next;
         }

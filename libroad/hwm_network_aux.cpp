@@ -111,7 +111,7 @@ namespace hwm
 
         BOOST_FOREACH(const intersection_pair &i, n.intersections)
         {
-            intersection_geoms[i.first] = intersection_geometry(&(i.second));
+            intersection_geoms[i.first] = intersection_geometry(&(i.second), n.lane_width);
         }
 
         build_spatial();
@@ -216,7 +216,15 @@ namespace hwm
 
                 const std::string oname(boost::str(boost::format("%s-%d") % r.id % re_c));
 
-                const std::string texname(e.write_texture(tdb));
+                road_metrics rm;
+                rm.lane_width      = net.lane_width;
+                rm.shoulder_width  = 2.0f;
+                rm.line_width      = 0.125;
+                rm.line_sep_width  = 0.125;
+                rm.line_length     = 3.0f;
+                rm.line_gap_length = 9.0f;
+
+                const std::string texname(e.write_texture(tdb, rm));
                 mesh_to_obj(os,
                             oname,
                             texname,
@@ -251,7 +259,8 @@ namespace hwm
 
     static void gen_tan_points(offs_pt         &low, offs_pt &high,
                                const hwm::lane &l,
-                               const bool       incomingp)
+                               const bool       incomingp,
+                               const float lane_width)
     {
         float param;
         float tan_sign;
@@ -304,7 +313,7 @@ namespace hwm
         : is(0)
     {}
 
-    network_aux::intersection_geometry::intersection_geometry(const hwm::intersection *in_is)
+    network_aux::intersection_geometry::intersection_geometry(const hwm::intersection *in_is, const float lane_width)
         : is(in_is)
     {
         BOOST_FOREACH(const hwm::lane *incl, is->incoming)
@@ -315,7 +324,7 @@ namespace hwm
             road_store                       &ent(ric.find(r, at_start));
 
             offs_pt low; offs_pt high;
-            gen_tan_points(low, high, *incl, true);
+            gen_tan_points(low, high, *incl, true, lane_width);
 
             const float oriented_sign = at_start ? 1.0 : -1.0;
             low.first                 = oriented_sign*(low.first + rm->lane_position);
@@ -332,7 +341,7 @@ namespace hwm
             road_store                       &ent(ric.find(r, at_start));
 
             offs_pt low; offs_pt high;
-            gen_tan_points(low, high, *outl, false);
+            gen_tan_points(low, high, *outl, false, lane_width);
 
             const float oriented_sign = at_start ? 1.0 : -1.0;
             low.first                 = oriented_sign*(low.first + rm->lane_position);
