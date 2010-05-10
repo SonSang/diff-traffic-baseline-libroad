@@ -11,7 +11,7 @@
 #include "arcball.hpp"
 #include "libroad/geometric.hpp"
 #include "visual_geometric.hpp"
-#include "im_heightfield.hpp"
+#include "libroad/im_heightfield.hpp"
 
 #include "libroad/osm_network.hpp"
 #include "libroad/hwm_network.hpp"

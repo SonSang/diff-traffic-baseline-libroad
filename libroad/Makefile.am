@@ -31,6 +31,8 @@ pkginclude_HEADERS  = partition01.hpp \
 		      rtree.hpp \
                       rtree-impl.hpp \
                       hilbert.hpp \
+		      im_heightfield.hpp \
+                      functions.hpp \
 	              geometric.hpp
 
 libroad_la_CPPFLAGS = $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS)

@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include "libroad/hwm_network.hpp"
-#include "im_heightfield.hpp"
+#include "libroad/im_heightfield.hpp"
 
 int main(int argc, char *argv[])
 {
