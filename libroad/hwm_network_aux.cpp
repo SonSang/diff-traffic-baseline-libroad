@@ -11,7 +11,7 @@ namespace hwm
     {
     }
 
-    void network_aux::road_rev_map::lane_cont::cairo_draw(cairo_t *c , const vec2f &interval, const float lane_widith, bool low_side, bool start_new) const
+    void network_aux::road_rev_map::lane_cont::cairo_draw(cairo_t *c , const vec2f &interval, const float lane_width, bool low_side, bool start_new) const
     {
         const float                  left  = begin()            ->first-0.5f*lane_width;
         const float                  right = boost::prior(end())->first+0.5f*lane_width;
