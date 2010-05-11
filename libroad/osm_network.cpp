@@ -671,7 +671,7 @@ namespace osm
         };
     };
 
-    void network::create_intersections()
+    void network::create_intersections(float lane_width)
     {
         compute_node_degrees();
 
@@ -785,7 +785,6 @@ namespace osm
             sort(edge_offsets.begin(), edge_offsets.end(), create_intersections::Edge_Offset::clockwise);
 
             assert(edge_offsets.size() > 1);
-            const float lane_width = 2.5;
             const float min_radius = 5;
             for (int i = 0; i < edge_offsets.size(); i++)
             {

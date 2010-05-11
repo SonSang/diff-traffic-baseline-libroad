@@ -401,7 +401,7 @@ public:
                 {
                     net->create_ramps(2.5);
                     net->remove_small_roads(50);
-                    net->create_intersections();
+                    net->create_intersections(2.5);
                     net->populate_edge_hash_from_edges();
 
                     hwm::network hnet(hwm::from_osm("test", 0.5f, 2.5, *net));

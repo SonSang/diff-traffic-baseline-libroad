@@ -118,7 +118,7 @@ namespace osm
         void check() const;
         void compute_edge_types();
         void draw_network() ;
-        void create_intersections();
+        void create_intersections(float lane_width);
         void compute_node_degrees();
         void join_logical_roads();
         void split_into_road_segments();

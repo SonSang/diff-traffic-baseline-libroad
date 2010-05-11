@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     onet.join_logical_roads();
     onet.split_into_road_segments();
     onet.remove_small_roads(15);
-    onet.create_intersections();
+    onet.create_intersections(2.5);
     onet.populate_edge_hash_from_edges();
 
     hwm::network net(hwm::from_osm("test", 0.5f, 2.5, onet));
