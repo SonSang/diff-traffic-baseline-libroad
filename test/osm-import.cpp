@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    float lane_width =  3.66;
+
     //Load from file
     osm::network onet(osm::load_xml_network(argv[1]));
     onet.populate_edges_from_hash();
@@ -23,13 +25,13 @@ int main(int argc, char *argv[])
     onet.remove_highway_intersections();
     onet.compute_node_heights();
     onet.join_logical_roads();
-    onet.create_ramps(2.5);
+    onet.create_ramps(lane_width);
     onet.remove_small_roads(50);
     onet.join_logical_roads();
-    onet.create_intersections();
+    onet.create_intersections(lane_width);
     onet.populate_edge_hash_from_edges();
 
-    hwm::network net(hwm::from_osm("test", 0.5f, 2.5, onet));
+    hwm::network net(hwm::from_osm("test", 0.5f, lane_width, onet));
     net.build_intersections();
     net.build_fictitious_lanes();
     net.auto_scale_memberships();
