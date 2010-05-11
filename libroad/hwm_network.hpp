@@ -380,7 +380,7 @@ namespace hwm
             void print() const;
 
             partition01<lane_cont>  lane_map;
-            const hwm::road        *road;
+            const hwm::road        *rp;
         };
 
         struct point_tan

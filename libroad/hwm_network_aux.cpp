@@ -42,7 +42,7 @@ namespace hwm
         lane_map.insert(0.0f, lane_cont());
     }
 
-    network_aux::road_rev_map::road_rev_map(const hwm::road *r) : road(r)
+    network_aux::road_rev_map::road_rev_map(const hwm::road *r) : rp(r)
     {
         lane_map.insert(0.0f, lane_cont());
     }
@@ -198,7 +198,7 @@ namespace hwm
 
         BOOST_FOREACH(const strhash<road_rev_map>::type::value_type &rrm_v, rrm)
         {
-            const hwm::road &r = *(rrm_v.second.road);
+            const hwm::road &r = *(rrm_v.second.rp);
 
             size_t re_c = 0;
             for(partition01<road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
