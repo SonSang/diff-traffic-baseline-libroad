@@ -1,11 +1,6 @@
-noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import read-scene
+noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import
 
 EXTRA_DIST = arcball.hpp visual_geometric.hpp
-
-read_scene_SOURCES  = read-scene.cpp
-read_scene_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-read_scene_LDFLAGS  = $(LDFLAGS)
-read_scene_LDADD    = $(top_builddir)/libroad/libroad.la
 
 road_test_SOURCES  = road-test.cpp
 road_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
@@ -48,7 +43,7 @@ osm_import_LDFLAGS  = $(LDFLAGS)
 osm_import_LDADD    = $(top_builddir)/libroad/libroad.la
 
 if DO_IMAGE
-noinst_PROGRAMS += mesh-extract-test displace-polylines
+noinst_PROGRAMS += mesh-extract-test displace-polylines read-scene
 
 mesh_extract_test_SOURCES = mesh-extract-test.cpp
 mesh_extract_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
@@ -59,6 +54,11 @@ displace_polylines_SOURCES = displace-polylines.cpp
 displace_polylines_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 displace_polylines_LDFLAGS  = $(MAGICKPP_LDFLAGS) $(BOOST_FILESYSTEM_LIBS) $(LDFLAGS)
 displace_polylines_LDADD    = $(top_builddir)/libroad/libroad.la $(top_builddir)/libroad/libroad_image.la
+
+read_scene_SOURCES  = read-scene.cpp
+read_scene_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+read_scene_LDFLAGS  = $(MAGICKPP_LDFLAGS) $(LDFLAGS)
+read_scene_LDADD    = $(top_builddir)/libroad/libroad.la
 endif
 
 if DO_VISUAL

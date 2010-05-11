@@ -610,15 +610,12 @@ namespace hwm
     }
 }
 
-static void xml_read_object(xmlpp::TextReader &reader)
+static obj_record xml_read_object(xmlpp::TextReader &reader)
 {
-    std::string name;
-    std::string mesh;
-    mat4x4f     matrix;
-    aabb3d      box;
+    obj_record obj;
 
-    get_attribute(name, reader, "name");
-    get_attribute(mesh, reader, "mesh");
+    get_attribute(obj.name, reader, "name");
+    get_attribute(obj.mesh_name, reader, "mesh");
 
     while(!is_closing_element(reader, "object"))
     {
@@ -650,7 +647,7 @@ static void xml_read_object(xmlpp::TextReader &reader)
                             {
                                 if(matrix_pos > 16)
                                     throw xml_error(reader, "Too many elements in matrix!");
-                                instr >> matrix.data()[matrix_pos++];
+                                instr >> obj.matrix.data()[matrix_pos++];
                             }
                         }
                     }
@@ -683,7 +680,7 @@ static void xml_read_object(xmlpp::TextReader &reader)
                             instr >> pos[1];
                             instr >> pos[2];
 
-                            box.enclose_point(pos[0], pos[1], pos[2]);
+                            obj.box.enclose_point(pos[0], pos[1], pos[2]);
                         }
                     }
                 }
@@ -691,15 +688,13 @@ static void xml_read_object(xmlpp::TextReader &reader)
         }
     }
 
-    std::cout << name << std::endl;
-    std::cout << mesh << std::endl;
-    std::cout << matrix << std::endl;
-    for(int i = 0; i < 3; ++i)
-        std::cout << box.bounds[0][i] << " " << box.bounds[1][i] << std::endl;
+    return obj;
 }
 
-void xml_read_scene(const std::string &filename)
+std::vector<obj_record> xml_read_scene(const std::string &filename)
 {
+    std::vector<obj_record> res;
+
     xmlpp::TextReader reader(filename);
     read_skip_comment(reader);
 
@@ -716,9 +711,10 @@ void xml_read_scene(const std::string &filename)
             {
                 read_skip_comment(reader);
                 if(is_opening_element(reader, "object"))
-                    xml_read_object(reader);
+                    res.push_back(xml_read_object(reader));
             }
         }
     }
     reader.close();
+    return res;
 }

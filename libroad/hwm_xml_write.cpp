@@ -460,3 +460,28 @@ namespace hwm
         delete out_stream;
     }
 }
+
+void xml_write_scene(const std::string &filename, const std::vector<obj_record> &objs)
+{
+    xmlpp::Document out;
+    xmlpp::Element *root(out.create_root_node("scene"));
+
+    xmlpp::Element *objects = root->add_child("objects");
+    BOOST_FOREACH(const obj_record &obj, objs)
+    {
+        xmlpp::Element *object = objects->add_child("object");
+        object->set_attribute("name", obj.name);
+        object->set_attribute("mesh", obj.mesh_name);
+
+        xmlpp::Element *mat = object->add_child("matrix");
+        mat->add_child_text(boost::str(boost::format("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f") %
+                                       obj.matrix(0,0) % obj.matrix(0,1) % obj.matrix(0,2) % obj.matrix(0,3) %
+                                       obj.matrix(1,0) % obj.matrix(1,1) % obj.matrix(1,2) % obj.matrix(1,3) %
+                                       obj.matrix(2,0) % obj.matrix(2,1) % obj.matrix(2,2) % obj.matrix(2,3) %
+                                       obj.matrix(3,0) % obj.matrix(3,1) % obj.matrix(3,2) % obj.matrix(3,3)));
+    }
+
+    std::ostream *out_stream = compressing_ostream(filename);
+    out.write_to_stream_formatted(*out_stream, "utf-8");
+    delete out_stream;
+}

@@ -15,7 +15,17 @@
 #include <cairo.h>
 #endif
 
-void xml_read_scene(const std::string &s);
+struct obj_record
+{
+    std::string name;
+    std::string mesh_name;
+
+    mat4x4f matrix;
+    aabb3d  box;
+};
+
+std::vector<obj_record> xml_read_scene(const std::string &s);
+void                    xml_write_scene(const std::string &s, const std::vector<obj_record> &objs);
 
 namespace hwm
 {
