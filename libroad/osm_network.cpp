@@ -5,7 +5,8 @@
 #include <limits>
 #include <algorithm>
 
-double scale = 157253.2964;
+static const double moar_fudge = 0.475;//0.6666666;
+static const double scale = 157253.2964 * moar_fudge;
 
 namespace osm
 {
