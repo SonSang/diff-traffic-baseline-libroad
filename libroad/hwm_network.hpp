@@ -15,6 +15,8 @@
 #include <cairo.h>
 #endif
 
+void xml_read_scene(const std::string &s);
+
 namespace hwm
 {
     struct road_metrics

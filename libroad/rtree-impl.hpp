@@ -84,6 +84,24 @@ void rtree<REAL_T, D, MIN, MAX>::aabb::enclose_point(const real_t x, const real_
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
+void rtree<REAL_T, D, MIN, MAX>::aabb::enclose_point(const real_t x, const real_t y, const real_t z)
+{
+    BOOST_STATIC_ASSERT(DIMENSION == 3);
+    if(x < bounds[0][0])
+        bounds[0][0] = x;
+    if(y < bounds[0][1])
+        bounds[0][1] = y;
+    if(z < bounds[0][2])
+        bounds[0][2] = z;
+    if(x > bounds[1][0])
+        bounds[1][0] = x;
+    if(y > bounds[1][1])
+        bounds[1][1] = y;
+    if(z > bounds[1][2])
+        bounds[1][2] = z;
+}
+
+template <typename REAL_T, int D, int MIN, int MAX>
 rtree<REAL_T, D, MIN, MAX>::entry::entry() : item(0)
 {
 }

@@ -609,3 +609,116 @@ namespace hwm
         return n;
     }
 }
+
+static void xml_read_object(xmlpp::TextReader &reader)
+{
+    std::string name;
+    std::string mesh;
+    mat4x4f     matrix;
+    aabb3d      box;
+
+    get_attribute(name, reader, "name");
+    get_attribute(mesh, reader, "mesh");
+
+    while(!is_closing_element(reader, "object"))
+    {
+        read_skip_comment(reader);
+
+        if(is_opening_element(reader, "matrix"))
+        {
+            while(!is_closing_element(reader, "matrix"))
+            {
+                int matrix_pos = 0;
+                read_skip_comment(reader);
+
+                if(reader.get_node_type() == xmlpp::TextReader::Text ||
+                   reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
+                {
+                    std::string                 res(reader.get_value());
+                    typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+                    boost::char_separator<char> linesep("\n");
+                    tokenizer                   linetokens(res, linesep);
+
+                    BOOST_FOREACH(const std::string &ltok, linetokens)
+                    {
+                        std::string trim_ltok(ltok);
+                        boost::trim_left(trim_ltok);
+                        if(!trim_ltok.empty())
+                        {
+                            std::stringstream instr(trim_ltok);
+                            while(!instr.eof())
+                            {
+                                if(matrix_pos > 16)
+                                    throw xml_error(reader, "Too many elements in matrix!");
+                                instr >> matrix.data()[matrix_pos++];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if(is_opening_element(reader, "bb_points"))
+        {
+            while(!is_closing_element(reader, "bb_points"))
+            {
+                read_skip_comment(reader);
+
+                if(reader.get_node_type() == xmlpp::TextReader::Text ||
+                   reader.get_node_type() == xmlpp::TextReader::SignificantWhitespace)
+                {
+                    std::string                 res(reader.get_value());
+                    typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+                    boost::char_separator<char> linesep("\n");
+                    tokenizer                   linetokens(res, linesep);
+
+                    BOOST_FOREACH(const std::string &ltok, linetokens)
+                    {
+                        std::string trim_ltok(ltok);
+                        boost::trim_left(trim_ltok);
+                        if(!trim_ltok.empty())
+                        {
+                            std::stringstream instr(trim_ltok);
+                            vec3f pos;
+                            instr >> pos[0];
+                            instr >> pos[1];
+                            instr >> pos[2];
+
+                            box.enclose_point(pos[0], pos[1], pos[2]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << name << std::endl;
+    std::cout << mesh << std::endl;
+    std::cout << matrix << std::endl;
+    for(int i = 0; i < 3; ++i)
+        std::cout << box.bounds[0][i] << " " << box.bounds[1][i] << std::endl;
+}
+
+void xml_read_scene(const std::string &filename)
+{
+    xmlpp::TextReader reader(filename);
+    read_skip_comment(reader);
+
+    if(!is_opening_element(reader, "scene"))
+        throw xml_error(reader, "No scene element found!");
+
+    while(!is_closing_element(reader, "scene"))
+    {
+        read_skip_comment(reader);
+
+        if(is_opening_element(reader, "objects"))
+        {
+            while(!is_closing_element(reader, "objects"))
+            {
+                read_skip_comment(reader);
+                if(is_opening_element(reader, "object"))
+                    xml_read_object(reader);
+            }
+        }
+    }
+    reader.close();
+}

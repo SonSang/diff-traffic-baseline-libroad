@@ -163,6 +163,20 @@ struct im_heightfield
         }
     }
 
+    float project_bb(const aabb3d &box) const
+    {
+        float min_height = std::numeric_limits<float>::max();
+        float delta      = 0;
+        for(int i = 0; i < 4; ++i)
+        {
+            const float f = lookup(vec2f(box.bounds[i&1][0], box.bounds[i%2][1]));
+            if(f < min_height)
+                delta     = f - box.bounds[0][2];
+        }
+
+        return delta;
+    }
+
     void displace_shapes(osm::shape_t &s, const float min_length, const float fac_limit, osm::network &net) const
     {
         osm::shape_t           res;

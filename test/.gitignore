@@ -13,3 +13,4 @@ view-osm
 mesh-extract-test
 displace-polylines
 cairo-network
+read-scene

@@ -33,6 +33,7 @@ struct rtree
         bool   overlap(const aabb &o) const;
         void   center(real_t c[DIMENSION]) const;
         void   enclose_point(real_t x, real_t y);
+        void   enclose_point(real_t x, real_t y, real_t z);
 
         real_t bounds[2][DIMENSION];
     };
@@ -128,8 +129,9 @@ struct rtree
     node *root;
 };
 
-typedef rtree<float, 2, 85, 170> rtree2d;
-typedef rtree2d::aabb            aabb2d;
+typedef rtree<float, 2, 85, 170>       rtree2d;
+typedef rtree2d::aabb                  aabb2d;
+typedef rtree<float, 3, 85, 170>::aabb aabb3d;
 
 template <typename REAL_T, int D, int MIN, int MAX>
 struct static_rtree
