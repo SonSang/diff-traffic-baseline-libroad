@@ -79,4 +79,46 @@ namespace hwm
 
         const hwm::network *net;
     };
+
+    struct network_aux_draw
+    {
+        network_aux_draw();
+
+        bool initialized() const;
+        void initialize(const hwm::network_aux *neta, const float resolution);
+
+        void draw_roads_wire();
+        void draw_roads_solid();
+
+        void draw_intersections_wire();
+        void draw_intersections_solid();
+
+        ~network_aux_draw();
+
+        GLuint v_vbo;
+        GLuint f_vbo;
+
+        std::vector<GLint>    lc_vert_starts;
+        std::vector<GLsizei>  lc_vert_counts;
+        std::vector<size_t>   lc_face_starts;
+        std::vector<GLsizei>  lc_face_counts;
+
+        std::vector<GLint>    intersection_vert_fan_starts;
+        std::vector<GLsizei>  intersection_vert_fan_counts;
+        std::vector<GLint>    intersection_vert_loop_starts;
+        std::vector<GLsizei>  intersection_vert_loop_counts;
+
+        struct lc_data
+        {
+            GLint   vert_start;
+            GLsizei vert_count;
+            size_t  face_start;
+            GLsizei face_count;
+        };
+
+        typedef std::map<const network_aux::road_rev_map::lane_cont*, lc_data> lc_data_map;
+        lc_data_map                    lcs;
+
+        const hwm::network_aux *neta;
+    };
 }

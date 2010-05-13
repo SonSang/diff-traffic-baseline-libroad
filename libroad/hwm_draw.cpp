@@ -399,4 +399,184 @@ namespace hwm
         if(f_vbo)
             glDeleteBuffersARB(1, &f_vbo);
     }
+
+    network_aux_draw::network_aux_draw() : v_vbo(0), f_vbo(0), neta(0)
+    {}
+
+    bool network_aux_draw::initialized() const
+    {
+        return neta && v_vbo && f_vbo;
+    }
+
+    void network_aux_draw::initialize(const network_aux *in_neta, const float resolution)
+    {
+        neta = in_neta;
+        std::vector<vertex> points;
+        std::vector<vec3u>  lc_faces;
+
+        std::cout << "Generating network aux mesh with refinement " << resolution << "...";
+        std::cout.flush();
+
+        BOOST_FOREACH(const strhash<network_aux::road_rev_map>::type::value_type &rrm_v, neta->rrm)
+        {
+            for(partition01<network_aux::road_rev_map::lane_cont>::const_iterator current = rrm_v.second.lane_map.begin();
+                current != rrm_v.second.lane_map.end();
+                ++current)
+            {
+                const network_aux::road_rev_map::lane_cont &e = current->second;
+
+                if(e.empty())
+                    continue;
+
+                lc_vert_starts.push_back(points.size());
+                lc_face_starts.push_back(lc_faces.size());
+
+                lc_data_map::iterator it = lcs.find(&e);
+                assert(it == lcs.end());
+
+                lc_data lcd;
+                lcd.vert_start = points.size();
+                lcd.face_start = lc_faces.size();
+
+                e.make_mesh(points, lc_faces, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width);
+
+                lcd.vert_count = points.size()    - lcd.vert_start;
+                lcd.face_count = (lc_faces.size() - lcd.face_start) * 3;
+                lcd.face_start *= sizeof(vec3u);
+                lcs.insert(it, std::make_pair(&e, lcd));
+
+                lc_vert_counts.push_back(points.size()   - lc_vert_starts.back());
+                lc_face_counts.push_back(lc_faces.size() - lc_face_starts.back());
+            }
+        }
+        BOOST_FOREACH(GLsizei &i, lc_face_counts)
+        {
+            i *= 3;
+        }
+        BOOST_FOREACH(size_t &i, lc_face_starts)
+        {
+            i *= sizeof(vec3u);
+        }
+
+        BOOST_FOREACH(const strhash<network_aux::intersection_geometry>::type::value_type &ip, neta->intersection_geoms)
+        {
+            typedef std::pair<float, network_aux::point_tan> offs_pt;
+            const network_aux::intersection_geometry &ig = ip.second;
+
+            intersection_vert_fan_starts.push_back(points.size());
+
+            points.push_back(vertex(ig.is->center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+            for(size_t i = 0; i < ig.ric.size(); ++i)
+            {
+                const network_aux::road_store &rs = ig.ric[i];
+                BOOST_FOREACH(const offs_pt &op, rs.ipt)
+                {
+                    points.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+                }
+
+                ig.connecting_arcs[i].extract_line(points, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+            }
+
+            intersection_vert_fan_counts.push_back(points.size()-intersection_vert_fan_starts.back());
+
+            intersection_vert_loop_starts.push_back(intersection_vert_fan_starts.back() + 1);
+            intersection_vert_loop_counts.push_back(intersection_vert_fan_counts.back() - 2);
+        }
+        std::cout << "Done" << std::endl;
+
+        std::cout << "Sending " << points.size()*sizeof(vertex) << " bytes of vertex info to GPU...";
+        std::cout.flush();
+        glGenBuffersARB(1, &v_vbo);
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBufferDataARB(GL_ARRAY_BUFFER_ARB, points.size()*sizeof(vertex), &(points[0]), GL_STATIC_DRAW_ARB);
+        std::cout << "Done" << std::endl;
+
+        std::cout << "Sending " << lc_faces.size()*sizeof(vec3i) << " bytes of index info to GPU...";
+        std::cout.flush();
+        glGenBuffersARB(1, &f_vbo);
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+        glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, lc_faces.size()*sizeof(vec3i), &(lc_faces[0]), GL_STATIC_DRAW_ARB);
+        std::cout << "Done" << std::endl;
+
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    void network_aux_draw::draw_roads_wire()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawArrays(GL_LINE_LOOP, &(lc_vert_starts[0]), &(lc_vert_counts[0]), lc_vert_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    void network_aux_draw::draw_roads_solid()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, normal)));
+
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
+
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawElements(GL_TRIANGLES, &(lc_face_counts[0]), GL_UNSIGNED_INT, reinterpret_cast<const GLvoid**>(&(lc_face_starts[0])), lc_face_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+    }
+
+    void network_aux_draw::draw_intersections_wire()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawArrays(GL_LINE_LOOP, &(intersection_vert_loop_starts[0]), &(intersection_vert_loop_counts[0]), intersection_vert_loop_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    void network_aux_draw::draw_intersections_solid()
+    {
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, normal)));
+
+        assert(glGetError() == GL_NO_ERROR);
+        glMultiDrawArrays(GL_TRIANGLE_FAN, &(intersection_vert_fan_starts[0]), &(intersection_vert_fan_counts[0]), intersection_vert_fan_starts.size());
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    }
+
+    network_aux_draw::~network_aux_draw()
+    {
+        if(v_vbo)
+            glDeleteBuffersARB(1, &v_vbo);
+        if(f_vbo)
+            glDeleteBuffersARB(1, &f_vbo);
+    }
 }
