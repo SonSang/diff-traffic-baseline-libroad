@@ -476,6 +476,7 @@ namespace hwm
 
                 ig.connecting_arcs[i].extract_line(points, vec2f(0.0f, 1.0f), 0.0f, 0.01);
             }
+            points.push_back(points[intersection_vert_fan_starts.back() + 1]);
 
             intersection_vert_fan_counts.push_back(points.size()-intersection_vert_fan_starts.back());
 
