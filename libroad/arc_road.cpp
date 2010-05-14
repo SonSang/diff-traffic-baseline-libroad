@@ -1009,8 +1009,9 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
 }
 
 void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
-                         const vec2f &range,
-                         const vec2f &offsets, const float resolution,
+                         size_t              &reverse_start,
+                         const vec2f         &range,
+                         const vec2f         &offsets, const float resolution,
                          const bool reverse_tex1) const
 {
     const size_t r1 = vrts.size();
@@ -1025,14 +1026,14 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
         v.tex_coord[1] = texcoord1[0];
     }
 
-    const size_t r2 = vrts.size();
+    reverse_start = vrts.size();
     extract_center(vrts, vec2f(range[1], range[0]), offsets[1], resolution);
-    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), r2), vrts.end()))
+    BOOST_FOREACH(vertex &v, std::make_pair(boost::next(vrts.begin(), reverse_start), vrts.end()))
     {
         v.tex_coord[1] = texcoord1[1];
     }
 
-    ::make_mesh(faces, vrts, vec2i(r1, r2), vec2i(vrts.size(), r2));
+    ::make_mesh(faces, vrts, vec2i(r1, reverse_start), vec2i(vrts.size(), reverse_start));
 }
 
 float arc_road::feature_base(const size_t i, const float offset) const

@@ -438,14 +438,19 @@ namespace hwm
                 lcd.vert_start = points.size();
                 lcd.face_start = lc_faces.size();
 
-                e.make_mesh(points, lc_faces, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width);
+                size_t reverse_start;
+                e.make_mesh(points, lc_faces, reverse_start, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width);
 
                 lcd.vert_count = points.size()    - lcd.vert_start;
                 lcd.face_count = (lc_faces.size() - lcd.face_start) * 3;
                 lcd.face_start *= sizeof(vec3u);
                 lcs.insert(it, std::make_pair(&e, lcd));
 
+                lc_vert_counts.push_back(reverse_start   - lc_vert_starts.back());
+
+                lc_vert_starts.push_back(reverse_start);
                 lc_vert_counts.push_back(points.size()   - lc_vert_starts.back());
+
                 lc_face_counts.push_back(lc_faces.size() - lc_face_starts.back());
             }
         }
@@ -473,15 +478,13 @@ namespace hwm
                 {
                     points.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
                 }
-
+                intersection_vert_strip_starts.push_back(points.size()-1);
                 ig.connecting_arcs[i].extract_line(points, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+                intersection_vert_strip_counts.push_back(points.size()-intersection_vert_strip_starts.back());
             }
             points.push_back(points[intersection_vert_fan_starts.back() + 1]);
 
             intersection_vert_fan_counts.push_back(points.size()-intersection_vert_fan_starts.back());
-
-            intersection_vert_loop_starts.push_back(intersection_vert_fan_starts.back() + 1);
-            intersection_vert_loop_counts.push_back(intersection_vert_fan_counts.back() - 2);
         }
         std::cout << "Done" << std::endl;
 
@@ -509,7 +512,7 @@ namespace hwm
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         assert(glGetError() == GL_NO_ERROR);
-        glMultiDrawArrays(GL_LINE_LOOP, &(lc_vert_starts[0]), &(lc_vert_counts[0]), lc_vert_starts.size());
+        glMultiDrawArrays(GL_LINE_STRIP, &(lc_vert_starts[0]), &(lc_vert_counts[0]), lc_vert_starts.size());
 
         glDisableClientState(GL_VERTEX_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
@@ -548,7 +551,7 @@ namespace hwm
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
         assert(glGetError() == GL_NO_ERROR);
-        glMultiDrawArrays(GL_LINE_LOOP, &(intersection_vert_loop_starts[0]), &(intersection_vert_loop_counts[0]), intersection_vert_loop_starts.size());
+        glMultiDrawArrays(GL_LINE_STRIP, &(intersection_vert_strip_starts[0]), &(intersection_vert_strip_counts[0]), intersection_vert_strip_starts.size());
 
         glDisableClientState(GL_VERTEX_ARRAY);
         assert(glGetError() == GL_NO_ERROR);

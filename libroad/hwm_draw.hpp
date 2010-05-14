@@ -105,8 +105,8 @@ namespace hwm
 
         std::vector<GLint>    intersection_vert_fan_starts;
         std::vector<GLsizei>  intersection_vert_fan_counts;
-        std::vector<GLint>    intersection_vert_loop_starts;
-        std::vector<GLsizei>  intersection_vert_loop_counts;
+        std::vector<GLint>    intersection_vert_strip_starts;
+        std::vector<GLsizei>  intersection_vert_strip_counts;
 
         struct lc_data
         {

@@ -21,12 +21,12 @@ namespace hwm
         rm.parent_road->rep.svg_arc_path_center(interval, offset).cairo_draw(c, start_new);
     }
 
-    void network_aux::road_rev_map::lane_cont::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, const vec2f &interval, const float lane_width) const
+    void network_aux::road_rev_map::lane_cont::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, size_t &reverse_start, const vec2f &interval, const float lane_width) const
     {
         const float                  left  = begin()            ->first-0.5f*lane_width;
         const float                  right = boost::prior(end())->first+0.5f*lane_width;
         const lane::road_membership &rm    = *(begin()->second.membership);
-        rm.parent_road->rep.make_mesh(vrts, fcs, interval, vec2f(left, right), 0.005, true);
+        rm.parent_road->rep.make_mesh(vrts, fcs, reverse_start, interval, vec2f(left, right), 0.005, true);
     }
 
     aabb2d network_aux::road_rev_map::lane_cont::planar_bounding_box(const float lane_width, const vec2f &interval) const
@@ -212,7 +212,8 @@ namespace hwm
 
                 std::vector<vertex> vrts;
                 std::vector<vec3u>  fcs;
-                e.make_mesh(vrts, fcs, rrm_v.second.lane_map.containing_interval(current), net.lane_width);
+                size_t              reverse_start;
+                e.make_mesh(vrts, fcs, reverse_start, rrm_v.second.lane_map.containing_interval(current), net.lane_width);
                 if(ih)
                     ih->project_vertices(vrts);
 

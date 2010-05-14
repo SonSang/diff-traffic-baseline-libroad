@@ -53,6 +53,7 @@ struct arc_road
     void extract_line  (std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1), float tex_offset=0.0f) const;
     void extract_center(std::vector<vertex> &result, const vec2f &range, const float offset, const float resolution, const vec3f &up=vec3f(0, 0, 1)) const;
     void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
+                   size_t &reverse_start,
                    const vec2f &range,
                    const vec2f &offsets, const float resolution,
                    const bool reverse_tex1=false) const;

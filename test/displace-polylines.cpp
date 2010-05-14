@@ -51,7 +51,8 @@ int main(int argc, char *argv[])
     fcs.clear();
     arc_road ar;
     ar.initialize_from_polyline(0.0f, poly);
-    ar.make_mesh(vrts, fcs, vec2f(0, 1), vec2f(-0.1, 0.1), 0.01);
+    size_t reverse_start;
+    ar.make_mesh(vrts, fcs, reverse_start, vec2f(0, 1), vec2f(-0.1, 0.1), 0.01);
 
     mesh_to_obj(os, "poly", "poly", vrts, fcs);
 
