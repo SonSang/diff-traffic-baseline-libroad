@@ -123,6 +123,7 @@ public:
                 bb[1] = vec3f(-FLT_MAX);
                 net->bounding_box(bb[0], bb[1]);
             }
+            glEnable(GL_MULTISAMPLE);
         }
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -409,7 +410,7 @@ int main(int argc, char *argv[])
     mv.net = &net;
 
     mv.take_focus();
-    Fl::visual(FL_DOUBLE|FL_DEPTH);
+    Fl::visual(FL_DOUBLE|FL_DEPTH|FL_MULTISAMPLE);
 
     mv.show(1, argv);
     return Fl::run();

@@ -53,13 +53,13 @@ namespace hwm
             }
         }
 
-        glGenBuffersARB(1, &v_vbo);
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, 24*3*sizeof(float), &(verts[0]), GL_STATIC_DRAW_ARB);
+        glGenBuffers(1, &v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
+        glBufferData(GL_ARRAY_BUFFER, 24*3*sizeof(float), &(verts[0]), GL_STATIC_DRAW);
 
-        glGenBuffersARB(1, &n_vbo);
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, n_vbo);
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, 24*3*sizeof(float), &(normals[0]), GL_STATIC_DRAW_ARB);
+        glGenBuffers(1, &n_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, n_vbo);
+        glBufferData(GL_ARRAY_BUFFER, 24*3*sizeof(float), &(normals[0]), GL_STATIC_DRAW);
         assert(glGetError() == GL_NO_ERROR);
     }
 
