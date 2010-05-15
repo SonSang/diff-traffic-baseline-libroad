@@ -422,7 +422,7 @@ public:
                     hnet.xml_write("default.xml.gz");
                     std::cerr << "Wrote default.xml.gz" << std::endl;
                     hwm::network_aux neta(hnet);
-                    neta.network_obj("default/default.obj", ih);
+                    neta.network_obj("default/default.obj", 0.01, ih);
                     std::cerr << "Wrote default/default.obj" << std::endl;
                 }
                 if(ih)

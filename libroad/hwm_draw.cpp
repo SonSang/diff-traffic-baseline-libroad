@@ -439,7 +439,7 @@ namespace hwm
                 lcd.face_start = lc_faces.size();
 
                 size_t reverse_start;
-                e.make_mesh(points, lc_faces, reverse_start, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width);
+                e.make_mesh(points, lc_faces, reverse_start, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width, resolution);
 
                 lcd.vert_count = points.size()    - lcd.vert_start;
                 lcd.face_count = (lc_faces.size() - lcd.face_start) * 3;

@@ -376,7 +376,7 @@ namespace hwm
                 void cairo_draw(cairo_t *c, const vec2f &interval, const float lane_width, bool low_side, bool start_new) const;
 #endif
 
-                void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, size_t &reverse_start, const vec2f &interval, const float lane_width) const;
+                void make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, size_t &reverse_start, const vec2f &interval, const float lane_width, float resolution) const;
 
                 aabb2d planar_bounding_box(float lane_width, const vec2f &interval) const;
             };
@@ -426,7 +426,7 @@ namespace hwm
             void cairo_draw(cairo_t *c, bool closed) const;
 #endif
 
-            void intersection_obj(std::ostream &os, const im_heightfield *ih=0) const;
+            void intersection_obj(std::ostream &os, float resolution, const im_heightfield *ih=0) const;
 
             road_is_cnt              ric;
             std::vector<arc_road>    connecting_arcs;
@@ -461,8 +461,8 @@ namespace hwm
         void cairo_roads(cairo_t *c) const;
 #endif
 
-        void road_objs(std::ostream &os, const im_heightfield *ih=0) const;
-        void network_obj(const std::string &path, const im_heightfield *ih=0) const;
+        void road_objs(std::ostream &os, float resolution, const im_heightfield *ih=0) const;
+        void network_obj(const std::string &path, float resolution, const im_heightfield *ih=0) const;
 
         void build_spatial();
 

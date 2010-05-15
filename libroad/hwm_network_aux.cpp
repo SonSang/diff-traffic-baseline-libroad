@@ -21,12 +21,12 @@ namespace hwm
         rm.parent_road->rep.svg_arc_path_center(interval, offset).cairo_draw(c, start_new);
     }
 
-    void network_aux::road_rev_map::lane_cont::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, size_t &reverse_start, const vec2f &interval, const float lane_width) const
+    void network_aux::road_rev_map::lane_cont::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &fcs, size_t &reverse_start, const vec2f &interval, const float lane_width, float resolution) const
     {
         const float                  left  = begin()            ->first-0.5f*lane_width;
         const float                  right = boost::prior(end())->first+0.5f*lane_width;
         const lane::road_membership &rm    = *(begin()->second.membership);
-        rm.parent_road->rep.make_mesh(vrts, fcs, reverse_start, interval, vec2f(left, right), 0.005, true);
+        rm.parent_road->rep.make_mesh(vrts, fcs, reverse_start, interval, vec2f(left, right), resolution, true);
     }
 
     aabb2d network_aux::road_rev_map::lane_cont::planar_bounding_box(const float lane_width, const vec2f &interval) const
@@ -183,7 +183,7 @@ namespace hwm
     }
 #endif
 
-    void network_aux::road_objs(std::ostream &os, const im_heightfield *ih) const
+    void network_aux::road_objs(std::ostream &os, const float resolution, const im_heightfield *ih) const
     {
         const std::string mtlname("road.mtl");
 
@@ -213,7 +213,7 @@ namespace hwm
                 std::vector<vertex> vrts;
                 std::vector<vec3u>  fcs;
                 size_t              reverse_start;
-                e.make_mesh(vrts, fcs, reverse_start, rrm_v.second.lane_map.containing_interval(current), net.lane_width);
+                e.make_mesh(vrts, fcs, reverse_start, rrm_v.second.lane_map.containing_interval(current), net.lane_width, resolution);
                 if(ih)
                     ih->project_vertices(vrts);
 
@@ -406,7 +406,7 @@ namespace hwm
             cairo_close_path(c);
     }
 
-    void network_aux::intersection_geometry::intersection_obj(std::ostream &os, const im_heightfield *ih) const
+    void network_aux::intersection_geometry::intersection_obj(std::ostream &os, float resolution, const im_heightfield *ih) const
     {
         std::vector<vertex> vrts;
         for(size_t i = 0; i < ric.size(); ++i)
@@ -417,7 +417,7 @@ namespace hwm
                 vrts.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
             }
 
-            connecting_arcs[i].extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+            connecting_arcs[i].extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, resolution);
         }
 
         vrts.push_back(vertex(is->center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
@@ -432,7 +432,7 @@ namespace hwm
         mesh_to_obj(os, is->id, "intersection_mtl", vrts, fcs);
     }
 
-    void network_aux::network_obj(const std::string &path, const im_heightfield *ih) const
+    void network_aux::network_obj(const std::string &path, float resolution, const im_heightfield *ih) const
     {
         bf::path full_out_path(path);
         bf::path dir(full_out_path.parent_path());
@@ -449,12 +449,12 @@ namespace hwm
             bf::current_path(dir);
         std::ofstream out(full_out_path.filename().c_str());
         out << "s 1\n";
-        road_objs(out, ih);
+        road_objs(out, resolution, ih);
 
         typedef strhash<intersection_geometry>::type::value_type ig_pair;
         BOOST_FOREACH(const ig_pair &ig, intersection_geoms)
         {
-            ig.second.intersection_obj(out, ih);
+            ig.second.intersection_obj(out, resolution, ih);
         }
 
         bf::current_path(now);

@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     }
 
     hwm::network_aux net_aux(net);
-    net_aux.network_obj(argv[2]);
+    net_aux.network_obj(argv[2], 0.01);
 
     return 0;
 }
