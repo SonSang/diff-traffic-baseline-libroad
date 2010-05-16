@@ -65,11 +65,11 @@ namespace hwm
 
     void car_draw::draw() const
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, 0);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, n_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, n_vbo);
         glEnableClientState(GL_NORMAL_ARRAY);
         glNormalPointer(GL_FLOAT, 0, 0);
 
@@ -84,9 +84,9 @@ namespace hwm
     car_draw::~car_draw()
     {
         if(v_vbo)
-            glDeleteBuffersARB(1, &v_vbo);
+            glDeleteBuffers(1, &v_vbo);
         if(n_vbo)
-            glDeleteBuffersARB(1, &n_vbo);
+            glDeleteBuffers(1, &n_vbo);
     }
 
     network_draw::network_draw() : v_vbo(0), f_vbo(0), net(0)
@@ -187,16 +187,16 @@ namespace hwm
 
         std::cout << "Sending " << points.size()*sizeof(vertex) << " bytes of vertex info to GPU...";
         std::cout.flush();
-        glGenBuffersARB(1, &v_vbo);
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, points.size()*sizeof(vertex), &(points[0]), GL_STATIC_DRAW_ARB);
+        glGenBuffers(1, &v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
+        glBufferData(GL_ARRAY_BUFFER, points.size()*sizeof(vertex), &(points[0]), GL_STATIC_DRAW);
         std::cout << "Done" << std::endl;
 
         std::cout << "Sending " << lane_faces.size()*sizeof(vec3i) << " bytes of index info to GPU...";
         std::cout.flush();
-        glGenBuffersARB(1, &f_vbo);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
-        glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, lane_faces.size()*sizeof(vec3i), &(lane_faces[0]), GL_STATIC_DRAW_ARB);
+        glGenBuffers(1, &f_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f_vbo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, lane_faces.size()*sizeof(vec3i), &(lane_faces[0]), GL_STATIC_DRAW);
         std::cout << "Done" << std::endl;
 
         assert(glGetError() == GL_NO_ERROR);
@@ -204,7 +204,7 @@ namespace hwm
 
     void network_draw::draw_lanes_wire()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -217,7 +217,7 @@ namespace hwm
 
     void network_draw::draw_lanes_solid()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -227,7 +227,7 @@ namespace hwm
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
 
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f_vbo);
 
         assert(glGetError() == GL_NO_ERROR);
         glMultiDrawElements(GL_TRIANGLES, &(lane_face_counts[0]), GL_UNSIGNED_INT, reinterpret_cast<const GLvoid**>(&(lane_face_starts[0])), lane_face_starts.size());
@@ -237,13 +237,13 @@ namespace hwm
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     void network_draw::draw_intersections_wire()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -256,7 +256,7 @@ namespace hwm
 
     void network_draw::draw_intersections_solid()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -270,12 +270,12 @@ namespace hwm
         glDisableClientState(GL_NORMAL_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void network_draw::draw_fictitious_lanes_wire()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -302,7 +302,7 @@ namespace hwm
 
     void network_draw::draw_fictitious_lanes_solid()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -312,7 +312,7 @@ namespace hwm
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
 
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f_vbo);
 
         assert(glGetError() == GL_NO_ERROR);
         BOOST_FOREACH(const intersection_pair &i, net->intersections)
@@ -337,13 +337,13 @@ namespace hwm
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     void network_draw::draw_lane_wire(const str &id)
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -358,12 +358,12 @@ namespace hwm
         glDisableClientState(GL_VERTEX_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void network_draw::draw_lane_solid(const str &id)
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -373,7 +373,7 @@ namespace hwm
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
 
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f_vbo);
 
         assert(glGetError() == GL_NO_ERROR);
         lane_data_map::iterator it = lanes.find(id);
@@ -388,16 +388,16 @@ namespace hwm
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     network_draw::~network_draw()
     {
         if(v_vbo)
-            glDeleteBuffersARB(1, &v_vbo);
+            glDeleteBuffers(1, &v_vbo);
         if(f_vbo)
-            glDeleteBuffersARB(1, &f_vbo);
+            glDeleteBuffers(1, &f_vbo);
     }
 
     network_aux_draw::network_aux_draw() : v_vbo(0), f_vbo(0), neta(0)
@@ -490,16 +490,16 @@ namespace hwm
 
         std::cout << "Sending " << points.size()*sizeof(vertex) << " bytes of vertex info to GPU...";
         std::cout.flush();
-        glGenBuffersARB(1, &v_vbo);
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
-        glBufferDataARB(GL_ARRAY_BUFFER_ARB, points.size()*sizeof(vertex), &(points[0]), GL_STATIC_DRAW_ARB);
+        glGenBuffers(1, &v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
+        glBufferData(GL_ARRAY_BUFFER, points.size()*sizeof(vertex), &(points[0]), GL_STATIC_DRAW);
         std::cout << "Done" << std::endl;
 
         std::cout << "Sending " << lc_faces.size()*sizeof(vec3i) << " bytes of index info to GPU...";
         std::cout.flush();
-        glGenBuffersARB(1, &f_vbo);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
-        glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, lc_faces.size()*sizeof(vec3i), &(lc_faces[0]), GL_STATIC_DRAW_ARB);
+        glGenBuffers(1, &f_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f_vbo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, lc_faces.size()*sizeof(vec3i), &(lc_faces[0]), GL_STATIC_DRAW);
         std::cout << "Done" << std::endl;
 
         assert(glGetError() == GL_NO_ERROR);
@@ -507,7 +507,7 @@ namespace hwm
 
     void network_aux_draw::draw_roads_wire()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -520,7 +520,7 @@ namespace hwm
 
     void network_aux_draw::draw_roads_solid()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -530,7 +530,7 @@ namespace hwm
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tex_coord)));
 
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, f_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f_vbo);
 
         assert(glGetError() == GL_NO_ERROR);
         glMultiDrawElements(GL_TRIANGLES, &(lc_face_counts[0]), GL_UNSIGNED_INT, reinterpret_cast<const GLvoid**>(&(lc_face_starts[0])), lc_face_starts.size());
@@ -540,13 +540,13 @@ namespace hwm
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-        glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     void network_aux_draw::draw_intersections_wire()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -559,7 +559,7 @@ namespace hwm
 
     void network_aux_draw::draw_intersections_solid()
     {
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, v_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, v_vbo);
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, position)));
 
@@ -573,14 +573,14 @@ namespace hwm
         glDisableClientState(GL_NORMAL_ARRAY);
         assert(glGetError() == GL_NO_ERROR);
 
-        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     network_aux_draw::~network_aux_draw()
     {
         if(v_vbo)
-            glDeleteBuffersARB(1, &v_vbo);
+            glDeleteBuffers(1, &v_vbo);
         if(f_vbo)
-            glDeleteBuffersARB(1, &f_vbo);
+            glDeleteBuffers(1, &f_vbo);
     }
 }

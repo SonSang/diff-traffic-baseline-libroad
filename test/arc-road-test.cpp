@@ -159,7 +159,7 @@ public:
         delete data;
 
         glGenTextures(1, &num_tex);
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, num_tex);
+        glBindTexture(GL_TEXTURE_RECTANGLE, num_tex);
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -336,16 +336,16 @@ public:
             glEnable(GL_BLEND);
 
             // setup point sprites
-            glEnable(GL_POINT_SPRITE_ARB);
-            glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-            glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_NV);
+            glEnable(GL_POINT_SPRITE);
+            glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+            glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
             glPointSize(PT_SIZE);
 
             glUseProgram(program);
             GLuint texLoc = glGetUniformLocation(program, "splatTexture");
             glUniform1i(texLoc, 0);
 
-            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture);
 
             glDepthMask(GL_FALSE);
@@ -368,7 +368,7 @@ public:
             glEnd();
 
             glUseProgram(0);
-            glDisable(GL_POINT_SPRITE_ARB);
+            glDisable(GL_POINT_SPRITE);
             glDisable(GL_TEXTURE_2D);
 
             glDepthMask(GL_TRUE);
