@@ -37,6 +37,10 @@ namespace hwm
         l.active = active;
     }
 
+    lane::terminus::~terminus()
+    {
+    }
+
     void lane::terminus::update_pointers(network &n)
     {
     }
@@ -54,6 +58,10 @@ namespace hwm
     lane* lane::terminus::incident(bool start) const
     {
         return 0;
+    }
+
+    lane::intersection_terminus::~intersection_terminus()
+    {
     }
 
     void lane::intersection_terminus::update_pointers(network &n)
@@ -88,6 +96,10 @@ namespace hwm
             return adjacent_intersection->upstream_lane(intersect_in_ref);
         else
             return adjacent_intersection->downstream_lane(intersect_in_ref);
+    }
+
+    lane::lane_terminus::~lane_terminus()
+    {
     }
 
     void lane::lane_terminus::update_pointers(network &n)

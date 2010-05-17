@@ -80,6 +80,7 @@ namespace hwm
 
         struct terminus
         {
+            virtual      ~terminus();
             virtual void update_pointers(network &n);
             virtual terminus* clone() const;
             virtual void xml_read (network &n, const lane *parent, xmlpp::TextReader &reader, const str &name);
@@ -95,6 +96,8 @@ namespace hwm
 
             intersection_terminus(intersection *i, int ref) : adjacent_intersection(i), intersect_in_ref(ref)
             {}
+
+            virtual ~intersection_terminus();
 
             virtual void update_pointers(network &n);
             virtual intersection_terminus* clone() const;
@@ -114,6 +117,8 @@ namespace hwm
 
             lane_terminus(lane* l) : adjacent_lane(l)
             {}
+
+            virtual ~lane_terminus();
 
             virtual void update_pointers(network &n);
             virtual lane_terminus* clone() const;
