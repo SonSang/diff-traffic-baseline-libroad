@@ -613,15 +613,15 @@ public:
                                Fl::event_y());
                 const vec2i dxy(Fl::event_dx(),
                                 Fl::event_dy());
-                const float fy = copysign(0.5, dxy[1]);
+                const float fy = copysignf(0.5f, dxy[1]);
 
                 if(Fl::event_state() & FL_SHIFT)
                 {
                     if(c)
-                        c->radius *= std::pow(2.0, fy);
+                        c->radius *= std::pow(2.0f, fy);
                 }
                 else
-                    scale *= std::pow(2.0, fy);
+                    scale *= std::pow(2.0f, fy);
 
                 redraw();
             }
