@@ -33,14 +33,10 @@ static void circle_frame(vec3f &pos, vec3f &tan, const float theta, const mat4x4
 {
     const float c = std::cos(theta);
     const float s = std::sin(theta);
-    const vec4f v(matrix*vec4f(radius*c, radius*s, 0.0, 1.0));
-    pos[0] = v[0];
-    pos[1] = v[1];
-    pos[2] = v[2];
-    const vec4f t(matrix * vec4f(-s, c, 0.0, 0.0));
-    tan[0] = t[0];
-    tan[1] = t[1];
-    tan[2] = t[2];
+    for(int i = 0; i < 3; ++i)
+        pos[i] = radius*(c*matrix(i, 0) + s*matrix(i, 1)) + matrix(i,3);
+    for(int i = 0; i < 3; ++i)
+        tan[i] = -s*matrix(i, 0) + c*matrix(i, 1);
 }
 
 static int triangle_cmp(const vec3f *low[3], const vec3f *high[3])
