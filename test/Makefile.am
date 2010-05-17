@@ -47,12 +47,12 @@ noinst_PROGRAMS += mesh-extract-test displace-polylines read-scene
 
 mesh_extract_test_SOURCES = mesh-extract-test.cpp
 mesh_extract_test_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CAIRO_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-mesh_extract_test_LDFLAGS  = $(CAIRO_LIBS) $(BOOST_FILESYSTEM_LIBS) $(LDFLAGS)
+mesh_extract_test_LDFLAGS  = $(CAIRO_LIBS) $(LDFLAGS)
 mesh_extract_test_LDADD    = $(top_builddir)/libroad/libroad.la $(top_builddir)/libroad/libroad_image.la
 
 displace_polylines_SOURCES = displace-polylines.cpp
 displace_polylines_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-displace_polylines_LDFLAGS  = $(MAGICKPP_LDFLAGS) $(BOOST_FILESYSTEM_LIBS) $(LDFLAGS)
+displace_polylines_LDFLAGS  = $(MAGICKPP_LDFLAGS) $(LDFLAGS)
 displace_polylines_LDADD    = $(top_builddir)/libroad/libroad.la $(top_builddir)/libroad/libroad_image.la
 
 read_scene_SOURCES  = read-scene.cpp
@@ -82,12 +82,12 @@ micro_LDADD    = $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libro
 
 view_osm_SOURCES  = view-osm.cpp
 view_osm_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CAIRO_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-view_osm_LDFLAGS  = $(BOOST_FILESYSTEM_LIBS) $(CAIRO_LIBS) $(MAGICKPP_LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS) $(LDFLAGS)
+view_osm_LDFLAGS  = $(CAIRO_LIBS) $(MAGICKPP_LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS) $(LDFLAGS)
 view_osm_LDADD    = $(top_builddir)/libroad/libroad.la $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad_image.la
 
 cairo_network_SOURCES  = cairo-network.cpp
 cairo_network_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(MAGICKPP_CXXFLAGS) $(CAIRO_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
-cairo_network_LDFLAGS  = $(BOOST_FILESYSTEM_LIBS) $(CAIRO_LIBS) $(MAGICKPP_LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS) $(LDFLAGS)
+cairo_network_LDFLAGS  = $(CAIRO_LIBS) $(MAGICKPP_LDFLAGS) $(FLTK_LDFLAGS) $(FLTK_GL_LDFLAGS) $(GLEW_LIBS) $(LDFLAGS)
 cairo_network_LDADD    = $(top_builddir)/libroad/libroad.la $(top_builddir)/libroad/libroad_visual.la $(top_builddir)/libroad/libroad_image.la
 endif
 endif
