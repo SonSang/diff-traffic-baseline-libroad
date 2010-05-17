@@ -786,7 +786,7 @@ namespace osm
 
             assert(edge_offsets.size() > 1);
             const float min_radius = 5;
-            for (int i = 0; i < edge_offsets.size(); i++)
+            for (size_t i = 0; i < edge_offsets.size(); i++)
             {
                 int clockwise_neighbor = (i == edge_offsets.size() - 1? 0 : i + 1);
 
