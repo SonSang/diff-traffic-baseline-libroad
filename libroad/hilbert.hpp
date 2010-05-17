@@ -50,12 +50,12 @@ struct hilbert
 
     static size_t order(const float x, const float y)
     {
-        return order_num(std::floor(x*((1LL << 24)-1)), std::floor(y*((1LL << 24)-1)), 24);
+        return order_num(static_cast<size_t>(std::floor(x*((1LL << 24)-1))), static_cast<size_t>(std::floor(y*((1LL << 24)-1))), 24);
     }
 
     static double order_norm(const float x, const float y)
     {
-        return order_num(std::floor(x*((1LL << 24)-1)), std::floor(y*((1LL << 24)-1)), 24)/static_cast<double>((1LL << (2*24)) -1);
+        return order_num(static_cast<size_t>(std::floor(x*((1LL << 24)-1))), static_cast<size_t>(std::floor(y*((1LL << 24)-1))), 24)/static_cast<double>((1LL << (2*24)) -1);
     }
 
     static size_t order_num(size_t x, size_t y, const size_t n)
