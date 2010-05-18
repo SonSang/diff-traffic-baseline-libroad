@@ -361,7 +361,7 @@ vec3f arc_road::center(const size_t p) const
     return ::center(points_[p], normals_[p-1], normals_[p], radii_[p-1]);
 }
 
-bool arc_road::initialize_from_polyline(const float cull_prox, const std::vector<vec3f> &points)
+bool arc_road::initialize_from_polyline(const float cull_prox, const std::vector<vec3f> &points, bool rem_redundant)
 {
     points_ = remove_colinear(points);
     points_ = remove_proximity(points_, cull_prox*cull_prox);
@@ -377,7 +377,8 @@ bool arc_road::initialize_from_polyline(const float cull_prox, const std::vector
     for(size_t i = 0; i < alphas.size(); ++i)
         radii_[i] = factors[i]*alphas[i];
 
-    remove_redundant();
+    if(rem_redundant)
+        remove_redundant();
 
     if(!compute_geometric(lengths, factors))
         return false;
