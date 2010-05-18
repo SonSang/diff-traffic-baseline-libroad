@@ -620,6 +620,48 @@ mat3x3f arc_road::frame(const float t, float offset, const bool reverse, const v
     return res;
 }
 
+vec3f arc_road::point_theta(float &theta, const float t, float offset, bool reverse, const vec3f &up) const
+{
+    vec3f pos;
+    vec3f tan;
+
+    float local;
+    const size_t idx = locate_scale(t, offset, local);
+    if(idx & 1)
+    {
+        const size_t real_idx = idx/2;
+        circle_frame(pos, tan, local*arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+    }
+    else
+    {
+        const int real_idx = idx/2-1;
+
+        if(real_idx < 0 || frames_.empty())
+        {
+            pos = points_.front();
+            tan = normals_.front();
+        }
+        else
+            circle_frame(pos, tan, arcs_[real_idx], frames_[real_idx], radii_[real_idx]);
+
+        pos += tan*local*feature_size(idx, offset);
+    }
+
+    if(reverse)
+    {
+        tan    *= -1;
+        offset *= -1;
+    }
+
+    const vec3f left  (tvmet::normalize(tvmet::cross(up, tan)));
+
+    pos += left*offset;
+
+    theta = std::atan2(tan[1], tan[0]);
+
+    return pos;
+}
+
 mat4x4f arc_road::point_frame(const float t, float offset, bool reverse, const vec3f &up) const
 {
     vec3f pos;

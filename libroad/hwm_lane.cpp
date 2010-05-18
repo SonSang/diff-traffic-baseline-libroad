@@ -158,6 +158,13 @@ namespace hwm
         return parent_road->rep.point(t, lane_position+offset, up);
     }
 
+    vec3f   lane::road_membership::point_theta(float &theta, float t, const float offset, const vec3f &up) const
+    {
+        const bool reversed = (interval[0] > interval[1]);
+        t = t*(interval[1]-interval[0])+interval[0];
+        return parent_road->rep.point_theta(theta, t, lane_position+offset, reversed, up);
+    }
+
     mat3x3f lane::road_membership::frame      (float t, const vec3f &up) const
     {
         const bool reversed = (interval[0] > interval[1]);
@@ -221,7 +228,6 @@ namespace hwm
         {
             mlengths.push_back(rmie.second.length() + mlengths.back());
         }
-
         const float inv_len = 1.0f/mlengths.back();
         road_membership::intervals new_rm;
 
@@ -387,6 +393,13 @@ namespace hwm
         float local;
         road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
         return rmici->second.point_frame(local, offset, up);
+    }
+
+    vec3f lane::point_theta(float &theta, float t, const float offset, const vec3f &up) const
+    {
+        float local;
+        road_membership::intervals::const_iterator rmici = road_memberships.find_rescale(t, local);
+        return rmici->second.point_theta(theta, local, offset, up);
     }
 
     lane::serial_state lane::serial() const
