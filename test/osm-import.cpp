@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    float lane_width =  3.66;
+    float lane_width =  2.5;
 
     //Load from file
     osm::network onet(osm::load_xml_network(argv[1]));

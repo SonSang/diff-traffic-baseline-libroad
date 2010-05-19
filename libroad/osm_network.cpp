@@ -5,7 +5,7 @@
 #include <limits>
 #include <algorithm>
 
-static const double moar_fudge = 0.475;//0.6666666;
+static const double moar_fudge = 0.5;//0.6666666;
 static const double scale = 157253.2964 * moar_fudge;
 
 namespace osm
@@ -1227,7 +1227,7 @@ namespace osm
             if(e.highway_class == "motorway")
             {
                 e_type->speed   = 65;
-                e_type->nolanes = 2;
+                e_type->nolanes = 3;
                 e_type->oneway  = 1;
             }
             if(e.highway_class == "motorway_link")
