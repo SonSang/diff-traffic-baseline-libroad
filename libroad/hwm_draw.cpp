@@ -431,20 +431,8 @@ namespace hwm
                 lc_vert_starts.push_back(points.size());
                 lc_face_starts.push_back(lc_faces.size());
 
-                lc_data_map::iterator it = lcs.find(&e);
-                assert(it == lcs.end());
-
-                lc_data lcd;
-                lcd.vert_start = points.size();
-                lcd.face_start = lc_faces.size();
-
                 size_t reverse_start;
                 e.make_mesh(points, lc_faces, reverse_start, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width, resolution);
-
-                lcd.vert_count = points.size()    - lcd.vert_start;
-                lcd.face_count = (lc_faces.size() - lcd.face_start) * 3;
-                lcd.face_start *= sizeof(vec3u);
-                lcs.insert(it, std::make_pair(&e, lcd));
 
                 lc_vert_counts.push_back(reverse_start   - lc_vert_starts.back());
 

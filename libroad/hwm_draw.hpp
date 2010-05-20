@@ -109,17 +109,6 @@ namespace hwm
         std::vector<GLint>    intersection_vert_strip_starts;
         std::vector<GLsizei>  intersection_vert_strip_counts;
 
-        struct lc_data
-        {
-            GLint   vert_start;
-            GLsizei vert_count;
-            size_t  face_start;
-            GLsizei face_count;
-        };
-
-        typedef std::map<const network_aux::road_rev_map::lane_cont*, lc_data> lc_data_map;
-        lc_data_map                    lcs;
-
         const hwm::network_aux *neta;
     };
 }
