@@ -83,6 +83,14 @@ namespace hwm
 
     struct network_aux_draw
     {
+        struct material_group
+        {
+            GLuint texture;
+
+            std::vector<size_t>   lc_face_starts;
+            std::vector<GLsizei>  lc_face_counts;
+        };
+
         network_aux_draw();
 
         bool initialized() const;
@@ -101,8 +109,8 @@ namespace hwm
 
         std::vector<GLint>    lc_vert_starts;
         std::vector<GLsizei>  lc_vert_counts;
-        std::vector<size_t>   lc_face_starts;
-        std::vector<GLsizei>  lc_face_counts;
+
+        std::map<std::string, material_group> groups;
 
         std::vector<GLint>    intersection_vert_fan_starts;
         std::vector<GLsizei>  intersection_vert_fan_counts;

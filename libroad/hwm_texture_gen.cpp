@@ -203,9 +203,35 @@ namespace hwm
         if(max_h == 0.0)
             max_h = 1.0;
 
-        im_res = 100*vec2u(static_cast<unsigned int>(std::ceil(max_h/min_y_feat)),
-                           static_cast<unsigned int>(std::ceil(total_w/min_x_feat)));
+        im_res = vec2u(static_cast<unsigned int>(std::ceil(max_h/min_y_feat)),
+                       static_cast<unsigned int>(std::ceil(total_w/min_x_feat)));
         scale  = vec2d(max_h, total_w);
+    }
+
+    void lane_maker::draw(unsigned char *pix)
+    {
+        cairo_surface_t *cs = cairo_image_surface_create_for_data(pix,
+                                                                  CAIRO_FORMAT_ARGB32,
+                                                                  im_res[0],
+                                                                  im_res[1],
+                                                                  cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, im_res[0]));
+        cairo_t         *cr = cairo_create(cs);
+
+        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 1.0);
+        cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+        cairo_paint(cr);
+
+        cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+        cairo_scale(cr, im_res[0]/scale[0], im_res[1]/scale[1]);
+
+        BOOST_FOREACH(const lane_op *lo, boxes)
+        {
+            lo->draw(cr);
+            cairo_translate(cr, 0.0, lo->width());
+        }
+
+        cairo_destroy(cr);
+        cairo_surface_destroy(cs);
     }
 
     void lane_maker::draw(const std::string &fname)
@@ -231,7 +257,7 @@ namespace hwm
 
         cairo_destroy(cr);
         cairo_surface_write_to_png(cs, fname.c_str());
-            cairo_surface_destroy(cs);
+        cairo_surface_destroy(cs);
     }
 
     std::string lane_maker::make_string() const
@@ -244,7 +270,7 @@ namespace hwm
         return res;
     }
 
-    const std::string network_aux::road_rev_map::lane_cont::write_texture(tex_db &tdb, const road_metrics &rm) const
+    lane_maker network_aux::road_rev_map::lane_cont::lane_tex(const road_metrics &rm) const
     {
         lane_maker lm;
         // lm.add_xgap(0.25*lane_width);
@@ -285,6 +311,12 @@ namespace hwm
         //                            color4d(1.0, 1.0, 1.0, 1.0)));
         // lm.add_xgap(0.25*lane_width);
 
+        return lm;
+    }
+
+    const std::string network_aux::road_rev_map::lane_cont::write_texture(tex_db &tdb, const road_metrics &rm) const
+    {
+        lane_maker lm(lane_tex(rm));
         return tdb.do_tex(lm);
     }
 

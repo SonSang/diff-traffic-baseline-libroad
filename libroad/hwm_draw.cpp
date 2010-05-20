@@ -410,6 +410,14 @@ namespace hwm
 
     void network_aux_draw::initialize(const network_aux *in_neta, const float resolution)
     {
+        road_metrics rm;
+        rm.lane_width      = in_neta->net.lane_width;
+        rm.shoulder_width  = 2.0f;
+        rm.line_width      = 0.125;
+        rm.line_sep_width  = 0.125;
+        rm.line_length     = 3.0f;
+        rm.line_gap_length = 9.0f;
+
         neta = in_neta;
         std::vector<vertex> points;
         std::vector<vec3u>  lc_faces;
@@ -428,8 +436,47 @@ namespace hwm
                 if(e.empty())
                     continue;
 
+                lane_maker lm(e.lane_tex(rm));
+                const std::string lm_id(lm.make_string());
+                std::map<std::string, material_group>::iterator cont_group(groups.find(lm_id));
+                if(cont_group == groups.end())
+                {
+                    cont_group = groups.insert(cont_group, std::make_pair(lm_id, material_group()));
+                    glGenTextures(1, &(cont_group->second.texture));
+                    glBindTexture(GL_TEXTURE_2D, cont_group->second.texture);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+                    lm.res_scale();
+                    std::cout << "Making new lane texture; res: " << lm.im_res << std::endl;
+                    unsigned char *pix = new unsigned char[4*lm.im_res[0]*lm.im_res[1]];
+                    lm.draw(pix);
+                    for(size_t i = 0; i < lm.im_res[0]*lm.im_res[1]; ++i)
+                    {
+                        unsigned char temp[4];
+                        memcpy(temp, pix + 4*i, sizeof(unsigned char)*4);
+                        for(int j = 0; j < 3; ++j)
+                            pix[4*i+j] = temp[2-j];
+                    }
+
+                    unsigned char *tmp = new unsigned char[4*lm.im_res[0]];
+                    for(size_t i = 0; i < lm.im_res[1]/2; ++i)
+                    {
+                        memcpy(tmp, pix + 4*lm.im_res[0]*i, sizeof(unsigned char)*4*lm.im_res[0]);
+                        memcpy(pix + 4*lm.im_res[0]*i, pix + 4*lm.im_res[0]*(lm.im_res[1]-1-i), sizeof(unsigned char)*4*lm.im_res[0]);
+                        memcpy(pix + 4*lm.im_res[0]*(lm.im_res[1]-1-i), tmp, sizeof(unsigned char)*4*lm.im_res[0]);
+                    }
+                    delete[] tmp;
+
+                    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, lm.im_res[0], lm.im_res[1], GL_RGBA, GL_UNSIGNED_BYTE, pix);
+                    delete[] pix;
+                    glError();
+                }
+
                 lc_vert_starts.push_back(points.size());
-                lc_face_starts.push_back(lc_faces.size());
+                cont_group->second.lc_face_starts.push_back(lc_faces.size());
 
                 size_t reverse_start;
                 e.make_mesh(points, lc_faces, reverse_start, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width, resolution);
@@ -439,16 +486,21 @@ namespace hwm
                 lc_vert_starts.push_back(reverse_start);
                 lc_vert_counts.push_back(points.size()   - lc_vert_starts.back());
 
-                lc_face_counts.push_back(lc_faces.size() - lc_face_starts.back());
+                cont_group->second.lc_face_counts.push_back(lc_faces.size() - cont_group->second.lc_face_starts.back());
             }
         }
-        BOOST_FOREACH(GLsizei &i, lc_face_counts)
+
+        typedef std::pair<const std::string, material_group> mg_pair;
+        BOOST_FOREACH(mg_pair &mg, groups)
         {
-            i *= 3;
-        }
-        BOOST_FOREACH(size_t &i, lc_face_starts)
-        {
-            i *= sizeof(vec3u);
+            BOOST_FOREACH(GLsizei &i, mg.second.lc_face_counts)
+            {
+                i *= 3;
+            }
+            BOOST_FOREACH(size_t &i, mg.second.lc_face_starts)
+            {
+                i *= sizeof(vec3u);
+            }
         }
 
         BOOST_FOREACH(const strhash<network_aux::intersection_geometry>::type::value_type &ip, neta->intersection_geoms)
@@ -520,8 +572,14 @@ namespace hwm
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f_vbo);
 
-        assert(glGetError() == GL_NO_ERROR);
-        glMultiDrawElements(GL_TRIANGLES, &(lc_face_counts[0]), GL_UNSIGNED_INT, reinterpret_cast<const GLvoid**>(&(lc_face_starts[0])), lc_face_starts.size());
+        typedef std::pair<const std::string, material_group> mg_pair;
+        BOOST_FOREACH(mg_pair &mg, groups)
+        {
+            glBindTexture(GL_TEXTURE_2D, mg.second.texture);
+
+            assert(glGetError() == GL_NO_ERROR);
+            glMultiDrawElements(GL_TRIANGLES, &(mg.second.lc_face_counts[0]), GL_UNSIGNED_INT, reinterpret_cast<const GLvoid**>(&(mg.second.lc_face_starts[0])), mg.second.lc_face_starts.size());
+        }
 
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);

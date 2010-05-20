@@ -382,6 +382,7 @@ namespace hwm
             struct lane_cont : public std::map<const float, lane_entry>
             {
 #if HAVE_CAIRO
+                lane_maker lane_tex(const road_metrics &lm) const;
                 const std::string write_texture(tex_db &tdb, const road_metrics &lm) const;
                 void cairo_draw(cairo_t *c, const vec2f &interval, const float lane_width, bool low_side, bool start_new) const;
 #endif

@@ -87,6 +87,7 @@ namespace hwm
         void add_cbox(center_box *cb);
         void add_xgap(double w);
         void res_scale();
+        void draw(unsigned char *pix);
         void draw(const std::string &fname);
         std::string make_string() const;
 
