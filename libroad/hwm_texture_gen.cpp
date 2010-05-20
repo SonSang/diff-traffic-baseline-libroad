@@ -203,8 +203,8 @@ namespace hwm
         if(max_h == 0.0)
             max_h = 1.0;
 
-        im_res = vec2u(static_cast<unsigned int>(std::ceil(max_h/min_y_feat)),
-                       static_cast<unsigned int>(std::ceil(total_w/min_x_feat)));
+        im_res = 2*vec2u(static_cast<unsigned int>(std::ceil(max_h/min_y_feat)),
+                         static_cast<unsigned int>(std::ceil(total_w/min_x_feat)));
         scale  = vec2d(max_h, total_w);
     }
 
