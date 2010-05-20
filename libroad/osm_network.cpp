@@ -5,8 +5,9 @@
 #include <limits>
 #include <algorithm>
 
-static const double moar_fudge = 0.5;//0.6666666;
-static const double scale = 157253.2964 * moar_fudge;
+static const double moar_fudge   = 0.5; //0.6666666;
+static const double scale        = 157253.2964 * moar_fudge;
+static const float  MIPH_TO_MEPS = 1609.344/(60.0*60.0);
 
 namespace osm
 {
@@ -1217,6 +1218,7 @@ namespace osm
 
     void network::compute_edge_types()
     {
+        // this is a goofy way to do this, we should use a hash or something
         BOOST_FOREACH(edge &e, edges)
         {
             edge_type* e_type = retrieve<edge_type>(types, e.id);
@@ -1230,55 +1232,56 @@ namespace osm
                 e_type->nolanes = 3;
                 e_type->oneway  = 1;
             }
-            if(e.highway_class == "motorway_link")
+            else if(e.highway_class == "motorway_link")
             {
                 e_type->speed   = 30;
                 e_type->nolanes = 1;
                 e_type->oneway  = 1;
             }
-            if(e.highway_class == "residential")
+            else if(e.highway_class == "residential")
             {
                 e_type->speed   = 30;
                 e_type->nolanes = 1;
                 e_type->oneway  = 0;
             }
-            if(e.highway_class == "primary")
+            else if(e.highway_class == "primary")
             {
                 e_type->nolanes = 1;
                 e_type->oneway  = 0;
                 e_type->speed   = 50;
             }
-            if(e.highway_class == "secondary")
+            else if(e.highway_class == "secondary")
             {
                 e_type->speed   = 40;
                 e_type->nolanes = 1;
                 e_type->oneway  = 0;
             }
-            if(e.highway_class == "service")
+            else if(e.highway_class == "service")
             {
                 e_type->speed   = 25;
                 e_type->nolanes = 1;
                 e_type->oneway  = 0;
             }
-            if(e.highway_class == "primary_link")
+            else if(e.highway_class == "primary_link")
             {
                 e_type->speed   = 30;
                 e_type->nolanes = 1;
                 e_type->oneway  = 1;
             }
-            if(e.highway_class == "secondary_link")
+            else if(e.highway_class == "secondary_link")
             {
                 e_type->speed   = 30;
                 e_type->nolanes = 1;
                 e_type->oneway  = 1;
             }
-            //Classes added for grid
-            if(e.highway_class == "urban")
+            else if(e.highway_class == "urban")
             {
+                //Classes added for grid
                 e_type->speed   = 30;
                 e_type->nolanes = 2;
                 e_type->oneway  = 0;
             }
+            e_type->speed *= MIPH_TO_MEPS;
         }
 
         BOOST_FOREACH(osm::edge &e, edges)
