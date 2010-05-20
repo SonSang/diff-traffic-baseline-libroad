@@ -214,7 +214,7 @@ namespace hwm
                                                                   CAIRO_FORMAT_ARGB32,
                                                                   im_res[0],
                                                                   im_res[1],
-                                                                  cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, im_res[0]));
+                                                                  sizeof(unsigned char)*4*im_res[0]);
         cairo_t         *cr = cairo_create(cs);
 
         cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 1.0);
