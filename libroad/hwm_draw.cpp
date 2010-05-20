@@ -429,6 +429,7 @@ namespace hwm
                     continue;
 
                 lane_maker lm(e.lane_tex(rm));
+                lm.res_scale();
                 const std::string lm_id(lm.make_string());
                 std::map<std::string, material_group>::iterator cont_group(groups.find(lm_id));
                 if(cont_group == groups.end())
@@ -441,8 +442,7 @@ namespace hwm
                     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-                    lm.res_scale();
-                    std::cout << "Making new lane texture; res: " << lm.im_res << std::endl;
+                    std::cout << "Making new lane texture; res: " << lm.im_res << " scale: " << lm.scale << std::endl;
                     unsigned char *pix = new unsigned char[4*lm.im_res[0]*lm.im_res[1]];
                     lm.draw(pix);
                     for(size_t i = 0; i < lm.im_res[0]*lm.im_res[1]; ++i)
@@ -472,6 +472,9 @@ namespace hwm
 
                 size_t reverse_start;
                 e.make_mesh(points, lc_faces, reverse_start, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width, resolution);
+                const float inv_scale = 1.0/lm.scale[1];
+                for(size_t i = lc_vert_starts.back(); i < points.size(); ++i)
+                    points[i].tex_coord[0] *= inv_scale;
 
                 lc_vert_counts.push_back(reverse_start   - lc_vert_starts.back());
 
