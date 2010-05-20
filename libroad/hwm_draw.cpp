@@ -408,16 +408,8 @@ namespace hwm
         return neta && v_vbo && f_vbo;
     }
 
-    void network_aux_draw::initialize(const network_aux *in_neta, const float resolution)
+    void network_aux_draw::initialize(const network_aux *in_neta, const road_metrics &rm, const float resolution)
     {
-        road_metrics rm;
-        rm.lane_width      = in_neta->net.lane_width;
-        rm.shoulder_width  = 2.0f;
-        rm.line_width      = 0.125;
-        rm.line_sep_width  = 0.125;
-        rm.line_length     = 3.0f;
-        rm.line_gap_length = 9.0f;
-
         neta = in_neta;
         std::vector<vertex> points;
         std::vector<vec3u>  lc_faces;

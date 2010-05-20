@@ -94,7 +94,7 @@ namespace hwm
         network_aux_draw();
 
         bool initialized() const;
-        void initialize(const hwm::network_aux *neta, const float resolution);
+        void initialize(const hwm::network_aux *neta, const road_metrics &rm, const float resolution);
 
         void draw_roads_wire();
         void draw_roads_solid();
