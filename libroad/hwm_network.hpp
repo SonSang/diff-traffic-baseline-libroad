@@ -87,6 +87,7 @@ namespace hwm
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual void check(bool start, const lane *parent) const;
             virtual lane *incident(bool start) const;
+            virtual bool network_boundary() const;
         };
 
         struct intersection_terminus : public terminus
@@ -105,6 +106,7 @@ namespace hwm
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual void check(bool start, const lane *parent) const;
             virtual lane *incident(bool start) const;
+            virtual bool network_boundary() const;
 
             intersection *adjacent_intersection;
             int           intersect_in_ref;
@@ -126,6 +128,7 @@ namespace hwm
             virtual void xml_write(xmlpp::Element *elt, const str &name) const;
             virtual void check(bool start, const lane *parent) const;
             virtual lane *incident(bool start) const;
+            virtual bool network_boundary() const;
 
             lane *adjacent_lane;
         };

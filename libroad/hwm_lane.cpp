@@ -60,6 +60,11 @@ namespace hwm
         return 0;
     }
 
+    bool lane::terminus::network_boundary() const
+    {
+        return true;
+    }
+
     lane::intersection_terminus::~intersection_terminus()
     {
     }
@@ -98,6 +103,11 @@ namespace hwm
             return adjacent_intersection->downstream_lane(intersect_in_ref);
     }
 
+    bool lane::intersection_terminus::network_boundary() const
+    {
+        return false;
+    }
+
     lane::lane_terminus::~lane_terminus()
     {
     }
@@ -131,6 +141,11 @@ namespace hwm
     {
         assert(adjacent_lane);
         return adjacent_lane;
+    }
+
+    bool lane::lane_terminus::network_boundary() const
+    {
+        return false;
     }
 
     void lane::road_membership::check() const
