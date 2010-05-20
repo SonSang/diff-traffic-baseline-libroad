@@ -472,7 +472,7 @@ namespace hwm
 
                 size_t reverse_start;
                 e.make_mesh(points, lc_faces, reverse_start, rrm_v.second.lane_map.containing_interval(current), neta->net.lane_width, resolution);
-                const float inv_scale = 1.0/lm.scale[1];
+                const float inv_scale = 1.0/lm.scale[0];
                 for(size_t i = lc_vert_starts.back(); i < points.size(); ++i)
                     points[i].tex_coord[0] *= inv_scale;
 
