@@ -206,6 +206,8 @@ namespace hwm
         vec2u minsize(static_cast<unsigned int>(std::ceil(max_h/min_y_feat)),
                       static_cast<unsigned int>(std::ceil(total_w/min_x_feat)));
         im_res = 3*minsize;
+        for(int i = 0; i < 2; ++i)
+            im_res[i] = std::max(im_res[i], 1ul);
         scale  = vec2d(max_h, total_w);
     }
 
