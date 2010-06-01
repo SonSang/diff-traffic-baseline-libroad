@@ -816,7 +816,7 @@ aabb2d arc_road::planar_bounding_box(const float offset, const vec2f &in_range) 
 
     aabb2d res(bound_feature2d(offset, vec2f(start_local, 1.0), start_feature));
     for(size_t c = start_feature+1; c < end_feature; ++c)
-        res = res.funion(bound_feature2d(offset, vec2f(0, 1), c));
+    res = res.funion(bound_feature2d(offset, vec2f(0.0f, 1.0f), c));
     res = res.funion(bound_feature2d(offset, vec2f(0.0f, end_local), end_feature));
 
     return res;
@@ -997,7 +997,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
         const vec2f frange(fst, fst+feature_size(2*i+1, tex_offset));
 
         const size_t last = result.size();
-        extract_arc(result, i, vec2f(0.0, 1.0), offset, resolution, up);
+        extract_arc(result, i, vec2f(0.0f, 1.0f), offset, resolution, up);
         rescale_tex_coords(boost::next(result.begin(), last), result.end(), frange, vec2f(0.0f, 1.0f));
     }
 
@@ -1009,7 +1009,7 @@ void arc_road::extract_line(std::vector<vertex> &result, const vec2f &in_range, 
             const vec2f frange(fst, fst+feature_size(end_feature, tex_offset));
 
             const size_t last = result.size();
-            extract_arc(result, end_feature/2, vec2f(0.0, end_local), offset, resolution, up);
+            extract_arc(result, end_feature/2, vec2f(0.0f, end_local), offset, resolution, up);
             rescale_tex_coords(boost::next(result.begin(), last), result.end(), frange, vec2f(0.0f, 1.0f));
         }
     }
@@ -1072,7 +1072,7 @@ void arc_road::make_mesh(std::vector<vertex> &vrts, std::vector<vec3u> &faces,
         v.tex_coord[1] = texcoord1[1];
     }
 
-    ::make_mesh(faces, vrts, vec2i(r1, reverse_start), vec2i(vrts.size(), reverse_start));
+    ::make_mesh(faces, vrts, vec2i(static_cast<int>(r1), static_cast<int>(reverse_start)), vec2i(static_cast<int>(vrts.size()), static_cast<int>(reverse_start)));
 }
 
 float arc_road::feature_base(const size_t i, const float offset) const

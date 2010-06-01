@@ -320,7 +320,7 @@ namespace hwm
             {
                 {
                     xmlpp::Element *path = arcgroup->add_child("path");
-                    path->set_attribute("d", rp.second.rep.svg_arc_path(vec2f(0.0, 1.0), 0.0).stringify());
+                    path->set_attribute("d", rp.second.rep.svg_arc_path(vec2f(0.0f, 1.0f), 0.0).stringify());
                     path->set_attribute("id", boost::str(boost::format("id%s_arc") % rp.first));
                 }
                 if(flags & SVG_ARCS)
@@ -329,7 +329,7 @@ namespace hwm
                     rp.second.rep.svg_arc_circles(rp.first, arc_circlegroup);
                 {
                     xmlpp::Element *path = polygroup->add_child("path");
-                    path->set_attribute("d", rp.second.rep.svg_poly_path(vec2f(0.0, 1.0), 0.0).stringify());
+                    path->set_attribute("d", rp.second.rep.svg_poly_path(vec2f(0.0f, 1.0f), 0.0).stringify());
                     path->set_attribute("id", boost::str(boost::format("id%s_poly") % rp.first));
                 }
             }
@@ -386,7 +386,7 @@ namespace hwm
                                                                          2.0));
                         {
                             xmlpp::Element *path = arcgroup->add_child("path");
-                            path->set_attribute("d", ar.svg_arc_path(vec2f(0.0, 1.0), 0.0).stringify()+"Z");
+                            path->set_attribute("d", ar.svg_arc_path(vec2f(0.0f, 1.0f), 0.0).stringify()+"Z");
                             path->set_attribute("id", boost::str(boost::format("%s_arc") % id));
                         }
                         if(flags & SVG_ARCS)
@@ -395,7 +395,7 @@ namespace hwm
                             ar.svg_arc_circles(id, arc_circlegroup);
                         {
                             xmlpp::Element *path = polygroup->add_child("path");
-                            path->set_attribute("d", ar.svg_poly_path(vec2f(0.0, 1.0), 0.0).stringify()+"Z");
+                            path->set_attribute("d", ar.svg_poly_path(vec2f(0.0f, 1.0f), 0.0).stringify()+"Z");
                             path->set_attribute("id", boost::str(boost::format("%s_poly") % id));
                         }
                     }

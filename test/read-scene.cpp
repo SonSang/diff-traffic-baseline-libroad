@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     std::vector<obj_record> objs(xml_read_scene(argv[1]));
 
     FILE *fp = fopen(argv[2], "rb");
-    const vec2i dim(boost::lexical_cast<float>(argv[3]), boost::lexical_cast<float>(argv[4]));
+    const vec2i dim(boost::lexical_cast<int>(argv[3]), boost::lexical_cast<int>(argv[4]));
     float *pix = new float[dim[0]*dim[1]];
     fread(pix, sizeof(float), dim[0]*dim[1], fp);
     im_heightfield ih(pix, dim, boost::lexical_cast<float>(argv[8]), boost::lexical_cast<float>(argv[9]));

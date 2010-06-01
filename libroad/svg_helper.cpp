@@ -35,12 +35,12 @@ struct center_param
                                  -radii[1]*xp[0]/radii[0]));
         center           = vec2f(cp + (ep.p0 + ep.p1)/2);
 
-        theta  = angle_func(vec2f(1, 0), vec2f((xp[0] - cp[0])/radii[0],
-                                               (xp[1] - cp[1])/radii[1]));
-        dtheta = angle_func(vec2f((xp[0] - cp[0])/radii[0],
-                                  (xp[1] - cp[1])/radii[1]),
-                            vec2f((-xp[0] - cp[0])/radii[0],
-                                  (-xp[1] - cp[1])/radii[1]));
+        theta  = angle_func(vec2f(1.0f, 0.0f), vec2f((float)(xp[0] - cp[0])/radii[0],
+                                               (float)(xp[1] - cp[1])/radii[1]));
+        dtheta = angle_func(vec2f((float)(xp[0] - cp[0])/radii[0],
+                                  (float)(xp[1] - cp[1])/radii[1]),
+                            vec2f((float)(-xp[0] - cp[0])/radii[0],
+                                  (float)(-xp[1] - cp[1])/radii[1]));
         if(!ep.fs && dtheta > 0)
             dtheta -= M_2_PI;
         else if(ep.fs && dtheta < 0)

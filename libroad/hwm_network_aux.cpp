@@ -400,7 +400,7 @@ namespace hwm
         cairo_new_path(c);
         BOOST_FOREACH(const arc_road &ar, connecting_arcs)
         {
-            ar.svg_arc_path(vec2f(0, 1), 0.0f).cairo_draw(c, !closed);
+            ar.svg_arc_path(vec2f(0.0f, 1.0f), 0.0f).cairo_draw(c, !closed);
         }
         if(closed)
             cairo_close_path(c);
@@ -414,13 +414,13 @@ namespace hwm
             const road_store &rs = ric[i];
             BOOST_FOREACH(const offs_pt &op, rs.ipt)
             {
-                vrts.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+                vrts.push_back(vertex(op.second.point, vec3f(0.0f, 0.0f, 1.0f), vec2f(0.0f, 0.0f)));
             }
 
             connecting_arcs[i].extract_line(vrts, vec2f(0.0f, 1.0f), 0.0f, resolution);
         }
 
-        vrts.push_back(vertex(is->center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+        vrts.push_back(vertex(is->center, vec3f(0.0f, 0.0f, 1.0f), vec2f(0.0f, 0.0f)));
         const unsigned int center(static_cast<unsigned int>(vrts.size()-1));
         std::vector<vec3u> fcs;
         for(unsigned int i = 0; i < center; ++i)

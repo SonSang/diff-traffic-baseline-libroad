@@ -119,12 +119,12 @@ inline vec2f world_point(const vec2i &input, const vec2f &center, const float &s
 {
     vec2f lo, hi;
     cscale_to_box(lo, hi, center, scale, window);
-    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(hi-lo) + lo);
+    return vec2f(input*vec2f(1.0f/(window[0]-1),(1.0f/(window[1]-1)))*(hi-lo) + lo);
 }
 
 inline vec2f world_point(const vec2i &input, const vec2f &low, const vec2f &high, const vec2i &window)
 {
-    return vec2f(input*vec2f(1.0/(window[0]-1), 1.0/(window[1]-1))*(high-low) + low);
+    return vec2f(input*vec2f(1.0f/(window[0]-1), 1.0f/(window[1]-1))*(high-low) + low);
 }
 
 inline mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)

@@ -565,10 +565,10 @@ namespace osm
         const float dr = std::sqrt(std::pow(dx,2) + std::pow(dy,2));
         const float D  = x1*y2 - x2*y1;
 
-        const vec2f isect1((D*dy + copysign(1, dy)*dx*std::sqrt(r*r*dr*dr - D*D))/(dr*dr),
+        const vec2f isect1(static_cast<float>((D*dy + copysign(1.0f, dy)*dx*std::sqrt(r*r*dr*dr - D*D))/(dr*dr)),
                            -D*dx + std::abs(dy)*std::sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
-        const vec2f isect2((D*dy - copysign(1, dy)*dx*std::sqrt(r*r*dr*dr - D*D))/(dr*dr),
+        const vec2f isect2(static_cast<float>((D*dy - copysign(1.0f, dy)*dx*std::sqrt(r*r*dr*dr - D*D))/(dr*dr)),
                            -D*dx - std::abs(dy)*std::sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
         return std::make_pair(isect1 + center, isect2 + center);

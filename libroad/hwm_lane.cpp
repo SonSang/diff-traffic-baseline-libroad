@@ -333,7 +333,7 @@ namespace hwm
             v.tex_coord[1] = 1.0f;
         }
 
-        ::make_mesh(faces, verts, vec2i(start_high, end_high), vec2i(verts.size(), end_high));
+        ::make_mesh(faces, verts, vec2i(static_cast<int>(start_high), static_cast<int>(end_high)), vec2i(static_cast<int>(verts.size()), static_cast<int>(end_high)));
     }
 
     path lane::svg_arc_path(const float lane_width) const
