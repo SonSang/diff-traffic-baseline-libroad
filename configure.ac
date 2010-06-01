@@ -105,8 +105,8 @@ AH_TEMPLATE([HAVE_CAIRO],
 AS_IF([test x"$enable_images" != xno],
       [AC_CHECK_PROG(have_magickpp, Magick++-config, [yes], [no])
        AS_IF([test x"$have_magickpp" = xyes],
-             [MAGICKPP_CXXFLAGS=`Magick++-config --cxxflags`
-              MAGICKPP_LDFLAGS=`Magick++-config --ldflags`
+             [MAGICKPP_CXXFLAGS=`Magick++-config --cppflags`
+              MAGICKPP_LDFLAGS=`Magick++-config --libs`
               AC_SUBST([MAGICKPP_CXXFLAGS])
               AC_SUBST([MAGICKPP_LDFLAGS])
 	      PKG_CHECK_MODULES([CAIRO], [cairo > 1.2],
