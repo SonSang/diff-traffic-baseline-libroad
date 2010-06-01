@@ -207,7 +207,7 @@ namespace hwm
                       static_cast<unsigned int>(std::ceil(total_w/min_x_feat)));
         im_res = 3*minsize;
         for(int i = 0; i < 2; ++i)
-            im_res[i] = std::max(im_res[i], 1ul);
+            im_res[i] = std::max(im_res[i], (size_t)(1));
         scale  = vec2d(max_h, total_w);
     }
 
@@ -282,12 +282,12 @@ namespace hwm
         //                            color4d(1.0, 1.0, 1.0, 1.0)));
 
         const_iterator i = begin();
-        const float orient0 = copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]);
-        while(i != end() && orient0 == copysignf(1, i->second.membership->interval[0] - i->second.membership->interval[1]))
+        const float orient0 = copysign(1, i->second.membership->interval[0] - i->second.membership->interval[1]);
+        while(i != end() && orient0 == copysign(1, i->second.membership->interval[0] - i->second.membership->interval[1]))
         {
             lm.add_xgap(rm.lane_width);
             const_iterator next = boost::next(i);
-            if(next != end() && orient0 == copysignf(1, next->second.membership->interval[0] - next->second.membership->interval[1]))
+            if(next != end() && orient0 == copysign(1, next->second.membership->interval[0] - next->second.membership->interval[1]))
                 lm.add_cbox(new single_box(rm.line_width, rm.line_length+rm.line_gap_length,
                                            0, rm.line_length,
                                            color4d(1.0, 1.0, 1.0, 1.0)));

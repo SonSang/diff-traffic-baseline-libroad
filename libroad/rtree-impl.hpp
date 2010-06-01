@@ -1,9 +1,12 @@
+#include "libroad/libroad_common.hpp"
 #include <cstring>
-#include <unistd.h>
 #include <cstdlib>
 #include <deque>
+#if HAVE_MMAP
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <unistd.h>
+#endif
 #include <iostream>
 #include <stdexcept>
 
@@ -107,12 +110,12 @@ rtree<REAL_T, D, MIN, MAX>::entry::entry() : item(0)
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
-rtree<REAL_T, D, MIN, MAX>::entry::entry(const rtree<REAL_T, D, MIN, MAX>::aabb &r, const idx_t i) : rect(r), item(i)
+rtree<REAL_T, D, MIN, MAX>::entry::entry(const typename rtree<REAL_T, D, MIN, MAX>::aabb &r, const idx_t i) : rect(r), item(i)
 {
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
-rtree<REAL_T, D, MIN, MAX>::entry::entry(rtree<REAL_T, D, MIN, MAX>::node *c) : item(reinterpret_cast<size_t>(c))
+rtree<REAL_T, D, MIN, MAX>::entry::entry(typename rtree<REAL_T, D, MIN, MAX>::node *c) : item(reinterpret_cast<size_t>(c))
 {
     recompute_rect();
 }
@@ -149,23 +152,31 @@ void rtree<REAL_T, D, MIN, MAX>::entry::recompute_rect()
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
-typename rtree<REAL_T, D, MIN, MAX>::node *rtree<REAL_T, D, MIN, MAX>::node::new_leaf(rtree<REAL_T, D, MIN, MAX>::node *p)
+typename rtree<REAL_T, D, MIN, MAX>::node *rtree<REAL_T, D, MIN, MAX>::node::new_leaf(typename rtree<REAL_T, D, MIN, MAX>::node *p)
 {
+#ifndef _MSC_VER
     void *v;
     posix_memalign(&v, sysconf(_SC_PAGESIZE),sizeof(node));
     return new(v) node(true, p);
+#else
+	return new node(true, p);
+#endif
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
-typename rtree<REAL_T, D, MIN, MAX>::node *rtree<REAL_T, D, MIN, MAX>::node::new_interior(rtree<REAL_T, D, MIN, MAX>::node *p)
+typename rtree<REAL_T, D, MIN, MAX>::node *rtree<REAL_T, D, MIN, MAX>::node::new_interior(typename rtree<REAL_T, D, MIN, MAX>::node *p)
 {
+#ifndef _MSC_VER
     void *v;
     posix_memalign(&v, sysconf(_SC_PAGESIZE),sizeof(node));
     return new(v) node(false, p);
+#else
+	return new node(false, p);
+#endif
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
-void rtree<REAL_T, D, MIN, MAX>::node::destroy(rtree<REAL_T, D, MIN, MAX>::node *c)
+void rtree<REAL_T, D, MIN, MAX>::node::destroy(typename rtree<REAL_T, D, MIN, MAX>::node *c)
 {
     c->nchildren = 0;
     c->~node();
@@ -173,7 +184,7 @@ void rtree<REAL_T, D, MIN, MAX>::node::destroy(rtree<REAL_T, D, MIN, MAX>::node 
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
-rtree<REAL_T, D, MIN, MAX>::node::node(const bool is_leaf, rtree<REAL_T, D, MIN, MAX>::node *p) : leaf(is_leaf), nchildren(0), parent(p)
+rtree<REAL_T, D, MIN, MAX>::node::node(const bool is_leaf, typename rtree<REAL_T, D, MIN, MAX>::node *p) : leaf(is_leaf), nchildren(0), parent(p)
 {
 }
 
@@ -314,7 +325,7 @@ int rtree<REAL_T, D, MIN, MAX>::node::entry_index(const typename rtree<REAL_T, D
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
- rtree<REAL_T, D, MIN, MAX>::query_result_gen::query_result_gen(const rtree<REAL_T, D, MIN, MAX>::node *start, const rtree<REAL_T, D, MIN, MAX>::aabb &r) : rect(r), current(0), child(0), state(NOT_STARTED)
+ rtree<REAL_T, D, MIN, MAX>::query_result_gen::query_result_gen(const typename rtree<REAL_T, D, MIN, MAX>::node *start, const typename rtree<REAL_T, D, MIN, MAX>::aabb &r) : rect(r), current(0), child(0), state(NOT_STARTED)
 {
     stack.push_back(start);
 }
@@ -701,7 +712,7 @@ void rtree<REAL_T, D, MIN, MAX>::condense_tree(typename rtree<REAL_T, D, MIN, MA
 }
 
 template <typename REAL_T, int D, int MIN, int MAX>
-void rtree<REAL_T, D, MIN, MAX>::split_node(rtree<REAL_T, D, MIN, MAX>::node *n, rtree<REAL_T, D, MIN, MAX>::node *&nn, entry &e) const
+void rtree<REAL_T, D, MIN, MAX>::split_node(typename rtree<REAL_T, D, MIN, MAX>::node *n, typename rtree<REAL_T, D, MIN, MAX>::node *&nn, entry &e) const
 {
     entry old_e[M+1];
     memcpy(old_e, n->children, sizeof(entry)*n->nchildren);
@@ -734,6 +745,8 @@ void rtree<REAL_T, D, MIN, MAX>::split_node(rtree<REAL_T, D, MIN, MAX>::node *n,
             assert(n->children[i].as_node()->parent == n);
 #endif
 }
+
+#if HAVE_MMAP
 
 template <typename REAL_T, int D, int MIN, int MAX>
 void rtree<REAL_T, D, MIN, MAX>::dump(const char *filename) const
@@ -774,8 +787,10 @@ void rtree<REAL_T, D, MIN, MAX>::dump(const char *filename) const
     munmap(res, (1+nnodes)*sizeof(node));
 }
 
+#endif
+
 template <typename REAL_T, int D, int MIN, int MAX>
-void rtree<REAL_T, D, MIN, MAX>::quad_split(rtree<REAL_T, D, MIN, MAX>::node *out_n1, rtree<REAL_T, D, MIN, MAX>::node *out_n2, entry in_e[M+1], int &nentries)
+void rtree<REAL_T, D, MIN, MAX>::quad_split(typename rtree<REAL_T, D, MIN, MAX>::node *out_n1, typename rtree<REAL_T, D, MIN, MAX>::node *out_n2, entry in_e[M+1], int &nentries)
 {
     assert(!out_n1->nchildren);
     assert(!out_n2->nchildren);
@@ -890,6 +905,7 @@ int rtree<REAL_T, D, MIN, MAX>::quad_pick_next(const aabb &r1, const aabb &r2, c
     return best;
 }
 
+#if HAVE_MMAP
 
 template <typename REAL_T, int D, int MIN, int MAX>
 typename static_rtree<REAL_T, D, MIN, MAX>::idx_t static_rtree<REAL_T, D, MIN, MAX>::entry::as_item() const
@@ -961,6 +977,8 @@ std::vector<typename static_rtree<REAL_T, D, MIN, MAX>::idx_t> static_rtree<REAL
     }
     return res;
 }
+
+#endif
 
 inline rtree2d::aabb random_rect2d()
 {

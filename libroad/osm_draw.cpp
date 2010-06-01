@@ -1,7 +1,8 @@
 #include "osm_network.hpp"
-#include <FL/gl.h>
-#include <FL/glu.h>
-#include <FL/glut.H>
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
 
 static bool               first_for_display = 1;
 static std::vector<vec3f> colors;

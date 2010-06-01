@@ -69,7 +69,7 @@ void arc_road::svg_arc_circles(const str &id, xmlpp::Element *parent) const
     for(size_t i = 1; i < points_.size()-1; ++i)
     {
         const vec3f c(center(i));
-        assert(std::isfinite(c[0]));
+        assert(xisfinite(c[0]));
         xmlpp::Element *circle = circle_group->add_child("circle");
         circle->set_attribute("id", boost::str(boost::format("id%s_circle_%d") % id % (i-1)));
 

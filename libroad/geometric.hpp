@@ -132,10 +132,10 @@ inline mat4x4f axis_angle_matrix(const float theta, const vec3f &axis)
     const float c = std::cos(theta);
     const float s = std::sin(theta);
     mat4x4f res;
-    res = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c, axis[0]*axis[1]*(1.0-c) -  axis[2]*s,  axis[0]*axis[2]*(1.0-c) +  axis[1]*s, 0,
-          axis[0]*axis[1]*(1.0-c) +  axis[2]*s, axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c,  axis[1]*axis[2]*(1.0-c) -  axis[0]*s, 0,
-          axis[0]*axis[2]*(1.0-c) -  axis[1]*s, axis[1]*axis[2]*(1.0-c) +  axis[0]*s,  axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c, 0,
-          0, 0, 0, 1;
+    res(0, 0) = axis[0]*axis[0] + (1.0-axis[0]*axis[0])*c; res(0, 1) = axis[0]*axis[1]*(1.0-c) -  axis[2]*s;      res(0, 2) = axis[0]*axis[2]*(1.0-c) +  axis[1]*s;      res(0, 3) = 0;
+    res(1, 0) = axis[0]*axis[1]*(1.0-c) +  axis[2]*s;      res(1, 1) = axis[1]*axis[1] + (1.0-axis[1]*axis[1])*c; res(1, 2) = axis[1]*axis[2]*(1.0-c) -  axis[0]*s;      res(1, 3) = 0;
+    res(2, 0) = axis[0]*axis[2]*(1.0-c) -  axis[1]*s;      res(2, 1) = axis[1]*axis[2]*(1.0-c) +  axis[0]*s;      res(2, 2) = axis[2]*axis[2] + (1.0-axis[2]*axis[2])*c; res(2, 3) = 0;
+    res(3, 0) = 0;                                         res(3, 1) = 0;                                         res(3, 2) = 0;                                         res(3, 3) = 1;
     return res;
 }
 #endif

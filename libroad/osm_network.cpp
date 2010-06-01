@@ -9,6 +9,8 @@ static const double moar_fudge   = 0.5; //0.6666666;
 static const double scale        = 157253.2964 * moar_fudge;
 static const float  MIPH_TO_MEPS = 1609.344/(60.0*60.0);
 
+typedef unsigned int uint;
+
 namespace osm
 {
     //Instantiate static
@@ -39,9 +41,9 @@ namespace osm
 
     bool network::out_of_bounds(const vec3f &pt) const
     {
-        return !((pt[0] >= topleft[0] and pt[0] <= bottomright[0])
-                 and
-                 (pt[1] >= bottomright[1] and pt[1] <= topleft[1]));
+        return !((pt[0] >= topleft[0] && pt[0] <= bottomright[0])
+                 &&
+                 (pt[1] >= bottomright[1] && pt[1] <= topleft[1]));
     }
 
     void network::clip_roads_to_bounds()
@@ -400,7 +402,7 @@ namespace osm
                                 e.shape[i + 1]->xy = len*tan + pt;
                             }
                             else if (i + 1 == e.shape.size())
-                             {
+                            {
                                 vec3f tan(col(highway_shape.frame(t, offset, true), 0));
                                 e.shape.insert(e.shape.begin() + i, new node);
                                 e.shape[i]->id = str(boost::lexical_cast<std::string>(rand()));
@@ -421,10 +423,10 @@ namespace osm
                                 if (std::abs(std::max((float)0, t_center - merge_lane_parametric_len) - t_center) > 0)
                                 {
                                     highway->additional_lanes.push_back(osm::edge::lane(std::max((float)0, t_center - merge_lane_parametric_len),
-                                                                                    t_center,
-                                                                                    offset,
-                                                                                    e.id,
-                                                                                    true));
+                                                                                        t_center,
+                                                                                        offset,
+                                                                                        e.id,
+                                                                                        true));
                                 }
                             }
                             else//Onramp
@@ -432,10 +434,10 @@ namespace osm
                                 if (std::abs(std::min((float)1, t_center + merge_lane_parametric_len) - t_center) > 0)
                                 {
                                     highway->additional_lanes.push_back(osm::edge::lane(t_center,
-                                                                                    std::min((float)1, t_center + merge_lane_parametric_len),
-                                                                                    offset,
-                                                                                    e.id,
-                                                                                    false));
+                                                                                        std::min((float)1, t_center + merge_lane_parametric_len),
+                                                                                        offset,
+                                                                                        e.id,
+                                                                                        false));
                                 }
 
                             }
@@ -507,7 +509,7 @@ namespace osm
                             e.from = n->id;
 
                     }
-                    else if (n->ramp_merging_point != NULL or n->is_overpass == true)
+                    else if (n->ramp_merging_point != NULL || n->is_overpass == true)
                     {
                         //Removing node from highway
                         node_degrees[n->id]--;
@@ -546,7 +548,7 @@ namespace osm
     static pair_of_isects circle_line_intersection(const vec2f &pt1,
                                                    const vec2f &pt2,
                                                    const vec2f &center,
-                                                   float r)  __attribute__ ((unused));
+                                                   float r) xunused;
 
     static pair_of_isects circle_line_intersection(const vec2f &pt1,
                                                    const vec2f &pt2,
@@ -589,55 +591,55 @@ namespace osm
 
                     n->xy[2] += overpass_height;
 
-            //         vec2f n_2d(n->xy[0], n->xy[1]);
+                    //         vec2f n_2d(n->xy[0], n->xy[1]);
 
-            //         //Walk back until
-            //         //  1) another overpass is found, or
-            //         //  2) until a line segment intersects with a circle centered at point i
-            //         float overpass_radius = 60;
-            //         float len_thus_far = 0;
-            //         int last_index = -1;
-            //         for(int j = i - 1; j >= 0; j--)
-            //         {
-            //             osm::node* j_node = e.shape[j];
+                    //         //Walk back until
+                    //         //  1) another overpass is found, or
+                    //         //  2) until a line segment intersects with a circle centered at point i
+                    //         float overpass_radius = 60;
+                    //         float len_thus_far = 0;
+                    //         int last_index = -1;
+                    //         for(int j = i - 1; j >= 0; j--)
+                    //         {
+                    //             osm::node* j_node = e.shape[j];
 
-            //             vec3f j_3d(j_node->xy[0], j_node->xy[1], 0);
-            //             vec3f jp1_3d(e.shape[j + 1]->xy[0], e.shape[j + 1]->xy[1], 0);
+                    //             vec3f j_3d(j_node->xy[0], j_node->xy[1], 0);
+                    //             vec3f jp1_3d(e.shape[j + 1]->xy[0], e.shape[j + 1]->xy[1], 0);
 
-            //             if (j_node->is_overpass)
-            //                 break;
+                    //             if (j_node->is_overpass)
+                    //                 break;
 
-            //             float dist = norm2(j_3d - jp1_3d);
-            //             if (len_thus_far + dist > overpass_radius)
-            //             {
-            //                 float param = (overpass_radius - len_thus_far) / dist;
-            //                 vec3f new_point(param*(j_3d - jp1_3d) + jp1_3d);
-            //                 osm::node ramp_start;
-            //                 ramp_start.id = n->id + "_opassramp";
-            //                 ramp_start.xy = vec3f(new_point);
-            //                 ramp_start.edges_including.push_back(&e);
-            //                 node_degrees[ramp_start.id] = 1;
-            //                 strhash<node>::type::iterator pos = nodes.insert(std::make_pair(ramp_start.id, ramp_start)).first;
-            //                 new_shape.push_back(&(pos->second));
-            //                 break;
-            //             }
-            //             else
-            //             {
-            //                 len_thus_far += dist;
-            //                 new_shape[j]->xy[2] = (len_thus_far / overpass_radius) / overpass_height;
-            //             }
-            //         }
-            //         new_shape.push_back(n);
-            //     }
-            //     else
-            //         new_shape.push_back(n);
+                    //             float dist = norm2(j_3d - jp1_3d);
+                    //             if (len_thus_far + dist > overpass_radius)
+                    //             {
+                    //                 float param = (overpass_radius - len_thus_far) / dist;
+                    //                 vec3f new_point(param*(j_3d - jp1_3d) + jp1_3d);
+                    //                 osm::node ramp_start;
+                    //                 ramp_start.id = n->id + "_opassramp";
+                    //                 ramp_start.xy = vec3f(new_point);
+                    //                 ramp_start.edges_including.push_back(&e);
+                    //                 node_degrees[ramp_start.id] = 1;
+                    //                 strhash<node>::type::iterator pos = nodes.insert(std::make_pair(ramp_start.id, ramp_start)).first;
+                    //                 new_shape.push_back(&(pos->second));
+                    //                 break;
+                    //             }
+                    //             else
+                    //             {
+                    //                 len_thus_far += dist;
+                    //                 new_shape[j]->xy[2] = (len_thus_far / overpass_radius) / overpass_height;
+                    //             }
+                    //         }
+                    //         new_shape.push_back(n);
+                    //     }
+                    //     else
+                    //         new_shape.push_back(n);
                 }
 
-            // e.shape.clear();
-            // for (int i = 0; i < new_shape.size(); i++)
-            // {
-            //     e.shape.push_back(new_shape[i]);
-            // }
+                // e.shape.clear();
+                // for (int i = 0; i < new_shape.size(); i++)
+                // {
+                //     e.shape.push_back(new_shape[i]);
+                // }
             }
         }
     }
@@ -976,9 +978,9 @@ namespace osm
         for(size_t i = 1; i < shape.size(); i++)
         {
             if ((shape[i]->id != last_id)
-                and ((shape[i]->xy[0] != last_vec[0])
-                     or
-                     (shape[i]->xy[1] != last_vec[1])))
+                && ((shape[i]->xy[0] != last_vec[0])
+                    ||
+                    (shape[i]->xy[1] != last_vec[1])))
             {
                 new_node_list.push_back(shape[i]);
                 last_id = shape[i]->id;
@@ -1016,12 +1018,12 @@ namespace osm
                     if (o == e)
                         continue;
 
-                    if ((nodes[o->to].id == nodes[e->from].id) and (o->to == np.first))
+                    if ((nodes[o->to].id == nodes[e->from].id) && (o->to == np.first))
                     {
                         std::swap(o, e);
                     }
 
-                    if ((nodes[e->to].id == nodes[o->from].id) and (e->to == np.first))
+                    if ((nodes[e->to].id == nodes[o->from].id) && (e->to == np.first))
                     {
                         node_degrees[e->to]--;
 
@@ -1036,7 +1038,7 @@ namespace osm
                         // assert(np.second.edges_including.end() != ei_it);
                         // np.second.edges_including.erase(ei_it);
                     }
-                    else if ((nodes[e->to].id == nodes[o->to].id) and (e->to == np.first))
+                    else if ((nodes[e->to].id == nodes[o->to].id) && (e->to == np.first))
                     {
                         node_degrees[e->to]--;
 
@@ -1055,7 +1057,7 @@ namespace osm
                         // assert(np.second.edges_including.end() != ei_it);
                         // np.second.edges_including.erase(ei_it);
                     }
-                    else if ((nodes[e->from].id == nodes[o->from].id) and (e->from == np.first))
+                    else if ((nodes[e->from].id == nodes[o->from].id) && (e->from == np.first))
                     {
                         node_degrees[e->from]--;
 
@@ -1151,7 +1153,7 @@ namespace osm
             bool _first = true;
             BOOST_FOREACH(int split_index, road_split_points[_edge.id])
             {
-                if (not _first)
+                if (!_first)
                 {
                     new_edges.push_back(copy_no_shape(_edge));
                     new_edges.back().from = _edge.shape[node_index]->id;
@@ -1167,7 +1169,7 @@ namespace osm
                 while (node_index != split_index)
                 {
                     node_index++;
-                    if (not _first)
+                    if (!_first)
                     {
                         //Add nodes to new road
                         new_edges.back().shape.push_back(&nodes[_edge.shape[node_index]->id]);
@@ -1175,7 +1177,7 @@ namespace osm
                     }
                 }
 
-                if (not _first)
+                if (!_first)
                     assert(new_edges.back().shape.size() > 1);
 
                 //Node index is at the index of the split point.

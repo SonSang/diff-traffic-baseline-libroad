@@ -1,8 +1,7 @@
 #ifndef _HILBERT_HPP_
 #define _HILBERT_HPP_
 
-#include <cmath>
-#include <iostream>
+#include "libroad/libroad_common.hpp"
 
 struct hilbert
 {
@@ -64,7 +63,7 @@ struct hilbert
             return 0;
 
         size_t z    = 0;
-        size_t rmin = static_cast<size_t>(std::floor(std::log(static_cast<double>(std::max(x, y)))/M_LN2l)) + 1;
+        size_t rmin = static_cast<size_t>(std::floor(std::log(static_cast<double>(std::max(x, y)))/M_LN2)) + 1;
         size_t w    = 1LL << (rmin - 1);
         if((rmin & 1) != (n & 1))
             std::swap(x, y);

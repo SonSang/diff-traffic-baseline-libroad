@@ -34,9 +34,9 @@ mat3x3f polyline_road::frame(const float t, const float offset) const
     const vec3f up(tvmet::cross(right, normals_[idx]));
 
     mat3x3f res;
-    res = normals_[idx][0], right[0], up[0],
-          normals_[idx][1], right[1], up[1],
-          normals_[idx][2], right[2], up[2];
+    res(0, 0) = normals_[idx][0]; res(0, 1) = right[0]; res(0, 2) = up[0];
+    res(1, 0) = normals_[idx][1]; res(1, 1) = right[1]; res(1, 2) = up[1];
+    res(2, 0) = normals_[idx][2]; res(2, 1) = right[2]; res(2, 2) = up[2];
 
     return res;
 }
@@ -57,10 +57,10 @@ mat4x4f polyline_road::point_frame(const float t, const float offset) const
     const vec3f point(points_[idx] + (local_t + offset*mitre)*normals_[idx] - offset*right);
 
     mat4x4f fr;
-    fr = normals_[idx][0], right[0], up[0], point[0],
-         normals_[idx][1], right[1], up[1], point[1],
-         normals_[idx][2], right[2], up[2], point[2],
-         0.0f,             0.0f,     0.0f,  1.0f;
+    fr(0, 0) = normals_[idx][0]; fr(0, 1) = right[0]; fr(0, 2) = up[0]; fr(0, 3) = point[0];
+    fr(1, 0) = normals_[idx][1]; fr(1, 1) = right[1]; fr(1, 2) = up[1]; fr(1, 3) = point[1];
+    fr(2, 0) = normals_[idx][2]; fr(2, 1) = right[2]; fr(2, 2) = up[2]; fr(2, 3) = point[2];
+    fr(3, 0) = 0.0f;             fr(3, 1) = 0.0f;     fr(3, 2) = 0.0f;  fr(3, 3) = 1.0f;
     return fr;
 }
 

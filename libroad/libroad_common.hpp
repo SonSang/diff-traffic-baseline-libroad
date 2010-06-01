@@ -13,8 +13,35 @@ const char *libroad_package_string();
 #include <iostream>
 #include <fstream>
 
+#ifdef _MSC_VER
+#include <functional>
+#include <unordered_map>
+
+inline double drand48()
+{
+	return rand()/(double)RAND_MAX;
+}
+
+inline float copysign(const float val, const float sign)
+{
+	return sign == 0.0f ? val : val*sign/std::abs(sign);
+}
+
+#define xunused
+
+#define xisfinite _finite
+#define isnan     _isnan
+
+#define M_LN2l static_cast<double>(M_LN2)
+
+#else
+#define HAVE_MMAP 1
+#define xunused __attribute__ ((unused))
+#define xisfinite std::isfinite
 #include <tr1/functional>
 #include <tr1/unordered_map>
+
+#endif
 
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
@@ -25,7 +52,9 @@ const char *libroad_package_string();
 #include <boost/multi_index/member.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#ifndef _MSC_VER
 #include <boost/iostreams/filter/gzip.hpp>
+#endif
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/filesystem.hpp>
@@ -157,6 +186,16 @@ inline V transform(const M &mat, const V &v)
     return sub<0, 3>::vector(vec4f(mat*vec4f(v[0], v[1], v[2], 1.0)));
 }
 
+#ifdef _MSC_VER
+inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filename)
+{
+    boost::iostreams::filtering_ostream *out_stream = new boost::iostreams::filtering_ostream();
+    str zip_name;
+    zip_name = filename;
+    out_stream->push(boost::iostreams::file_descriptor_sink(zip_name.raw()));
+    return out_stream;
+}
+#else
 inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filename)
 {
     boost::iostreams::filtering_ostream *out_stream = new boost::iostreams::filtering_ostream();
@@ -169,5 +208,6 @@ inline boost::iostreams::filtering_ostream *compressing_ostream(const str &filen
     out_stream->push(boost::iostreams::file_descriptor_sink(zip_name.raw()));
     return out_stream;
 }
+#endif
 
 #endif

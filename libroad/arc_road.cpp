@@ -495,7 +495,7 @@ bool arc_road::initialize(const std::vector<float> &alphas, std::vector<float> &
     {
         const float alpha  = alphas[i];
         const float radius = radii_[i];
-        assert(std::isfinite(radius));
+        assert(xisfinite(radius));
 
         const vec3f   laxis(tvmet::normalize(tvmet::cross(normals_[i+1], normals_[i])));
         const mat4x4f rot_pi2(axis_angle_matrix(M_PI_2, laxis));
@@ -817,7 +817,7 @@ aabb2d arc_road::planar_bounding_box(const float offset, const vec2f &in_range) 
     aabb2d res(bound_feature2d(offset, vec2f(start_local, 1.0), start_feature));
     for(size_t c = start_feature+1; c < end_feature; ++c)
         res = res.funion(bound_feature2d(offset, vec2f(0, 1), c));
-    res = res.funion(bound_feature2d(offset, vec2f(0, end_local), end_feature));
+    res = res.funion(bound_feature2d(offset, vec2f(0.0f, end_local), end_feature));
 
     return res;
 }
@@ -1361,7 +1361,7 @@ bool projection_intersect(vec3f &result,
     od[2] = 0.0f;
     const float denom = -n0[0] * n1[1] + n0[1]*n1[0];
     if(length2(od) < 1e-6 || std::abs(denom) < 1e-6)
-            return false;
+        return false;
     const float t0 = (-n1[1]*od[0] + n1[0]*od[1])/denom;
     const float t1 = (-n0[1]*od[0] + n0[0]*od[1])/denom;
     if(t0 >= min_t && t1 >= min_t)
