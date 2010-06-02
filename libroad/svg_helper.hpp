@@ -63,7 +63,9 @@ struct path
     void add_arc(const vec3f &p0, const float r, const float off, const bool o, const vec3f &p1);
     void reverse();
     void append(const path &o);
+#if HAVE_CAIRO
     void cairo_draw(cairo_t *ct, const bool new_path=true) const;
+#endif
     str stringify() const;
 
     std::vector<path_element*> elements;
