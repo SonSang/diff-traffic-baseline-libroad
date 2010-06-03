@@ -373,7 +373,7 @@ namespace osm
                             ///First, we need the offset of the point where the ramp will merge.
                             ///This will always be on the right side of the road, one lane beyond the end of the road.
                             float lanect  = -1;
-                            float nolanes = 2;
+                            float nolanes = highway->type->nolanes;
 
                             //TODO use lane width value, not constant
                             float offset = lane_width*(lanect + -((nolanes - 1)/2.0));
