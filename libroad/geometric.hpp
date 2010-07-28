@@ -86,7 +86,9 @@ inline void box_to_cscale(vec2f &center, float &scale,
 {
     center = vec2f(low+high)/2;
 
-    const vec2f dv(high-low);
+    vec2f dv(high-low);
+    if(dv[1] < std::numeric_limits<float>::epsilon())
+        dv[1] = dv[0];
     const float view_aspect  = static_cast<float>(window[0])/window[1];
     const float scene_aspect = dv[0]/dv[1];
 
