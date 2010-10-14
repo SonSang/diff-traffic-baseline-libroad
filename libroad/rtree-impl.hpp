@@ -4,6 +4,7 @@
 #include <deque>
 #if HAVE_MMAP
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #endif
