@@ -9,6 +9,24 @@
 #include "libroad/hwm_network.hpp"
 #include "libroad/geometric.hpp"
 
+static const double colors[][4] =
+{
+    { 0.901961, 0.000000, 0.400000, 1.000000 },
+    { 0.631373, 0.000000, 0.282353, 1.000000 },
+    { 1.000000, 0.749020, 0.862745, 1.000000 },
+    { 1.000000, 0.501961, 0.721569, 1.000000 },
+    { 1.000000, 0.898039, 0.000000, 1.000000 },
+    { 0.701961, 0.627451, 0.000000, 1.000000 },
+    { 1.000000, 0.976471, 0.749020, 1.000000 },
+    { 1.000000, 0.949020, 0.501961, 1.000000 },
+    { 0.000000, 0.400000, 0.701961, 1.000000 },
+    { 0.000000, 0.282353, 0.490196, 1.000000 },
+    { 0.749020, 0.894118, 1.000000, 1.000000 },
+    { 0.501961, 0.788235, 1.000000, 1.000000 }
+};
+
+static const size_t num_colors = sizeof (colors) / sizeof (colors[0]);
+
 struct circle_partition
 {
     void insert(float f, bool inside)
@@ -431,13 +449,14 @@ static void cairo_draw_arc(cairo_t *cr, const circle &c, const vec2f &range, boo
     cairo_stroke(cr);
 }
 
-static void gl_draw_arc(const circle &c, const vec2f &range, bool inside)
+static void gl_draw_arc(const circle &c, const vec2f &range, bool inside, const double *color)
 {
+    glColor4dv(color);
     if(inside)
-        glColor4f(1.0, 0.0, 0.0, 1.0);
+        glBegin(GL_LINES);
     else
-        glColor4f(0.0, 0.0, 1.0, 1.0);
-    glBegin(GL_LINE_STRIP);
+        glBegin(GL_LINE_STRIP);
+
     const int N = 100;
     vec2f draw_range(range);
     if(draw_range[1] < draw_range[0])
@@ -450,7 +469,6 @@ static void gl_draw_arc(const circle &c, const vec2f &range, bool inside)
     glEnd();
 
     const aabb2d box(aabb_from_arc(c, range));
-    glColor3f(0.4, 0.8, 0.4);
     glBegin(GL_QUADS);
     glVertex2f(box.bounds[0][0], box.bounds[0][1]);
     glVertex2f(box.bounds[1][0], box.bounds[0][1]);
@@ -522,9 +540,11 @@ public:
             std::vector<interval> cpi(chop_circle(sp_copy, *c));
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            int count = 0;
             BOOST_FOREACH(const interval &i, cpi)
             {
-                gl_draw_arc(*c, i.range, i.inside);
+                gl_draw_arc(*c, i.range, i.inside, colors[count]);
+                count = (count + 1) % num_colors;
             }
         }
 
