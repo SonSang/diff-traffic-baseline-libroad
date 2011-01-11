@@ -1391,10 +1391,7 @@ std::vector<vec3f> from_tan_pairs(const vec3f &start_point,
                                          min_t));
 
     if(!okay)
-    {
-        pts.push_back(vec3f(start_point + start_tan*4));
-        pts.push_back(vec3f(end_point   + end_tan*4));
-    }
+        pts.push_back(vec3f(vec3f(start_point + end_point)*0.5));
     else
         pts.push_back(middle);
 
