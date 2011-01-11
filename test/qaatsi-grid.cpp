@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
     const int    nx    = 3;
     const int    ny    = 17;
 
-    const float x_len         = 60.0;
-    const float y_len         = 17.224;
+    const float x_len         = 60.0-net.lane_width*0.25;
+    const float y_len         = 17.224-net.lane_width*0.25;
     const float y_divider_gap = 6;
 
     const float x_offs = y_divider_gap + 8*net.lane_width + net.lane_width*0.25;
