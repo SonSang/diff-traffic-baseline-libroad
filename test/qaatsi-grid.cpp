@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     const float x_offs = y_divider_gap + 8*net.lane_width + net.lane_width*0.25;
     const float del_x  = x_len + x_offs;
     const float y_offs = 2*net.lane_width + net.lane_width*0.25;
-    const float del_y  = y_len + x_offs;
+    const float del_y  = y_len + y_offs;
 
     const float speedlimit = 15.0;
 
