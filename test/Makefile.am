@@ -1,4 +1,4 @@
-noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import
+noinst_PROGRAMS = road-test interval-test sumo-test hwm-test sumo-xml-to-hwm svg-write make-grid osm-import qaatsi-grid
 
 EXTRA_DIST = arcball.hpp visual_geometric.hpp
 
@@ -41,6 +41,11 @@ osm_import_SOURCES = osm-import.cpp
 osm_import_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
 osm_import_LDFLAGS  = $(LDFLAGS)
 osm_import_LDADD    = $(top_builddir)/libroad/libroad.la
+
+qaatsi_grid_SOURCES  = qaatsi-grid.cpp
+qaatsi_grid_CPPFLAGS = $(GLIBMM_CFLAGS) $(LIBXMLPP_CFLAGS) $(CAIRO_CFLAGS) $(BOOST_CPPFLAGS) $(TVMET_CFLAGS) $(CXXFLAGS) -I$(top_srcdir)
+qaatsi_grid_LDFLAGS  = $(LDFLAGS)
+qaatsi_grid_LDADD    = $(top_builddir)/libroad/libroad.la
 
 if DO_IMAGE
 noinst_PROGRAMS += mesh-extract-test displace-polylines read-scene
