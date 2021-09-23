@@ -9,6 +9,8 @@ PKG_PROG_PKG_CONFIG
 
 AC_LANG([C++])
 
+AM_PROG_AR
+
 AC_PROG_LIBTOOL
 
 AC_ARG_ENABLE([tvmet-optimize],
