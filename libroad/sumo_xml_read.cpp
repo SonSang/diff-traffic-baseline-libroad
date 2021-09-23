@@ -1,6 +1,45 @@
 #include "sumo_network.hpp"
 #include "xml_util.hpp"
 
+
+template <>
+inline void get_attribute(sumo::edge::SPREAD &res, xmlpp::TextReader &reader, const str &eltname)
+{
+  std::string read = reader.get_attribute(eltname);
+
+  if(read.empty())
+    throw missing_attribute(reader, eltname);
+
+  if(read == "center") {
+    res = sumo::edge::SPREAD::center;
+  }
+  else if(read == "right") {
+    res = sumo::edge::SPREAD::right;
+  }
+  else {
+    throw missing_attribute(reader, eltname); // probably should be "wrong attribute"
+  }
+}
+
+template <>
+inline void get_attribute(sumo::node::TYPES &res, xmlpp::TextReader &reader, const str &eltname)
+{
+  std::string read = reader.get_attribute(eltname);
+
+  if(read.empty())
+    throw missing_attribute(reader, eltname);
+
+  if(read == "priority") {
+    res = sumo::node::TYPES::priority;
+  }
+  else if(read == "traffic_light") {
+    res = sumo::node::TYPES::traffic_light;
+  }
+  else {
+    res = sumo::node::TYPES::unknown;
+  }
+}
+
 namespace sumo
 {
     static inline void read_shape(edge::shape_t &shape, const std::string &s)
