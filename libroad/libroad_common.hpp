@@ -17,6 +17,8 @@ const char *libroad_package_string();
 #include <functional>
 #include <unordered_map>
 
+using std::isnan;
+
 inline double drand48()
 {
 	return rand()/(double)RAND_MAX;
@@ -60,7 +62,10 @@ inline float copysign(const float val, const float sign)
 #include <boost/filesystem.hpp>
 
 #include <glibmm/ustring.h>
-
+#define TVMET_HAVE_IEEE_MATH
+using std::isnan;
+using std::isinf;
+#include <cmath>
 #include <tvmet/Vector.h>
 #include <tvmet/Matrix.h>
 #include <libxml++/libxml++.h>
