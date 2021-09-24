@@ -5,7 +5,7 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/gl.h>
 #include <FL/glu.h>
-#include <FL/glut.h>
+#include <FL/glut.H>
 #include "libroad/hwm_network.hpp"
 #include "libroad/geometric.hpp"
 
