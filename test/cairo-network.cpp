@@ -54,7 +54,7 @@ public:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-            retex_roads(center, scale, vec2i(w(), h()));
+            retex_roads(center, scale, make_v2(w(), h()));
         }
         if(back_image && !glIsTexture(background_tex_))
         {
@@ -69,7 +69,7 @@ public:
 
             Magick::Image im(*back_image);
             im.flip();
-            back_image_dim = vec2i(im.columns(), im.rows());
+            back_image_dim = make_v2(im.columns(), im.rows());
             unsigned char *pix = new unsigned char[back_image_dim[0]*back_image_dim[1]*4];
             im.write(0, 0, back_image_dim[0], back_image_dim[1], "RGBA", Magick::CharPixel, pix);
             glTexImage2D (GL_TEXTURE_2D,
@@ -93,7 +93,7 @@ public:
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-            retex_overlay(center, scale, vec2i(w(), h()));
+            retex_overlay(center, scale, make_v2(w(), h()));
         }
     }
 
@@ -269,7 +269,7 @@ public:
         glLoadIdentity();
 
         vec2f lo, hi;
-        cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
+        cscale_to_box(lo, hi, center, scale, make_v2(w(), h()));
         gluOrtho2D(lo[0], hi[0], lo[1], hi[1]);
 
         glMatrixMode(GL_MODELVIEW);
@@ -315,7 +315,7 @@ public:
         glPopMatrix();
 
         glBindTexture (GL_TEXTURE_2D, overlay_tex_);
-        retex_overlay(center, scale, vec2i(w(), h()));
+        retex_overlay(center, scale, make_v2(w(), h()));
         glPushMatrix();
         glBegin(GL_QUADS);
         glTexCoord2f(0.0, 0.0);
@@ -341,9 +341,9 @@ public:
         {
         case FL_PUSH:
             {
-                const vec2i xy(Fl::event_x(),
-                               Fl::event_y());
-                const vec2f world(world_point(vec2i(xy[0], h()-xy[1]), center, scale, vec2i(w(), h())));
+                const vec2i xy(make_v2(Fl::event_x(),
+				       Fl::event_y()));
+                const vec2f world(world_point(make_v2(xy[0], h()-xy[1]), center, scale, make_v2(w(), h())));
 
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                     first_point = world;
@@ -371,9 +371,9 @@ public:
             return 1;
         case FL_DRAG:
             {
-                const vec2i xy(Fl::event_x(),
-                               Fl::event_y());
-                const vec2f world(world_point(vec2i(xy[0], h()-xy[1]), center, scale, vec2i(w(), h())));
+                const vec2i xy(make_v2(Fl::event_x(),
+				       Fl::event_y()));
+                const vec2f world(world_point(make_v2(xy[0], h()-xy[1]), center, scale, make_v2(w(), h())));
                 vec2f dvec(0);
                 if(Fl::event_button() == FL_LEFT_MOUSE)
                 {
@@ -401,17 +401,17 @@ public:
             switch(Fl::event_key())
             {
             case ' ':
-                retex_roads(center, scale, vec2i(w(), h()));
+                retex_roads(center, scale, make_v2(w(), h()));
                 redraw();
                 break;
             }
             return 1;
         case FL_MOUSEWHEEL:
             {
-                const vec2i xy(Fl::event_x(),
-                               Fl::event_y());
-                const vec2i dxy(Fl::event_dx(),
-                                Fl::event_dy());
+                const vec2i xy(make_v2(Fl::event_x(),
+				       Fl::event_y()));
+                const vec2i dxy(make_v2(Fl::event_dx(),
+					Fl::event_dy()));
                 const float fy = copysign(0.5, dxy[1]);
 
                 if(Fl::event_state() & FL_SHIFT)
