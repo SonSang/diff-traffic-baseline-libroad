@@ -53,7 +53,7 @@ struct circle_partition
 
 static vec2f interval_intersection(const vec2f &a, const vec2f &b)
 {
-    return vec2f(std::max(a[0], b[0]), std::min(a[1], b[1]));
+    return make_v2(std::max(a[0], b[0]), std::min(a[1], b[1]));
 }
 
 static bool interval_okay(const vec2f &a)
@@ -66,16 +66,16 @@ static std::vector<vec2f> interval_overlap(const vec2f &a, const vec2f &b)
     std::vector<vec2f> a_pairs;
     if(a[0] > a[1])
     {
-        a_pairs.push_back(vec2f(0, a[1]));
-        a_pairs.push_back(vec2f(a[0], 2*M_PI));
+        a_pairs.push_back(make_v2(0.0f, a[1]));
+        a_pairs.push_back(make_v2(a[0], (float)(2*M_PI)));
     }
     else
         a_pairs.push_back(a);
     std::vector<vec2f> b_pairs;
     if(b[0] > b[1])
     {
-        b_pairs.push_back(vec2f(0, b[1]));
-        b_pairs.push_back(vec2f(b[0], 2*M_PI));
+        b_pairs.push_back(make_v2(0.0f, b[1]));
+        b_pairs.push_back(make_v2(b[0], (float)(2*M_PI)));
     }
     else
         b_pairs.push_back(b);
@@ -261,7 +261,7 @@ struct ray
         }
 
         const float sterm       = std::sqrt(b*b - 4*a*c);
-        const vec2f crossings(1.0/(2*a)*vec2f(-b-sterm, -b+sterm));
+        const vec2f crossings(1.0/(2*a)*make_v2(-b-sterm, -b+sterm));
         int         crossing_no = 0;
         if(crossings[0] > 0.0 && crossings[0] < len)
         {
@@ -388,8 +388,8 @@ std::vector<interval> chop_circle(const simple_polygon &p, const circle &c)
         const int  crossing_no(r.intersect(crossings, c));
         if(crossing_no == 2)
         {
-            vec2f param(c.arc(r.point(crossings[0])),
-                        c.arc(r.point(crossings[1])));
+            vec2f param(make_v2(c.arc(r.point(crossings[0])),
+                          c.arc(r.point(crossings[1]))));
             if(param[0] > param[0])
                 std::swap(param[0], param[1]);
             res.insert(param[0], p_inside);
@@ -520,7 +520,7 @@ public:
         glLoadIdentity();
 
         vec2f lo, hi;
-        cscale_to_box(lo, hi, center, scale, vec2i(w(), h()));
+        cscale_to_box(lo, hi, center, scale, make_v2(w(), h()));
         glOrtho(lo[0], hi[0], lo[1], hi[1], -100, 100);
 
         glMatrixMode(GL_MODELVIEW);
@@ -579,9 +579,9 @@ public:
         {
         case FL_PUSH:
             {
-                const vec2i xy(Fl::event_x(),
-                               Fl::event_y());
-                const vec2f world(world_point(vec2i(xy[0], h()-xy[1]), center, scale, vec2i(w(), h())));
+                const vec2i xy(make_v2(Fl::event_x(),
+                                       Fl::event_y()));
+                const vec2f world(world_point(make_v2(xy[0], h()-xy[1]), center, scale, make_v2(w(), h())));
 
                 lastpick = world;
             }
@@ -593,9 +593,9 @@ public:
             return 1;
         case FL_DRAG:
             {
-                const vec2i xy(Fl::event_x(),
-                               Fl::event_y());
-                const vec2f world(world_point(vec2i(xy[0], h()-xy[1]), center, scale, vec2i(w(), h())));
+                const vec2i xy(make_v2(Fl::event_x(),
+                                       Fl::event_y()));
+                const vec2f world(world_point(make_v2(xy[0], h()-xy[1]), center, scale, make_v2(w(), h())));
                 vec2f dvec(0);
                 if(Fl::event_button() == FL_MIDDLE_MOUSE)
                 {
@@ -629,10 +629,10 @@ public:
             return 1;
         case FL_MOUSEWHEEL:
             {
-                const vec2i xy(Fl::event_x(),
-                               Fl::event_y());
-                const vec2i dxy(Fl::event_dx(),
-                                Fl::event_dy());
+                const vec2i xy(make_v2(Fl::event_x(),
+                                       Fl::event_y()));
+                const vec2i dxy(make_v2(Fl::event_dx(),
+                                        Fl::event_dy()));
                 const float fy = copysignf(0.5f, dxy[1]);
 
                 if(Fl::event_state() & FL_SHIFT)
@@ -678,13 +678,13 @@ int main(int argc, char *argv[])
     c.center(vec3f(0));
     c.radius = 2.0;
 
-    c.range  = vec2f(M_PI, M_PI/2);
+    c.range  = make_v2<float>(M_PI, M_PI/2);
 
     fltkview mv(0, 0, 500, 500, "fltk View");
 
     box_to_cscale(mv.center, mv.scale,
-                  vec2f(-10, -10), vec2f(10, 10),
-                  vec2i(500, 500));
+                  make_v2<float>(-10, -10), make_v2<float>(10, 10),
+                  make_v2(500, 500));
 
     mv.sp = &sp;
     mv.c  = &c;

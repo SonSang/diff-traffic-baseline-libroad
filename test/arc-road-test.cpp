@@ -251,7 +251,7 @@ public:
             std::vector<vertex> v;
             std::vector<vec3u> f;
             size_t reverse_start;
-            ar->make_mesh(v, f, reverse_start, vec2f(0.0, 1.0), vec2f(-0.5, 0.5), 0.01);
+            ar->make_mesh(v, f, reverse_start, make_v2(0.0f, 1.0f), make_v2(-0.5f, 0.5f), 0.01);
             glBegin(GL_TRIANGLES);
             BOOST_FOREACH(const vec3u &fa, f)
             {
