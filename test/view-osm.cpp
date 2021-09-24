@@ -6,6 +6,7 @@
 #include <FL/gl.h>
 #include <FL/glu.h>
 #include "FL/glut.H"
+#undef None // Stupid X11/X.h defines this!
 #include <fstream>
 
 #include "arcball.hpp"

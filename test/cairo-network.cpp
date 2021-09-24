@@ -6,6 +6,7 @@
 #include <FL/gl.h>
 #include <FL/glu.h>
 #include <FL/glut.H>
+#undef None // Stupid X11/X.h defines this!
 #include "libroad/hwm_network.hpp"
 #include "libroad/geometric.hpp"
 #include "visual_geometric.hpp"
