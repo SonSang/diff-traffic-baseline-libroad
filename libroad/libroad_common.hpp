@@ -112,6 +112,14 @@ typedef tvmet::Matrix<float,       3, 3> mat3x3f;
 typedef tvmet::Matrix<float,       4, 4> mat4x4f;
 
 template <typename T>
+inline tvmet::Vector<T, 2> make_v2(const T &a, const T&b)
+{
+    tvmet::Vector<T, 2> o;
+    o[0] = a;
+    o[1] = b;
+    return o;
+}
+template <typename T>
 inline float length2(const T& t1)
 {
     return tvmet::dot(t1, t1);
