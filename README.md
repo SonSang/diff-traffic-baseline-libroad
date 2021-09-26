@@ -22,7 +22,8 @@ $ sudo apt install libboost-dev \
 		 libfltk1.3-dev \
 		 libglew-dev \
 		 freeglut3-dev \ 
-		 libfltk-gl1.3-dev
+		 libfltk-gl1.3-dev \
+		 libcairo2-dev
 ```
 
 Configure and build:
