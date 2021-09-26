@@ -75,7 +75,7 @@ struct micro_lane
     hwm::lane  *parent_lane;
 };
 
-class micro : boost::noncopyable
+class microB : boost::noncopyable
 {
 public:
 
@@ -377,7 +377,7 @@ Globals for OpenGL Loop
 */
 double timestep = 0.033;
 hwm::network* hnet;
-micro sim;
+microB sim;
 
 class fltkview : public Fl_Gl_Window
 {

@@ -442,7 +442,7 @@ namespace hwm
                     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-                    std::cout << "Making new lane texture; res: " << lm.im_res << " scale: " << lm.scale << std::endl;
+                    //std::cout << "Making new lane texture; res: " << lm.im_res << " scale: " << lm.scale << std::endl;
                     unsigned char *pix = new unsigned char[4*lm.im_res[0]*lm.im_res[1]];
                     lm.draw(pix);
                     for(size_t i = 0; i < lm.im_res[0]*lm.im_res[1]; ++i)
