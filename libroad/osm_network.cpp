@@ -571,7 +571,7 @@ namespace osm
         const vec2f isect2(static_cast<float>((D*dy - copysign(1.0f, dy)*dx*std::sqrt(r*r*dr*dr - D*D))/(dr*dr)),
                            -D*dx - std::abs(dy)*std::sqrt(r*r*dr*dr - D*D)/(dr*dr));
 
-        return std::make_pair(isect1 + center, isect2 + center);
+        return std::make_pair(vec2f(isect1 + center), vec2f(isect2 + center));
     }
 
     void network::compute_node_heights()

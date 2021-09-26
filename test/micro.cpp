@@ -4,7 +4,8 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/gl.h>
 #include <FL/glu.h>
-#include "FL/glut.h"
+#include "FL/glut.H"
+#undef None // Stupid X11/X.h defines this!
 #include "arcball.hpp"
 #include "libroad/hwm_network.hpp"
 #include "libroad/hwm_draw.hpp"

@@ -17,6 +17,8 @@ const char *libroad_package_string();
 #include <functional>
 #include <unordered_map>
 
+using std::isnan;
+
 inline double drand48()
 {
 	return rand()/(double)RAND_MAX;
@@ -60,7 +62,10 @@ inline float copysign(const float val, const float sign)
 #include <boost/filesystem.hpp>
 
 #include <glibmm/ustring.h>
-
+#define TVMET_HAVE_IEEE_MATH
+using std::isnan;
+using std::isinf;
+#include <cmath>
 #include <tvmet/Vector.h>
 #include <tvmet/Matrix.h>
 #include <libxml++/libxml++.h>
@@ -106,6 +111,14 @@ typedef tvmet::Vector<float,       4>    vec4f;
 typedef tvmet::Matrix<float,       3, 3> mat3x3f;
 typedef tvmet::Matrix<float,       4, 4> mat4x4f;
 
+template <typename T>
+inline tvmet::Vector<T, 2> make_v2(const T &a, const T&b)
+{
+    tvmet::Vector<T, 2> o;
+    o[0] = a;
+    o[1] = b;
+    return o;
+}
 template <typename T>
 inline float length2(const T& t1)
 {

@@ -145,12 +145,12 @@ namespace hwm
             intersection_vert_fan_starts.push_back(points.size());
 
             points.push_back(vertex(i.second.center, vec3f(0.0, 0.0, 1.0),
-                                    vec2f(0.0f, 0.0f)));
+                                    make_v2(0.0f, 0.0f)));
             BOOST_FOREACH(const vec3f &p, i.second.shape)
             {
-                points.push_back(vertex(p, vec3f(0.0, 0.0, 1.0), vec2f(0.0f, 0.0f)));
+                points.push_back(vertex(p, vec3f(0.0, 0.0, 1.0), make_v2(0.0f, 0.0f)));
             }
-            points.push_back(vertex(i.second.shape.front(), vec3f(0.0, 0.0, 1.0), vec2f(0.0f, 0.0f)));
+            points.push_back(vertex(i.second.shape.front(), vec3f(0.0, 0.0, 1.0), make_v2(0.0f, 0.0f)));
 
             intersection_vert_fan_counts.push_back(points.size()-intersection_vert_fan_starts.back());
 
@@ -505,16 +505,16 @@ namespace hwm
 
             intersection_vert_fan_starts.push_back(points.size());
 
-            points.push_back(vertex(ig.is->center, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+            points.push_back(vertex(ig.is->center, vec3f(0, 0, 1), make_v2(0.0f, 0.0f)));
             for(size_t i = 0; i < ig.ric.size(); ++i)
             {
                 const network_aux::road_store &rs = ig.ric[i];
                 BOOST_FOREACH(const offs_pt &op, rs.ipt)
                 {
-                    points.push_back(vertex(op.second.point, vec3f(0, 0, 1), vec2f(0.0, 0.0)));
+                    points.push_back(vertex(op.second.point, vec3f(0, 0, 1), make_v2(0.0f, 0.0f)));
                 }
                 intersection_vert_strip_starts.push_back(points.size()-1);
-                ig.connecting_arcs[i].extract_line(points, vec2f(0.0f, 1.0f), 0.0f, 0.01);
+                ig.connecting_arcs[i].extract_line(points, make_v2(0.0f, 1.0f), 0.0f, 0.01);
                 intersection_vert_strip_counts.push_back(points.size()-intersection_vert_strip_starts.back());
             }
             points.push_back(points[intersection_vert_fan_starts.back() + 1]);

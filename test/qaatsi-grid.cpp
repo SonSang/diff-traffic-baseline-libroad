@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
                 hwm::lane                  new_lane_we;
                 new_lane_we.id         = boost::str(boost::format("lane-x%d%d-y%d-we") % i % (i+1) % j);
                 hwm::lane::road_membership rm;
-                rm.interval            = vec2f(0, 1);
+                rm.interval            = make_v2(0.0f, 1.0f);
                 rm.parent_road         = &(rp->second);
                 rm.lane_position       = -net.lane_width/2;
                 new_lane_we.road_memberships.insert(0.0, rm);
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
                 hwm::lane                  new_lane_ew;
                 new_lane_ew.id        = boost::str(boost::format("lane-x%d%d-y%d-ew") % i % (i+1) % j);
                 hwm::lane::road_membership rm;
-                rm.interval           = vec2f(1, 0);
+                rm.interval           = make_v2(1.0f, 0.0f);
                 rm.parent_road        = &(rp->second);
                 rm.lane_position      = net.lane_width/2;
                 new_lane_ew.road_memberships.insert(0.0, rm);
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
                     hwm::lane                  new_lane_sn;
                     new_lane_sn.id         = boost::str(boost::format("lane-x%d-y%d%d-sn-%d") % i % j % (j+1) % l);
                     hwm::lane::road_membership rm;
-                    rm.interval            = vec2f(0, 1);
+                    rm.interval            = make_v2(0.0f, 1.0f);
                     rm.parent_road         = &(rp->second);
                     rm.lane_position       = -net.lane_width*(l+0.5)-y_divider_gap/2;
                     new_lane_sn.road_memberships.insert(0.0, rm);
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
                     hwm::lane                  new_lane_ns;
                     new_lane_ns.id         = boost::str(boost::format("lane-x%d-y%d%d-ns-%d") % i % j % (j+1) % l);
                     hwm::lane::road_membership rm;
-                    rm.interval            = vec2f(1, 0);
+                    rm.interval            = make_v2(1.0f, 0.0f);
                     rm.parent_road         = &(rp->second);
                     rm.lane_position       = net.lane_width*(l+0.5)+y_divider_gap/2;
                     new_lane_ns.road_memberships.insert(0.0, rm);

@@ -5,7 +5,8 @@
 #include <FL/Fl_Menu_Button.H>
 #include <FL/gl.h>
 #include <FL/glu.h>
-#include "FL/glut.h"
+#include "FL/glut.H"
+#undef None // Stupid X11/X.h defines this!
 #include <fstream>
 
 #include "arcball.hpp"
@@ -546,7 +547,7 @@ int main(int argc, char *argv[])
         }
 
         const_image = false;
-        dim         = vec2f(atoi(argv[3]), atoi(argv[4]));
+        dim         = make_v2(atoi(argv[3]), atoi(argv[4]));
         pix         = new float[dim[0]*dim[1]];
     }
     else
@@ -556,7 +557,7 @@ int main(int argc, char *argv[])
         im.quantize();
         im.flip();
 
-        dim = vec2i(im.columns(), im.rows());
+        dim = make_v2(im.columns(), im.rows());
 
         const_image = true;
         pix         = new float[dim[0]*dim[1]];
@@ -564,7 +565,7 @@ int main(int argc, char *argv[])
     }
 
     im_heightfield ih(pix, dim, 0, 2560);
-    ih.origin  = vec2f(-19269.5, -18832.1);//vec2f(-50);
+    ih.origin  = make_v2(-19269.5f, -18832.1f);//vec2f(-50);
     ih.spacing = vec2f(75.2784);
 
     if(std::strcmp(argv[1], "--") == 0)
